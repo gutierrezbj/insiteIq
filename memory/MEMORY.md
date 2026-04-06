@@ -1,0 +1,4 @@
+- [Glossary](glossary.md) — Acronimos, modulos, capas, fases del protocolo SRS/InsiteIQ
+- [Infra Notion](reference_infra_notion.md) — Referencia a docs de infraestructura SRS: servidores, puertos, VPN, backups
+- [Design System SRS](design_system_srs.md) — SRS Nucleus v2.0: metodologia, Identity Sprint, tokens, blacklist
+- [Company Context](context/company.md) — SRS overview, servidores, puertos, deploy, proyectos activos
