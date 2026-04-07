@@ -39,45 +39,46 @@ export default function TechListPage() {
         />
       </div>
 
-      <div className="space-y-2">
-        {loading && <p className="text-text-tertiary text-sm">Loading...</p>}
+      {loading && <p className="text-text-tertiary text-sm">Loading...</p>}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
         {techs.map((tech, i) => (
-          <div key={tech.id} className="bg-surface-raised border border-surface-border rounded-lg p-4 hover:border-primary/30 accent-bar stagger-item transition-all duration-fast ease-out-expo" style={{ animationDelay: `${i * 60}ms` }}>
-            <div className="flex items-start justify-between">
-              <div className="flex items-start gap-3">
-                <div className="bg-surface-overlay rounded-full p-2.5">
-                  <User size={18} className="text-text-secondary" />
-                </div>
-                <div>
-                  <h3 className="text-text-primary font-medium">{tech.name}</h3>
-                  <p className="text-sm text-text-secondary">{tech.email}</p>
-                  <p className="text-xs text-text-tertiary mt-1">{tech.city}, {tech.country}</p>
-                  {tech.skills?.length > 0 && (
-                    <div className="flex gap-1 mt-2 flex-wrap">
-                      {tech.skills.map((s) => (
-                        <span key={s} className="bg-primary-muted text-primary-light text-xs px-1.5 py-0.5 rounded">{s}</span>
-                      ))}
-                    </div>
-                  )}
-                </div>
+          <div
+            key={tech.id}
+            className="bg-surface-raised border border-surface-border rounded-lg p-3 hover:border-primary/40 hover:shadow-glow-primary accent-bar stagger-item transition-all duration-fast ease-out-expo flex flex-col gap-2"
+            style={{ animationDelay: `${i * 60}ms` }}
+          >
+            <div className="flex items-start gap-2">
+              <div className="bg-surface-overlay rounded-full p-2 flex-shrink-0">
+                <User size={16} className="text-text-secondary" />
               </div>
-              <div className="text-right space-y-1">
-                <span className={`text-xs px-2 py-0.5 rounded ${availColors[tech.availability] || availColors.offline}`}>
-                  {tech.availability}
-                </span>
-                {tech.rating?.average > 0 && (
-                  <div className="flex items-center gap-1 justify-end">
-                    <Star size={12} className="text-warning" />
-                    <span className="text-sm text-warning font-mono">{tech.rating.average.toFixed(1)}</span>
-                  </div>
-                )}
-                <p className="text-xs text-text-tertiary font-mono">{tech.stats?.total_jobs || 0} jobs</p>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-text-primary font-medium text-sm leading-tight truncate">{tech.name}</h3>
+                <p className="text-[11px] text-text-tertiary truncate">{tech.city}, {tech.country}</p>
               </div>
+              <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono uppercase tracking-wide flex-shrink-0 ${availColors[tech.availability] || availColors.offline}`}>
+                {tech.availability}
+              </span>
+            </div>
+            {tech.skills?.length > 0 && (
+              <div className="flex gap-1 flex-wrap">
+                {tech.skills.slice(0, 4).map((s) => (
+                  <span key={s} className="bg-primary-muted text-primary-light text-[10px] px-1.5 py-0.5 rounded">{s}</span>
+                ))}
+              </div>
+            )}
+            <div className="flex items-center justify-between pt-1 border-t border-surface-border-subtle mt-auto">
+              <p className="text-[10px] text-text-tertiary font-mono uppercase tracking-wide">{tech.stats?.total_jobs || 0} jobs</p>
+              {tech.rating?.average > 0 && (
+                <div className="flex items-center gap-1">
+                  <Star size={11} className="text-warning" />
+                  <span className="text-xs text-warning font-mono">{tech.rating.average.toFixed(1)}</span>
+                </div>
+              )}
             </div>
           </div>
         ))}
-        {!loading && techs.length === 0 && <p className="text-text-tertiary text-sm text-center py-8">No technicians found</p>}
       </div>
+      {!loading && techs.length === 0 && <p className="text-text-tertiary text-sm text-center py-8">No technicians found</p>}
     </div>
   );
 }

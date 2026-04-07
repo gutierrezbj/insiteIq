@@ -37,30 +37,30 @@ export default function SiteListPage() {
         />
       </div>
 
-      <div className="space-y-2">
-        {loading && <p className="text-text-tertiary text-sm">Loading...</p>}
+      {loading && <p className="text-text-tertiary text-sm">Loading...</p>}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
         {sites.map((site, i) => (
           <Link
             key={site.id}
             to={`/sites/${site.id}`}
-            className="block bg-surface-raised border border-surface-border rounded-lg p-4 hover:border-primary/30 accent-bar stagger-item transition-all duration-fast ease-out-expo"
+            className="block bg-surface-raised border border-surface-border rounded-lg p-3 hover:border-primary/40 hover:shadow-glow-primary accent-bar stagger-item transition-all duration-fast ease-out-expo"
             style={{ animationDelay: `${i * 60}ms` }}
           >
-            <div className="flex items-start justify-between">
+            <div className="flex flex-col gap-1.5">
               <div>
-                <h3 className="text-text-primary font-medium">{site.name}</h3>
-                <p className="text-sm text-text-secondary mt-0.5">{site.client}</p>
-                <p className="text-xs text-text-tertiary mt-1 flex items-center gap-1">
-                  <MapPin size={12} />
-                  {site.address || `${site.city}, ${site.country}`}
-                </p>
+                <h3 className="text-text-primary font-medium text-sm leading-tight line-clamp-1">{site.name}</h3>
+                <p className="text-xs text-text-secondary line-clamp-1">{site.client}</p>
               </div>
-              <div className="text-right">
-                <span className="text-xs text-text-tertiary font-mono">{site.intervention_count} interventions</span>
+              <p className="text-[11px] text-text-tertiary flex items-start gap-1 line-clamp-2">
+                <MapPin size={11} className="mt-0.5 flex-shrink-0" />
+                <span>{site.address || `${site.city}, ${site.country}`}</span>
+              </p>
+              <div className="flex items-center justify-between pt-1 border-t border-surface-border-subtle mt-1">
+                <span className="text-[10px] text-text-tertiary font-mono uppercase tracking-wide">{site.intervention_count} ops</span>
                 {site.tags?.length > 0 && (
-                  <div className="flex gap-1 mt-1 justify-end">
-                    {site.tags.slice(0, 3).map((t) => (
-                      <span key={t} className="bg-surface-overlay text-text-secondary text-xs px-1.5 py-0.5 rounded">{t}</span>
+                  <div className="flex gap-1">
+                    {site.tags.slice(0, 2).map((t) => (
+                      <span key={t} className="bg-surface-overlay text-text-secondary text-[10px] px-1.5 py-0.5 rounded">{t}</span>
                     ))}
                   </div>
                 )}
@@ -68,10 +68,10 @@ export default function SiteListPage() {
             </div>
           </Link>
         ))}
-        {!loading && sites.length === 0 && (
-          <p className="text-text-tertiary text-sm text-center py-8">No sites found</p>
-        )}
       </div>
+      {!loading && sites.length === 0 && (
+        <p className="text-text-tertiary text-sm text-center py-8">No sites found</p>
+      )}
 
       {total > 20 && (
         <div className="flex justify-center gap-2">
