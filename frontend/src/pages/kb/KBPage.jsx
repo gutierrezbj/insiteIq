@@ -58,26 +58,36 @@ export default function KBPage() {
         </select>
       </div>
 
-      <div className="space-y-2">
-        {loading && <p className="text-text-tertiary text-sm">Loading...</p>}
+      {loading && <p className="text-text-tertiary text-sm">Loading...</p>}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
         {entries.map((e, i) => (
-          <div key={e.id} className="bg-surface-raised border border-surface-border rounded-lg p-4 accent-bar stagger-item" style={{ animationDelay: `${i * 60}ms` }}>
-            <div className="flex items-center gap-2 mb-2">
-              <span className={`text-xs px-2 py-0.5 rounded ${categoryColors[e.category] || categoryColors.other}`}>
+          <div
+            key={e.id}
+            className="bg-surface-raised border border-surface-border rounded-lg p-3 accent-bar stagger-item flex flex-col gap-2 hover:border-primary/40 hover:shadow-glow-primary transition-all duration-fast ease-out-expo"
+            style={{ animationDelay: `${i * 60}ms` }}
+          >
+            <div className="flex flex-wrap items-center gap-1">
+              <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono uppercase tracking-wide ${categoryColors[e.category] || categoryColors.other}`}>
                 {e.category}
               </span>
-              {e.tags?.map((t) => (
-                <span key={t} className="text-xs bg-surface-overlay text-text-secondary px-1.5 py-0.5 rounded">{t}</span>
+              {e.tags?.slice(0, 3).map((t) => (
+                <span key={t} className="text-[10px] bg-surface-overlay text-text-secondary px-1.5 py-0.5 rounded">{t}</span>
               ))}
             </div>
-            <p className="text-sm text-danger mb-1"><span className="text-text-tertiary">Problem:</span> {e.problem}</p>
-            <p className="text-sm text-success"><span className="text-text-tertiary">Solution:</span> {e.solution}</p>
+            <div>
+              <p className="label-caps mb-0.5">Problem</p>
+              <p className="text-xs text-danger leading-snug line-clamp-3">{e.problem}</p>
+            </div>
+            <div>
+              <p className="label-caps mb-0.5">Solution</p>
+              <p className="text-xs text-success leading-snug line-clamp-4">{e.solution}</p>
+            </div>
           </div>
         ))}
-        {!loading && entries.length === 0 && (
-          <p className="text-text-tertiary text-sm text-center py-8">No knowledge base entries yet</p>
-        )}
       </div>
+      {!loading && entries.length === 0 && (
+        <p className="text-text-tertiary text-sm text-center py-8">No knowledge base entries yet</p>
+      )}
     </div>
   );
 }
