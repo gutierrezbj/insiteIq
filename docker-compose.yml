@@ -50,6 +50,20 @@ services:
       - redis_data:/data
     restart: unless-stopped
 
+  litellm:
+    image: ghcr.io/berriai/litellm:main-stable
+    container_name: insiteiq-litellm
+    ports:
+      - "127.0.0.1:4111:4000"
+    volumes:
+      - ./litellm_config.yaml:/app/config.yaml:ro
+    command: ["--config", "/app/config.yaml", "--port", "4000"]
+    env_file:
+      - .env
+    depends_on:
+      - redis
+    restart: unless-stopped
+
 volumes:
   mongo_data:
   redis_data:

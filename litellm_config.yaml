@@ -1,0 +1,57 @@
+# InsiteIQ — LiteLLM Gateway
+# Patrón heredado de SA99 ADR-021. Tiers iiq-l0..l4.
+# Modelos locales corren en SA96 (Mac M4 Pro) vía Tailscale.
+
+model_list:
+  # L0 — Local fast: parsing emails, clasificación, KB suggest
+  - model_name: "iiq-l0"
+    litellm_params:
+      model: "openai/qwen3-8b"
+      api_base: "http://100.107.171.77:1234/v1"
+      api_key: "lm-studio"
+
+  # L1 — Local smart: drafts de reportes, redacción ES/EN
+  - model_name: "iiq-l1"
+    litellm_params:
+      model: "openai/qwen3-14b"
+      api_base: "http://100.107.171.77:1234/v1"
+      api_key: "lm-studio"
+
+  # L2 — Cloud cheap: fallback rápido
+  - model_name: "iiq-l2"
+    litellm_params:
+      model: "anthropic/claude-haiku-4-5"
+      api_key: "os.environ/ANTHROPIC_API_KEY"
+
+  # L3 — Cloud medium: análisis estructurado
+  - model_name: "iiq-l3"
+    litellm_params:
+      model: "gemini/gemini-2.5-flash"
+      api_key: "os.environ/GEMINI_API_KEY"
+
+  # L4 — Cloud premium: reportes finales facturables
+  - model_name: "iiq-l4"
+    litellm_params:
+      model: "anthropic/claude-sonnet-4-6"
+      api_key: "os.environ/ANTHROPIC_API_KEY"
+
+router_settings:
+  routing_strategy: "simple-shuffle"
+  num_retries: 2
+  fallbacks:
+    - iiq-l0: ["iiq-l2"]
+    - iiq-l1: ["iiq-l3", "iiq-l2"]
+    - iiq-l4: ["iiq-l3", "iiq-l2"]
+
+litellm_settings:
+  cache: true
+  cache_params:
+    type: "redis"
+    host: "redis"
+    port: 6379
+    ttl: 3600
+  drop_params: true
+  set_verbose: false
+
+general_settings:
+  master_key: "os.environ/LITELLM_MASTER_KEY"
