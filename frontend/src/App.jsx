@@ -12,6 +12,7 @@ import InterventionListPage from "./pages/interventions/InterventionListPage";
 import InterventionDetailPage from "./pages/interventions/InterventionDetailPage";
 import InterventionFormPage from "./pages/interventions/InterventionFormPage";
 import KBPage from "./pages/kb/KBPage";
+import AIOpsPage from "./pages/ai/AIOpsPage";
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -36,6 +37,7 @@ function AppRoutes() {
       <Route path="/interventions/new" element={<ProtectedRoute><InterventionFormPage /></ProtectedRoute>} />
       <Route path="/interventions/:id" element={<ProtectedRoute><InterventionDetailPage /></ProtectedRoute>} />
       <Route path="/kb" element={<ProtectedRoute><KBPage /></ProtectedRoute>} />
+      <Route path="/ai-ops" element={<ProtectedRoute><AIOpsPage /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>
   );

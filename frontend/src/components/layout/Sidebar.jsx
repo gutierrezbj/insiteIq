@@ -5,6 +5,7 @@ import {
   Users,
   ClipboardList,
   BookOpen,
+  Sparkles,
   LogOut,
 } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
@@ -15,6 +16,7 @@ const links = [
   { to: "/technicians", icon: Users, label: "Technicians" },
   { to: "/interventions", icon: ClipboardList, label: "Interventions" },
   { to: "/kb", icon: BookOpen, label: "Knowledge Base" },
+  { to: "/ai-ops", icon: Sparkles, label: "AI Operations" },
 ];
 
 export default function Sidebar() {

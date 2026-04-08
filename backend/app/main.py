@@ -32,7 +32,7 @@ app.add_middleware(
 app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads")
 
 # Routes
-from app.routes import auth, sites, technicians, interventions, knowledge, dashboard  # noqa: E402
+from app.routes import auth, sites, technicians, interventions, knowledge, dashboard, ai  # noqa: E402
 
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(sites.router, prefix="/api/sites", tags=["sites"])
@@ -40,6 +40,7 @@ app.include_router(technicians.router, prefix="/api/technicians", tags=["technic
 app.include_router(interventions.router, prefix="/api/interventions", tags=["interventions"])
 app.include_router(knowledge.router, prefix="/api/kb", tags=["knowledge"])
 app.include_router(dashboard.router, prefix="/api/dashboard", tags=["dashboard"])
+app.include_router(ai.router, prefix="/api/ai", tags=["ai"])
 
 
 @app.get("/health")

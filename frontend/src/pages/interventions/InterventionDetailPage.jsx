@@ -1,6 +1,6 @@
 import { useParams, Link } from "react-router-dom";
 import { useFetch } from "../../hooks/useFetch";
-import { ArrowLeft, Clock, CheckCircle, Upload } from "lucide-react";
+import { ArrowLeft, Clock, CheckCircle, Upload, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { api } from "../../api/client";
 import { toast } from "sonner";
@@ -23,6 +23,21 @@ export default function InterventionDetailPage() {
   const [uploading, setUploading] = useState(false);
 
   const iv = data?.data;
+  const [report, setReport] = useState(null);
+  const [generating, setGenerating] = useState(false);
+
+  async function generateReport(premium = false) {
+    setGenerating(true);
+    try {
+      const res = await api.post(`/ai/reports/${id}/generate?premium=${premium}`, {});
+      setReport(res.report);
+      toast.success(premium ? "Premium report generated" : "Report generated");
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setGenerating(false);
+    }
+  }
 
   async function updateStatus(newStatus) {
     try {
@@ -168,6 +183,55 @@ export default function InterventionDetailPage() {
             </div>
           )}
         </div>
+      </div>
+
+      <div className="bg-surface-raised border border-surface-border rounded-lg p-4 accent-bar">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="label-caps flex items-center gap-2"><Sparkles size={14} className="text-primary" /> AI Report</h3>
+          <div className="flex gap-2">
+            <button
+              onClick={() => generateReport(false)}
+              disabled={generating}
+              className="px-3 py-1.5 rounded-lg text-sm bg-primary hover:bg-primary-dark hover:shadow-glow-primary text-text-inverse transition-all duration-fast ease-out-expo disabled:opacity-50"
+            >
+              {generating ? "Generating..." : "Generate Report"}
+            </button>
+            <button
+              onClick={() => generateReport(true)}
+              disabled={generating}
+              className="px-3 py-1.5 rounded-lg text-sm bg-surface-overlay hover:bg-surface-border text-text-secondary transition-all duration-fast ease-out-expo disabled:opacity-50"
+              title="Usa Claude Sonnet (facturable add-on)"
+            >
+              Premium
+            </button>
+          </div>
+        </div>
+        {report && (
+          <div className="space-y-3 text-sm">
+            <div>
+              <p className="label-caps mb-1">Executive Summary</p>
+              <p className="text-text-primary leading-relaxed whitespace-pre-wrap">{report.executive_summary}</p>
+            </div>
+            {report.actions_taken?.length > 0 && (
+              <div>
+                <p className="label-caps mb-1">Actions Taken</p>
+                <ul className="list-disc list-inside text-text-secondary space-y-0.5">
+                  {report.actions_taken.map((a, i) => <li key={i}>{a}</li>)}
+                </ul>
+              </div>
+            )}
+            {report.client_email_draft && (
+              <div className="bg-surface-overlay rounded-md p-3">
+                <p className="label-caps mb-1">Client Email Draft</p>
+                <p className="text-xs text-text-tertiary mb-1">Subject: {report.client_email_draft.subject}</p>
+                <p className="text-text-primary text-xs whitespace-pre-wrap font-mono">{report.client_email_draft.body}</p>
+              </div>
+            )}
+            {report.kb_candidate?.should_create && (
+              <p className="text-xs text-warning">→ KB candidate suggested ({report.kb_candidate.category})</p>
+            )}
+          </div>
+        )}
       </div>
 
       {iv.resolution && (

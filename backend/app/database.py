@@ -25,6 +25,12 @@ async def connect_db():
     await db.interventions.create_index("reference", unique=True)
     await db.knowledge_base.create_index("site_id")
     await db.knowledge_base.create_index([("problem", "text"), ("solution", "text")])
+    await db.ai_usage.create_index("created_at")
+    await db.ai_usage.create_index("intervention_id")
+    await db.ai_usage.create_index("client")
+    await db.email_messages.create_index("message_id", unique=True)
+    await db.email_messages.create_index("intervention_id")
+    await db.email_messages.create_index("status")
 
 
 async def close_db():
