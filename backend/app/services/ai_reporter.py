@@ -10,6 +10,8 @@ from __future__ import annotations
 import json
 from datetime import datetime, timezone
 
+from bson import ObjectId
+
 from app.database import get_db
 from app.services import llm_service
 
@@ -41,12 +43,16 @@ Devuelves SOLO JSON válido con este schema:
 async def generate_report(intervention_id: str, *, premium: bool = False) -> dict:
     """Genera reporte completo. premium=True usa Claude Sonnet (facturable)."""
     db = get_db()
-    intv = await db["interventions"].find_one({"_id": intervention_id})
+    intv = await db["interventions"].find_one({"_id": ObjectId(intervention_id)})
     if not intv:
         raise ValueError(f"Intervention {intervention_id} not found")
 
-    site = await db["sites"].find_one({"_id": intv.get("site_id")}) or {}
-    tech = await db["technicians"].find_one({"_id": intv.get("technician_id")}) or {}
+    site_id = intv.get("site_id")
+    tech_id = intv.get("technician_id")
+    site = await db["sites"].find_one({"_id": ObjectId(site_id)}) if site_id else None
+    tech = await db["technicians"].find_one({"_id": ObjectId(tech_id)}) if tech_id else None
+    site = site or {}
+    tech = tech or {}
 
     context = {
         "reference": intv.get("reference"),

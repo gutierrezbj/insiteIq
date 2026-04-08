@@ -60,6 +60,8 @@ services:
     command: ["--config", "/app/config.yaml", "--port", "4000"]
     env_file:
       - .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       - redis
     restart: unless-stopped

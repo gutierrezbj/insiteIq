@@ -7,14 +7,14 @@ model_list:
   - model_name: "iiq-l0"
     litellm_params:
       model: "openai/qwen3-8b"
-      api_base: "http://100.107.171.77:1234/v1"
+      api_base: "os.environ/LMSTUDIO_BASE_URL"
       api_key: "lm-studio"
 
   # L1 — Local smart: drafts de reportes, redacción ES/EN
   - model_name: "iiq-l1"
     litellm_params:
       model: "openai/qwen3-14b"
-      api_base: "http://100.107.171.77:1234/v1"
+      api_base: "os.environ/LMSTUDIO_BASE_URL"
       api_key: "lm-studio"
 
   # L2 — Cloud cheap: fallback rápido
