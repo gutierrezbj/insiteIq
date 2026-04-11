@@ -32,9 +32,9 @@ class Settings(BaseSettings):
     LITELLM_MASTER_KEY: str = "sk-insiteiq-dev"
     LLM_TIER_EMAIL_PARSE: str = "iiq-l0"
     LLM_TIER_KB_SUGGEST: str = "iiq-l0"
-    LLM_TIER_REPORT_DRAFT: str = "iiq-l1"
+    LLM_TIER_REPORT_DRAFT: str = "iiq-l0"
     LLM_TIER_REPORT_PREMIUM: str = "iiq-l4"
-    LLM_TIER_CLIENT_EMAIL: str = "iiq-l2"
+    LLM_TIER_CLIENT_EMAIL: str = "iiq-l0"
 
     # Microsoft Graph (email intake) — pendiente provisioning
     GRAPH_TENANT_ID: str = ""

@@ -17,19 +17,19 @@ model_list:
       api_base: "os.environ/LMSTUDIO_BASE_URL"
       api_key: "lm-studio"
 
-  # L2 — Cloud cheap: fallback rápido
+  # L2 — Cloud cheap: fallback principal (Gemini Flash — $0.15/1M tokens)
   - model_name: "iiq-l2"
     litellm_params:
-      model: "anthropic/claude-haiku-4-5"
-      api_key: "os.environ/ANTHROPIC_API_KEY"
+      model: "gemini/gemini-2.5-flash"
+      api_key: "os.environ/GEMINI_API_KEY"
 
-  # L3 — Cloud medium: análisis estructurado
+  # L3 — Cloud medium: redundancia Gemini
   - model_name: "iiq-l3"
     litellm_params:
       model: "gemini/gemini-2.5-flash"
       api_key: "os.environ/GEMINI_API_KEY"
 
-  # L4 — Cloud premium: reportes finales facturables
+  # L4 — Cloud premium: SOLO reportes facturables (cliente paga)
   - model_name: "iiq-l4"
     litellm_params:
       model: "anthropic/claude-sonnet-4-6"
@@ -40,8 +40,8 @@ router_settings:
   num_retries: 2
   fallbacks:
     - iiq-l0: ["iiq-l2"]
-    - iiq-l1: ["iiq-l3", "iiq-l2"]
-    - iiq-l4: ["iiq-l3", "iiq-l2"]
+    - iiq-l1: ["iiq-l2"]
+    - iiq-l4: ["iiq-l2"]
 
 litellm_settings:
   cache: true
