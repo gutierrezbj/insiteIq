@@ -23,11 +23,11 @@ model_list:
       model: "gemini/gemini-2.5-flash"
       api_key: "os.environ/GEMINI_API_KEY"
 
-  # L3 — Cloud medium: redundancia Gemini
+  # L3 — Cloud medium: GPT-4.1-mini como segundo fallback
   - model_name: "iiq-l3"
     litellm_params:
-      model: "gemini/gemini-2.5-flash"
-      api_key: "os.environ/GEMINI_API_KEY"
+      model: "openai/gpt-4.1-mini"
+      api_key: "os.environ/OPENAI_API_KEY"
 
   # L4 — Cloud premium: SOLO reportes facturables (cliente paga)
   - model_name: "iiq-l4"
@@ -39,9 +39,9 @@ router_settings:
   routing_strategy: "simple-shuffle"
   num_retries: 2
   fallbacks:
-    - iiq-l0: ["iiq-l2"]
-    - iiq-l1: ["iiq-l2"]
-    - iiq-l4: ["iiq-l2"]
+    - iiq-l0: ["iiq-l2", "iiq-l3"]
+    - iiq-l1: ["iiq-l2", "iiq-l3"]
+    - iiq-l4: ["iiq-l2", "iiq-l3"]
 
 litellm_settings:
   cache: true
