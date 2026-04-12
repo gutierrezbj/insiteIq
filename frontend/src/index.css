@@ -80,3 +80,11 @@
   opacity: 0;
   animation: stagger-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+/* PWA safe areas (notch, home indicator) */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.safe-area-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}

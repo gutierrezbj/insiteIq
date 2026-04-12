@@ -13,12 +13,23 @@ import InterventionDetailPage from "./pages/interventions/InterventionDetailPage
 import InterventionFormPage from "./pages/interventions/InterventionFormPage";
 import KBPage from "./pages/kb/KBPage";
 import AIOpsPage from "./pages/ai/AIOpsPage";
+import TechLayout from "./components/layout/TechLayout";
+import TechDashboard from "./pages/tech/TechDashboard";
+import TechJobDetail from "./pages/tech/TechJobDetail";
+import TechProfile from "./pages/tech/TechProfile";
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
   if (loading) return <div className="min-h-screen bg-gray-950 flex items-center justify-center text-gray-400">Loading...</div>;
   if (!user) return <Navigate to="/login" />;
   return <PageWrapper>{children}</PageWrapper>;
+}
+
+function TechProtectedRoute() {
+  const { user, loading } = useAuth();
+  if (loading) return <div className="min-h-screen bg-white flex items-center justify-center text-gray-400">Loading...</div>;
+  if (!user) return <Navigate to="/login" />;
+  return <TechLayout />;
 }
 
 function AppRoutes() {
@@ -38,6 +49,14 @@ function AppRoutes() {
       <Route path="/interventions/:id" element={<ProtectedRoute><InterventionDetailPage /></ProtectedRoute>} />
       <Route path="/kb" element={<ProtectedRoute><KBPage /></ProtectedRoute>} />
       <Route path="/ai-ops" element={<ProtectedRoute><AIOpsPage /></ProtectedRoute>} />
+
+      {/* Tech mobile routes — light theme, no sidebar */}
+      <Route path="/tech" element={<TechProtectedRoute />}>
+        <Route index element={<TechDashboard />} />
+        <Route path="job/:id" element={<TechJobDetail />} />
+        <Route path="profile" element={<TechProfile />} />
+      </Route>
+
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>
   );
