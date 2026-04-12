@@ -38,7 +38,7 @@ function AppRoutes() {
 
   return (
     <Routes>
-      <Route path="/login" element={user ? <Navigate to="/" /> : <LoginPage />} />
+      <Route path="/login" element={user ? <Navigate to={user.role === "technician" ? "/tech" : "/"} /> : <LoginPage />} />
       <Route path="/" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
       <Route path="/sites" element={<ProtectedRoute><SiteListPage /></ProtectedRoute>} />
       <Route path="/sites/new" element={<ProtectedRoute><SiteFormPage /></ProtectedRoute>} />
