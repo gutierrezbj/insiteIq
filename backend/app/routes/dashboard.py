@@ -96,3 +96,89 @@ async def sla_status(user: dict = Depends(get_current_user)):
                 at_risk.append(entry)
 
     return {"data": {"at_risk": at_risk, "breached": breached}}
+
+
+@router.get("/workforce")
+async def workforce(user: dict = Depends(get_current_user)):
+    db = get_db()
+    active_statuses = ["assigned", "accepted", "en_route", "on_site", "in_progress"]
+
+    # Get all active techs
+    techs = []
+    async for t in db.technicians.find({"is_active": True}):
+        t["id"] = str(t.pop("_id"))
+        techs.append(t)
+
+    # Get active interventions mapped by technician_id
+    assignments = {}
+    async for iv in db.interventions.find({"status": {"$in": active_statuses}}):
+        tid = iv.get("technician_id")
+        if tid:
+            assignments[tid] = {
+                "reference": iv.get("reference"),
+                "status": iv.get("status"),
+                "site_name": iv.get("site_name"),
+                "priority": iv.get("priority"),
+            }
+
+    available, busy, offline = [], [], []
+    for t in techs:
+        assignment = assignments.get(t["id"])
+        entry = {
+            "id": t["id"],
+            "name": t["name"],
+            "city": t.get("city", ""),
+            "country": t.get("country", ""),
+            "skills": (t.get("skills") or [])[:3],
+            "tier": t.get("tier", ""),
+            "rating": t.get("rating", {}),
+            "current_mission": assignment,
+        }
+        if t.get("availability") == "offline":
+            offline.append(entry)
+        elif assignment:
+            busy.append(entry)
+        else:
+            available.append(entry)
+
+    return {"data": {"available": available, "busy": busy, "offline": offline},
+            "counts": {"available": len(available), "busy": len(busy), "offline": len(offline), "total": len(techs)}}
+
+
+@router.get("/compliance")
+async def compliance(user: dict = Depends(get_current_user)):
+    db = get_db()
+    now = datetime.now(timezone.utc)
+    thirty_days = now + timedelta(days=30)
+
+    # Count active interventions missing pre_flight
+    preflight_pending = await db.interventions.count_documents({
+        "status": {"$in": ["assigned", "accepted", "en_route"]},
+        "pre_flight": None,
+    })
+
+    # Count on-site/in-progress missing proof_of_work
+    missing_proof = await db.interventions.count_documents({
+        "status": {"$in": ["on_site", "in_progress"]},
+        "proof_of_work": None,
+    })
+
+    # Certs expiring (check string dates in certifications array)
+    certs_expiring = []
+    async for t in db.technicians.find({"is_active": True, "certifications": {"$exists": True, "$ne": []}}):
+        for c in t.get("certifications", []):
+            exp = c.get("expires")
+            if exp:
+                try:
+                    exp_date = datetime.fromisoformat(exp.replace("Z", "+00:00")) if isinstance(exp, str) else exp
+                    if now <= exp_date <= thirty_days:
+                        certs_expiring.append({"tech_name": t["name"], "cert_name": c.get("name", ""), "expires": exp})
+                except (ValueError, TypeError):
+                    pass
+
+    return {"data": {
+        "certs_expiring": certs_expiring,
+        "preflight_pending": preflight_pending,
+        "missing_proof": missing_proof,
+        "status": "ok" if not certs_expiring and preflight_pending == 0 and missing_proof == 0 else "attention",
+    }}

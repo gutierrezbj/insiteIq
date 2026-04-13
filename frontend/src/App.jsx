@@ -3,7 +3,8 @@ import { Toaster } from "sonner";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import PageWrapper from "./components/layout/PageWrapper";
 import LoginPage from "./pages/auth/LoginPage";
-import DashboardPage from "./pages/dashboard/DashboardPage";
+import OpsCockpitPage from "./pages/dashboard/OpsCockpitPage";
+import OpsMapPage from "./pages/dashboard/OpsMapPage";
 import SiteListPage from "./pages/sites/SiteListPage";
 import SiteDetailPage from "./pages/sites/SiteDetailPage";
 import SiteFormPage from "./pages/sites/SiteFormPage";
@@ -39,7 +40,8 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={user ? <Navigate to={user.role === "technician" ? "/tech" : "/"} /> : <LoginPage />} />
-      <Route path="/" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+      <Route path="/" element={<ProtectedRoute><OpsCockpitPage /></ProtectedRoute>} />
+      <Route path="/ops-map" element={<ProtectedRoute><OpsMapPage /></ProtectedRoute>} />
       <Route path="/sites" element={<ProtectedRoute><SiteListPage /></ProtectedRoute>} />
       <Route path="/sites/new" element={<ProtectedRoute><SiteFormPage /></ProtectedRoute>} />
       <Route path="/sites/:id" element={<ProtectedRoute><SiteDetailPage /></ProtectedRoute>} />

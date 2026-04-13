@@ -1,6 +1,7 @@
 import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard,
+  Radar,
   MapPin,
   Users,
   ClipboardList,
@@ -11,7 +12,8 @@ import {
 import { useAuth } from "../../contexts/AuthContext";
 
 const links = [
-  { to: "/", icon: LayoutDashboard, label: "Dashboard" },
+  { to: "/", icon: LayoutDashboard, label: "Cockpit" },
+  { to: "/ops-map", icon: Radar, label: "Espacio OPS" },
   { to: "/sites", icon: MapPin, label: "Sites" },
   { to: "/technicians", icon: Users, label: "Technicians" },
   { to: "/interventions", icon: ClipboardList, label: "Interventions" },
