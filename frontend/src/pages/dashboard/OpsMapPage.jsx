@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, RefreshCw, Layers, ChevronRight, Clock, User, MapPin, Zap, AlertTriangle, Shield, X } from "lucide-react";
 import { useOpsData } from "../../hooks/useOpsData";
 import ControlTowerMap from "../../components/maps/ControlTowerMap";
+import AlertsPanel from "../../components/ops/AlertsPanel";
 
 /* ── Status config ────────────────────────────────────────────────── */
 const ST = {
@@ -41,7 +42,7 @@ function fmtElapsed(startedAt) {
    ══════════════════════════════════════════════════════════════════════ */
 export default function OpsMapPage() {
   const navigate = useNavigate();
-  const { sites, technicians, interventions, activeInterventions, loading, lastRefresh, refresh } = useOpsData();
+  const { sites, technicians, interventions, activeInterventions, teamMembers, loading, lastRefresh, refresh } = useOpsData();
   const [selected, setSelected] = useState(null);
   const [showList, setShowList] = useState(true);
 
@@ -69,6 +70,7 @@ export default function OpsMapPage() {
         </div>
         <div className="flex items-center gap-3">
           <span className="text-2xs font-mono text-text-tertiary">UTC {utc}</span>
+          <AlertsPanel />
           <button
             onClick={refresh}
             className="flex items-center gap-1.5 text-2xs text-text-secondary hover:text-text-primary transition-colors"
@@ -146,6 +148,7 @@ export default function OpsMapPage() {
             sites={sites}
             technicians={technicians}
             interventions={interventions}
+            teamMembers={teamMembers}
             onSelectIntervention={handleSelect}
           />
         </div>

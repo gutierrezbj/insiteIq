@@ -44,7 +44,7 @@ async def main():
                 "name": u["name"],
                 "role": u["role"],
                 "organization": u["organization"],
-                "hashed_password": pwd.hash(u["password"]),
+                "password_hash": pwd.hash(u["password"]),
                 "is_active": True,
                 "created_at": now,
                 "updated_at": now,

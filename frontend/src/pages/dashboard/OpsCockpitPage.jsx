@@ -4,6 +4,7 @@ import { useOpsData } from "../../hooks/useOpsData";
 import { Activity, CheckCircle, AlertTriangle, MapPin, Users, Wrench, Navigation, Clock, ChevronRight, Zap, Shield, ArrowRight, Maximize2, Map as MapIcon } from "lucide-react";
 import ControlTowerMap from "../../components/maps/ControlTowerMap";
 import OpsSidebar from "../../components/ops/OpsSidebar";
+import AlertsPanel from "../../components/ops/AlertsPanel";
 
 /* ── Live tick ────────────────────────────────────────────────────── */
 function useTick() {
@@ -140,7 +141,7 @@ export default function OpsCockpitPage() {
   const [selectedIntv, setSelectedIntv] = useState(null);
 
   const ops = useOpsData();
-  const { today, stats, sla, workforce, compliance, activeInterventions, completedInterventions, escalation, sites, technicians, interventions } = ops;
+  const { today, stats, sla, workforce, compliance, activeInterventions, completedInterventions, escalation, sites, technicians, interventions, teamMembers } = ops;
 
   const d = new Date(now);
   const clock = `${String(d.getUTCHours()).padStart(2, "0")}:${String(d.getUTCMinutes()).padStart(2, "0")}:${String(d.getUTCSeconds()).padStart(2, "0")}`;
@@ -172,6 +173,7 @@ export default function OpsCockpitPage() {
         <div className="flex items-center gap-4">
           <span className="font-mono text-xs text-text-secondary tabular-nums">{clock} <span className="text-text-tertiary">UTC</span></span>
           <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" /><span className="text-2xs font-mono text-green-500">{activeInterventions.length} live</span></span>
+          <AlertsPanel />
           <Link to="/ops-map" className="flex items-center gap-1.5 text-2xs font-medium text-primary bg-primary/10 hover:bg-primary/20 px-3 py-1.5 rounded-lg border border-primary/30 transition-all">
             <MapIcon size={12} /> Espacio OPS
           </Link>
@@ -235,12 +237,14 @@ export default function OpsCockpitPage() {
                 <div className="flex items-center gap-1.5 text-2xs text-text-secondary"><span className="w-2 h-2 rounded-full bg-amber-600" /> Sites</div>
                 <div className="flex items-center gap-1.5 text-2xs text-text-secondary"><span className="w-2 h-2 rounded-full bg-green-500" /> Available</div>
                 <div className="flex items-center gap-1.5 text-2xs text-text-secondary"><span className="w-2 h-2 rounded-full bg-blue-500" /> On mission</div>
+                <div className="flex items-center gap-1.5 text-2xs text-text-secondary"><span className="w-2 h-2 bg-cyan-400" style={{ transform: "rotate(45deg)", width: 7, height: 7 }} /> Team</div>
               </div>
             </div>
             <ControlTowerMap
               sites={sites}
               technicians={technicians}
               interventions={interventions}
+              teamMembers={teamMembers}
               onSelectIntervention={setSelectedIntv}
             />
           </div>

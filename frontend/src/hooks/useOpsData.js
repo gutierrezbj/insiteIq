@@ -18,13 +18,14 @@ export function useOpsData() {
     interventions: [],
     sites: [],
     technicians: [],
+    teamMembers: [],
   });
   const [loading, setLoading] = useState(true);
   const [lastRefresh, setLastRefresh] = useState(null);
 
   const fetchAll = useCallback(async () => {
     try {
-      const [today, stats, sla, workforce, compliance, interventions, sites, technicians] =
+      const [today, stats, sla, workforce, compliance, interventions, sites, technicians, teamMembers] =
         await Promise.allSettled([
           api.get("/dashboard/today"),
           api.get("/dashboard/stats"),
@@ -34,6 +35,7 @@ export function useOpsData() {
           api.get("/interventions"),
           api.get("/sites"),
           api.get("/technicians"),
+          api.get("/team/active"),
         ]);
 
       setData({
@@ -45,6 +47,7 @@ export function useOpsData() {
         interventions: interventions.status === "fulfilled" ? interventions.value?.data || [] : [],
         sites: sites.status === "fulfilled" ? sites.value?.data || [] : [],
         technicians: technicians.status === "fulfilled" ? technicians.value?.data || [] : [],
+        teamMembers: teamMembers.status === "fulfilled" ? teamMembers.value?.data || [] : [],
       });
       setLastRefresh(Date.now());
     } catch (e) {

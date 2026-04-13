@@ -1,5 +1,6 @@
 import { useMemo } from "react";
-import { Zap, AlertTriangle, Shield, User, MapPin, CheckCircle, XCircle, Clock, FileWarning, Award } from "lucide-react";
+import { Zap, AlertTriangle, Shield, User, MapPin, CheckCircle, XCircle, Clock, FileWarning, Award, Globe } from "lucide-react";
+import ActiveTeamPanel from "./ActiveTeamPanel";
 
 /* ── Status colors ────────────────────────────────────────────────── */
 const ST_COLOR = {
@@ -249,6 +250,11 @@ export default function OpsSidebar({ activeInterventions, workforce, compliance,
       {/* Alerts */}
       <SidebarSection title="Alerts & Escalations" icon={<Zap size={12} className="text-red-400" />}>
         <AlertsFeed activeInterventions={activeInterventions} />
+      </SidebarSection>
+
+      {/* Active Team */}
+      <SidebarSection title="Team on Duty" icon={<Globe size={12} className="text-cyan-400" />}>
+        <ActiveTeamPanel compact />
       </SidebarSection>
 
       {/* Workforce */}

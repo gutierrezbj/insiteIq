@@ -77,10 +77,29 @@ if (typeof document !== "undefined" && !document.getElementById("iiq-map-css")) 
   document.head.appendChild(style);
 }
 
-export default function ControlTowerMap({ sites = [], technicians = [], interventions = [], onSelectIntervention }) {
+/* ── Team member icon (diamond shape) ────────────────────────────── */
+const TEAM_ROLE_COLORS = {
+  owner: "#D97706", lead: "#D97706", coordinator: "#3B82F6", pm: "#06B6D4", field_engineer: "#22C55E",
+};
+function teamMemberIcon(name, role, onShift) {
+  const color = TEAM_ROLE_COLORS[role] || "#A8A29E";
+  const opacity = onShift ? 1 : 0.35;
+  const firstName = name.split(" ")[0];
+  const html = `
+    <div style="position:relative;display:flex;align-items:center;gap:0;white-space:nowrap;cursor:pointer;opacity:${opacity}">
+      <span style="display:inline-flex;align-items:center;gap:4px;background:#1C1917;color:${color};font-size:10px;font-weight:700;font-family:'JetBrains Mono',monospace;padding:3px 7px;border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,0.5);border:1.5px solid ${color};letter-spacing:0.02em;transform:rotate(0deg)">
+        <span style="width:5px;height:5px;transform:rotate(45deg);background:${color};flex-shrink:0"></span>
+        ${firstName}
+      </span>
+    </div>
+  `;
+  return L.divIcon({ html, className: "", iconSize: [0, 0], iconAnchor: [0, 10] });
+}
+
+export default function ControlTowerMap({ sites = [], technicians = [], interventions = [], teamMembers = [], onSelectIntervention }) {
   const mapRef = useRef(null);
   const mapInstance = useRef(null);
-  const layersRef = useRef({ sites: null, techs: null, lines: null, interventions: null });
+  const layersRef = useRef({ sites: null, techs: null, lines: null, interventions: null, team: null });
 
   /* ── Lookups ────────────────────────────────────────────────────── */
   const activeInterventions = useMemo(() =>
@@ -269,19 +288,51 @@ export default function ControlTowerMap({ sites = [], technicians = [], interven
       }
     });
 
+    // ── Team member markers (diamond) ──
+    const teamLg = L.layerGroup();
+    teamMembers.forEach((member) => {
+      const coords = member.location?.coordinates;
+      if (!coords || coords.length < 2) return;
+      const mll = [coords[1], coords[0]];
+
+      const roleLabel = { owner: "Owner", lead: "Lead", coordinator: "Coordinator", pm: "Project Manager", field_engineer: "Field Engineer" }[member.role] || member.role;
+      const shiftText = member.on_shift ? "ON SHIFT" : "OFF SHIFT";
+      const shiftColor = member.on_shift ? "#22C55E" : "#78716C";
+      const regions = (member.covers_regions || []).join(", ");
+
+      const popup = `
+        <div style="padding:12px;min-width:220px;font-family:system-ui;color:#E7E5E4">
+          <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:#A8A29E;font-family:'JetBrains Mono',monospace;margin-bottom:6px">TEAM</div>
+          <div style="font-weight:700;font-size:14px;margin-bottom:2px">${member.name}</div>
+          <div style="color:${TEAM_ROLE_COLORS[member.role] || "#A8A29E"};font-size:11px;font-weight:600;margin-bottom:6px">${roleLabel}</div>
+          <div style="display:grid;grid-template-columns:auto 1fr;gap:3px 10px;font-size:11px;color:#A8A29E">
+            <span style="color:#78716C">Location</span><span>${member.city}, ${member.country}</span>
+            <span style="color:#78716C">Local time</span><span style="font-family:'JetBrains Mono',monospace">${member.local_time} ${member.timezone}</span>
+            <span style="color:#78716C">Status</span><span style="color:${shiftColor};font-weight:600">${shiftText}</span>
+            ${regions ? `<span style="color:#78716C">Covers</span><span>${regions}</span>` : ""}
+          </div>
+        </div>
+      `;
+
+      L.marker(mll, { icon: teamMemberIcon(member.name, member.role, member.on_shift), zIndexOffset: 500 })
+        .bindPopup(popup, { className: "iiq-map-tooltip", maxWidth: 280 })
+        .addTo(teamLg);
+    });
+
     lineLg.addTo(map);
     siteLg.addTo(map);
     intvLg.addTo(map);
     techLg.addTo(map);
+    teamLg.addTo(map);
 
-    layersRef.current = { sites: siteLg, techs: techLg, lines: lineLg, interventions: intvLg };
+    layersRef.current = { sites: siteLg, techs: techLg, lines: lineLg, interventions: intvLg, team: teamLg };
 
     if (bounds.length > 1) {
       map.fitBounds(bounds, { padding: [40, 40], maxZoom: 5 });
     } else if (bounds.length === 1) {
       map.setView(bounds[0], 5);
     }
-  }, [sites, technicians, interventions, activeInterventions, siteMap, intvSiteCoords, onSelectIntervention]);
+  }, [sites, technicians, interventions, teamMembers, activeInterventions, siteMap, intvSiteCoords, onSelectIntervention]);
 
   return (
     <div

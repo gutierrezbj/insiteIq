@@ -1,10 +1,15 @@
 node_modules
+**/node_modules
 dist
+**/dist
 .env
 __pycache__
+**/__pycache__
 *.pyc
 .venv
 .git
 *.md
 *.docx
 memory/
+*.pptx
+.claude/
