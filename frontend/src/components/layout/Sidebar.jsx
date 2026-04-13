@@ -11,24 +11,33 @@ import {
 } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 
-const links = [
-  { to: "/", icon: LayoutDashboard, label: "Cockpit" },
-  { to: "/ops-map", icon: Radar, label: "Espacio OPS" },
-  { to: "/sites", icon: MapPin, label: "Sites" },
-  { to: "/technicians", icon: Users, label: "Technicians" },
-  { to: "/interventions", icon: ClipboardList, label: "Interventions" },
-  { to: "/kb", icon: BookOpen, label: "Knowledge Base" },
-  { to: "/ai-ops", icon: Sparkles, label: "AI Operations" },
+/* ── Navigation links with role-based visibility ──────────────────── */
+// internal = only admin/coordinator/supervisor; client = visible to client role too
+const ALL_LINKS = [
+  { to: "/", icon: LayoutDashboard, label: "Cockpit", access: "all" },
+  { to: "/ops-map", icon: Radar, label: "Espacio OPS", access: "all" },
+  { to: "/sites", icon: MapPin, label: "Sites", access: "all" },
+  { to: "/technicians", icon: Users, label: "Technicians", access: "internal" },
+  { to: "/interventions", icon: ClipboardList, label: "Interventions", access: "all" },
+  { to: "/kb", icon: BookOpen, label: "Knowledge Base", access: "internal" },
+  { to: "/ai-ops", icon: Sparkles, label: "AI Operations", access: "internal" },
 ];
+
+const INTERNAL_ROLES = new Set(["admin", "coordinator", "supervisor"]);
 
 export default function Sidebar() {
   const { logout, user } = useAuth();
+  const isInternal = INTERNAL_ROLES.has(user?.role);
+  const links = ALL_LINKS.filter((l) => l.access === "all" || isInternal);
 
   return (
     <aside className="fixed left-0 top-0 h-screen w-56 bg-surface-raised border-r border-surface-border flex flex-col">
       <div className="p-4 border-b border-surface-border">
         <h1 className="text-lg font-bold text-text-primary font-display tracking-tight">InsiteIQ</h1>
         <p className="label-caps mt-0.5">{user?.name || "Coordinator"}</p>
+        {user?.organization && (
+          <p className="text-2xs text-primary-light font-mono mt-0.5">{user.organization}</p>
+        )}
       </div>
 
       <nav className="flex-1 p-2 space-y-0.5">

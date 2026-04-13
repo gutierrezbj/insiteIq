@@ -171,9 +171,10 @@ async def list_interventions(
     intervention_status: str = None,
     page: int = 1,
     per_page: int = 20,
+    tenant_filter: dict = None,
 ) -> tuple[list[dict], int]:
     db = get_db()
-    query = {}
+    query = {**(tenant_filter or {})}
     if site_id:
         query["site_id"] = site_id
     if technician_id:
@@ -190,11 +191,12 @@ async def list_interventions(
     return interventions, total
 
 
-async def get_active_interventions() -> list[dict]:
+async def get_active_interventions(tenant_filter: dict = None) -> list[dict]:
     db = get_db()
     active_statuses = ["created", "assigned", "accepted", "en_route", "on_site", "in_progress"]
+    query = {"status": {"$in": active_statuses}, **(tenant_filter or {})}
     interventions = []
-    async for iv in db.interventions.find({"status": {"$in": active_statuses}}).sort("scheduled_at", 1):
+    async for iv in db.interventions.find(query).sort("scheduled_at", 1):
         iv["id"] = str(iv.pop("_id"))
         interventions.append(iv)
     return interventions

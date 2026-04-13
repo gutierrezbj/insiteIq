@@ -2,11 +2,12 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { toast } from "sonner";
-import { Shield, Radio, Wrench } from "lucide-react";
+import { Shield, Radio, Wrench, Building2 } from "lucide-react";
 
 const DEMO_ACCOUNTS = [
   { label: "Admin", email: "admin@insiteiq.io", password: "admin123", icon: Shield, color: "bg-amber-600" },
   { label: "Coordinador", email: "coordinator@insiteiq.io", password: "tech123", icon: Radio, color: "bg-cyan-600" },
+  { label: "Telefonica", email: "ops@telefonica.com", password: "client123", icon: Building2, color: "bg-blue-600", sub: "Cliente" },
   { label: "Roberto Diaz", email: "roberto.diaz@insiteiq.io", password: "tech123", icon: Wrench, color: "bg-emerald-600", sub: "Tecnico" },
   { label: "Sarah Chen", email: "sarah.chen@insiteiq.io", password: "tech123", icon: Wrench, color: "bg-emerald-600", sub: "Tecnico" },
   { label: "Diego Morales", email: "diego.morales@insiteiq.io", password: "tech123", icon: Wrench, color: "bg-emerald-600", sub: "Tecnico" },

@@ -37,3 +37,22 @@ def require_role(*roles: str):
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
         return user
     return role_checker
+
+
+# ── Multi-tenant filter ──────────────────────────────────────────────
+# Internal roles (admin, coordinator, supervisor) see everything.
+# Client role only sees data belonging to their organization.
+# Technician sees their own assignments (handled separately per route).
+
+INTERNAL_ROLES = {"admin", "coordinator", "supervisor"}
+
+
+def client_filter(user: dict, field: str = "client") -> dict:
+    """Return a MongoDB query filter that scopes data to the user's org.
+    Internal users get {}, client users get {field: org_name}."""
+    if user.get("role") in INTERNAL_ROLES:
+        return {}
+    org = user.get("organization")
+    if not org:
+        return {}  # Fallback: no filter if org missing (shouldn't happen)
+    return {field: org}

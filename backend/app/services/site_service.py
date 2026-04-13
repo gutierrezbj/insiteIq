@@ -56,9 +56,10 @@ async def list_sites(
     search: str = None,
     page: int = 1,
     per_page: int = 20,
+    tenant_filter: dict = None,
 ) -> tuple[list[dict], int]:
     db = get_db()
-    query = {}
+    query = {**(tenant_filter or {})}
     if country:
         query["country"] = {"$regex": country, "$options": "i"}
     if city:
@@ -77,10 +78,11 @@ async def list_sites(
     return sites, total
 
 
-async def get_sites_geojson() -> dict:
+async def get_sites_geojson(tenant_filter: dict = None) -> dict:
     db = get_db()
+    query = {**(tenant_filter or {})}
     features = []
-    async for s in db.sites.find({}, {"name": 1, "client": 1, "location": 1, "address": 1}):
+    async for s in db.sites.find(query, {"name": 1, "client": 1, "location": 1, "address": 1}):
         features.append({
             "type": "Feature",
             "geometry": s.get("location", {"type": "Point", "coordinates": [0, 0]}),

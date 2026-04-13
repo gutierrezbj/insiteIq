@@ -3,7 +3,7 @@ from datetime import datetime, timezone, timedelta
 from fastapi import APIRouter, Depends
 
 from app.database import get_db
-from app.dependencies import get_current_user
+from app.dependencies import get_current_user, client_filter
 
 router = APIRouter()
 
@@ -11,22 +11,25 @@ router = APIRouter()
 @router.get("/today")
 async def today(user: dict = Depends(get_current_user)):
     db = get_db()
+    tf = client_filter(user)
     now = datetime.now(timezone.utc)
     start_of_day = now.replace(hour=0, minute=0, second=0, microsecond=0)
 
     active_statuses = ["created", "assigned", "accepted", "en_route", "on_site", "in_progress"]
-    active = await db.interventions.count_documents({"status": {"$in": active_statuses}})
+    active = await db.interventions.count_documents({"status": {"$in": active_statuses}, **tf})
     completed_today = await db.interventions.count_documents({
         "status": "completed",
         "updated_at": {"$gte": start_of_day},
+        **tf,
     })
     created_today = await db.interventions.count_documents({
         "created_at": {"$gte": start_of_day},
+        **tf,
     })
 
     by_status = {}
     for s in active_statuses:
-        by_status[s] = await db.interventions.count_documents({"status": s})
+        by_status[s] = await db.interventions.count_documents({"status": s, **tf})
 
     return {
         "data": {
@@ -42,16 +45,18 @@ async def today(user: dict = Depends(get_current_user)):
 @router.get("/stats")
 async def stats(user: dict = Depends(get_current_user)):
     db = get_db()
+    tf = client_filter(user)
+    sf = client_filter(user, field="client")  # sites also use "client" field
     now = datetime.now(timezone.utc)
     week_ago = now - timedelta(days=7)
     month_ago = now - timedelta(days=30)
 
-    total_interventions = await db.interventions.count_documents({})
-    this_week = await db.interventions.count_documents({"created_at": {"$gte": week_ago}})
-    this_month = await db.interventions.count_documents({"created_at": {"$gte": month_ago}})
-    completed = await db.interventions.count_documents({"status": "completed"})
-    total_sites = await db.sites.count_documents({})
-    total_techs = await db.technicians.count_documents({})
+    total_interventions = await db.interventions.count_documents({**tf})
+    this_week = await db.interventions.count_documents({"created_at": {"$gte": week_ago}, **tf})
+    this_month = await db.interventions.count_documents({"created_at": {"$gte": month_ago}, **tf})
+    completed = await db.interventions.count_documents({"status": "completed", **tf})
+    total_sites = await db.sites.count_documents({**sf})
+    total_techs = await db.technicians.count_documents({})  # techs are global resource
 
     fix_rate = (completed / total_interventions * 100) if total_interventions > 0 else 0
 
@@ -71,12 +76,13 @@ async def stats(user: dict = Depends(get_current_user)):
 @router.get("/sla")
 async def sla_status(user: dict = Depends(get_current_user)):
     db = get_db()
+    tf = client_filter(user)
     now = datetime.now(timezone.utc)
     at_risk = []
     breached = []
 
     active_statuses = ["assigned", "accepted", "en_route", "on_site", "in_progress"]
-    async for iv in db.interventions.find({"status": {"$in": active_statuses}}):
+    async for iv in db.interventions.find({"status": {"$in": active_statuses}, **tf}):
         deadline = iv.get("sla", {}).get("deadline_at")
         if not deadline:
             continue
@@ -101,6 +107,7 @@ async def sla_status(user: dict = Depends(get_current_user)):
 @router.get("/workforce")
 async def workforce(user: dict = Depends(get_current_user)):
     db = get_db()
+    tf = client_filter(user)
     active_statuses = ["assigned", "accepted", "en_route", "on_site", "in_progress"]
 
     # Get all active techs
@@ -109,9 +116,9 @@ async def workforce(user: dict = Depends(get_current_user)):
         t["id"] = str(t.pop("_id"))
         techs.append(t)
 
-    # Get active interventions mapped by technician_id
+    # Get active interventions mapped by technician_id (scoped to tenant)
     assignments = {}
-    async for iv in db.interventions.find({"status": {"$in": active_statuses}}):
+    async for iv in db.interventions.find({"status": {"$in": active_statuses}, **tf}):
         tid = iv.get("technician_id")
         if tid:
             assignments[tid] = {
@@ -121,9 +128,13 @@ async def workforce(user: dict = Depends(get_current_user)):
                 "priority": iv.get("priority"),
             }
 
+    is_client = user.get("role") == "client"
     available, busy, offline = [], [], []
     for t in techs:
         assignment = assignments.get(t["id"])
+        # Client users only see techs assigned to their interventions
+        if is_client and not assignment:
+            continue
         entry = {
             "id": t["id"],
             "name": t["name"],
@@ -135,32 +146,37 @@ async def workforce(user: dict = Depends(get_current_user)):
             "current_mission": assignment,
         }
         if t.get("availability") == "offline":
-            offline.append(entry)
+            if not is_client:  # clients don't see offline techs
+                offline.append(entry)
         elif assignment:
             busy.append(entry)
         else:
-            available.append(entry)
+            if not is_client:  # clients don't see available techs
+                available.append(entry)
 
     return {"data": {"available": available, "busy": busy, "offline": offline},
-            "counts": {"available": len(available), "busy": len(busy), "offline": len(offline), "total": len(techs)}}
+            "counts": {"available": len(available), "busy": len(busy), "offline": len(offline), "total": len(available) + len(busy) + len(offline)}}
 
 
 @router.get("/compliance")
 async def compliance(user: dict = Depends(get_current_user)):
     db = get_db()
+    tf = client_filter(user)
     now = datetime.now(timezone.utc)
     thirty_days = now + timedelta(days=30)
 
-    # Count active interventions missing pre_flight
+    # Count active interventions missing pre_flight (scoped to tenant)
     preflight_pending = await db.interventions.count_documents({
         "status": {"$in": ["assigned", "accepted", "en_route"]},
         "pre_flight": None,
+        **tf,
     })
 
-    # Count on-site/in-progress missing proof_of_work
+    # Count on-site/in-progress missing proof_of_work (scoped to tenant)
     missing_proof = await db.interventions.count_documents({
         "status": {"$in": ["on_site", "in_progress"]},
         "proof_of_work": None,
+        **tf,
     })
 
     # Certs expiring (check string dates in certifications array)

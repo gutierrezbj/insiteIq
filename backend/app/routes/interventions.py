@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, Query, UploadFile, File, Form
 
 from app.core.config import settings
-from app.dependencies import get_current_user
+from app.dependencies import get_current_user, client_filter
 from app.models.intervention import (
     InterventionCreate,
     InterventionUpdate,
@@ -37,13 +37,15 @@ async def get_interventions(
     per_page: int = Query(20, ge=1, le=100),
     user: dict = Depends(get_current_user),
 ):
-    items, total = await list_interventions(site_id, technician_id, status, page, per_page)
+    tf = client_filter(user)
+    items, total = await list_interventions(site_id, technician_id, status, page, per_page, tenant_filter=tf)
     return {"data": items, "total": total, "page": page, "per_page": per_page}
 
 
 @router.get("/active")
 async def active(user: dict = Depends(get_current_user)):
-    items = await get_active_interventions()
+    tf = client_filter(user)
+    items = await get_active_interventions(tenant_filter=tf)
     return {"data": items, "total": len(items)}
 
 

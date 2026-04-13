@@ -7,7 +7,8 @@ from pydantic import BaseModel, EmailStr, Field
 class UserBase(BaseModel):
     email: EmailStr
     name: str
-    role: str = Field(default="coordinator", pattern="^(admin|coordinator|supervisor|technician)$")
+    role: str = Field(default="coordinator", pattern="^(admin|coordinator|supervisor|technician|client)$")
+    organization: Optional[str] = None  # Client org name — required for role=client
 
 
 class UserCreate(UserBase):
@@ -16,7 +17,8 @@ class UserCreate(UserBase):
 
 class UserUpdate(BaseModel):
     name: Optional[str] = None
-    role: Optional[str] = Field(default=None, pattern="^(admin|coordinator|supervisor|technician)$")
+    role: Optional[str] = Field(default=None, pattern="^(admin|coordinator|supervisor|technician|client)$")
+    organization: Optional[str] = None
     is_active: Optional[bool] = None
 
 
