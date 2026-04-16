@@ -13,6 +13,9 @@ from app.database import close_db, connect_db
 from app.middleware.audit_log import AuditLogMiddleware
 from app.routes import auth as auth_routes
 from app.routes import health as health_routes
+from app.routes import service_agreements as service_agreements_routes
+from app.routes import sites as sites_routes
+from app.routes import work_orders as work_orders_routes
 
 
 @asynccontextmanager
@@ -44,6 +47,9 @@ app.add_middleware(AuditLogMiddleware)
 # Routers
 app.include_router(health_routes.router)
 app.include_router(auth_routes.router, prefix="/api")
+app.include_router(sites_routes.router, prefix="/api")
+app.include_router(service_agreements_routes.router, prefix="/api")
+app.include_router(work_orders_routes.router, prefix="/api")
 
 
 @app.get("/")

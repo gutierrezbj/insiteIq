@@ -34,6 +34,22 @@ async def _ensure_indexes() -> None:
     await db.users.create_index([("tenant_id", 1), ("is_active", 1)])
     await db.users.create_index([("space_memberships.space", 1)])
 
+    # --- Modo 1 Reactive (Fase 1) ---
+    await db.sites.create_index([("tenant_id", 1), ("organization_id", 1)])
+    await db.sites.create_index([("tenant_id", 1), ("code", 1)])
+    await db.sites.create_index([("country", 1)])
+
+    await db.service_agreements.create_index([("tenant_id", 1), ("organization_id", 1)])
+    await db.service_agreements.create_index([("tenant_id", 1), ("contract_ref", 1)], unique=True)
+    await db.service_agreements.create_index([("tenant_id", 1), ("shield_level", 1)])
+
+    await db.work_orders.create_index([("tenant_id", 1), ("reference", 1)], unique=True)
+    await db.work_orders.create_index([("tenant_id", 1), ("status", 1), ("created_at", -1)])
+    await db.work_orders.create_index([("tenant_id", 1), ("organization_id", 1), ("status", 1)])
+    await db.work_orders.create_index([("tenant_id", 1), ("site_id", 1)])
+    await db.work_orders.create_index([("tenant_id", 1), ("assigned_tech_user_id", 1), ("status", 1)])
+    await db.work_orders.create_index([("tenant_id", 1), ("ball_in_court.side", 1), ("ball_in_court.since", 1)])
+
     # --- Domain 11 Asset ---
     await db.assets.create_index(
         [("organization_id", 1), ("serial_number", 1)], unique=True
