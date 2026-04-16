@@ -1,9 +1,22 @@
-from pydantic_settings import BaseSettings
+"""
+InsiteIQ v1 Foundation — Configuration
+Settings loaded from environment. All secrets live in .env, never in code.
+"""
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
+
+    # App
     APP_NAME: str = "InsiteIQ"
-    DEBUG: bool = False
+    APP_VERSION: str = "1.0.0-foundation"
+    APP_ENV: str = "development"  # development | production
+    DEBUG: bool = True
 
     # MongoDB
     MONGO_URL: str = "mongodb://mongo:27017"
@@ -12,38 +25,21 @@ class Settings(BaseSettings):
     # Redis
     REDIS_URL: str = "redis://redis:6379/0"
 
-    # JWT
-    JWT_SECRET: str = "change-me-in-production"
+    # Security / JWT
+    JWT_SECRET_KEY: str = "CHANGE-ME-IN-ENV"
     JWT_ALGORITHM: str = "HS256"
-    JWT_ACCESS_EXPIRE_MINUTES: int = 1440  # 24h
-    JWT_REFRESH_EXPIRE_DAYS: int = 30
+    JWT_ACCESS_EXPIRE_MINUTES: int = 60 * 8  # 8h working day
+    JWT_REFRESH_EXPIRE_DAYS: int = 7
 
-    # Uploads
-    UPLOAD_DIR: str = "/app/uploads"
-    MAX_UPLOAD_MB: int = 10
+    # CORS
+    CORS_ORIGINS: list[str] = [
+        "http://localhost:3110",
+        "http://localhost:5173",  # vite dev
+        "https://insiteiq.systemrapid.io",
+    ]
 
-    # Admin seed
-    ADMIN_EMAIL: str = "admin@insiteiq.io"
-    ADMIN_PASSWORD: str = "change-me"
-    ADMIN_NAME: str = "Admin"
-
-    # LiteLLM gateway
-    LITELLM_BASE_URL: str = "http://litellm:4000"
-    LITELLM_MASTER_KEY: str = "sk-insiteiq-dev"
-    LLM_TIER_EMAIL_PARSE: str = "iiq-l0"
-    LLM_TIER_KB_SUGGEST: str = "iiq-l0"
-    LLM_TIER_REPORT_DRAFT: str = "iiq-l0"
-    LLM_TIER_REPORT_PREMIUM: str = "iiq-l4"
-    LLM_TIER_CLIENT_EMAIL: str = "iiq-l0"
-
-    # Microsoft Graph (email intake) — pendiente provisioning
-    GRAPH_TENANT_ID: str = ""
-    GRAPH_CLIENT_ID: str = ""
-    GRAPH_CLIENT_SECRET: str = ""
-    GRAPH_INTAKE_MAILBOX: str = "wo@systemrapid.com"
-    EMAIL_INTAKE_ENABLED: bool = False
-
-    model_config = {"env_file": ".env", "extra": "ignore"}
+    # Tenant default (v1 = single SRS tenant, prep for Ghost Tech)
+    DEFAULT_TENANT_CODE: str = "SRS"
 
 
 settings = Settings()

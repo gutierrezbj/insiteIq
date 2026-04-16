@@ -1,66 +1,46 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { Toaster } from "sonner";
+/**
+ * InsiteIQ v1 Foundation — App shell
+ * Router for the 3 spaces + auth guards.
+ * Design WOW (Track B) fills these routes with real UX per space.
+ */
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
-import PageWrapper from "./components/layout/PageWrapper";
+import RequireSpace from "./components/RequireSpace";
 import LoginPage from "./pages/auth/LoginPage";
-import OpsCockpitPage from "./pages/dashboard/OpsCockpitPage";
-import OpsMapPage from "./pages/dashboard/OpsMapPage";
-import SiteListPage from "./pages/sites/SiteListPage";
-import SiteDetailPage from "./pages/sites/SiteDetailPage";
-import SiteFormPage from "./pages/sites/SiteFormPage";
-import TechListPage from "./pages/technicians/TechListPage";
-import InterventionListPage from "./pages/interventions/InterventionListPage";
-import InterventionDetailPage from "./pages/interventions/InterventionDetailPage";
-import InterventionFormPage from "./pages/interventions/InterventionFormPage";
-import KBPage from "./pages/kb/KBPage";
-import AIOpsPage from "./pages/ai/AIOpsPage";
-import TechLayout from "./components/layout/TechLayout";
-import TechDashboard from "./pages/tech/TechDashboard";
-import TechJobDetail from "./pages/tech/TechJobDetail";
-import TechProfile from "./pages/tech/TechProfile";
 
-function ProtectedRoute({ children }) {
-  const { user, loading } = useAuth();
-  if (loading) return <div className="min-h-screen bg-gray-950 flex items-center justify-center text-gray-400">Loading...</div>;
-  if (!user) return <Navigate to="/login" />;
-  return <PageWrapper>{children}</PageWrapper>;
+import SrsLayout from "./spaces/srs/Layout";
+import SrsHome from "./spaces/srs/HomePage";
+
+import ClientLayout from "./spaces/client/Layout";
+import ClientHome from "./spaces/client/HomePage";
+
+import TechLayout from "./spaces/tech/Layout";
+import TechHome from "./spaces/tech/HomePage";
+
+function RootRedirect() {
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/login" replace />;
+  const space = user.memberships?.[0]?.space;
+  const target =
+    space === "srs_coordinators" ? "/srs" :
+    space === "tech_field" ? "/tech" :
+    space === "client_coordinator" ? "/client" :
+    "/no-access";
+  return <Navigate to={target} replace />;
 }
 
-function TechProtectedRoute() {
-  const { user, loading } = useAuth();
-  if (loading) return <div className="min-h-screen bg-white flex items-center justify-center text-gray-400">Loading...</div>;
-  if (!user) return <Navigate to="/login" />;
-  return <TechLayout />;
-}
-
-function AppRoutes() {
-  const { user, loading } = useAuth();
-  if (loading) return null;
-
+function NoAccessPage() {
   return (
-    <Routes>
-      <Route path="/login" element={user ? <Navigate to={user.role === "technician" ? "/tech" : "/"} /> : <LoginPage />} />
-      <Route path="/" element={<ProtectedRoute><OpsCockpitPage /></ProtectedRoute>} />
-      <Route path="/ops-map" element={<ProtectedRoute><OpsMapPage /></ProtectedRoute>} />
-      <Route path="/sites" element={<ProtectedRoute><SiteListPage /></ProtectedRoute>} />
-      <Route path="/sites/new" element={<ProtectedRoute><SiteFormPage /></ProtectedRoute>} />
-      <Route path="/sites/:id" element={<ProtectedRoute><SiteDetailPage /></ProtectedRoute>} />
-      <Route path="/technicians" element={<ProtectedRoute><TechListPage /></ProtectedRoute>} />
-      <Route path="/interventions" element={<ProtectedRoute><InterventionListPage /></ProtectedRoute>} />
-      <Route path="/interventions/new" element={<ProtectedRoute><InterventionFormPage /></ProtectedRoute>} />
-      <Route path="/interventions/:id" element={<ProtectedRoute><InterventionDetailPage /></ProtectedRoute>} />
-      <Route path="/kb" element={<ProtectedRoute><KBPage /></ProtectedRoute>} />
-      <Route path="/ai-ops" element={<ProtectedRoute><AIOpsPage /></ProtectedRoute>} />
-
-      {/* Tech mobile routes — light theme, no sidebar */}
-      <Route path="/tech" element={<TechProtectedRoute />}>
-        <Route index element={<TechDashboard />} />
-        <Route path="job/:id" element={<TechJobDetail />} />
-        <Route path="profile" element={<TechProfile />} />
-      </Route>
-
-      <Route path="*" element={<Navigate to="/" />} />
-    </Routes>
+    <div className="min-h-screen flex items-center justify-center px-4">
+      <div className="max-w-md text-center accent-bar bg-surface-raised p-6 rounded-md">
+        <div className="label-caps">403</div>
+        <h1 className="font-display text-xl text-text-primary mt-1">No active space</h1>
+        <p className="text-text-secondary font-body mt-2">
+          Your account has no active space membership. Contact the SRS administrator.
+        </p>
+      </div>
+    </div>
   );
 }
 
@@ -68,8 +48,57 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <Toaster position="top-right" theme="dark" />
-        <AppRoutes />
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/no-access" element={<NoAccessPage />} />
+
+          {/* SRS Coordinators */}
+          <Route
+            path="/srs"
+            element={
+              <RequireSpace space="srs_coordinators">
+                <SrsLayout />
+              </RequireSpace>
+            }
+          >
+            <Route index element={<SrsHome />} />
+            <Route path="ops" element={<SrsHome />} />
+            <Route path="finance" element={<SrsHome />} />
+            <Route path="admin" element={<SrsHome />} />
+          </Route>
+
+          {/* Client Coordinator */}
+          <Route
+            path="/client"
+            element={
+              <RequireSpace space="client_coordinator">
+                <ClientLayout />
+              </RequireSpace>
+            }
+          >
+            <Route index element={<ClientHome />} />
+            <Route path="tickets" element={<ClientHome />} />
+            <Route path="deliverables" element={<ClientHome />} />
+          </Route>
+
+          {/* Tech Field PWA */}
+          <Route
+            path="/tech"
+            element={
+              <RequireSpace space="tech_field">
+                <TechLayout />
+              </RequireSpace>
+            }
+          >
+            <Route index element={<TechHome />} />
+            <Route path="briefing" element={<TechHome />} />
+            <Route path="profile" element={<TechHome />} />
+          </Route>
+
+          {/* Root */}
+          <Route path="/" element={<RootRedirect />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
       </AuthProvider>
     </BrowserRouter>
   );

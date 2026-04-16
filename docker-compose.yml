@@ -1,4 +1,6 @@
-version: "3.8"
+# InsiteIQ v1 Foundation — Docker Compose
+# Puertos offset +110 (Catalogo Infraestructura SRS).
+# Regla de oro: 127.0.0.1 siempre, nunca 0.0.0.0.
 
 services:
   frontend:
@@ -48,22 +50,6 @@ services:
       - "127.0.0.1:6111:6379"
     volumes:
       - redis_data:/data
-    restart: unless-stopped
-
-  litellm:
-    image: ghcr.io/berriai/litellm:main-stable
-    container_name: insiteiq-litellm
-    ports:
-      - "127.0.0.1:4111:4000"
-    volumes:
-      - ./litellm_config.yaml:/app/config.yaml:ro
-    command: ["--config", "/app/config.yaml", "--port", "4000"]
-    env_file:
-      - .env
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    depends_on:
-      - redis
     restart: unless-stopped
 
 volumes:

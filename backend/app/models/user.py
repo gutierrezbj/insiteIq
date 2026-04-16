@@ -1,42 +1,52 @@
-from datetime import datetime
-from typing import Optional
+"""
+InsiteIQ v1 Foundation — User with space_memberships
+A user can belong to multiple spaces (Juan = srs_coordinators, Arlindo = tech_field).
+employment_type differentiates SRS staff from external subcontractors.
+email_provisioned_by_srs tracks when client contract requires SRS-domain email for externals.
+"""
+from typing import Literal
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
+
+from app.models.base import BaseMongoModel
+
+Space = Literal["srs_coordinators", "client_coordinator", "tech_field"]
+EmploymentType = Literal["plantilla", "external_sub"]
+AuthorityLevel = Literal[
+    "reports_only",      # read-only observer (e.g. Sajid in SRS space)
+    "contractor",        # external executor, no management authority (tech_field external_sub)
+    "approval_on_site",  # onsite client approver (LCON)
+    "mid_manager",       # typical coordinator / SRS plantilla tech senior
+    "director",          # senior client authority (Arturo Pellerano)
+    "owner",             # top-level (Juan, Sajid read/write overrides)
+]
 
 
-class UserBase(BaseModel):
+class SpaceMembership(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    space: Space
+    role: str  # free-text role label ("account_lead", "finance", "tech_senior", ...)
+    authority_level: AuthorityLevel = "mid_manager"
+    organization_id: str | None = None  # for client_coordinator / tech_field externals
+    active: bool = True
+
+
+class User(BaseMongoModel):
     email: EmailStr
-    name: str
-    role: str = Field(default="coordinator", pattern="^(admin|coordinator|supervisor|technician|client)$")
-    organization: Optional[str] = None  # Client org name — required for role=client
-
-
-class UserCreate(UserBase):
-    password: str = Field(min_length=6)
-
-
-class UserUpdate(BaseModel):
-    name: Optional[str] = None
-    role: Optional[str] = Field(default=None, pattern="^(admin|coordinator|supervisor|technician|client)$")
-    organization: Optional[str] = None
-    is_active: Optional[bool] = None
-
-
-class UserInDB(UserBase):
-    id: str
+    full_name: str
+    phone: str | None = None
+    country: str | None = None
+    hashed_password: str | None = None  # None if SSO-only future
     is_active: bool = True
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
-    last_login: Optional[datetime] = None
 
-    model_config = {"from_attributes": True}
+    employment_type: EmploymentType = "plantilla"
+    email_provisioned_by_srs: bool = False  # true when client contract required it
 
+    space_memberships: list[SpaceMembership] = Field(default_factory=list)
 
-class UserResponse(BaseModel):
-    data: UserInDB
-    message: str = ""
+    last_login_at: str | None = None
+    notes: str | None = None
 
-
-class UserListResponse(BaseModel):
-    data: list[UserInDB]
-    total: int
+    def is_member_of(self, space: Space) -> bool:
+        return any(m.space == space and m.active for m in self.space_memberships)

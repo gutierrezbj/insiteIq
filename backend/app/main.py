@@ -1,15 +1,18 @@
-import os
+"""
+InsiteIQ v1 Foundation — FastAPI application entry
+Clean shell: CORS + audit_log middleware + health + auth.
+Business routers added per-phase as the Blueprint v1.1 roadmap advances.
+"""
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings
-from app.database import connect_db, close_db
-
-
-os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
+from app.database import close_db, connect_db
+from app.middleware.audit_log import AuditLogMiddleware
+from app.routes import auth as auth_routes
+from app.routes import health as health_routes
 
 
 @asynccontextmanager
@@ -19,31 +22,34 @@ async def lifespan(app: FastAPI):
     await close_db()
 
 
-app = FastAPI(title="InsiteIQ API", version="0.1.0", lifespan=lifespan)
+app = FastAPI(
+    title=settings.APP_NAME,
+    version=settings.APP_VERSION,
+    description="Sistema operativo interno SRS para field services IT internacional.",
+    lifespan=lifespan,
+)
 
+# CORS — permissive in dev, tight in prod (per settings.CORS_ORIGINS)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads")
+# audit_log — EVERY mutation stamped. Principle #7.
+app.add_middleware(AuditLogMiddleware)
 
-# Routes
-from app.routes import auth, sites, technicians, interventions, knowledge, dashboard, ai, team  # noqa: E402
-
-app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
-app.include_router(sites.router, prefix="/api/sites", tags=["sites"])
-app.include_router(technicians.router, prefix="/api/technicians", tags=["technicians"])
-app.include_router(interventions.router, prefix="/api/interventions", tags=["interventions"])
-app.include_router(knowledge.router, prefix="/api/kb", tags=["knowledge"])
-app.include_router(dashboard.router, prefix="/api/dashboard", tags=["dashboard"])
-app.include_router(ai.router, prefix="/api/ai", tags=["ai"])
-app.include_router(team.router, prefix="/api/team", tags=["team"])
+# Routers
+app.include_router(health_routes.router)
+app.include_router(auth_routes.router, prefix="/api")
 
 
-@app.get("/health")
-async def health():
-    return {"status": "ok", "service": "insiteiq-api"}
+@app.get("/")
+async def root():
+    return {
+        "service": settings.APP_NAME,
+        "version": settings.APP_VERSION,
+        "docs": "/docs",
+    }
