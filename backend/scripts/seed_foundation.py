@@ -488,6 +488,7 @@ async def seed():
     andros_id = user_ids["androsb@systemrapid.com"]
     arlindo_id = user_ids["arlindoo@systemrapid.com"]
     agustin_id = user_ids["agustinc@systemrapid.com"]
+    yunus_h_id = user_ids["yunush@systemrapid.com"]
 
     def sla_deadlines(level: str, now: datetime) -> tuple[datetime, datetime]:
         spec = SHIELD_DEFAULTS[level]
@@ -865,6 +866,415 @@ async def seed():
     ]
     await db.work_orders.insert_many(arcos_wos)
 
+    # ------------------------------------------------------------------
+    # Demo depth — extra realistic data so dashboards feel alive
+    # Populated end-of-seed so it doesn't distract from core structure.
+    # ------------------------------------------------------------------
+
+    fractalia_sa_id = ag_ids["FRAC-TEL-2026-2029"]  # SRS-US intl Fractalia agreement
+    claro_us_sa_id = ag_ids["CLARO-US-2026-AUDIT"]
+    dxc_uk_sa_id = ag_ids["DXC-UK-2026-DCMIGRATION"]
+
+    # --- More sites from real Fractalia footprint (Inditex + CH + Duty Free) ---
+    more_sites = [
+        _site_doc(tenant_id, juan_id, fractalia_id, "ZARA-ES-GV01",
+                  "ZARA Gran Vía Madrid", "ES", "Madrid",
+                  "Calle Gran Vía 32, 28013 Madrid", "Europe/Madrid"),
+        _site_doc(tenant_id, juan_id, fractalia_id, "ZARA-ES-BCN01",
+                  "ZARA Passeig de Gràcia Barcelona", "ES", "Barcelona",
+                  "Passeig de Gràcia 16, 08007 Barcelona", "Europe/Madrid"),
+        _site_doc(tenant_id, juan_id, fractalia_id, "ZARA-AR-BA01",
+                  "ZARA Galerías Pacífico Buenos Aires", "AR", "Buenos Aires",
+                  "Av. Córdoba 550, CABA", "America/Argentina/Buenos_Aires"),
+        _site_doc(tenant_id, juan_id, fractalia_id, "ZARA-MX-POL01",
+                  "ZARA Antara Polanco CDMX", "MX", "Ciudad de México",
+                  "Av. Ejército Nacional 843, Granada, Miguel Hidalgo",
+                  "America/Mexico_City"),
+        _site_doc(tenant_id, juan_id, fractalia_id, "CH-ES-SER01",
+                  "Carolina Herrera Flagship Serrano", "ES", "Madrid",
+                  "Calle de Serrano 16, 28001 Madrid", "Europe/Madrid"),
+        _site_doc(tenant_id, juan_id, fractalia_id, "CH-US-NY01",
+                  "Carolina Herrera Madison Avenue", "US", "New York",
+                  "772 Madison Ave, New York, NY 10065", "America/New_York"),
+        _site_doc(tenant_id, juan_id, fractalia_id, "DF-ES-MAD-T4",
+                  "Duty Free Madrid T4", "ES", "Madrid",
+                  "Aeropuerto Adolfo Suárez Madrid-Barajas T4", "Europe/Madrid"),
+        _site_doc(tenant_id, juan_id, fractalia_id, "DF-HK-HKG01",
+                  "Duty Free Hong Kong International", "HK", "Hong Kong",
+                  "Hong Kong International Airport, Chek Lap Kok", "Asia/Hong_Kong"),
+    ]
+    more_sites_ins = await db.sites.insert_many(more_sites)
+    extra_site_ids = {
+        s["code"]: str(i) for s, i in zip(more_sites, more_sites_ins.inserted_ids)
+    }
+
+    # --- More work_orders across stages / shield levels / techs / clients ---
+    # Spread realistic activity to populate dashboards + ball-in-court aging.
+    more_wos: list[dict] = []
+
+    # Fractalia bronze_plus (international retail) — 5 across stages
+    more_wos.append(_wo_doc(
+        tenant_id, fractalia_id, extra_site_ids["ZARA-ES-GV01"], fractalia_sa_id,
+        "FRAC-CS-0000120",
+        "Pantalla LED cabinet muerto — ZARA Gran Vía",
+        severity="high",
+        status="triage",
+        ball_side="srs", ball_actor=juan_id,
+        assigned_tech=None, coord=juan_id,
+        shield="bronze_plus",
+        age_hours=4,
+    ))
+    more_wos.append(_wo_doc(
+        tenant_id, fractalia_id, extra_site_ids["ZARA-AR-BA01"], fractalia_sa_id,
+        "FRAC-CS-0000121",
+        "Amplificador rack audio reemplazo — ZARA BA Galerías",
+        severity="normal",
+        status="pre_flight",
+        ball_side="srs", ball_actor=andros_id,
+        assigned_tech=arlindo_id, coord=andros_id,
+        shield="bronze_plus",
+        age_hours=8,
+        preflight={"kit_verified": True, "parts_ready": False, "all_green": False},
+    ))
+    more_wos.append(_wo_doc(
+        tenant_id, fractalia_id, extra_site_ids["ZARA-ES-BCN01"], fractalia_sa_id,
+        "FRAC-CS-0000122",
+        "Hilo musical no emite — ZARA Passeig de Gràcia",
+        severity="normal",
+        status="on_site",
+        ball_side="tech", ball_actor=agustin_id,
+        assigned_tech=agustin_id, coord=juan_id,
+        shield="bronze_plus",
+        age_hours=3,
+        handshakes_kinds=[("check_in", 41.392, 2.162, "Arrived Passeig de Gràcia")],
+    ))
+    more_wos.append(_wo_doc(
+        tenant_id, fractalia_id, extra_site_ids["CH-ES-SER01"], fractalia_sa_id,
+        "FRAC-CS-0000108",
+        "Matriz audio Carolina Herrera Serrano — reemplazo preventivo",
+        severity="low",
+        status="closed",
+        ball_side="srs", ball_actor=juan_id,
+        assigned_tech=agustin_id, coord=juan_id,
+        shield="bronze_plus",
+        age_hours=48,
+        closed_hours_ago=12,
+        handshakes_kinds=[
+            ("check_in", 40.425, -3.689, "Onsite CH Serrano"),
+            ("resolution", 40.425, -3.689, "Matrix replaced, audio tested"),
+            ("closure", None, None, "NOC Telefónica sign-off"),
+        ],
+        preflight={"kit_verified": True, "parts_ready": True, "all_green": True},
+    ))
+    more_wos.append(_wo_doc(
+        tenant_id, fractalia_id, extra_site_ids["DF-ES-MAD-T4"], fractalia_sa_id,
+        "FRAC-CS-0000105",
+        "Pantalla LED flagship Duty Free MAD T4 — modulo sustitucion",
+        severity="high",
+        status="resolved",
+        ball_side="client", ball_actor=None,
+        assigned_tech=agustin_id, coord=juan_id,
+        shield="bronze_plus",
+        age_hours=28,
+        handshakes_kinds=[
+            ("check_in", 40.471, -3.574, "Onsite MAD T4"),
+            ("resolution", 40.471, -3.574, "LED module replaced, imagen verde"),
+        ],
+        preflight={"kit_verified": True, "parts_ready": True, "all_green": True},
+    ))
+
+    # Claro US silver (Miramar audit) — 2
+    more_wos.append(_wo_doc(
+        tenant_id, claro_us_id, site_ids["CLARO-US-MIRAMAR"], claro_us_sa_id,
+        "CLARO-WO-2026-0055",
+        "Revisit inventory Miramar — bloque B estanteria 12-18",
+        severity="normal",
+        status="dispatched",
+        ball_side="tech", ball_actor=arlindo_id,
+        assigned_tech=arlindo_id, coord=juan_id,
+        shield="silver",
+        age_hours=16,
+        preflight={"kit_verified": True, "parts_ready": True, "all_green": True},
+    ))
+    more_wos.append(_wo_doc(
+        tenant_id, claro_us_id, site_ids["CLARO-US-MIRAMAR"], claro_us_sa_id,
+        "CLARO-WO-2026-0041",
+        "Scope correction — reconcile 500 items muestra",
+        severity="normal",
+        status="closed",
+        ball_side="srs", ball_actor=juan_id,
+        assigned_tech=arlindo_id, coord=juan_id,
+        shield="silver",
+        age_hours=120,
+        closed_hours_ago=20,
+        handshakes_kinds=[
+            ("check_in", 25.985, -80.233, "Onsite Miramar warehouse"),
+            ("resolution", 25.985, -80.233, "500 items reconciled, 12 discrepancies documented"),
+            ("closure", None, None, "Arturo Pellerano sign-off via email"),
+        ],
+        preflight={"kit_verified": True, "parts_ready": True, "all_green": True},
+    ))
+
+    # DXC UK gold — 1 en en_route, para mostrar Shield gold en dashboard
+    more_wos.append(_wo_doc(
+        tenant_id, org_ids["DXC UK"], extra_site_ids["CH-US-NY01"], dxc_uk_sa_id,
+        "DXC-UK-WO-2026-0007",
+        "Emergency LED flagship CH Madison NY",
+        severity="critical",
+        status="en_route",
+        ball_side="tech", ball_actor=agustin_id,
+        assigned_tech=agustin_id, coord=yunus_h_id,
+        shield="gold",
+        age_hours=2,
+        preflight={"kit_verified": True, "parts_ready": True, "all_green": True},
+    ))
+
+    await db.work_orders.insert_many(more_wos)
+    # Map references for ratings + budget approvals
+    more_wo_refs = {
+        wo["reference"]: wo for wo in await db.work_orders.find(
+            {"tenant_id": tenant_id, "reference": {"$in": [w["reference"] for w in more_wos]}}
+        ).to_list(None)
+    }
+
+    # --- Tech ratings (show skill_passport + recompute working) ---
+    # Agustin gets rated on his 3 closed/resolved WOs: CH Serrano (closed),
+    # DF MAD T4 (resolved), and his seed FRAC-CS-0000099 (resolved).
+    ratings_data = [
+        # Agustin on Carolina Herrera Serrano (closed) — flawless
+        {
+            "wo_ref": "FRAC-CS-0000108", "tech_id": agustin_id, "by": juan_id,
+            "score": 5.0,
+            "dims": {"quality": 5, "punctuality": 5, "communication": 5, "professionalism": 5},
+            "notes": "Trabajo impecable en flagship. Cliente satisfecho.",
+        },
+        # Agustin on Duty Free MAD T4 (resolved)
+        {
+            "wo_ref": "FRAC-CS-0000105", "tech_id": agustin_id, "by": juan_id,
+            "score": 4.5,
+            "dims": {"quality": 5, "punctuality": 4, "communication": 4, "professionalism": 5},
+            "notes": "Excelente ejecucion. Leve demora intake por duty free badge.",
+        },
+        # Agustin on original seed closed WO (FRAC-CS-0000099 — ZARA Talcahuano resolved)
+        {
+            "wo_ref": "FRAC-CS-0000099", "tech_id": agustin_id, "by": juan_id,
+            "score": 5.0,
+            "dims": {"quality": 5, "punctuality": 5, "communication": 5, "professionalism": 5},
+            "notes": "Cerrado clean, NOC approved same day.",
+        },
+        # Arlindo on Miramar CLARO-WO-2026-0041 (closed) — first ever rating
+        {
+            "wo_ref": "CLARO-WO-2026-0041", "tech_id": arlindo_id, "by": juan_id,
+            "score": 4.0,
+            "dims": {"quality": 4, "punctuality": 4, "communication": 4, "professionalism": 4},
+            "notes": "Primer engagement completo. Ejecucion solida.",
+        },
+    ]
+    rating_docs = []
+    for r in ratings_data:
+        wo = more_wo_refs.get(r["wo_ref"])
+        if wo is None:
+            # Fallback: fetch from main work_orders collection (covers seed WOs)
+            wo = await db.work_orders.find_one(
+                {"tenant_id": tenant_id, "reference": r["wo_ref"]}
+            )
+        if wo is None:
+            continue
+        rating_docs.append({
+            "tenant_id": tenant_id,
+            "work_order_id": str(wo["_id"]),
+            "rated_user_id": r["tech_id"],
+            "rated_by_user_id": r["by"],
+            "rated_by_role": "srs_coordinator",
+            "score": float(r["score"]),
+            "dimensions": r["dims"],
+            "notes": r["notes"],
+            "created_at": _now(),
+            "updated_at": _now(),
+            "created_by": r["by"],
+            "updated_by": r["by"],
+        })
+    if rating_docs:
+        await db.tech_ratings.insert_many(rating_docs)
+
+    # --- Seed skill_passports for rated techs (compute aggregates inline) ---
+    # Agustin: 3 ratings avg ~4.83. Arlindo: 1 rating avg 4.0.
+    passport_docs = []
+    for user_id, ratings in [
+        (agustin_id, [r for r in rating_docs if r["rated_user_id"] == agustin_id]),
+        (arlindo_id, [r for r in rating_docs if r["rated_user_id"] == arlindo_id]),
+    ]:
+        if not ratings:
+            continue
+        avg = round(sum(r["score"] for r in ratings) / len(ratings), 2)
+        # Count closed/resolved WOs assigned to this tech
+        jobs_done = await db.work_orders.count_documents({
+            "tenant_id": tenant_id,
+            "assigned_tech_user_id": user_id,
+            "status": {"$in": ["resolved", "closed"]},
+        })
+        # Level threshold check
+        level = "bronze"
+        if jobs_done >= 10 and avg >= 4.0:
+            level = "silver"
+        if jobs_done >= 50 and avg >= 4.5:
+            level = "gold"
+        if jobs_done >= 150 and avg >= 4.7:
+            level = "platinum"
+        # Basic certifications + countries for demo polish
+        certs = []
+        countries = []
+        skills = []
+        bio = None
+        if user_id == agustin_id:
+            certs = [
+                {"name": "CCNA", "issuer": "Cisco", "issued_at": None, "expires_at": None,
+                 "credential_id": None, "verified_by_user_id": juan_id},
+                {"name": "Audinate Dante Level 2", "issuer": "Audinate",
+                 "issued_at": None, "expires_at": None,
+                 "credential_id": None, "verified_by_user_id": juan_id},
+            ]
+            skills = [
+                {"name": "Audio systems (Crown, Biamp)", "tier": "advanced", "endorsed_count": 8},
+                {"name": "Network install + config", "tier": "advanced", "endorsed_count": 6},
+                {"name": "LED displays (Samsung, Unilumin)", "tier": "intermediate", "endorsed_count": 4},
+            ]
+            countries = ["ES", "PT", "MX", "AR", "CL", "US"]
+            bio = "Top tech plantilla SRS — audio + network retail international."
+        elif user_id == arlindo_id:
+            certs = [
+                {"name": "BICSI Installer 2", "issuer": "BICSI",
+                 "issued_at": None, "expires_at": None,
+                 "credential_id": None, "verified_by_user_id": juan_id},
+            ]
+            skills = [
+                {"name": "Warehouse inventory / audit", "tier": "intermediate", "endorsed_count": 2},
+                {"name": "Data center cabling", "tier": "intermediate", "endorsed_count": 3},
+            ]
+            countries = ["US"]
+            bio = "External contractor. Claro US contract (email provisioned)."
+
+        passport_docs.append({
+            "tenant_id": tenant_id,
+            "user_id": user_id,
+            "employment_type": "plantilla" if user_id == agustin_id else "external_sub",
+            "level": level,
+            "jobs_completed": jobs_done,
+            "rating_avg": avg,
+            "rating_count": len(ratings),
+            "certifications": certs,
+            "skills": skills,
+            "languages": ["es", "en"] if user_id == agustin_id else ["en"],
+            "countries_covered": countries,
+            "quality_marks": [],
+            "bio": bio,
+            "last_active_at": _now(),
+            "created_at": _now(),
+            "updated_at": _now(),
+            "created_by": juan_id,
+            "updated_by": juan_id,
+        })
+    if passport_docs:
+        await db.skill_passports.insert_many(passport_docs)
+
+    # --- Budget Approval Requests (parts threshold demo) ---
+    # 1 below threshold auto-approved (Fractalia agreement threshold 150 USD)
+    # 1 above threshold sent_to_client awaiting response
+    # For each we need WO refs.
+    wo_bcn = more_wo_refs.get("FRAC-CS-0000122")  # ZARA BCN on_site
+    wo_mad_gv = more_wo_refs.get("FRAC-CS-0000120")  # ZARA GV triage
+    budget_docs = []
+    if wo_bcn:
+        # Below threshold: 2 audio cables = $80
+        budget_docs.append({
+            "tenant_id": tenant_id,
+            "work_order_id": str(wo_bcn["_id"]),
+            "service_agreement_id": fractalia_sa_id,
+            "parts": [
+                {"name": "Audio cable XLR 10m", "quantity": 2,
+                 "unit_price_usd": 40, "total_price_usd": 80, "vendor": None,
+                 "part_number": "XLR-10M", "lead_time_days": None, "notes": None},
+            ],
+            "total_amount_usd": 80.0,
+            "currency_native": "EUR",
+            "total_amount_native": 73.0,
+            "threshold_applied_usd": 150.0,
+            "below_threshold": True,
+            "auto_purchased": False,
+            "auto_purchased_at": None,
+            "auto_purchase_reason": None,
+            "status": "approved",
+            "ball_in_court": {
+                "side": "srs", "actor_user_id": juan_id,
+                "since": _now() - timedelta(hours=1),
+                "reason": "auto-approved (below threshold)",
+            },
+            "exchanges": [],
+            "expires_at": None,
+            "supersedes_id": None,
+            "resolved_at": _now() - timedelta(hours=1),
+            "resolved_by": juan_id,
+            "created_at": _now() - timedelta(hours=1),
+            "updated_at": _now() - timedelta(hours=1),
+            "created_by": juan_id,
+            "updated_by": juan_id,
+        })
+    if wo_mad_gv:
+        # Above threshold: LED module $850 → sent_to_client awaiting
+        budget_docs.append({
+            "tenant_id": tenant_id,
+            "work_order_id": str(wo_mad_gv["_id"]),
+            "service_agreement_id": fractalia_sa_id,
+            "parts": [
+                {"name": "Unilumin UpadIII LED module P2.5", "quantity": 1,
+                 "unit_price_usd": 850, "total_price_usd": 850,
+                 "vendor": "Unilumin official reseller EU",
+                 "part_number": "UPIII-P2.5-R", "lead_time_days": 5, "notes": None},
+            ],
+            "total_amount_usd": 850.0,
+            "currency_native": "EUR",
+            "total_amount_native": 780.0,
+            "threshold_applied_usd": 150.0,
+            "below_threshold": False,
+            "auto_purchased": False,
+            "auto_purchased_at": None,
+            "auto_purchase_reason": None,
+            "status": "sent_to_client",
+            "ball_in_court": {
+                "side": "client", "actor_user_id": None,
+                "since": _now() - timedelta(hours=3),
+                "reason": "awaiting Rackel/Fractalia approval",
+            },
+            "exchanges": [
+                {
+                    "ts": _now() - timedelta(hours=3),
+                    "actor_user_id": juan_id,
+                    "kind": "quote_sent",
+                    "notes": "Cotizacion enviada. Lead time 5 dias.",
+                    "ball_side_after": "client",
+                },
+            ],
+            "expires_at": None,
+            "supersedes_id": None,
+            "resolved_at": None,
+            "resolved_by": None,
+            "created_at": _now() - timedelta(hours=3),
+            "updated_at": _now() - timedelta(hours=3),
+            "created_by": juan_id,
+            "updated_by": juan_id,
+        })
+    if budget_docs:
+        await db.budget_approval_requests.insert_many(budget_docs)
+
+    # Track counts for print summary
+    demo_counts = {
+        "extra_sites": len(more_sites),
+        "extra_wos": len(more_wos),
+        "ratings": len(rating_docs),
+        "passports": len(passport_docs),
+        "budgets": len(budget_docs),
+    }
+
     # --- Re-ensure indexes (drops above removed the index definitions) ---
     await ensure_indexes()
 
@@ -898,11 +1308,17 @@ async def seed():
     print(f"  SRS entities: {len(srs_entities)} (SR-UK, SR-US, SR-SA active; SR-ES closed)")
     print(f"  Organizations: {len(orgs)}")
     print(f"  Users: {len(users)} (default password: '{DEFAULT_PASSWORD}')")
-    print(f"  Sites: {len(sites) + len(arcos_sites)} ({len(arcos_sites)} Arcos)")
+    print(f"  Sites: {len(sites) + len(arcos_sites) + demo_counts['extra_sites']} "
+          f"({len(arcos_sites)} Arcos + {demo_counts['extra_sites']} Fractalia flagships)")
     print(f"  Service agreements: {len(agreements) + 1}")
-    print(f"  Work orders: {len(work_orders) + len(arcos_wos)} ({len(arcos_wos)} Arcos rollout)")
+    print(f"  Work orders: {len(work_orders) + len(arcos_wos) + demo_counts['extra_wos']} total "
+          f"({len(arcos_wos)} Arcos rollout + {demo_counts['extra_wos']} demo-depth multi-stage)")
     print(f"  Projects: 1 (Arcos Dorados Panama rollout)")
     print(f"  Cluster groups: 1 (Wave 1 Panama City activated)")
+    print(f"  Extra sites: {demo_counts['extra_sites']} Fractalia flagships (Inditex+CH+DutyFree)")
+    print(f"  Tech ratings: {demo_counts['ratings']} (Agustin 3 + Arlindo 1)")
+    print(f"  Skill passports: {demo_counts['passports']} (Agustin + Arlindo with computed aggregates)")
+    print(f"  Budget approval requests: {demo_counts['budgets']} (1 below threshold auto + 1 above sent_to_client)")
     print(f"  Audit entries: seed event recorded")
 
     await close_db()
@@ -958,6 +1374,98 @@ def _m(space: str, role: str, authority: str, organization_id: str | None = None
         "authority_level": authority,
         "organization_id": organization_id,
         "active": True,
+    }
+
+
+def _site_doc(tenant_id, creator_id, org_id, code, name, country, city, address, tz):
+    """Shorthand builder for demo sites."""
+    return {
+        "tenant_id": tenant_id,
+        "organization_id": org_id,
+        "code": code,
+        "name": name,
+        "country": country,
+        "city": city,
+        "address": address,
+        "timezone": tz,
+        "has_physical_resident": False,
+        "status": "active",
+        "notes": None,
+        "created_at": _now(),
+        "updated_at": _now(),
+        "created_by": creator_id,
+        "updated_by": creator_id,
+    }
+
+
+def _wo_doc(
+    tenant_id, org_id, site_id, sa_id, reference, title, *,
+    severity="normal",
+    status="intake",
+    ball_side="srs",
+    ball_actor=None,
+    assigned_tech=None,
+    coord=None,
+    noc_operator=None,
+    onsite_resident=None,
+    shield="bronze",
+    age_hours=0,
+    closed_hours_ago=None,
+    handshakes_kinds=None,
+    preflight=None,
+    description=None,
+):
+    """Shorthand builder for demo work_orders across stages."""
+    from app.models.service_agreement import SHIELD_DEFAULTS
+    sla = SHIELD_DEFAULTS[shield]
+    created = _now() - timedelta(hours=age_hours)
+    handshakes = []
+    if handshakes_kinds:
+        # Distribute handshakes evenly across the age_hours window
+        for idx, (kind, lat, lng, notes) in enumerate(handshakes_kinds):
+            hs_ts = created + timedelta(hours=max(1, age_hours - idx * 2))
+            handshakes.append({
+                "kind": kind,
+                "ts": hs_ts,
+                "actor_user_id": assigned_tech or coord,
+                "notes": notes,
+                "lat": lat,
+                "lng": lng,
+            })
+    closed_at = _now() - timedelta(hours=closed_hours_ago) if closed_hours_ago is not None else None
+    return {
+        "tenant_id": tenant_id,
+        "organization_id": org_id,
+        "site_id": site_id,
+        "service_agreement_id": sa_id,
+        "reference": reference,
+        "title": title,
+        "description": description,
+        "severity": severity,
+        "status": status,
+        "ball_in_court": {
+            "side": ball_side,
+            "actor_user_id": ball_actor,
+            "since": created,
+            "reason": f"{status}",
+        },
+        "assigned_tech_user_id": assigned_tech,
+        "srs_coordinator_user_id": coord,
+        "noc_operator_user_id": noc_operator,
+        "onsite_resident_user_id": onsite_resident,
+        "project_id": None,
+        "cluster_group_id": None,
+        "shield_level": shield,
+        "sla_snapshot": sla,
+        "deadline_receive_at": created + timedelta(minutes=sla["receive_minutes"]),
+        "deadline_resolve_at": created + timedelta(minutes=sla["resolve_minutes"]),
+        "closed_at": closed_at,
+        "handshakes": handshakes,
+        "pre_flight_checklist": preflight or {},
+        "created_at": created,
+        "updated_at": _now(),
+        "created_by": coord,
+        "updated_by": coord,
     }
 
 
