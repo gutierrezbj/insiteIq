@@ -13,6 +13,7 @@ from app.database import close_db, connect_db
 from app.middleware.audit_log import AuditLogMiddleware
 from app.routes import auth as auth_routes
 from app.routes import health as health_routes
+from app.routes import copilot_briefings as copilot_briefings_routes
 from app.routes import service_agreements as service_agreements_routes
 from app.routes import sites as sites_routes
 from app.routes import ticket_threads as ticket_threads_routes
@@ -52,6 +53,7 @@ app.include_router(sites_routes.router, prefix="/api")
 app.include_router(service_agreements_routes.router, prefix="/api")
 app.include_router(work_orders_routes.router, prefix="/api")
 app.include_router(ticket_threads_routes.router, prefix="/api")
+app.include_router(copilot_briefings_routes.router, prefix="/api")
 
 
 @app.get("/")

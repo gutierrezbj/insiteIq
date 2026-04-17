@@ -50,6 +50,13 @@ async def _ensure_indexes() -> None:
     await db.work_orders.create_index([("tenant_id", 1), ("assigned_tech_user_id", 1), ("status", 1)])
     await db.work_orders.create_index([("tenant_id", 1), ("ball_in_court.side", 1), ("ball_in_court.since", 1)])
 
+    # --- Copilot Briefing (Modo 1, Domain 10.5) ---
+    # Only ONE active (non-superseded) briefing per work_order
+    await db.copilot_briefings.create_index(
+        [("work_order_id", 1), ("status", 1)]
+    )
+    await db.copilot_briefings.create_index([("tenant_id", 1), ("status", 1)])
+
     # --- Ticket Thread (Modo 1, Decision #8 WhatsApp kill) ---
     # 1 thread per (work_order, kind) — unique enforced
     await db.ticket_threads.create_index(

@@ -35,6 +35,7 @@ from app.models.work_order import (
     WorkOrderStatus,
     transition_allowed,
 )
+from app.routes.copilot_briefings import briefing_acknowledged_by
 from app.routes.ticket_threads import append_system_event, seal_threads
 
 router = APIRouter(prefix="/work-orders", tags=["work_orders"])
@@ -316,6 +317,23 @@ async def advance_work_order(
                 status.HTTP_400_BAD_REQUEST,
                 "pre_flight checklist not all_green — set emergency=true to override",
             )
+
+    # dispatched -> en_route guard (Domain 10.5 Copilot Briefing mandatory)
+    if current == "dispatched" and target == "en_route":
+        assigned_tech = doc.get("assigned_tech_user_id")
+        if not assigned_tech:
+            raise HTTPException(
+                status.HTTP_400_BAD_REQUEST,
+                "work_order has no assigned tech — cannot go en_route",
+            )
+        if not body.emergency:
+            ack = await briefing_acknowledged_by(db, doc, assigned_tech)
+            if not ack:
+                raise HTTPException(
+                    status.HTTP_400_BAD_REQUEST,
+                    "Copilot Briefing not acknowledged by assigned tech — "
+                    "set emergency=true to override",
+                )
 
     # Build ball-in-court for new status
     now = _now()

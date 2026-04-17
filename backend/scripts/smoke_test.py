@@ -94,6 +94,16 @@ def main() -> int:
     sites = r.json()
     site = next(s for s in sites if s["code"] == "ZARA-CL-TAL")
 
+    # Login Agustin (doubles as SRS + tech_field) — used for briefing ack later
+    r = client.post(
+        "/api/auth/login",
+        json={"email": "agustin@systemrapid.com", "password": JUAN_PWD},
+    )
+    check("login Agustin 200", r.status_code == 200)
+    agustin = r.json()
+    agustin_auth = {"Authorization": f"Bearer {agustin['access_token']}"}
+    agustin_id = agustin["user"]["id"]
+
     ref = f"SMOKE-{int(time.time())}"
     r = client.post("/api/work-orders", headers=auth, json={
         "organization_id": frac["organization_id"],
@@ -102,6 +112,7 @@ def main() -> int:
         "reference": ref,
         "title": "Smoke test work order",
         "severity": "normal",
+        "assigned_tech_user_id": agustin_id,
     })
     check("intake work_order 201", r.status_code == 201, f"status={r.status_code}")
     if r.status_code != 201:
@@ -157,7 +168,43 @@ def main() -> int:
     check("dispatch after all_green", r.status_code == 200)
     check("ball=tech after dispatch", r.json()["ball_in_court"]["side"] == "tech")
 
-    # 11. Ticket Thread: post shared + internal messages (lazy creation)
+    # 11. Copilot Briefing (Domain 10.5) — assemble, guard on en_route, acknowledge
+    r = client.post(f"/api/work-orders/{wo_id}/briefing/assemble", headers=auth)
+    check("briefing assemble 200", r.status_code == 200)
+    check("briefing status=assembled", r.json()["status"] == "assembled")
+    check("site_bible_summary has site_name",
+          r.json()["site_bible_summary"].get("site_name") is not None)
+
+    # Guard: dispatched -> en_route without acknowledgment blocked
+    r = client.post(
+        f"/api/work-orders/{wo_id}/advance",
+        headers=auth,
+        json={"target_status": "en_route"},
+    )
+    check("en_route blocked without brief ack (400)", r.status_code == 400)
+
+    # SRS cannot acknowledge (only assigned tech)
+    r = client.post(f"/api/work-orders/{wo_id}/briefing/acknowledge", headers=auth)
+    check("SRS cannot ack (403)", r.status_code == 403)
+
+    # Agustin (assigned tech) acknowledges
+    r = client.post(
+        f"/api/work-orders/{wo_id}/briefing/acknowledge", headers=agustin_auth
+    )
+    check("tech ack 200", r.status_code == 200, f"status={r.status_code}")
+    check("briefing status=acknowledged", r.json()["status"] == "acknowledged")
+    check("acknowledged_by == tech", r.json()["acknowledged_by"] == agustin_id)
+
+    # Now en_route should succeed (advance as Agustin who has tech_field)
+    r = client.post(
+        f"/api/work-orders/{wo_id}/advance",
+        headers=agustin_auth,
+        json={"target_status": "en_route"},
+    )
+    check("en_route after ack 200", r.status_code == 200, f"status={r.status_code}")
+    check("status=en_route", r.json()["status"] == "en_route")
+
+    # 12. Ticket Thread: post shared + internal messages (lazy creation)
     r = client.post(
         f"/api/work-orders/{wo_id}/threads/shared/messages",
         headers=auth,
@@ -177,18 +224,7 @@ def main() -> int:
     threads = r.json()
     check("two threads exist (shared + internal)", len(threads) == 2)
 
-    # 12. Advance again to generate a system_event in shared thread
-    r = client.get(f"/api/work-orders/{wo_id}", headers=auth)
-    current_status = r.json()["status"]
-    # already dispatched from earlier step — go en_route
-    if current_status == "dispatched":
-        r = client.post(
-            f"/api/work-orders/{wo_id}/advance",
-            headers=auth,
-            json={"target_status": "en_route"},
-        )
-        check("advance dispatched -> en_route", r.status_code == 200)
-
+    # WO is already en_route; shared thread should have multiple system_events from the path
     r = client.get(f"/api/work-orders/{wo_id}/threads/shared/messages", headers=auth)
     msgs = r.json()
     check("shared has user msg + system_event", any(m["kind"] == "message" for m in msgs)
