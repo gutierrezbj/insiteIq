@@ -204,7 +204,7 @@ def main() -> int:
     check("en_route after ack 200", r.status_code == 200, f"status={r.status_code}")
     check("status=en_route", r.json()["status"] == "en_route")
 
-    # 12. Ticket Thread: post shared + internal messages (lazy creation)
+    # Thread messages BEFORE closing (post after close is tested separately)
     r = client.post(
         f"/api/work-orders/{wo_id}/threads/shared/messages",
         headers=auth,
@@ -224,25 +224,99 @@ def main() -> int:
     threads = r.json()
     check("two threads exist (shared + internal)", len(threads) == 2)
 
-    # WO is already en_route; shared thread should have multiple system_events from the path
     r = client.get(f"/api/work-orders/{wo_id}/threads/shared/messages", headers=auth)
     msgs = r.json()
-    check("shared has user msg + system_event", any(m["kind"] == "message" for m in msgs)
+    check("shared has user msg + system_event",
+          any(m["kind"] == "message" for m in msgs)
           and any(m["kind"] == "system_event" for m in msgs))
 
-    # 13. Cancel work_order (cleanup) — also seals threads
+    # Tech arrives on site (en_route -> on_site)
     r = client.post(
-        f"/api/work-orders/{wo_id}/cancel",
-        headers=auth,
-        json={"reason": "smoke test cleanup"},
+        f"/api/work-orders/{wo_id}/advance",
+        headers=agustin_auth,
+        json={"target_status": "on_site", "handshake": "check_in",
+              "lat": -36.72, "lng": -73.11, "notes": "Arrived onsite (smoke)"},
     )
-    check("cancel 200", r.status_code == 200)
-    check("status=cancelled", r.json()["status"] == "cancelled")
+    check("on_site 200", r.status_code == 200)
+    check("status=on_site", r.json()["status"] == "on_site")
+    check("handshake check_in recorded", len(r.json()["handshakes"]) >= 1)
 
-    # 14. Threads should be sealed now, messages immutable
+    # Tech PWA Capture (Domain 10.4) — ritual post-intervencion
+    # Guard: on_site -> resolved blocked without capture
+    r = client.post(
+        f"/api/work-orders/{wo_id}/advance",
+        headers=agustin_auth,
+        json={"target_status": "resolved"},
+    )
+    check("resolved blocked without capture (400)", r.status_code == 400)
+
+    # SRS cannot submit capture (only assigned tech)
+    r = client.post(
+        f"/api/work-orders/{wo_id}/capture/submit",
+        headers=auth,
+        json={
+            "what_found": "test",
+            "what_did": "test",
+        },
+    )
+    check("SRS cannot submit capture (403)", r.status_code == 403)
+
+    # Content guard: empty fields rejected
+    r = client.post(
+        f"/api/work-orders/{wo_id}/capture/submit",
+        headers=agustin_auth,
+        json={"what_found": "", "what_did": ""},
+    )
+    check("empty capture rejected (400)", r.status_code == 400)
+
+    # Tech submits proper capture
+    r = client.post(
+        f"/api/work-orders/{wo_id}/capture/submit",
+        headers=agustin_auth,
+        json={
+            "what_found": "Amplificador audio muerto, LEDs rojos intermitentes.",
+            "what_did": "Reemplazo amplificador. Prueba audio OK en las 4 zonas.",
+            "anything_new_about_site": "Nuevo gerente de tienda desde enero (Mariana). Contacto actualizado.",
+            "devices_touched": [{
+                "device_type": "Crown CDi amplifier",
+                "category": "audio",
+                "known_failure": False,
+                "resolution_action": "replaced",
+            }],
+            "time_on_site_minutes": 75,
+            "follow_up_needed": False,
+        },
+    )
+    check("tech submits capture 201", r.status_code == 201, f"status={r.status_code}")
+    check("capture status=submitted", r.json()["status"] == "submitted")
+    check("capture submitted_by == tech", r.json()["submitted_by"] == agustin_id)
+
+    # Now on_site -> resolved should succeed
+    r = client.post(
+        f"/api/work-orders/{wo_id}/advance",
+        headers=agustin_auth,
+        json={"target_status": "resolved", "handshake": "resolution",
+              "notes": "Intervention complete"},
+    )
+    check("resolved after capture 200", r.status_code == 200, f"status={r.status_code}")
+    check("status=resolved", r.json()["status"] == "resolved")
+    check("ball=client on resolved", r.json()["ball_in_court"]["side"] == "client")
+
+    # SRS closes the work_order (resolved -> closed)
+    r = client.post(
+        f"/api/work-orders/{wo_id}/advance",
+        headers=auth,
+        json={"target_status": "closed", "handshake": "closure",
+              "notes": "NOC Operator sign-off (smoke)"},
+    )
+    check("closed 200", r.status_code == 200)
+    check("status=closed", r.json()["status"] == "closed")
+    check("closed_at populated", r.json().get("closed_at") is not None)
+
+    # 12. Threads should be sealed now (closed triggers seal), messages immutable
     r = client.get(f"/api/work-orders/{wo_id}/threads", headers=auth)
     threads = r.json()
-    check("both threads sealed after cancel", all(t.get("sealed_at") for t in threads))
+    check("both threads sealed after close", all(t.get("sealed_at") for t in threads))
 
     r = client.post(
         f"/api/work-orders/{wo_id}/threads/shared/messages",
@@ -250,6 +324,14 @@ def main() -> int:
         json={"text": "try after seal"},
     )
     check("post to sealed thread rejected (409)", r.status_code == 409)
+
+    # 14. Terminal state: cannot advance further
+    r = client.post(
+        f"/api/work-orders/{wo_id}/advance",
+        headers=auth,
+        json={"target_status": "resolved"},
+    )
+    check("terminal closed refuses advance (400)", r.status_code == 400)
 
     # 12. Audit trail: verify rich entries exist for this work_order
     # We need direct DB access for this; connect via host mongo (127.0.0.1:6110)
@@ -265,10 +347,11 @@ def main() -> int:
         check("audit_log rich >= 5 entries", len(rich) >= 5, f"count={len(rich)}")
         actions = [e["action"] for e in rich]
         check(
-            "audit_log has intake + 3 advance + cancel actions",
+            "audit_log has full happy-path actions",
             any(a == "work_order.intake" for a in actions)
-            and any(a.startswith("work_order.advance.") for a in actions)
-            and any(a == "work_order.cancel" for a in actions),
+            and any(a == "work_order.advance.closed" for a in actions)
+            and any(a == "copilot_briefing.acknowledge" for a in actions)
+            and any(a == "tech_capture.submit" for a in actions),
             f"actions={actions}",
         )
     except Exception as e:

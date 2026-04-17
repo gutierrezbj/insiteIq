@@ -36,6 +36,7 @@ from app.models.work_order import (
     transition_allowed,
 )
 from app.routes.copilot_briefings import briefing_acknowledged_by
+from app.routes.tech_captures import capture_submitted_by
 from app.routes.ticket_threads import append_system_event, seal_threads
 
 router = APIRouter(prefix="/work-orders", tags=["work_orders"])
@@ -332,6 +333,23 @@ async def advance_work_order(
                 raise HTTPException(
                     status.HTTP_400_BAD_REQUEST,
                     "Copilot Briefing not acknowledged by assigned tech — "
+                    "set emergency=true to override",
+                )
+
+    # on_site -> resolved guard (Domain 10.4 Tech PWA Capture mandatory)
+    if current == "on_site" and target == "resolved":
+        assigned_tech = doc.get("assigned_tech_user_id")
+        if not assigned_tech:
+            raise HTTPException(
+                status.HTTP_400_BAD_REQUEST,
+                "work_order has no assigned tech — cannot resolve",
+            )
+        if not body.emergency:
+            submitted = await capture_submitted_by(db, doc, assigned_tech)
+            if not submitted:
+                raise HTTPException(
+                    status.HTTP_400_BAD_REQUEST,
+                    "Tech Capture not submitted by assigned tech — "
                     "set emergency=true to override",
                 )
 

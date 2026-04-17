@@ -249,6 +249,13 @@ async def post_message(
     if body.text is None and not body.attachments:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Message needs text or attachments")
 
+    # Block new thread creation / new posts when the work_order is terminal
+    if wo.get("status") in ("closed", "cancelled"):
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            "Work order is terminal — threads immutable",
+        )
+
     # Create thread lazily if needed
     thread = await _get_or_create_thread(db, wo, kind, user.user_id)
 
