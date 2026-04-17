@@ -13,6 +13,8 @@ from app.database import get_db
 router = APIRouter(tags=["health"])
 
 
+# Exposed at BOTH /health (local/docker healthcheck) and /api/health (via nginx)
+# See main.py where this router is included twice.
 @router.get("/health")
 async def health():
     db = get_db()

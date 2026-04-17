@@ -24,7 +24,7 @@ from datetime import datetime, timedelta, timezone
 from bson import ObjectId
 
 from app.core.security import hash_password
-from app.database import close_db, connect_db, get_db
+from app.database import close_db, connect_db, ensure_indexes, get_db
 from app.models.service_agreement import ServiceAgreement, SHIELD_DEFAULTS
 
 DEFAULT_PASSWORD = "InsiteIQ2026!"
@@ -864,6 +864,9 @@ async def seed():
         },
     ]
     await db.work_orders.insert_many(arcos_wos)
+
+    # --- Re-ensure indexes (drops above removed the index definitions) ---
+    await ensure_indexes()
 
     # --- Seed audit entry (forensic trace that the seed ran) ---
     await db.audit_log.insert_one(

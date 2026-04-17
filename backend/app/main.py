@@ -52,7 +52,8 @@ app.add_middleware(
 app.add_middleware(AuditLogMiddleware)
 
 # Routers
-app.include_router(health_routes.router)
+app.include_router(health_routes.router)                # /health (docker/local)
+app.include_router(health_routes.router, prefix="/api") # /api/health (via nginx)
 app.include_router(auth_routes.router, prefix="/api")
 app.include_router(sites_routes.router, prefix="/api")
 app.include_router(service_agreements_routes.router, prefix="/api")

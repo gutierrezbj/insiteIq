@@ -15,10 +15,10 @@ async def connect_db() -> None:
     global client, db
     client = AsyncIOMotorClient(settings.MONGO_URL)
     db = client[settings.MONGO_DB]
-    await _ensure_indexes()
+    await ensure_indexes()
 
 
-async def _ensure_indexes() -> None:
+async def ensure_indexes() -> None:
     assert db is not None
 
     # --- Identity & Tenancy ---
