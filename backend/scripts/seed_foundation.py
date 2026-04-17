@@ -51,6 +51,21 @@ async def seed():
         "sites",
         "service_agreements",
         "work_orders",
+        # Modo 1 satellites
+        "ticket_threads",
+        "ticket_messages",
+        "copilot_briefings",
+        "tech_captures",
+        "intervention_reports",
+        "email_outbox",
+        "webhook_outbox",
+        "budget_approval_requests",
+        "skill_passports",
+        "tech_ratings",
+        # Modo 2
+        "projects",
+        "cluster_groups",
+        "bulk_upload_events",
     ):
         await db[col].drop()
 
@@ -612,6 +627,244 @@ async def seed():
     ]
     await db.work_orders.insert_many(work_orders)
 
+    # --- Modo 2 seed: Arcos Dorados Panama rollout ---
+    # Add a Claro Panama agreement + Arcos Dorados rollout project + 3 sites + 3 WOs
+    claro_pa_id = org_ids["Claro Panama"]
+    arcos_id = org_ids["Arcos Dorados"]
+
+    claro_pa_agreement = {
+        "tenant_id": tenant_id,
+        "organization_id": claro_pa_id,
+        "contract_ref": "CLARO-PA-ARCOS-2026",
+        "title": "Claro Panama — Arcos Dorados SDWAN rollout",
+        "shield_level": "silver",
+        "sla_spec": SHIELD_DEFAULTS["silver"],
+        "parts_approval_threshold_usd": 300.0,
+        "currency": "USD",
+        "active": True,
+        "notes": "Rollout SDWAN 95 McDonald's Panama — seed truncated to 3 sites for demo.",
+        "created_at": _now(),
+        "updated_at": _now(),
+    }
+    claro_pa_ag_insert = await db.service_agreements.insert_one(claro_pa_agreement)
+    claro_pa_ag_id = str(claro_pa_ag_insert.inserted_id)
+
+    arcos_sites = [
+        {
+            "tenant_id": tenant_id,
+            "organization_id": claro_pa_id,
+            "code": "MCD-PA-P01",
+            "name": "McDonald's Costa del Este",
+            "country": "PA",
+            "city": "Panama City",
+            "address": "Costa del Este, Panama",
+            "timezone": "America/Panama",
+            "has_physical_resident": False,
+            "status": "active",
+            "notes": "Arcos Dorados site 1 (of 95).",
+            "created_at": _now(),
+            "updated_at": _now(),
+        },
+        {
+            "tenant_id": tenant_id,
+            "organization_id": claro_pa_id,
+            "code": "MCD-PA-P02",
+            "name": "McDonald's Albrook Mall",
+            "country": "PA",
+            "city": "Panama City",
+            "address": "Albrook Mall, Panama",
+            "timezone": "America/Panama",
+            "has_physical_resident": False,
+            "status": "active",
+            "notes": "Arcos Dorados site 2.",
+            "created_at": _now(),
+            "updated_at": _now(),
+        },
+        {
+            "tenant_id": tenant_id,
+            "organization_id": claro_pa_id,
+            "code": "MCD-PA-P47",
+            "name": "McDonald's David (historically lost P47)",
+            "country": "PA",
+            "city": "David, Chiriqui",
+            "address": "David, Chiriqui",
+            "timezone": "America/Panama",
+            "has_physical_resident": False,
+            "status": "active",
+            "notes": "El P47 que se perdio en tabla Excel del historico — ahora trazado.",
+            "created_at": _now(),
+            "updated_at": _now(),
+        },
+    ]
+    arcos_sites_insert = await db.sites.insert_many(arcos_sites)
+    arcos_site_ids = [str(i) for i in arcos_sites_insert.inserted_ids]
+
+    arcos_project = {
+        "tenant_id": tenant_id,
+        "type": "rollout",
+        "delivery_pattern": "rollout",
+        "code": "ARCOS-PA-SDWAN-2026",
+        "title": "SDWAN McDonald's Panama — 95 sites rollout",
+        "description": "Rollout SDWAN multi-site Claro/Arcos Dorados. Seed demo con 3 sites (real: 95). Caso referencia Decision Modo 2.",
+        "client_organization_id": claro_pa_id,
+        "service_agreement_id": claro_pa_ag_id,
+        "srs_entity_id": None,
+        "po_number": "PA-1000066",
+        "end_client_organization_id": arcos_id,
+        "delivery_chain": [
+            {"tier_index": 0, "organization_id": arcos_id, "role": "end_client_metadata", "notes": "Arcos Dorados — no user access"},
+            {"tier_index": 1, "organization_id": claro_pa_id, "role": "client", "notes": "Claro Panama contractual"},
+        ],
+        # cluster_lead = ROL: Agustin (Venezuela) lidera Panama remoto (Decision #2)
+        "cluster_lead_user_id": agustin_id,
+        "field_senior_user_id": None,
+        "srs_coordinator_user_id": juan_id,
+        "total_sites_target": 95,  # ambition even with 3 seeded
+        "playbook_template": "sdwan-install-v1",
+        "status": "active",
+        "start_date": _now() - timedelta(days=45),
+        "target_end_date": _now() + timedelta(days=135),
+        "actual_end_date": None,
+        "summary": "Rollout SDWAN regional. Caso antimodelo del historico (P47 perdido) ahora correctamente trazado.",
+        "metadata": {"original_sites_count": 95, "demo_seeded": 3},
+        "created_at": _now() - timedelta(days=45),
+        "updated_at": _now(),
+        "created_by": juan_id,
+        "updated_by": juan_id,
+    }
+    arcos_proj_insert = await db.projects.insert_one(arcos_project)
+    arcos_proj_id = str(arcos_proj_insert.inserted_id)
+
+    # One cluster for wave 1 (activated)
+    cluster_w1 = {
+        "tenant_id": tenant_id,
+        "project_id": arcos_proj_id,
+        "code": "W1-PANAMA-CITY",
+        "title": "Wave 1 — Panama City metro area",
+        "cluster_lead_user_id": agustin_id,
+        "field_senior_user_id": None,
+        "assigned_tech_user_id": agustin_id,
+        "site_ids": arcos_site_ids[:2],  # P01 + P02
+        "target_start_date": _now() - timedelta(days=14),
+        "target_end_date": _now() + timedelta(days=30),
+        "status": "activated",
+        "activated_at": _now() - timedelta(days=14),
+        "activated_by": juan_id,
+        "completed_at": None,
+        "created_at": _now() - timedelta(days=14),
+        "updated_at": _now(),
+        "created_by": juan_id,
+        "updated_by": juan_id,
+    }
+    cluster_w1_insert = await db.cluster_groups.insert_one(cluster_w1)
+    cluster_w1_id = str(cluster_w1_insert.inserted_id)
+
+    # Three rollout work_orders linked to the project + cluster
+    arcos_wos = [
+        {
+            "tenant_id": tenant_id,
+            "organization_id": claro_pa_id,
+            "site_id": arcos_site_ids[0],
+            "service_agreement_id": claro_pa_ag_id,
+            "reference": "ARCOS-WO-2026-001",
+            "title": "SDWAN install — McDonald's Costa del Este",
+            "description": "Install SDWAN appliance + config network + test failover.",
+            "severity": "normal",
+            "status": "closed",
+            "ball_in_court": {
+                "side": "srs", "actor_user_id": juan_id,
+                "since": _now() - timedelta(days=10), "reason": "closed",
+            },
+            "assigned_tech_user_id": agustin_id,
+            "srs_coordinator_user_id": juan_id,
+            "noc_operator_user_id": None,
+            "onsite_resident_user_id": None,
+            "project_id": arcos_proj_id,
+            "cluster_group_id": cluster_w1_id,
+            "shield_level": "silver",
+            "sla_snapshot": SHIELD_DEFAULTS["silver"],
+            "deadline_receive_at": _now() - timedelta(days=13, hours=22),
+            "deadline_resolve_at": _now() - timedelta(days=11),
+            "closed_at": _now() - timedelta(days=10),
+            "handshakes": [],
+            "pre_flight_checklist": {"all_green": True},
+            "created_at": _now() - timedelta(days=14),
+            "updated_at": _now() - timedelta(days=10),
+            "created_by": juan_id,
+            "updated_by": juan_id,
+        },
+        {
+            "tenant_id": tenant_id,
+            "organization_id": claro_pa_id,
+            "site_id": arcos_site_ids[1],
+            "service_agreement_id": claro_pa_ag_id,
+            "reference": "ARCOS-WO-2026-002",
+            "title": "SDWAN install — McDonald's Albrook",
+            "description": "Install SDWAN appliance.",
+            "severity": "normal",
+            "status": "on_site",
+            "ball_in_court": {
+                "side": "tech", "actor_user_id": agustin_id,
+                "since": _now() - timedelta(hours=3), "reason": "tech onsite working",
+            },
+            "assigned_tech_user_id": agustin_id,
+            "srs_coordinator_user_id": juan_id,
+            "noc_operator_user_id": None,
+            "onsite_resident_user_id": None,
+            "project_id": arcos_proj_id,
+            "cluster_group_id": cluster_w1_id,
+            "shield_level": "silver",
+            "sla_snapshot": SHIELD_DEFAULTS["silver"],
+            "deadline_receive_at": _now() - timedelta(days=2),
+            "deadline_resolve_at": _now() + timedelta(days=1),
+            "handshakes": [{
+                "kind": "check_in",
+                "ts": _now() - timedelta(hours=3),
+                "actor_user_id": agustin_id,
+                "notes": "Onsite Albrook Mall",
+                "lat": 8.9714, "lng": -79.5540,
+            }],
+            "pre_flight_checklist": {"all_green": True},
+            "created_at": _now() - timedelta(days=3),
+            "updated_at": _now() - timedelta(hours=3),
+            "created_by": juan_id,
+            "updated_by": agustin_id,
+        },
+        # P47 — the one that used to get lost — now properly tracked as intake
+        {
+            "tenant_id": tenant_id,
+            "organization_id": claro_pa_id,
+            "site_id": arcos_site_ids[2],
+            "service_agreement_id": claro_pa_ag_id,
+            "reference": "ARCOS-WO-2026-047",
+            "title": "SDWAN install — McDonald's David P47",
+            "description": "Historical P47 — the one lost in Excel. Tracking correctly from intake.",
+            "severity": "normal",
+            "status": "intake",
+            "ball_in_court": {
+                "side": "srs", "actor_user_id": juan_id,
+                "since": _now() - timedelta(hours=6), "reason": "intake pending triage",
+            },
+            "assigned_tech_user_id": None,
+            "srs_coordinator_user_id": juan_id,
+            "noc_operator_user_id": None,
+            "onsite_resident_user_id": None,
+            "project_id": arcos_proj_id,
+            "cluster_group_id": None,  # not yet in a cluster wave
+            "shield_level": "silver",
+            "sla_snapshot": SHIELD_DEFAULTS["silver"],
+            "deadline_receive_at": _now() + timedelta(hours=42),
+            "deadline_resolve_at": _now() + timedelta(days=2),
+            "handshakes": [],
+            "pre_flight_checklist": {},
+            "created_at": _now() - timedelta(hours=6),
+            "updated_at": _now() - timedelta(hours=6),
+            "created_by": juan_id,
+            "updated_by": juan_id,
+        },
+    ]
+    await db.work_orders.insert_many(arcos_wos)
+
     # --- Seed audit entry (forensic trace that the seed ran) ---
     await db.audit_log.insert_one(
         {
@@ -626,9 +879,11 @@ async def seed():
                 "srs_entities_inserted": len(srs_entities),
                 "organizations_inserted": len(orgs),
                 "users_inserted": len(users),
-                "sites_inserted": len(sites),
-                "service_agreements_inserted": len(agreements),
-                "work_orders_inserted": len(work_orders),
+                "sites_inserted": len(sites) + len(arcos_sites),
+                "service_agreements_inserted": len(agreements) + 1,
+                "work_orders_inserted": len(work_orders) + len(arcos_wos),
+                "projects_inserted": 1,
+                "cluster_groups_inserted": 1,
                 "default_password": "[redacted — see seed script]",
                 "blueprint_version": "v1.1",
             },
@@ -640,9 +895,11 @@ async def seed():
     print(f"  SRS entities: {len(srs_entities)} (SR-UK, SR-US, SR-SA active; SR-ES closed)")
     print(f"  Organizations: {len(orgs)}")
     print(f"  Users: {len(users)} (default password: '{DEFAULT_PASSWORD}')")
-    print(f"  Sites: {len(sites)}")
-    print(f"  Service agreements: {len(agreements)}")
-    print(f"  Work orders: {len(work_orders)} (intake / en_route / resolved)")
+    print(f"  Sites: {len(sites) + len(arcos_sites)} ({len(arcos_sites)} Arcos)")
+    print(f"  Service agreements: {len(agreements) + 1}")
+    print(f"  Work orders: {len(work_orders) + len(arcos_wos)} ({len(arcos_wos)} Arcos rollout)")
+    print(f"  Projects: 1 (Arcos Dorados Panama rollout)")
+    print(f"  Cluster groups: 1 (Wave 1 Panama City activated)")
     print(f"  Audit entries: seed event recorded")
 
     await close_db()

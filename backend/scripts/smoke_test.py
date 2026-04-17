@@ -535,6 +535,95 @@ def main() -> int:
     r = client.get(f"/api/work-orders/{wo_id}/ratings", headers=auth)
     check("list ratings", r.status_code == 200 and len(r.json()) == 1)
 
+    # 18. Modo 2 Rollout — projects, clusters, bulk upload, dashboard
+    # Verify seed has Arcos project
+    r = client.get("/api/projects", headers=auth)
+    check("list projects 200", r.status_code == 200)
+    arcos = next((p for p in r.json() if p["code"] == "ARCOS-PA-SDWAN-2026"), None)
+    check("seed has Arcos rollout", arcos is not None)
+
+    if arcos:
+        r = client.get(f"/api/projects/{arcos['id']}/dashboard", headers=auth)
+        check("arcos dashboard 200", r.status_code == 200)
+        dash = r.json()
+        check("dashboard KPIs present", "kpis" in dash and "progress_pct" in dash["kpis"])
+        check("dashboard WO buckets present",
+              "by_status" in dash["work_orders"])
+        check("dashboard 3 arcos WOs", dash["work_orders"]["total"] == 3)
+        check("dashboard cluster W1 listed",
+              any(c["code"] == "W1-PANAMA-CITY" for c in dash["clusters"]))
+
+    # Create a fresh rollout project end-to-end
+    r = client.get("/api/service-agreements", headers=auth)
+    claro_us_ag = next(a for a in r.json() if a["contract_ref"] == "CLARO-US-2026-AUDIT")
+
+    proj_code = f"SMOKE-ROLLOUT-{int(time.time())}"
+    r = client.post("/api/projects", headers=auth, json={
+        "type": "rollout",
+        "delivery_pattern": "rollout",
+        "code": proj_code,
+        "title": "Smoke test rollout",
+        "client_organization_id": claro_us_ag["organization_id"],
+        "service_agreement_id": claro_us_ag["id"],
+        "total_sites_target": 5,
+    })
+    check("create project 201", r.status_code == 201, f"status={r.status_code}")
+    new_proj_id = r.json()["id"]
+    check("project status=draft", r.json()["status"] == "draft")
+
+    # Patch to active
+    r = client.patch(f"/api/projects/{new_proj_id}", headers=auth, json={"status": "active"})
+    check("patch project status 200", r.status_code == 200)
+    check("project active", r.json()["status"] == "active")
+
+    # Bulk upload 3 sites
+    r = client.post(f"/api/projects/{new_proj_id}/bulk-upload", headers=auth, json={
+        "source": "clipboard_paste",
+        "sites": [
+            {"code": f"SMK-{int(time.time())}-01", "name": "Smoke Site 1", "country": "US"},
+            {"code": f"SMK-{int(time.time())}-02", "name": "Smoke Site 2", "country": "US"},
+            {"code": f"SMK-{int(time.time())}-03", "name": "Smoke Site 3", "country": "US"},
+        ],
+    })
+    check("bulk upload 201", r.status_code == 201, f"status={r.status_code}")
+    check("bulk upload sites_created=3", r.json()["sites_created"] == 3)
+    check("bulk upload status=applied", r.json()["status"] == "applied")
+    check("bulk upload changelog has 3 entries", len(r.json()["changelog"]) == 3)
+
+    r = client.get(f"/api/projects/{new_proj_id}/bulk-uploads", headers=auth)
+    check("list bulk uploads", r.status_code == 200 and len(r.json()) == 1)
+
+    # Create + activate a cluster
+    r = client.post(f"/api/projects/{new_proj_id}/clusters", headers=auth, json={
+        "code": "SMK-W1",
+        "title": "Smoke wave 1",
+        "cluster_lead_user_id": agustin_id,
+    })
+    check("create cluster 201", r.status_code == 201)
+    cluster_id = r.json()["id"]
+    check("cluster initial status=proposed", r.json()["status"] == "proposed")
+
+    r = client.post(
+        f"/api/projects/{new_proj_id}/clusters/{cluster_id}/activate", headers=auth
+    )
+    check("activate cluster 200", r.status_code == 200)
+    check("cluster status=activated", r.json()["status"] == "activated")
+    check("cluster activated_by set", r.json().get("activated_by") is not None)
+
+    # Activating twice rejected
+    r = client.post(
+        f"/api/projects/{new_proj_id}/clusters/{cluster_id}/activate", headers=auth
+    )
+    check("re-activate rejected 409", r.status_code == 409)
+
+    # List clusters
+    r = client.get(f"/api/projects/{new_proj_id}/clusters", headers=auth)
+    check("list clusters", r.status_code == 200 and len(r.json()) == 1)
+
+    # Project WOs list (should be empty — we haven't linked any)
+    r = client.get(f"/api/projects/{new_proj_id}/work-orders", headers=auth)
+    check("project WOs empty", r.status_code == 200 and len(r.json()) == 0)
+
     # 12. Audit trail: verify rich entries exist for this work_order
     # We need direct DB access for this; connect via host mongo (127.0.0.1:6110)
     # If running inside api container, mongo host is 'mongo'.

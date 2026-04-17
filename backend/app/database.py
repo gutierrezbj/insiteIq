@@ -50,6 +50,22 @@ async def _ensure_indexes() -> None:
     await db.work_orders.create_index([("tenant_id", 1), ("assigned_tech_user_id", 1), ("status", 1)])
     await db.work_orders.create_index([("tenant_id", 1), ("ball_in_court.side", 1), ("ball_in_court.since", 1)])
 
+    # --- Modo 2 Rollout (projects + cluster_groups + bulk_uploads) ---
+    await db.projects.create_index([("tenant_id", 1), ("code", 1)], unique=True)
+    await db.projects.create_index([("tenant_id", 1), ("type", 1), ("status", 1)])
+    await db.projects.create_index([("tenant_id", 1), ("client_organization_id", 1)])
+    await db.projects.create_index([("tenant_id", 1), ("cluster_lead_user_id", 1)])
+
+    await db.cluster_groups.create_index([("tenant_id", 1), ("project_id", 1), ("status", 1)])
+    await db.cluster_groups.create_index([("tenant_id", 1), ("project_id", 1), ("code", 1)], unique=True)
+    await db.cluster_groups.create_index([("assigned_tech_user_id", 1), ("status", 1)])
+
+    await db.bulk_upload_events.create_index([("tenant_id", 1), ("project_id", 1), ("received_at", -1)])
+
+    # work_order gains project_id / cluster_group_id indexes for dashboards
+    await db.work_orders.create_index([("tenant_id", 1), ("project_id", 1), ("status", 1)])
+    await db.work_orders.create_index([("tenant_id", 1), ("cluster_group_id", 1), ("status", 1)])
+
     # --- Skill Passport + Tech Ratings (Modo 1, Decision #4) ---
     # 1 passport per user (unique)
     await db.skill_passports.create_index([("tenant_id", 1), ("user_id", 1)], unique=True)

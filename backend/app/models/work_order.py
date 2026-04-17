@@ -100,6 +100,10 @@ class WorkOrder(BaseMongoModel):
     service_agreement_id: str
     reference: str = Field(..., description="Client reference, e.g. CS0533456")
 
+    # Modo 2 linkage (optional — standalone reactive WOs keep project_id=None)
+    project_id: str | None = None
+    cluster_group_id: str | None = None
+
     title: str
     description: str | None = None
     severity: Literal["low", "normal", "high", "critical"] = "normal"

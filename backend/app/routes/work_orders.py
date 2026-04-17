@@ -66,6 +66,9 @@ class IntakeBody(BaseModel):
     assigned_tech_user_id: str | None = None
     noc_operator_user_id: str | None = None
     onsite_resident_user_id: str | None = None
+    # Modo 2 linkage — optional
+    project_id: str | None = None
+    cluster_group_id: str | None = None
 
 
 class AdvanceBody(BaseModel):
@@ -194,6 +197,8 @@ async def intake_work_order(body: IntakeBody, user: CurrentUser = Depends(get_cu
         "noc_operator_user_id": body.noc_operator_user_id,
         "onsite_resident_user_id": body.onsite_resident_user_id
             or (None if not site.get("has_physical_resident") else None),
+        "project_id": body.project_id,
+        "cluster_group_id": body.cluster_group_id,
         "shield_level": shield_level,
         "sla_snapshot": sla_snapshot,
         "deadline_receive_at": deadline_receive,
