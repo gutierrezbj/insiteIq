@@ -38,6 +38,7 @@ from app.models.work_order import (
 from app.routes.copilot_briefings import briefing_acknowledged_by
 from app.routes.tech_captures import capture_submitted_by
 from app.routes.ticket_threads import append_system_event, seal_threads
+from app.services.report_assembler import assemble_intervention_report
 
 router = APIRouter(prefix="/work-orders", tags=["work_orders"])
 
@@ -416,6 +417,16 @@ async def advance_work_order(
     )
     if target in ("closed", "cancelled"):
         await seal_threads(db, wo_id, user.tenant_id)
+
+    # Hook: on close, auto-assemble the intervention_report (Principle #1 emit)
+    if target == "closed":
+        try:
+            refreshed_wo = await db.work_orders.find_one({"_id": doc["_id"]})
+            if refreshed_wo:
+                await assemble_intervention_report(db, refreshed_wo, actor_user_id=user.user_id)
+        except Exception:
+            import traceback
+            traceback.print_exc()  # audit middleware still logs; never block the advance
 
     refreshed = await db.work_orders.find_one({"_id": doc["_id"]})
     return _serialize(refreshed)

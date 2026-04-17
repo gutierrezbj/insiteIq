@@ -333,6 +333,68 @@ def main() -> int:
     )
     check("terminal closed refuses advance (400)", r.status_code == 400)
 
+    # 15. Emit channels (Principle #1) — auto-assembled at close
+    r = client.get(f"/api/work-orders/{wo_id}/report", headers=auth)
+    check("report JSON 200", r.status_code == 200, f"status={r.status_code}")
+    report = r.json()
+    check("report version=1", report.get("version") == 1)
+    check("report status=final", report.get("status") == "final")
+    check("report header has reference", report.get("header", {}).get("work_order_reference"))
+    check("report timeline non-empty", len(report.get("timeline", [])) > 0)
+    check("report ball_timeline non-empty", len(report.get("ball_timeline", [])) > 0)
+    check("report capture.what_found set", report.get("capture", {}).get("what_found") is not None)
+
+    # SLA computed
+    sla = report.get("sla", {})
+    check("report sla.received_within_sla set",
+          sla.get("received_within_sla") is not None)
+    check("report sla.resolved_within_sla set",
+          sla.get("resolved_within_sla") is not None)
+
+    # HTML channel
+    r = client.get(f"/api/work-orders/{wo_id}/report.html", headers=auth)
+    check("report HTML 200", r.status_code == 200)
+    check("HTML content-type", "text/html" in r.headers.get("content-type", ""))
+    check("HTML contains reference", ref in r.text)
+    check("HTML contains SLA section", "SLA Compliance" in r.text)
+
+    # CSV channel
+    r = client.get(f"/api/work-orders/{wo_id}/report.csv", headers=auth)
+    check("report CSV 200", r.status_code == 200)
+    check("CSV content-type", "text/csv" in r.headers.get("content-type", ""))
+    check("CSV contains reference", ref in r.text)
+    check("CSV has Content-Disposition",
+          "attachment" in r.headers.get("content-disposition", ""))
+
+    # Email dispatch
+    r = client.post(
+        f"/api/work-orders/{wo_id}/report/dispatch/email",
+        headers=auth,
+        json={"to": "rackel.rocha@fractaliasystems.es"},
+    )
+    check("email dispatch queued", r.status_code == 200 and r.json().get("queued") is True)
+    check("email outbox_id returned", r.json().get("outbox_id") is not None)
+
+    # Webhook dispatch
+    r = client.post(
+        f"/api/work-orders/{wo_id}/report/dispatch/webhook",
+        headers=auth,
+        json={"url": "https://fractalia.example/hooks/insiteiq"},
+    )
+    check("webhook dispatch queued", r.status_code == 200 and r.json().get("queued") is True)
+
+    # Deliveries list should now include portal + email + webhook
+    r = client.get(f"/api/work-orders/{wo_id}/report", headers=auth)
+    deliveries = r.json().get("deliveries", [])
+    channels = {d["channel"] for d in deliveries}
+    check("deliveries has portal + email + webhook",
+          {"portal", "email", "webhook"}.issubset(channels), f"channels={channels}")
+
+    # Regenerate supersedes + bumps version
+    r = client.post(f"/api/work-orders/{wo_id}/report/regenerate", headers=auth)
+    check("regenerate 200", r.status_code == 200)
+    check("version bumped to 2", r.json().get("version") == 2)
+
     # 12. Audit trail: verify rich entries exist for this work_order
     # We need direct DB access for this; connect via host mongo (127.0.0.1:6110)
     # If running inside api container, mongo host is 'mongo'.

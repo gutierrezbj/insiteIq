@@ -50,6 +50,18 @@ async def _ensure_indexes() -> None:
     await db.work_orders.create_index([("tenant_id", 1), ("assigned_tech_user_id", 1), ("status", 1)])
     await db.work_orders.create_index([("tenant_id", 1), ("ball_in_court.side", 1), ("ball_in_court.since", 1)])
 
+    # --- Intervention Report (Modo 1, Principle #1 emit-not-integrate) ---
+    await db.intervention_reports.create_index(
+        [("work_order_id", 1), ("status", 1)]
+    )
+    await db.intervention_reports.create_index([("tenant_id", 1), ("generated_at", -1)])
+
+    # Outboxes (queues drained by future workers)
+    await db.email_outbox.create_index([("tenant_id", 1), ("status", 1), ("enqueued_at", 1)])
+    await db.email_outbox.create_index([("work_order_id", 1)])
+    await db.webhook_outbox.create_index([("tenant_id", 1), ("status", 1), ("enqueued_at", 1)])
+    await db.webhook_outbox.create_index([("work_order_id", 1)])
+
     # --- Tech Capture (Modo 1, Domain 10.4) ---
     await db.tech_captures.create_index(
         [("work_order_id", 1), ("status", 1)]
