@@ -77,6 +77,9 @@ export default {
       },
       fontFamily: {
         display: ["'Instrument Sans'", "sans-serif"],
+        // Editorial serif — used in Client space for headlines.
+        // Foundation-available; per-space theme decides whether to apply it.
+        "display-serif": ["'Instrument Serif'", "serif"],
         body: ["'DM Sans'", "sans-serif"],
         mono: ["'JetBrains Mono'", "monospace"],
       },
