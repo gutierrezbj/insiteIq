@@ -50,6 +50,18 @@ async def _ensure_indexes() -> None:
     await db.work_orders.create_index([("tenant_id", 1), ("assigned_tech_user_id", 1), ("status", 1)])
     await db.work_orders.create_index([("tenant_id", 1), ("ball_in_court.side", 1), ("ball_in_court.since", 1)])
 
+    # --- Ticket Thread (Modo 1, Decision #8 WhatsApp kill) ---
+    # 1 thread per (work_order, kind) — unique enforced
+    await db.ticket_threads.create_index(
+        [("work_order_id", 1), ("kind", 1)], unique=True
+    )
+    await db.ticket_threads.create_index([("tenant_id", 1), ("sealed_at", 1)])
+
+    # Messages sorted by thread+ts for paginated reads
+    await db.ticket_messages.create_index([("thread_id", 1), ("ts", 1)])
+    await db.ticket_messages.create_index([("tenant_id", 1), ("work_order_id", 1), ("ts", 1)])
+    await db.ticket_messages.create_index([("mentions", 1)])
+
     # --- Domain 11 Asset ---
     await db.assets.create_index(
         [("organization_id", 1), ("serial_number", 1)], unique=True

@@ -35,6 +35,7 @@ from app.models.work_order import (
     WorkOrderStatus,
     transition_allowed,
 )
+from app.routes.ticket_threads import append_system_event, seal_threads
 
 router = APIRouter(prefix="/work-orders", tags=["work_orders"])
 
@@ -369,6 +370,17 @@ async def advance_work_order(
         },
     )
 
+    # Hook: emit system_event into shared thread, seal threads on close/cancel
+    await append_system_event(
+        db,
+        doc,
+        actor_user_id=user.user_id,
+        text=f"Status advanced: {current} -> {target}",
+        payload={"from": current, "to": target, "ball": ball_side},
+    )
+    if target in ("closed", "cancelled"):
+        await seal_threads(db, wo_id, user.tenant_id)
+
     refreshed = await db.work_orders.find_one({"_id": doc["_id"]})
     return _serialize(refreshed)
 
@@ -414,6 +426,15 @@ async def cancel_work_order(
         entity_refs=[{"collection": "work_orders", "id": wo_id, "label": doc.get("reference")}],
         context_snapshot={"from_status": doc["status"], "reason": body.reason},
     )
+
+    await append_system_event(
+        db,
+        doc,
+        actor_user_id=user.user_id,
+        text=f"Work order cancelled: {body.reason}",
+        payload={"from": doc["status"], "to": "cancelled", "reason": body.reason},
+    )
+    await seal_threads(db, wo_id, user.tenant_id)
 
     refreshed = await db.work_orders.find_one({"_id": doc["_id"]})
     return _serialize(refreshed)

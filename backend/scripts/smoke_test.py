@@ -157,7 +157,44 @@ def main() -> int:
     check("dispatch after all_green", r.status_code == 200)
     check("ball=tech after dispatch", r.json()["ball_in_court"]["side"] == "tech")
 
-    # 11. Cancel work_order (cleanup)
+    # 11. Ticket Thread: post shared + internal messages (lazy creation)
+    r = client.post(
+        f"/api/work-orders/{wo_id}/threads/shared/messages",
+        headers=auth,
+        json={"text": "Triage kickoff note (smoke)"},
+    )
+    check("post shared message 201", r.status_code == 201, f"status={r.status_code}")
+
+    r = client.post(
+        f"/api/work-orders/{wo_id}/threads/internal/messages",
+        headers=auth,
+        json={"text": "Internal coord note (smoke)"},
+    )
+    check("post internal message 201", r.status_code == 201)
+
+    r = client.get(f"/api/work-orders/{wo_id}/threads", headers=auth)
+    check("list threads 200", r.status_code == 200)
+    threads = r.json()
+    check("two threads exist (shared + internal)", len(threads) == 2)
+
+    # 12. Advance again to generate a system_event in shared thread
+    r = client.get(f"/api/work-orders/{wo_id}", headers=auth)
+    current_status = r.json()["status"]
+    # already dispatched from earlier step — go en_route
+    if current_status == "dispatched":
+        r = client.post(
+            f"/api/work-orders/{wo_id}/advance",
+            headers=auth,
+            json={"target_status": "en_route"},
+        )
+        check("advance dispatched -> en_route", r.status_code == 200)
+
+    r = client.get(f"/api/work-orders/{wo_id}/threads/shared/messages", headers=auth)
+    msgs = r.json()
+    check("shared has user msg + system_event", any(m["kind"] == "message" for m in msgs)
+          and any(m["kind"] == "system_event" for m in msgs))
+
+    # 13. Cancel work_order (cleanup) — also seals threads
     r = client.post(
         f"/api/work-orders/{wo_id}/cancel",
         headers=auth,
@@ -165,6 +202,18 @@ def main() -> int:
     )
     check("cancel 200", r.status_code == 200)
     check("status=cancelled", r.json()["status"] == "cancelled")
+
+    # 14. Threads should be sealed now, messages immutable
+    r = client.get(f"/api/work-orders/{wo_id}/threads", headers=auth)
+    threads = r.json()
+    check("both threads sealed after cancel", all(t.get("sealed_at") for t in threads))
+
+    r = client.post(
+        f"/api/work-orders/{wo_id}/threads/shared/messages",
+        headers=auth,
+        json={"text": "try after seal"},
+    )
+    check("post to sealed thread rejected (409)", r.status_code == 409)
 
     # 12. Audit trail: verify rich entries exist for this work_order
     # We need direct DB access for this; connect via host mongo (127.0.0.1:6110)
