@@ -20,7 +20,7 @@ import time
 import httpx
 
 API_BASE = os.environ.get("API_BASE", "http://api:8000")
-JUAN_EMAIL = "juancho@systemrapid.com"
+JUAN_EMAIL = "juang@systemrapid.io"
 JUAN_PWD = "InsiteIQ2026!"
 
 PASS = "\033[32mPASS\033[0m"
@@ -97,7 +97,7 @@ def main() -> int:
     # Login Agustin (doubles as SRS + tech_field) — used for briefing ack later
     r = client.post(
         "/api/auth/login",
-        json={"email": "agustin@systemrapid.com", "password": JUAN_PWD},
+        json={"email": "agustinc@systemrapid.com", "password": JUAN_PWD},
     )
     check("login Agustin 200", r.status_code == 200)
     agustin = r.json()
@@ -479,7 +479,7 @@ def main() -> int:
 
     # Tech cannot view another tech's passport
     # (we don't have another tech user set up beyond Arlindo — try Arlindo)
-    r = client.post("/api/auth/login", json={"email": "arlindo@systemrapid.com", "password": JUAN_PWD})
+    r = client.post("/api/auth/login", json={"email": "arlindoo@systemrapid.com", "password": JUAN_PWD})
     arlindo_auth = {"Authorization": f"Bearer {r.json()['access_token']}"}
     r = client.get(f"/api/techs/{agustin_id}/passport", headers=arlindo_auth)
     check("tech cannot view other tech passport (403)", r.status_code == 403)

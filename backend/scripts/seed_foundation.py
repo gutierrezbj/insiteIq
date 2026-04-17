@@ -276,57 +276,52 @@ async def seed():
     # --- Users (SRS core team + external subs + key client contacts) ---
     pwd = hash_password(DEFAULT_PASSWORD)
 
+    # SRS team — 9 plantilla/external users from real SRS directory
     users = [
         _user(
-            tenant_id,
-            pwd,
-            email="juancho@systemrapid.com",
-            full_name="Juan Gutierrez Blanco",
+            tenant_id, pwd,
+            email="juang@systemrapid.io",
+            full_name="Juan Gutierrez",
             country="ES",
             employment="plantilla",
             memberships=[_m("srs_coordinators", "lead", "owner")],
         ),
         _user(
-            tenant_id,
-            pwd,
+            tenant_id, pwd,
             email="sajid@systemrapid.com",
-            full_name="Sajid (Owner read-only)",
+            full_name="Sajid",
             country="GB",
             employment="plantilla",
             memberships=[_m("srs_coordinators", "owner_readonly", "owner")],
         ),
         _user(
-            tenant_id,
-            pwd,
-            email="andros@systemrapid.com",
-            full_name="Andros Briceno",
-            country="VE",
-            employment="plantilla",
-            memberships=[_m("srs_coordinators", "ops_coordinator", "mid_manager")],
-        ),
-        _user(
-            tenant_id,
-            pwd,
-            email="adriana@systemrapid.com",
-            full_name="Adriana (Finance)",
+            tenant_id, pwd,
+            email="adrianab@systemrapid.com",
+            full_name="Adriana Bracho",
             country="VE",
             employment="plantilla",
             memberships=[_m("srs_coordinators", "finance", "director")],
         ),
         _user(
-            tenant_id,
-            pwd,
-            email="luis.sanchez@systemrapid.com",
-            full_name="Luis Sanchez",
+            tenant_id, pwd,
+            email="androsb@systemrapid.com",
+            full_name="Andros Briceño",
+            country="VE",
+            employment="plantilla",
+            memberships=[_m("srs_coordinators", "ops_coordinator", "mid_manager")],
+        ),
+        _user(
+            tenant_id, pwd,
+            email="luiss@systemrapid.com",
+            full_name="Luis Sánchez",
             country="PE",
             employment="plantilla",
             memberships=[_m("srs_coordinators", "field_consultant", "mid_manager")],
         ),
         _user(
-            tenant_id,
-            pwd,
-            email="agustin@systemrapid.com",
-            full_name="Agustin (Top Tech)",
+            tenant_id, pwd,
+            email="agustinc@systemrapid.com",
+            full_name="Agustin Rivera",
             country="ES",
             employment="plantilla",
             memberships=[
@@ -335,30 +330,35 @@ async def seed():
             ],
         ),
         _user(
-            tenant_id,
-            pwd,
-            email="yunus@systemrapid.com",
-            full_name="Yunus (Account Lead London)",
+            tenant_id, pwd,
+            email="hugoq@systemrapid.com",
+            full_name="Hugo M Rodriguez",
+            country=None,
+            employment="plantilla",
+            memberships=[_m("tech_field", "tech_dc", "mid_manager")],
+        ),
+        _user(
+            tenant_id, pwd,
+            email="yunush@systemrapid.com",
+            full_name="Yunus Hafesjee",
             country="GB",
             employment="plantilla",
             memberships=[_m("srs_coordinators", "account_lead", "mid_manager")],
         ),
         _user(
-            tenant_id,
-            pwd,
-            email="arlindo@systemrapid.com",
-            full_name="Arlindo (External Contractor, Claro US contract)",
+            tenant_id, pwd,
+            email="arlindoo@systemrapid.com",
+            full_name="Arlindo Ochoa",
             country="US",
             employment="external_sub",
             email_provisioned=True,
             memberships=[_m("tech_field", "tech_contractor", "contractor")],
         ),
-        # Sample client-side contacts (will expand as real contracts land)
+        # Sample client-side contact (Fractalia external, NOT part of 9 SRS users)
         _user(
-            tenant_id,
-            pwd,
+            tenant_id, pwd,
             email="rackel.rocha@fractaliasystems.es",
-            full_name="Rackel Rocha (Fractalia)",
+            full_name="Rackel Rocha",
             country="ES",
             employment="external_sub",
             memberships=[
@@ -484,10 +484,10 @@ async def seed():
     ag_ids = {a["contract_ref"]: str(i) for a, i in zip(agreements, ag_insert.inserted_ids)}
 
     # 3 work_orders in distinct stages (intake / en_route / resolved)
-    juan_id = user_ids["juancho@systemrapid.com"]
-    andros_id = user_ids["andros@systemrapid.com"]
-    arlindo_id = user_ids["arlindo@systemrapid.com"]
-    agustin_id = user_ids["agustin@systemrapid.com"]
+    juan_id = user_ids["juang@systemrapid.io"]
+    andros_id = user_ids["androsb@systemrapid.com"]
+    arlindo_id = user_ids["arlindoo@systemrapid.com"]
+    agustin_id = user_ids["agustinc@systemrapid.com"]
 
     def sla_deadlines(level: str, now: datetime) -> tuple[datetime, datetime]:
         spec = SHIELD_DEFAULTS[level]
