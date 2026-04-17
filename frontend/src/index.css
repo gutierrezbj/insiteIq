@@ -88,3 +88,16 @@
 .safe-area-top {
   padding-top: env(safe-area-inset-top, 0px);
 }
+
+/* Kill browser autofill ugly light background — keep surface-overlay dark + text light */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active,
+textarea:-webkit-autofill,
+select:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 30px #292524 inset !important;
+  -webkit-text-fill-color: #FAFAF9 !important;
+  caret-color: #FAFAF9;
+  transition: background-color 9999s ease-in-out 0s;
+}

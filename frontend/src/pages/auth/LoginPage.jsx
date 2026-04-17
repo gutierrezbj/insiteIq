@@ -1,6 +1,7 @@
 /**
- * Login — shared across the 3 spaces. Minimal shell for Foundation.
- * Track B (tomorrow) will give this the full Identity Sprint treatment.
+ * Login — shared across the 3 spaces.
+ * SRS Identity Sprint applied: war room + relojeria suiza. Mechanical precision,
+ * mono-caps CTA, amber glow on hover, tight radius, Spanish UI (internal SRS).
  */
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -26,39 +27,45 @@ export default function LoginPage() {
       const target = from || spaceToPath(preferredSpaceFor(user)) || "/no-access";
       navigate(target, { replace: true });
     } catch (err) {
-      setError(err.message || "Login failed");
+      setError(err.message || "Credenciales invalidas");
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
+    <div className="min-h-screen flex items-center justify-center px-4 bg-surface-base">
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-sm accent-bar bg-surface-raised p-6 rounded-lg shadow-lg"
+        className="w-full max-w-sm accent-bar bg-surface-raised p-6 rounded-md shadow-lg"
       >
         <div className="label-caps mb-2">InsiteIQ · v1 Foundation</div>
-        <h1 className="font-display text-2xl text-text-primary mb-5">Sign in</h1>
+        <h1 className="font-display text-2xl text-text-primary mb-6 tracking-tight">
+          Iniciar sesion
+        </h1>
 
-        <label className="label-caps block mb-1">Email</label>
+        <label className="label-caps block mb-1.5" htmlFor="login-email">Email</label>
         <input
+          id="login-email"
           type="email"
           autoComplete="username"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          className="w-full mb-4 bg-surface-base border border-surface-border rounded-md px-3 py-2 text-text-primary font-body focus:outline-none focus:border-primary"
+          className="w-full mb-4 bg-surface-overlay border border-surface-border rounded-sm px-3 py-2 text-text-primary font-body focus:outline-none focus:border-primary focus:shadow-glow-primary transition-all duration-fast ease-out-expo"
         />
 
-        <label className="label-caps block mb-1">Password</label>
+        <label className="label-caps block mb-1.5" htmlFor="login-password">
+          Contrasena
+        </label>
         <input
+          id="login-password"
           type="password"
           autoComplete="current-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          className="w-full mb-5 bg-surface-base border border-surface-border rounded-md px-3 py-2 text-text-primary font-body focus:outline-none focus:border-primary"
+          className="w-full mb-5 bg-surface-overlay border border-surface-border rounded-sm px-3 py-2 text-text-primary font-body focus:outline-none focus:border-primary focus:shadow-glow-primary transition-all duration-fast ease-out-expo"
         />
 
         {error && (
@@ -70,12 +77,12 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={busy}
-          className="w-full bg-primary text-text-inverse font-display font-medium py-2.5 rounded-md transition-all duration-fast ease-out-expo hover:bg-primary-light disabled:opacity-50"
+          className="w-full bg-primary text-text-inverse font-mono font-semibold uppercase tracking-widest-srs text-xs py-3 rounded-sm transition-all duration-fast ease-out-expo hover:bg-primary-light hover:shadow-glow-primary disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {busy ? "Signing in…" : "Sign in"}
+          {busy ? "Validando…" : "Iniciar sesion"}
         </button>
 
-        <p className="mt-5 text-text-tertiary text-2xs font-mono tracking-widest-srs uppercase">
+        <p className="mt-6 text-text-tertiary text-2xs font-mono tracking-widest-srs uppercase">
           Herramienta interna SRS · Solo usuarios autorizados
         </p>
       </form>
