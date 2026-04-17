@@ -50,6 +50,15 @@ async def _ensure_indexes() -> None:
     await db.work_orders.create_index([("tenant_id", 1), ("assigned_tech_user_id", 1), ("status", 1)])
     await db.work_orders.create_index([("tenant_id", 1), ("ball_in_court.side", 1), ("ball_in_court.since", 1)])
 
+    # --- Budget Approval Request (Modo 1, Decision #5 ball-in-court parts) ---
+    await db.budget_approval_requests.create_index(
+        [("tenant_id", 1), ("work_order_id", 1), ("created_at", -1)]
+    )
+    await db.budget_approval_requests.create_index(
+        [("tenant_id", 1), ("status", 1), ("ball_in_court.since", 1)]
+    )
+    await db.budget_approval_requests.create_index([("ball_in_court.side", 1)])
+
     # --- Intervention Report (Modo 1, Principle #1 emit-not-integrate) ---
     await db.intervention_reports.create_index(
         [("work_order_id", 1), ("status", 1)]

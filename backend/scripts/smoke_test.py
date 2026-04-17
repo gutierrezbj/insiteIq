@@ -395,6 +395,77 @@ def main() -> int:
     check("regenerate 200", r.status_code == 200)
     check("version bumped to 2", r.json().get("version") == 2)
 
+    # 16. Budget Approval Requests (Decision #5 — parts threshold + ball-in-court)
+    # First we need a non-closed WO. Create one fresh (re-use intake flow).
+    ref2 = f"SMOKE-PARTS-{int(time.time())}"
+    r = client.post("/api/work-orders", headers=auth, json={
+        "organization_id": frac["organization_id"],
+        "site_id": site["id"],
+        "service_agreement_id": frac["id"],
+        "reference": ref2,
+        "title": "Parts threshold test",
+    })
+    check("intake parts-test WO 201", r.status_code == 201)
+    wo2_id = r.json()["id"]
+
+    # Below threshold (Fractalia agreement threshold=150 USD; we use 100)
+    r = client.post(
+        f"/api/work-orders/{wo2_id}/parts",
+        headers=auth,
+        json={"parts": [{"name": "Audio cable 5m", "unit_price_usd": 50, "quantity": 2, "total_price_usd": 100}]},
+    )
+    check("parts request below threshold 201", r.status_code == 201)
+    req_below = r.json()
+    check("below_threshold flag true", req_below["below_threshold"] is True)
+    check("status=approved (auto)", req_below["status"] == "approved")
+    check("ball=srs after auto-approve", req_below["ball_in_court"]["side"] == "srs")
+
+    # Above threshold
+    r = client.post(
+        f"/api/work-orders/{wo2_id}/parts",
+        headers=auth,
+        json={"parts": [
+            {"name": "Crown CDi amplifier", "unit_price_usd": 850, "quantity": 1, "total_price_usd": 850}
+        ]},
+    )
+    check("parts request above threshold 201", r.status_code == 201)
+    req_above = r.json()
+    req_above_id = req_above["id"]
+    check("below_threshold flag false", req_above["below_threshold"] is False)
+    check("status=draft (awaiting send)", req_above["status"] == "draft")
+
+    # Send to client -> ball moves to client
+    r = client.post(f"/api/parts/{req_above_id}/send-to-client", headers=auth)
+    check("send-to-client 200", r.status_code == 200)
+    check("status=sent_to_client", r.json()["status"] == "sent_to_client")
+    check("ball=client after send", r.json()["ball_in_court"]["side"] == "client")
+    check("exchange logged quote_sent",
+          any(e["kind"] == "quote_sent" for e in r.json()["exchanges"]))
+
+    # Client approves (SRS acts on behalf — Rackel user would work too if in smoke)
+    r = client.post(
+        f"/api/parts/{req_above_id}/client-approve",
+        headers=auth,
+        json={"notes": "approved by Rackel via email"},
+    )
+    check("client-approve 200", r.status_code == 200)
+    check("status=approved", r.json()["status"] == "approved")
+    check("ball=srs after decision", r.json()["ball_in_court"]["side"] == "srs")
+    check("resolved_at set", r.json().get("resolved_at") is not None)
+
+    # Auto-purchase flag (SRS bought urgently anyway)
+    r = client.post(
+        f"/api/parts/{req_above_id}/auto-purchase",
+        headers=auth,
+        json={"reason": "shipped before client reply — operational urgency"},
+    )
+    check("auto-purchase 200", r.status_code == 200)
+    check("auto_purchased=true", r.json()["auto_purchased"] is True)
+
+    # List parts requests for WO
+    r = client.get(f"/api/work-orders/{wo2_id}/parts", headers=auth)
+    check("list parts for WO", r.status_code == 200 and len(r.json()) == 2)
+
     # 12. Audit trail: verify rich entries exist for this work_order
     # We need direct DB access for this; connect via host mongo (127.0.0.1:6110)
     # If running inside api container, mongo host is 'mongo'.
