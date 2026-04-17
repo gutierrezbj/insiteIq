@@ -466,6 +466,75 @@ def main() -> int:
     r = client.get(f"/api/work-orders/{wo2_id}/parts", headers=auth)
     check("list parts for WO", r.status_code == 200 and len(r.json()) == 2)
 
+    # 17. Skill Passport (Decision #4) — using the resolved/closed WO with Agustin
+    # The first WO (wo_id) was closed with Agustin as assigned tech.
+    r = client.get("/api/techs/me/passport", headers=agustin_auth)
+    check("tech gets own passport 200", r.status_code == 200)
+    passport = r.json()
+    check("initial level=bronze", passport["level"] == "bronze")
+
+    # SRS views same passport via /{id}
+    r = client.get(f"/api/techs/{agustin_id}/passport", headers=auth)
+    check("SRS views tech passport 200", r.status_code == 200)
+
+    # Tech cannot view another tech's passport
+    # (we don't have another tech user set up beyond Arlindo — try Arlindo)
+    r = client.post("/api/auth/login", json={"email": "arlindo@systemrapid.com", "password": JUAN_PWD})
+    arlindo_auth = {"Authorization": f"Bearer {r.json()['access_token']}"}
+    r = client.get(f"/api/techs/{agustin_id}/passport", headers=arlindo_auth)
+    check("tech cannot view other tech passport (403)", r.status_code == 403)
+
+    # Patch passport: SRS adds certifications + countries + skills
+    r = client.patch(
+        f"/api/techs/{agustin_id}/passport",
+        headers=auth,
+        json={
+            "certifications": [{"name": "CCNA", "issuer": "Cisco"}],
+            "skills": [{"name": "Audio systems", "tier": "advanced", "endorsed_count": 5}],
+            "languages": ["es", "en"],
+            "countries_covered": ["ES", "PT", "CL", "MX"],
+            "bio": "Top tech plantilla SRS — audio + network",
+        },
+    )
+    check("patch passport 200", r.status_code == 200)
+    check("patch stored certs", len(r.json()["certifications"]) == 1)
+    check("patch stored countries", len(r.json()["countries_covered"]) == 4)
+
+    # Rate the tech on the closed WO (wo_id)
+    r = client.post(
+        f"/api/work-orders/{wo_id}/rate-tech",
+        headers=auth,
+        json={
+            "score": 5.0,
+            "dimensions": {
+                "quality": 5, "punctuality": 5,
+                "communication": 5, "professionalism": 5,
+            },
+            "notes": "Flawless execution (smoke)",
+        },
+    )
+    check("rate-tech 201", r.status_code == 201, f"status={r.status_code}")
+    rated = r.json()
+    check("rating score=5", rated["rating"]["score"] == 5.0)
+    check(
+        "passport rating_avg=5.0",
+        rated["passport"]["rating_avg"] == 5.0,
+        f"avg={rated['passport']['rating_avg']}",
+    )
+    check("passport rating_count=1", rated["passport"]["rating_count"] == 1)
+
+    # Duplicate rating should 409 (unique index)
+    r = client.post(
+        f"/api/work-orders/{wo_id}/rate-tech",
+        headers=auth,
+        json={"score": 4.0},
+    )
+    check("duplicate rating 409", r.status_code == 409)
+
+    # List ratings on WO
+    r = client.get(f"/api/work-orders/{wo_id}/ratings", headers=auth)
+    check("list ratings", r.status_code == 200 and len(r.json()) == 1)
+
     # 12. Audit trail: verify rich entries exist for this work_order
     # We need direct DB access for this; connect via host mongo (127.0.0.1:6110)
     # If running inside api container, mongo host is 'mongo'.

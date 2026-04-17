@@ -50,6 +50,18 @@ async def _ensure_indexes() -> None:
     await db.work_orders.create_index([("tenant_id", 1), ("assigned_tech_user_id", 1), ("status", 1)])
     await db.work_orders.create_index([("tenant_id", 1), ("ball_in_court.side", 1), ("ball_in_court.since", 1)])
 
+    # --- Skill Passport + Tech Ratings (Modo 1, Decision #4) ---
+    # 1 passport per user (unique)
+    await db.skill_passports.create_index([("tenant_id", 1), ("user_id", 1)], unique=True)
+    await db.skill_passports.create_index([("tenant_id", 1), ("level", 1)])
+    await db.skill_passports.create_index([("tenant_id", 1), ("countries_covered", 1)])
+
+    # 1 rating per (work_order, rated_user) — unique
+    await db.tech_ratings.create_index(
+        [("work_order_id", 1), ("rated_user_id", 1)], unique=True
+    )
+    await db.tech_ratings.create_index([("tenant_id", 1), ("rated_user_id", 1), ("created_at", -1)])
+
     # --- Budget Approval Request (Modo 1, Decision #5 ball-in-court parts) ---
     await db.budget_approval_requests.create_index(
         [("tenant_id", 1), ("work_order_id", 1), ("created_at", -1)]
