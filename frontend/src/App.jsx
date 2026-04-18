@@ -12,6 +12,7 @@ import LoginPage from "./pages/auth/LoginPage";
 import SrsLayout from "./spaces/srs/Layout";
 import SrsHome from "./spaces/srs/HomePage";
 import WorkOrdersListPage from "./spaces/srs/ops/WorkOrdersListPage";
+import WorkOrderDetailPage from "./spaces/srs/ops/WorkOrderDetailPage";
 
 import ClientLayout from "./spaces/client/Layout";
 import ClientHome from "./spaces/client/HomePage";
@@ -64,6 +65,7 @@ export default function App() {
           >
             <Route index element={<SrsHome />} />
             <Route path="ops" element={<WorkOrdersListPage />} />
+            <Route path="ops/:wo_id" element={<WorkOrderDetailPage />} />
             <Route path="finance" element={<SrsHome />} />
             <Route path="admin" element={<SrsHome />} />
           </Route>
