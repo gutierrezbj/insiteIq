@@ -50,6 +50,17 @@ async def ensure_indexes() -> None:
     await db.work_orders.create_index([("tenant_id", 1), ("assigned_tech_user_id", 1), ("status", 1)])
     await db.work_orders.create_index([("tenant_id", 1), ("ball_in_court.side", 1), ("ball_in_court.since", 1)])
 
+    # --- Equipment Plan + Reconciliation (Modo 2 Decision #4) ---
+    await db.equipment_plan_entries.create_index(
+        [("tenant_id", 1), ("project_id", 1), ("status", 1)]
+    )
+    await db.equipment_plan_entries.create_index(
+        [("project_id", 1), ("serial_number", 1)]
+    )
+    await db.equipment_plan_entries.create_index(
+        [("project_id", 1), ("site_id", 1), ("status", 1)]
+    )
+
     # --- Modo 2 Rollout (projects + cluster_groups + bulk_uploads) ---
     await db.projects.create_index([("tenant_id", 1), ("code", 1)], unique=True)
     await db.projects.create_index([("tenant_id", 1), ("type", 1), ("status", 1)])

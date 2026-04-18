@@ -15,6 +15,7 @@ from app.routes import auth as auth_routes
 from app.routes import health as health_routes
 from app.routes import budget_approvals as budget_approvals_routes
 from app.routes import copilot_briefings as copilot_briefings_routes
+from app.routes import equipment as equipment_routes
 from app.routes import intervention_reports as intervention_reports_routes
 from app.routes import projects as projects_routes
 from app.routes import service_agreements as service_agreements_routes
@@ -65,6 +66,7 @@ app.include_router(intervention_reports_routes.router, prefix="/api")
 app.include_router(budget_approvals_routes.router, prefix="/api")
 app.include_router(skill_passports_routes.router, prefix="/api")
 app.include_router(projects_routes.router, prefix="/api")
+app.include_router(equipment_routes.router, prefix="/api")
 
 
 @app.get("/")

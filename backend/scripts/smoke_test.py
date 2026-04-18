@@ -626,6 +626,95 @@ def main() -> int:
     })
     check("CSV malformed rejected 400", r.status_code == 400)
 
+    # 19. Equipment reconciliation (Modo 2 Decision #4)
+    # Get the 3 smoke sites we just created via CSV upload for scanning.
+    r = client.get(
+        f"/api/sites?country=US", headers=auth
+    )
+    smoke_site = next((s for s in r.json()
+                       if s["code"].startswith(f"SMK-CSV-{ts_suffix}")), None)
+    # Fallback: any US site from the earlier non-CSV upload
+    if smoke_site is None:
+        r2 = client.get(f"/api/sites", headers=auth)
+        smoke_site = r2.json()[0]
+
+    # Upload plan entries for the new project — reuse new_proj_id
+    r = client.post(
+        f"/api/projects/{new_proj_id}/equipment-plan",
+        headers=auth,
+        json={
+            "source": "portal_upload",
+            "entries": [
+                {
+                    "site_id": smoke_site["id"],
+                    "serial_number": f"SN-SMOKE-{ts_suffix}-001",
+                    "make": "Cisco", "model": "C9300-24T", "category": "network",
+                },
+                {
+                    "site_id": smoke_site["id"],
+                    "serial_number": f"SN-SMOKE-{ts_suffix}-002",
+                    "make": "Samsung", "model": "QM55R", "category": "display",
+                },
+                {
+                    "site_id": smoke_site["id"],
+                    "serial_number": f"SN-SMOKE-{ts_suffix}-003",
+                    "make": "Cisco", "model": "AP-9130", "category": "network",
+                },
+            ],
+        },
+    )
+    check("equipment plan upload 201", r.status_code == 201)
+    check("plan inserted 3", r.json()["inserted"] == 3)
+
+    r = client.get(f"/api/projects/{new_proj_id}/equipment-plan", headers=auth)
+    check("list plan 3 entries", r.status_code == 200 and len(r.json()) == 3)
+
+    # Scan 2 of 3 at the site (1 match + 1 substitution setup)
+    # Serial 001 matches exactly
+    r = client.post(
+        f"/api/sites/{smoke_site['id']}/equipment/scan",
+        headers=auth,
+        json={
+            "serial_number": f"SN-SMOKE-{ts_suffix}-001",
+            "make": "Cisco", "model": "C9300-24T", "category": "network",
+        },
+    )
+    check("scan match 201", r.status_code == 201)
+    check("scan event installed", r.json()["event_type"] == "installed")
+
+    # Serial 099 — not in plan → will be sin_plan
+    r = client.post(
+        f"/api/sites/{smoke_site['id']}/equipment/scan",
+        headers=auth,
+        json={
+            "serial_number": f"SN-SMOKE-{ts_suffix}-099",
+            "make": "Unexpected", "model": "X-100", "category": "other",
+        },
+    )
+    check("scan sin_plan 201", r.status_code == 201)
+
+    # Run reconcile
+    r = client.post(f"/api/projects/{new_proj_id}/reconcile", headers=auth)
+    check("reconcile 200", r.status_code == 200)
+    recon = r.json()
+    check("reconcile returned counts dict",
+          isinstance(recon.get("counts"), dict)
+          and all(k in recon["counts"]
+                  for k in ("match", "substituted", "missing", "sin_plan", "conflicto")))
+    # With 3 planned + 2 scanned (1 match, 1 sin_plan): expect 1 match, 2 missing, 1 sin_plan
+    check("reconcile counts reasonable (match>=1, missing>=1, sin_plan>=1)",
+          recon["counts"]["match"] >= 1
+          and recon["counts"]["missing"] >= 1
+          and recon["counts"]["sin_plan"] >= 1)
+
+    # Get reconciliation report
+    r = client.get(f"/api/projects/{new_proj_id}/reconciliation", headers=auth)
+    check("get reconciliation 200", r.status_code == 200)
+    report = r.json()
+    check("report has plan_entries", len(report["plan_entries"]) == 3)
+    check("report entries have resolved status (not all planned)",
+          any(e["status"] != "planned" for e in report["plan_entries"]))
+
     # Create + activate a cluster
     r = client.post(f"/api/projects/{new_proj_id}/clusters", headers=auth, json={
         "code": "SMK-W1",
