@@ -581,12 +581,102 @@ class BulkUploadSiteEntry(BaseModel):
     notes: str | None = None
 
 
+# Canonical header aliases (Modo 2 Decision #1: plantilla cliente gana — aprendemos su mapping)
+CSV_HEADER_ALIASES: dict[str, list[str]] = {
+    "code": ["code", "site_code", "site code", "store code", "store_code",
+             "codigo", "cod", "ref", "reference", "id"],
+    "name": ["name", "site_name", "site name", "store_name", "store name",
+             "tienda", "nombre", "nombre tienda"],
+    "country": ["country", "pais", "country_code", "country code", "cc"],
+    "city": ["city", "ciudad", "town", "localidad"],
+    "address": ["address", "direccion", "dirección", "location", "ubicacion",
+                "street"],
+    "timezone": ["timezone", "tz", "time_zone", "time zone", "zona horaria"],
+    "has_physical_resident": ["has_physical_resident", "resident", "onsite_staff",
+                              "staffed_24x7"],
+    "notes": ["notes", "notas", "comments", "observations", "observaciones"],
+}
+
+
+def _normalize_header(h: str) -> str | None:
+    """Map a CSV column header to a canonical BulkUploadSiteEntry field, or None."""
+    key = h.strip().lower()
+    for canonical, aliases in CSV_HEADER_ALIASES.items():
+        if key in [a.lower() for a in aliases]:
+            return canonical
+    return None
+
+
+def _parse_csv_sites(csv_text: str) -> tuple[list[dict], list[str]]:
+    """
+    Parse raw CSV text into list of site dicts. Returns (sites, parse_notes).
+    Accepts common client header variants. Missing required fields -> skipped row
+    with a note in parse_notes.
+    """
+    import csv as stdlib_csv
+    import io
+
+    notes: list[str] = []
+    reader = stdlib_csv.DictReader(io.StringIO(csv_text))
+
+    if not reader.fieldnames:
+        notes.append("CSV has no header row — aborting parse")
+        return [], notes
+
+    # Map original header -> canonical
+    header_map: dict[str, str] = {}
+    unmapped: list[str] = []
+    for h in reader.fieldnames:
+        canonical = _normalize_header(h)
+        if canonical:
+            header_map[h] = canonical
+        else:
+            unmapped.append(h)
+    if unmapped:
+        notes.append(f"Columns ignored (no canonical mapping): {unmapped}")
+
+    # Verify required fields reachable
+    reachable = set(header_map.values())
+    required = {"code", "name", "country"}
+    missing = required - reachable
+    if missing:
+        notes.append(f"Required canonical columns missing: {sorted(missing)} — "
+                     f"provide aliases like {[CSV_HEADER_ALIASES[m] for m in missing]}")
+        return [], notes
+
+    sites: list[dict] = []
+    for row_idx, row in enumerate(reader, start=2):  # row 1 is header
+        mapped: dict[str, str] = {}
+        for orig_h, canonical in header_map.items():
+            val = (row.get(orig_h) or "").strip()
+            if val:
+                mapped[canonical] = val
+
+        if not mapped.get("code") or not mapped.get("name") or not mapped.get("country"):
+            notes.append(f"Row {row_idx} skipped — missing required field(s)")
+            continue
+
+        if "has_physical_resident" in mapped:
+            v = mapped["has_physical_resident"].lower()
+            mapped["has_physical_resident"] = v in ("true", "yes", "y", "1", "si", "sí")
+        else:
+            mapped["has_physical_resident"] = False
+
+        sites.append(mapped)
+
+    notes.append(f"Parsed {len(sites)} valid rows from CSV")
+    return sites, notes
+
+
 class BulkUploadBody(BaseModel):
     model_config = ConfigDict(extra="ignore")
     source: BulkUploadSource
     original_filename: str | None = None
     raw_content_inline: str | None = None
-    sites: list[BulkUploadSiteEntry]
+    sites: list[BulkUploadSiteEntry] = Field(default_factory=list)
+    # OR provide raw CSV text (Modo 2 Decision #1 — plantilla cliente gana).
+    # When csv_content is given, `sites` is ignored and CSV parsed on server.
+    csv_content: str | None = None
 
 
 @router.post("/projects/{project_id}/bulk-upload", status_code=status.HTTP_201_CREATED)
@@ -596,17 +686,31 @@ async def bulk_upload(
     user: CurrentUser = Depends(get_current_user),
 ):
     """
-    Accept pre-parsed sites from client data (Excel/email/upload/paste).
-    For v1 Fase 2 first pass: body is a JSON list of sites.
-    CSV/XLS parsing + LLM mapping come in a subsequent commit.
-    Regla dura: Excel del cliente es autoritativo. Este upload crea sites y
-    registra el evento con changelog (supersede cuando hay re-uploads).
+    Accept client data in two shapes (Modo 2 Decision #1 — plantilla cliente gana):
+      (A) Pre-parsed JSON: `sites` list of canonical SiteEntry
+      (B) Raw CSV: `csv_content` text (header aliases normalized on server)
+    Provide ONE of the two. CSV takes precedence if both given.
+    Regla dura: Excel/CSV del cliente es autoritativo. Sub-uploads con
+    changelog preservado.
     """
     if not user.has_space("srs_coordinators"):
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Only SRS coord")
     db = get_db()
     p = await _load_project(db, project_id, user)
     client_org_id = p["client_organization_id"]
+
+    # Normalize input: CSV parsed -> site entries; else use JSON sites.
+    parse_notes: list[str] = []
+    if body.csv_content:
+        parsed_dicts, parse_notes = _parse_csv_sites(body.csv_content)
+        body.sites = [BulkUploadSiteEntry(**d) for d in parsed_dicts]
+
+    if not body.sites:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            f"No valid site rows. Notes: {parse_notes}" if parse_notes
+            else "Provide either `sites` JSON list or `csv_content` text",
+        )
 
     # Previous upload to supersede?
     prev = await db.bulk_upload_events.find_one(
@@ -676,7 +780,7 @@ async def bulk_upload(
         "sites_created": sites_created,
         "sites_updated": sites_updated,
         "equipment_entries": 0,
-        "parsing_notes": [],
+        "parsing_notes": parse_notes,
         "supersedes_event_id": supersedes_id,
         "changelog": changelog,
         "status": "applied",

@@ -603,6 +603,29 @@ def main() -> int:
     r = client.get(f"/api/projects/{new_proj_id}/bulk-uploads", headers=auth)
     check("list bulk uploads", r.status_code == 200 and len(r.json()) == 1)
 
+    # CSV bulk_upload with mixed ES/EN aliased headers
+    ts_suffix = int(time.time()) + 1
+    csv_content = (
+        "Codigo,Store Name,Pais,Ciudad,Timezone\n"
+        f"SMK-CSV-{ts_suffix}-A,ZARA Test ES,ES,Madrid,Europe/Madrid\n"
+        f"SMK-CSV-{ts_suffix}-B,CH Test US,US,New York,America/New_York\n"
+    )
+    r = client.post(f"/api/projects/{new_proj_id}/bulk-upload", headers=auth, json={
+        "source": "clipboard_paste",
+        "csv_content": csv_content,
+    })
+    check("CSV bulk upload 201", r.status_code == 201, f"status={r.status_code}")
+    csv_event = r.json()
+    check("CSV sites_created=2", csv_event["sites_created"] == 2)
+    check("CSV parsing_notes present", len(csv_event.get("parsing_notes", [])) > 0)
+
+    # CSV with wrong columns should 400
+    r = client.post(f"/api/projects/{new_proj_id}/bulk-upload", headers=auth, json={
+        "source": "clipboard_paste",
+        "csv_content": "xxx,yyy\n1,2\n",
+    })
+    check("CSV malformed rejected 400", r.status_code == 400)
+
     # Create + activate a cluster
     r = client.post(f"/api/projects/{new_proj_id}/clusters", headers=auth, json={
         "code": "SMK-W1",
