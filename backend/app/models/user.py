@@ -4,6 +4,7 @@ A user can belong to multiple spaces (Juan = srs_coordinators, Arlindo = tech_fi
 employment_type differentiates SRS staff from external subcontractors.
 email_provisioned_by_srs tracks when client contract requires SRS-domain email for externals.
 """
+from datetime import datetime
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
@@ -44,6 +45,11 @@ class User(BaseMongoModel):
     email_provisioned_by_srs: bool = False  # true when client contract required it
 
     space_memberships: list[SpaceMembership] = Field(default_factory=list)
+
+    # Password rotation (first-login flow). Seed sets this to True so the
+    # default password "InsiteIQ2026!" is replaced by the user on first access.
+    must_change_password: bool = False
+    password_changed_at: datetime | None = None
 
     last_login_at: str | None = None
     notes: str | None = None

@@ -6,7 +6,7 @@ Domain audit event is written on successful login so we can forensically trace
 who accessed the system and when, even if HTTP middleware output is rotated.
 """
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr
 
 from app.core.config import settings
 from app.core.dependencies import CurrentUser, get_current_user
@@ -14,6 +14,7 @@ from app.core.security import (
     create_access_token,
     create_refresh_token,
     decode_token,
+    hash_password,
     verify_password,
 )
 from app.database import get_db
@@ -155,8 +156,98 @@ async def refresh(body: RefreshRequest):
 
 @router.get("/me")
 async def me(user: CurrentUser = Depends(get_current_user)):
+    db = get_db()
+    profile_extras = {}
+    if db is not None:
+        try:
+            from bson import ObjectId
+            doc = await db.users.find_one(
+                {"_id": ObjectId(user.user_id)},
+                {"must_change_password": 1, "email": 1, "full_name": 1, "password_changed_at": 1},
+            )
+            if doc:
+                profile_extras = {
+                    "email": doc.get("email"),
+                    "full_name": doc.get("full_name"),
+                    "must_change_password": bool(doc.get("must_change_password")),
+                    "password_changed_at": doc.get("password_changed_at"),
+                }
+        except Exception:
+            pass
     return {
         "id": user.user_id,
         "tenant_id": user.tenant_id,
         "memberships": user.memberships,
+        **profile_extras,
     }
+
+
+class ChangePasswordBody(BaseModel):
+    current_password: str
+    new_password: str
+
+
+@router.post("/change-password")
+async def change_password(
+    body: ChangePasswordBody,
+    user: CurrentUser = Depends(get_current_user),
+):
+    """
+    User rotates their own password. Requires current password. Clears the
+    must_change_password flag. Audited.
+    """
+    if len(body.new_password) < 10:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            "New password must be at least 10 characters",
+        )
+    if body.new_password == body.current_password:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            "New password must differ from current",
+        )
+
+    db = get_db()
+    if db is None:
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "DB not ready")
+
+    from bson import ObjectId
+    try:
+        doc = await db.users.find_one({"_id": ObjectId(user.user_id)})
+    except Exception:
+        doc = None
+    if not doc or not doc.get("is_active", True):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "User not active")
+
+    hashed = doc.get("hashed_password")
+    if not hashed or not verify_password(body.current_password, hashed):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Current password invalid")
+
+    from datetime import datetime, timezone
+    from app.core.security import hash_password
+
+    now = datetime.now(timezone.utc)
+    new_hash = hash_password(body.new_password)
+    await db.users.update_one(
+        {"_id": ObjectId(user.user_id)},
+        {
+            "$set": {
+                "hashed_password": new_hash,
+                "must_change_password": False,
+                "password_changed_at": now,
+                "updated_at": now,
+                "updated_by": user.user_id,
+            }
+        },
+    )
+
+    await write_audit_event(
+        db,
+        tenant_id=user.tenant_id,
+        actor_user_id=user.user_id,
+        action="auth.change_password",
+        entity_refs=[{"collection": "users", "id": user.user_id}],
+        context_snapshot={"self_rotation": True},
+    )
+
+    return {"ok": True, "password_changed_at": now.isoformat()}

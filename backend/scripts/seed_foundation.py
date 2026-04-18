@@ -1351,7 +1351,8 @@ def _org(tenant_id: str, *, legal_name: str, display_name: str, country: str,
 
 def _user(tenant_id: str, hashed_pwd: str, *, email: str, full_name: str,
           country: str, employment: str, memberships: list[dict],
-          email_provisioned: bool = False) -> dict:
+          email_provisioned: bool = False,
+          must_change_password: bool = True) -> dict:
     return {
         "tenant_id": tenant_id,
         "email": email.lower(),
@@ -1362,6 +1363,9 @@ def _user(tenant_id: str, hashed_pwd: str, *, email: str, full_name: str,
         "employment_type": employment,
         "email_provisioned_by_srs": email_provisioned,
         "space_memberships": memberships,
+        # Seed default password forces rotation on first login
+        "must_change_password": must_change_password,
+        "password_changed_at": None,
         "created_at": _now(),
         "updated_at": _now(),
     }
