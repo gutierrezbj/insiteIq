@@ -164,12 +164,10 @@ export default function SrsHome() {
 // -------------------- Row components --------------------
 
 function ProjectRow({ p, delayMs }) {
-  const progress = p.total_sites_target
-    ? 0  // no data on closed count here; leave 0 without extra call
-    : null;
   return (
-    <div
-      className="stagger-item px-4 py-3 hover:bg-surface-overlay/60 transition-colors duration-fast"
+    <Link
+      to={`/srs/projects/${p.id}`}
+      className="stagger-item block px-4 py-3 hover:bg-surface-overlay/60 transition-colors duration-fast"
       style={{ animationDelay: `${delayMs}ms` }}
     >
       <div className="flex items-center justify-between gap-3">
@@ -190,7 +188,7 @@ function ProjectRow({ p, delayMs }) {
         )}
         {p.po_number && <span>PO {p.po_number}</span>}
       </div>
-    </div>
+    </Link>
   );
 }
 

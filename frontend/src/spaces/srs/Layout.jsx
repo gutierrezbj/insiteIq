@@ -9,7 +9,8 @@ import { useAuth } from "../../contexts/AuthContext";
 
 const nav = [
   { to: "/srs", label: "Overview", end: true },
-  { to: "/srs/ops", label: "Operations" },
+  { to: "/srs/ops", label: "Work Orders" },
+  { to: "/srs/projects", label: "Projects" },
   { to: "/srs/finance", label: "Finance" },
   { to: "/srs/admin", label: "Admin" },
 ];
