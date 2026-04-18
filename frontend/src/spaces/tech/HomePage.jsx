@@ -1,29 +1,121 @@
 /**
- * Tech Home — Foundation placeholder.
- * Real Jobs list, Copilot Briefing, PWA Capture land in Fase 1 + Fase 5.
+ * Tech Home — Fase 2 plumbing.
+ * Cirujano de campo personality: alto contraste, grandes touch targets,
+ * todo a la mano, estado claro por WO.
  */
+import { useMemo } from "react";
 import { useAuth } from "../../contexts/AuthContext";
+import { useFetch } from "../../lib/useFetch";
+import { StatusBadge, SeverityBadge } from "../../components/ui/Badges";
 
 export default function TechHome() {
   const { user } = useAuth();
+  const { data: wos, loading } = useFetch("/work-orders?limit=100");
+
+  const myWos = useMemo(() => {
+    if (!wos) return { active: [], done: [] };
+    const mine = wos.filter((w) => w.assigned_tech_user_id === user?.id);
+    const active = mine.filter(
+      (w) => !["closed", "cancelled"].includes(w.status)
+    );
+    const done = mine.filter((w) =>
+      ["closed", "cancelled"].includes(w.status)
+    );
+    return { active, done };
+  }, [wos, user]);
 
   return (
     <div>
-      <div className="accent-bar pl-4 mb-5">
-        <div className="label-caps">Your jobs</div>
-        <h1 className="font-display text-xl text-text-primary">No active assignments</h1>
+      {/* Header */}
+      <div className="accent-bar pl-3 mb-5">
+        <div className="label-caps text-text-secondary">Trabajos</div>
+        <h1 className="font-display text-xl text-text-primary leading-tight">
+          {myWos.active.length} activos
+        </h1>
       </div>
 
-      <div className="accent-bar bg-surface-raised rounded-md p-5 font-body text-text-secondary text-sm">
-        <p>
-          Field workspace ready, {user?.full_name?.split(" ")[0] || "technician"}. Assignments
-          will arrive here when Modo 1 Reactive goes live (Fase 1).
-        </p>
-        <p className="mt-3 text-text-tertiary">
-          You will not be able to start a job without confirming the Copilot Briefing
-          (Domain 10 Knowledge, Blueprint v1.1).
-        </p>
+      {/* Active jobs — prominent */}
+      {myWos.active.length === 0 && !loading && (
+        <div className="bg-surface-raised rounded-md p-5 font-body text-text-secondary">
+          No tienes trabajos activos asignados ahora mismo.
+        </div>
+      )}
+
+      <div className="space-y-3 mb-6">
+        {myWos.active.map((w) => (
+          <ActiveJobCard key={w.id} wo={w} />
+        ))}
+      </div>
+
+      {/* Done recent */}
+      {myWos.done.length > 0 && (
+        <section>
+          <div className="label-caps mb-2">Historico reciente</div>
+          <div className="bg-surface-raised rounded-md divide-y divide-surface-border">
+            {myWos.done.slice(0, 5).map((w) => (
+              <div key={w.id} className="px-3 py-2.5">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+                      {w.reference}
+                    </div>
+                    <div className="font-body text-sm text-text-primary truncate">
+                      {w.title}
+                    </div>
+                  </div>
+                  <StatusBadge status={w.status} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <p className="mt-6 text-text-tertiary font-mono text-2xs uppercase tracking-widest-srs">
+        PWA mode · actions pendientes Fase 4
+      </p>
+    </div>
+  );
+}
+
+function ActiveJobCard({ wo }) {
+  return (
+    <div className="bg-surface-raised accent-bar rounded-md p-4">
+      <div className="flex items-start justify-between gap-2 mb-2">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+              {wo.reference}
+            </span>
+            <SeverityBadge severity={wo.severity} />
+          </div>
+          <div className="font-display text-base text-text-primary leading-tight">
+            {wo.title}
+          </div>
+        </div>
+      </div>
+      <div className="flex items-center gap-2 mt-2">
+        <StatusBadge status={wo.status} />
+        {wo.deadline_resolve_at && (
+          <span className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+            resolve in {formatDeadline(wo.deadline_resolve_at)}
+          </span>
+        )}
       </div>
     </div>
   );
+}
+
+function formatDeadline(iso) {
+  if (!iso) return "—";
+  const t = new Date(iso).getTime();
+  if (isNaN(t)) return "—";
+  const delta = t - Date.now();
+  const past = delta < 0;
+  const abs = Math.abs(delta);
+  const hours = Math.floor(abs / (1000 * 60 * 60));
+  const days = Math.floor(hours / 24);
+  if (past) return days > 0 ? `OVERDUE ${days}d` : "OVERDUE";
+  if (hours < 24) return `${hours}h`;
+  return `${days}d`;
 }
