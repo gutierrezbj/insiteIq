@@ -25,6 +25,7 @@ import ActionDialog, {
   DialogTextarea,
   DialogCheckbox,
 } from "../../../components/ui/ActionDialog";
+import PartsSection from "../../../components/workorder/PartsSection";
 
 // The 7 stages per Blueprint Modo 1 Decision #1
 const STAGES = [
@@ -231,6 +232,9 @@ export default function WorkOrderDetailPage() {
           </div>
         </section>
       )}
+
+      {/* Parts / Budget approvals */}
+      <PartsSection wo={wo} isSrs={isSrs} isClient={isClient} />
 
       {/* Related tabs stub */}
       <section className="bg-surface-raised accent-bar rounded-sm p-4 mt-4">
