@@ -4,6 +4,7 @@
  * todo a la mano, estado claro por WO.
  */
 import { useMemo } from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { useFetch } from "../../lib/useFetch";
 import { StatusBadge, SeverityBadge } from "../../components/ui/Badges";
@@ -80,7 +81,10 @@ export default function TechHome() {
 
 function ActiveJobCard({ wo }) {
   return (
-    <div className="bg-surface-raised accent-bar rounded-md p-4">
+    <Link
+      to={`/tech/ops/${wo.id}`}
+      className="block bg-surface-raised accent-bar rounded-md p-4 active:bg-surface-overlay/70 hover:bg-surface-overlay/50 transition-colors duration-fast"
+    >
       <div className="flex items-start justify-between gap-2 mb-2">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 mb-1">
@@ -93,6 +97,9 @@ function ActiveJobCard({ wo }) {
             {wo.title}
           </div>
         </div>
+        <span className="font-mono text-2xs uppercase tracking-widest-srs text-primary-light flex-shrink-0">
+          →
+        </span>
       </div>
       <div className="flex items-center gap-2 mt-2">
         <StatusBadge status={wo.status} />
@@ -102,7 +109,7 @@ function ActiveJobCard({ wo }) {
           </span>
         )}
       </div>
-    </div>
+    </Link>
   );
 }
 

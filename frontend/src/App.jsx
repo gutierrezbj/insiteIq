@@ -116,6 +116,7 @@ export default function App() {
             }
           >
             <Route index element={<TechHome />} />
+            <Route path="ops/:wo_id" element={<WorkOrderDetailPage />} />
             <Route path="briefing" element={<TechHome />} />
             <Route path="profile" element={<TechHome />} />
           </Route>

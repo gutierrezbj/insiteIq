@@ -1,10 +1,17 @@
 /**
  * SRS Ops — Work Order detail.
- * Read-only view (Pasito C). Actions (advance, rate, parts) come later.
+ * Pasito C (read-only view) + Pasito G (actions: advance / cancel / preflight /
+ * briefing ack / capture submit / rate tech).
+ *
+ * Buttons render based on (current status × user role × tech assignment).
+ * State machine legality is enforced by the backend; the UI just hides what
+ * would 400 out of the gate.
  */
-import { useMemo } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useState } from "react";
+import { Link, useLocation, useParams } from "react-router-dom";
 import { useFetch } from "../../../lib/useFetch";
+import { api } from "../../../lib/api";
+import { useAuth } from "../../../contexts/AuthContext";
 import {
   BallBadge,
   SeverityBadge,
@@ -12,6 +19,12 @@ import {
   StatusBadge,
   formatAge,
 } from "../../../components/ui/Badges";
+import ActionDialog, {
+  DialogLabel,
+  DialogInput,
+  DialogTextarea,
+  DialogCheckbox,
+} from "../../../components/ui/ActionDialog";
 
 // The 7 stages per Blueprint Modo 1 Decision #1
 const STAGES = [
@@ -27,23 +40,37 @@ const STAGES = [
 
 export default function WorkOrderDetailPage() {
   const { wo_id } = useParams();
+  const { user } = useAuth();
+  const location = useLocation();
 
-  const { data: wo, loading, error } = useFetch(`/work-orders/${wo_id}`, {
-    deps: [wo_id],
-  });
+  const { data: wo, loading, error, reload } = useFetch(
+    `/work-orders/${wo_id}`,
+    { deps: [wo_id] }
+  );
 
   if (loading) return <CenteredMessage text="cargando…" />;
   if (error) return <CenteredMessage text={`error: ${error.message}`} />;
   if (!wo) return <CenteredMessage text="—" />;
 
+  const isSrs = !!user?.memberships?.some((m) => m.space === "srs_coordinators");
+  const isClient = !!user?.memberships?.some((m) => m.space === "client_coordinator");
+  const isAssignedTech =
+    !!user?.memberships?.some((m) => m.space === "tech_field") &&
+    wo.assigned_tech_user_id === user?.id;
+
+  // Stay within whichever space the user is browsing (tech PWA vs SRS cockpit)
+  const inTech = location.pathname.startsWith("/tech");
+  const backHref = inTech ? "/tech" : "/srs/ops";
+  const backLabel = inTech ? "Mis trabajos" : "Work orders";
+
   return (
-    <div className="px-8 py-7 max-w-wide">
+    <div className="px-4 md:px-8 py-5 md:py-7 max-w-wide">
       {/* Back link */}
       <Link
-        to="/srs/ops"
+        to={backHref}
         className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary hover:text-primary-light inline-block mb-3"
       >
-        ← Work orders
+        ← {backLabel}
       </Link>
 
       {/* Header */}
@@ -64,6 +91,15 @@ export default function WorkOrderDetailPage() {
           </p>
         )}
       </div>
+
+      {/* Actions bar — buttons appear based on status × role × assignment */}
+      <ActionBar
+        wo={wo}
+        reload={reload}
+        isSrs={isSrs}
+        isClient={isClient}
+        isAssignedTech={isAssignedTech}
+      />
 
       {/* State + Ball banner */}
       <section className="bg-surface-raised accent-bar rounded-sm p-4 mb-5 flex flex-wrap gap-5 items-center">
@@ -240,9 +276,494 @@ export default function WorkOrderDetailPage() {
       </section>
 
       <p className="mt-6 text-text-tertiary font-mono text-2xs uppercase tracking-widest-srs">
-        Fase 2 plumbing · read-only · acciones (advance/close/rate) pendientes
+        Fase 2 plumbing · state-machine vivo · audit_log graba todo
       </p>
     </div>
+  );
+}
+
+// -------------------- Action bar + actions --------------------
+
+// Advance targets per current status (happy path + quick back-steps).
+// Every target is re-validated by the backend state machine; this list
+// just filters what we ever show the user.
+const ADVANCE_TARGETS = {
+  intake:     [{ to: "triage",     label: "Pasar a triage" }],
+  triage:     [{ to: "pre_flight", label: "A pre-flight" }],
+  pre_flight: [
+    { to: "dispatched", label: "Dispatch" },
+    { to: "triage",     label: "Volver a triage", soft: true },
+  ],
+  dispatched: [
+    { to: "en_route",   label: "En ruta" },
+    { to: "triage",     label: "Volver a triage", soft: true },
+  ],
+  en_route:   [{ to: "on_site",  label: "Check-in on site", handshake: "check_in" }],
+  on_site:    [
+    { to: "resolved",  label: "Resolver", handshake: "resolution" },
+    { to: "en_route",  label: "Sali a por partes", soft: true },
+  ],
+  resolved:   [
+    { to: "closed",    label: "Cerrar WO", handshake: "closure" },
+    { to: "on_site",   label: "Reabrir on-site", soft: true },
+  ],
+  closed:     [],
+  cancelled:  [],
+};
+
+function ActionBar({ wo, reload, isSrs, isClient, isAssignedTech }) {
+  const status = wo.status;
+  const isTerminal = status === "closed" || status === "cancelled";
+
+  // Who is allowed to advance to what (mirrors backend auth)
+  const srsOnlyTargets = new Set(["triage", "pre_flight", "closed"]);
+  const srsOrTechTargets = new Set(["en_route", "on_site", "resolved"]);
+
+  const availableAdvance = (ADVANCE_TARGETS[status] || []).filter((t) => {
+    if (srsOnlyTargets.has(t.to)) return isSrs;
+    if (srsOrTechTargets.has(t.to)) return isSrs || isAssignedTech;
+    // Back-steps + other transitions: SRS can do it
+    return isSrs;
+  });
+
+  // Nothing to do on this WO for this user
+  const canRate =
+    (isSrs || isClient) &&
+    (status === "resolved" || status === "closed") &&
+    !!wo.assigned_tech_user_id;
+  const canCancel = isSrs && !isTerminal;
+  const canPreflight = (isSrs || isAssignedTech) && status === "pre_flight";
+  const canAckBriefing = isAssignedTech && status === "dispatched";
+  const canSubmitCapture = isAssignedTech && status === "on_site";
+
+  const hasAny =
+    availableAdvance.length > 0 ||
+    canRate ||
+    canCancel ||
+    canPreflight ||
+    canAckBriefing ||
+    canSubmitCapture;
+
+  if (!hasAny) return null;
+
+  return (
+    <section className="bg-surface-raised accent-bar rounded-sm p-4 mb-5">
+      <div className="label-caps mb-3">Acciones disponibles</div>
+      <div className="flex flex-wrap gap-2">
+        {availableAdvance.map((t) => (
+          <AdvanceAction
+            key={t.to}
+            wo={wo}
+            target={t.to}
+            label={t.label}
+            handshake={t.handshake}
+            soft={t.soft}
+            isSrs={isSrs}
+            reload={reload}
+          />
+        ))}
+        {canPreflight && <PreflightAction wo={wo} reload={reload} />}
+        {canAckBriefing && <AckBriefingAction wo={wo} reload={reload} />}
+        {canSubmitCapture && <SubmitCaptureAction wo={wo} reload={reload} />}
+        {canRate && <RateTechAction wo={wo} reload={reload} isClient={isClient} />}
+        {canCancel && <CancelAction wo={wo} reload={reload} />}
+      </div>
+    </section>
+  );
+}
+
+function ActionButton({ onClick, label, tone = "default" }) {
+  const toneClass =
+    tone === "destructive"
+      ? "bg-danger text-text-inverse hover:bg-danger/90 hover:shadow-glow-danger"
+      : tone === "soft"
+      ? "bg-surface-overlay text-text-secondary border border-surface-border hover:text-text-primary hover:border-primary"
+      : "bg-primary text-text-inverse hover:bg-primary-light hover:shadow-glow-primary";
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`font-mono font-semibold uppercase tracking-widest-srs text-2xs px-3 py-2 rounded-sm transition-all duration-fast ease-out-expo ${toneClass}`}
+    >
+      {label}
+    </button>
+  );
+}
+
+function AdvanceAction({ wo, target, label, handshake, soft, isSrs, reload }) {
+  const [open, setOpen] = useState(false);
+  const [notes, setNotes] = useState("");
+  const [emergency, setEmergency] = useState(false);
+
+  const isDispatch = wo.status === "pre_flight" && target === "dispatched";
+  const isEnRoute = wo.status === "dispatched" && target === "en_route";
+  const isResolve = wo.status === "on_site" && target === "resolved";
+  const needsEmergencyHint = isDispatch || isEnRoute || isResolve;
+
+  async function submit() {
+    const body = { target_status: target, notes: notes || undefined };
+    if (handshake) body.handshake = handshake;
+    if (emergency) body.emergency = true;
+    await api.post(`/work-orders/${wo.id}/advance`, body);
+    reload();
+  }
+
+  return (
+    <>
+      <ActionButton
+        onClick={() => setOpen(true)}
+        label={label}
+        tone={soft ? "soft" : "default"}
+      />
+      <ActionDialog
+        open={open}
+        onClose={() => setOpen(false)}
+        title={label}
+        subtitle={`${wo.status} → ${target}`}
+        submitLabel={label}
+        onSubmit={submit}
+      >
+        <div>
+          <DialogLabel htmlFor="notes" optional>
+            Notas
+          </DialogLabel>
+          <DialogTextarea
+            id="notes"
+            rows={3}
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Contexto breve — opcional, queda en audit_log"
+          />
+        </div>
+        {needsEmergencyHint && isSrs && (
+          <div className="bg-surface-base rounded-sm p-3 border border-surface-border">
+            <DialogCheckbox
+              id="emergency"
+              label="Override emergency (bypassa guards)"
+              checked={emergency}
+              onChange={setEmergency}
+            />
+            <p className="mt-1.5 text-2xs text-text-tertiary font-mono uppercase tracking-widest-srs">
+              {isDispatch && "pre-flight all_green, o emergency"}
+              {isEnRoute && "briefing acknowledged, o emergency"}
+              {isResolve && "tech capture submitted, o emergency"}
+            </p>
+          </div>
+        )}
+      </ActionDialog>
+    </>
+  );
+}
+
+function PreflightAction({ wo, reload }) {
+  const [open, setOpen] = useState(false);
+  const existing = wo.pre_flight_checklist || {};
+  const [kit, setKit] = useState(!!existing.kit_verified);
+  const [parts, setParts] = useState(!!existing.parts_ready);
+  const [siteBible, setSiteBible] = useState(!!existing.site_bible_read);
+
+  const allGreen = kit && parts && siteBible;
+
+  async function submit() {
+    await api.post(`/work-orders/${wo.id}/preflight`, {
+      checklist: {
+        kit_verified: kit,
+        parts_ready: parts,
+        site_bible_read: siteBible,
+        all_green: allGreen,
+      },
+    });
+    reload();
+  }
+
+  return (
+    <>
+      <ActionButton
+        onClick={() => setOpen(true)}
+        label="Pre-flight checklist"
+        tone="soft"
+      />
+      <ActionDialog
+        open={open}
+        onClose={() => setOpen(false)}
+        title="Pre-flight checklist"
+        subtitle="Todo verde desbloquea dispatch sin emergency"
+        submitLabel="Guardar"
+        onSubmit={submit}
+      >
+        <DialogCheckbox
+          id="kit"
+          label="Kit verificado (laptop, cables, herramientas)"
+          checked={kit}
+          onChange={setKit}
+        />
+        <DialogCheckbox
+          id="parts"
+          label="Partes listas (si aplica)"
+          checked={parts}
+          onChange={setParts}
+        />
+        <DialogCheckbox
+          id="sitebible"
+          label="Site Bible leido"
+          checked={siteBible}
+          onChange={setSiteBible}
+        />
+        <div
+          className={`font-mono text-2xs uppercase tracking-widest-srs mt-2 ${
+            allGreen ? "text-success" : "text-text-tertiary"
+          }`}
+        >
+          {allGreen ? "· all_green" : "· falta"}
+        </div>
+      </ActionDialog>
+    </>
+  );
+}
+
+function AckBriefingAction({ wo, reload }) {
+  const [open, setOpen] = useState(false);
+
+  async function submit() {
+    await api.post(`/work-orders/${wo.id}/briefing/acknowledge`, {});
+    reload();
+  }
+
+  return (
+    <>
+      <ActionButton
+        onClick={() => setOpen(true)}
+        label="Acknowledge briefing"
+      />
+      <ActionDialog
+        open={open}
+        onClose={() => setOpen(false)}
+        title="Acknowledge Copilot briefing"
+        subtitle="Requerido antes de marcar en ruta"
+        submitLabel="Confirmar"
+        onSubmit={submit}
+      >
+        <p className="font-body text-sm text-text-secondary">
+          Confirmo que lei el briefing asignado a este work order. Queda
+          registrado en audit_log con mi user_id y timestamp.
+        </p>
+      </ActionDialog>
+    </>
+  );
+}
+
+function SubmitCaptureAction({ wo, reload }) {
+  const [open, setOpen] = useState(false);
+  const [whatFound, setWhatFound] = useState("");
+  const [whatDid, setWhatDid] = useState("");
+  const [siteNew, setSiteNew] = useState("");
+  const [minutes, setMinutes] = useState("");
+  const [followUp, setFollowUp] = useState(false);
+  const [followUpNotes, setFollowUpNotes] = useState("");
+
+  const canSubmit = whatFound.trim().length > 0 && whatDid.trim().length > 0;
+
+  async function submit() {
+    const body = {
+      what_found: whatFound,
+      what_did: whatDid,
+      anything_new_about_site: siteNew || null,
+      time_on_site_minutes: minutes ? parseInt(minutes, 10) : null,
+      follow_up_needed: followUp,
+      follow_up_notes: followUp ? followUpNotes || null : null,
+      devices_touched: [],
+      photos: [],
+      parts_used: [],
+    };
+    await api.post(`/work-orders/${wo.id}/capture/submit`, body);
+    reload();
+  }
+
+  return (
+    <>
+      <ActionButton onClick={() => setOpen(true)} label="Submit capture" />
+      <ActionDialog
+        open={open}
+        onClose={() => setOpen(false)}
+        title="Tech Capture"
+        subtitle="Ritual post-intervencion — requerido antes de resolver"
+        submitLabel="Submit capture"
+        submitDisabled={!canSubmit}
+        onSubmit={submit}
+      >
+        <div>
+          <DialogLabel htmlFor="cap-found">Que encontraste</DialogLabel>
+          <DialogTextarea
+            id="cap-found"
+            rows={3}
+            value={whatFound}
+            onChange={(e) => setWhatFound(e.target.value)}
+            placeholder="Sintomas, causa raiz, estado al llegar"
+            required
+          />
+        </div>
+        <div>
+          <DialogLabel htmlFor="cap-did">Que hiciste</DialogLabel>
+          <DialogTextarea
+            id="cap-did"
+            rows={3}
+            value={whatDid}
+            onChange={(e) => setWhatDid(e.target.value)}
+            placeholder="Pasos ejecutados, partes tocadas, resultado"
+            required
+          />
+        </div>
+        <div>
+          <DialogLabel htmlFor="cap-new" optional>
+            Algo nuevo sobre el sitio
+          </DialogLabel>
+          <DialogTextarea
+            id="cap-new"
+            rows={2}
+            value={siteNew}
+            onChange={(e) => setSiteNew(e.target.value)}
+            placeholder="Cambio de acceso, layout, contacto, rack…"
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <DialogLabel htmlFor="cap-min" optional>
+              Tiempo on site (min)
+            </DialogLabel>
+            <DialogInput
+              id="cap-min"
+              type="number"
+              min="0"
+              value={minutes}
+              onChange={(e) => setMinutes(e.target.value)}
+              placeholder="90"
+            />
+          </div>
+          <div className="flex items-end">
+            <DialogCheckbox
+              id="cap-follow"
+              label="Requiere follow-up"
+              checked={followUp}
+              onChange={setFollowUp}
+            />
+          </div>
+        </div>
+        {followUp && (
+          <div>
+            <DialogLabel htmlFor="cap-follow-notes" optional>
+              Notas follow-up
+            </DialogLabel>
+            <DialogTextarea
+              id="cap-follow-notes"
+              rows={2}
+              value={followUpNotes}
+              onChange={(e) => setFollowUpNotes(e.target.value)}
+              placeholder="Que falta, para cuando"
+            />
+          </div>
+        )}
+      </ActionDialog>
+    </>
+  );
+}
+
+function RateTechAction({ wo, reload, isClient }) {
+  const [open, setOpen] = useState(false);
+  const [score, setScore] = useState("5");
+  const [notes, setNotes] = useState("");
+
+  async function submit() {
+    const body = {
+      score: parseFloat(score),
+      dimensions: {},
+      notes: notes || null,
+      rated_by_role: isClient ? "client_coordinator" : "srs_coordinator",
+    };
+    await api.post(`/work-orders/${wo.id}/rate-tech`, body);
+    reload();
+  }
+
+  return (
+    <>
+      <ActionButton onClick={() => setOpen(true)} label="Rate tech" tone="soft" />
+      <ActionDialog
+        open={open}
+        onClose={() => setOpen(false)}
+        title="Rate tech"
+        subtitle="Unico por tech por WO — alimenta Skill Passport"
+        submitLabel="Rate"
+        onSubmit={submit}
+      >
+        <div>
+          <DialogLabel htmlFor="rate-score">Score (1.0–5.0)</DialogLabel>
+          <DialogInput
+            id="rate-score"
+            type="number"
+            min="1"
+            max="5"
+            step="0.5"
+            value={score}
+            onChange={(e) => setScore(e.target.value)}
+          />
+        </div>
+        <div>
+          <DialogLabel htmlFor="rate-notes" optional>
+            Comentario
+          </DialogLabel>
+          <DialogTextarea
+            id="rate-notes"
+            rows={2}
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Que destaco, que pulir"
+          />
+        </div>
+      </ActionDialog>
+    </>
+  );
+}
+
+function CancelAction({ wo, reload }) {
+  const [open, setOpen] = useState(false);
+  const [reason, setReason] = useState("");
+
+  async function submit() {
+    await api.post(`/work-orders/${wo.id}/cancel`, { reason });
+    reload();
+  }
+
+  const canSubmit = reason.trim().length > 0;
+
+  return (
+    <>
+      <ActionButton
+        onClick={() => setOpen(true)}
+        label="Cancelar WO"
+        tone="destructive"
+      />
+      <ActionDialog
+        open={open}
+        onClose={() => setOpen(false)}
+        title="Cancelar work order"
+        subtitle="Accion irreversible — sella threads y emite audit_log"
+        submitLabel="Cancelar WO"
+        destructive
+        submitDisabled={!canSubmit}
+        onSubmit={submit}
+      >
+        <div>
+          <DialogLabel htmlFor="cancel-reason">Razon</DialogLabel>
+          <DialogTextarea
+            id="cancel-reason"
+            rows={3}
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="Cliente retiro, out of scope, duplicado…"
+            required
+          />
+        </div>
+      </ActionDialog>
+    </>
   );
 }
 
