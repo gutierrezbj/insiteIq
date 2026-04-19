@@ -4,6 +4,7 @@
  */
 import { Link, useParams } from "react-router-dom";
 import { useFetch } from "../../../lib/useFetch";
+import { useAuth } from "../../../contexts/AuthContext";
 import KpiCard from "../../../components/ui/KpiCard";
 import {
   BallBadge,
@@ -12,9 +13,12 @@ import {
   ShieldBadge,
   StatusBadge,
 } from "../../../components/ui/Badges";
+import EquipmentSection from "../../../components/project/EquipmentSection";
 
 export default function ProjectDetailPage() {
   const { project_id } = useParams();
+  const { user } = useAuth();
+  const isSrs = !!user?.memberships?.some((m) => m.space === "srs_coordinators");
 
   const { data: project, loading: pLoading } = useFetch(`/projects/${project_id}`, {
     deps: [project_id],
@@ -232,6 +236,11 @@ export default function ProjectDetailPage() {
             </div>
           </section>
         </div>
+      </div>
+
+      {/* Equipment reconciliation (Modo 2 Decision #4) */}
+      <div className="mt-4">
+        <EquipmentSection project={project} isSrs={isSrs} />
       </div>
 
       <p className="mt-6 text-text-tertiary font-mono text-2xs uppercase tracking-widest-srs">
