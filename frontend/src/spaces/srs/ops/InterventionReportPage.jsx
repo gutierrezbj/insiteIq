@@ -32,7 +32,12 @@ export default function InterventionReportPage() {
 
   const isSrs = !!user?.memberships?.some((m) => m.space === "srs_coordinators");
   const inTech = location.pathname.startsWith("/tech");
-  const backHref = inTech ? `/tech/ops/${wo_id}` : `/srs/ops/${wo_id}`;
+  const inClientSpace = location.pathname.startsWith("/client");
+  const backHref = inTech
+    ? `/tech/ops/${wo_id}`
+    : inClientSpace
+    ? `/client/ops/${wo_id}`
+    : `/srs/ops/${wo_id}`;
 
   if (loading) return <Centered text="cargando…" />;
   if (error) {

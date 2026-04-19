@@ -113,6 +113,8 @@ export default function App() {
             }
           >
             <Route index element={<ClientHome />} />
+            <Route path="ops/:wo_id" element={<WorkOrderDetailPage />} />
+            <Route path="ops/:wo_id/report" element={<InterventionReportPage />} />
             <Route path="tickets" element={<ClientHome />} />
             <Route path="deliverables" element={<ClientHome />} />
           </Route>

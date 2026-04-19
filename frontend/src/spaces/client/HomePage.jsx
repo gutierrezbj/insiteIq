@@ -89,7 +89,11 @@ export default function ClientHome() {
               </div>
             )}
             {wos.slice(0, 10).map((w) => (
-              <div key={w.id} className="px-4 py-3">
+              <Link
+                key={w.id}
+                to={`/client/ops/${w.id}`}
+                className="block px-4 py-3 hover:bg-surface-overlay/60 transition-colors duration-fast"
+              >
                 <div className="flex items-center justify-between gap-3">
                   <div className="min-w-0">
                     <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
@@ -101,7 +105,7 @@ export default function ClientHome() {
                   </div>
                   <StatusBadge status={w.status} />
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         </section>

@@ -61,10 +61,15 @@ export default function WorkOrderDetailPage() {
     !!user?.memberships?.some((m) => m.space === "tech_field") &&
     wo.assigned_tech_user_id === user?.id;
 
-  // Stay within whichever space the user is browsing (tech PWA vs SRS cockpit)
+  // Stay within whichever space the user is browsing (tech PWA / SRS cockpit / Client portal)
   const inTech = location.pathname.startsWith("/tech");
-  const backHref = inTech ? "/tech" : "/srs/ops";
-  const backLabel = inTech ? "Mis trabajos" : "Work orders";
+  const inClientSpace = location.pathname.startsWith("/client");
+  const backHref = inTech ? "/tech" : inClientSpace ? "/client" : "/srs/ops";
+  const backLabel = inTech
+    ? "Mis trabajos"
+    : inClientSpace
+    ? "Status"
+    : "Work orders";
 
   return (
     <div className="px-4 md:px-8 py-5 md:py-7 max-w-wide">
@@ -298,7 +303,9 @@ export default function WorkOrderDetailPage() {
           />
           {wo.status === "closed" && (
             <Link
-              to={`${backHref === "/tech" ? "/tech" : "/srs"}/ops/${wo_id}/report`}
+              to={`${
+                inTech ? "/tech" : inClientSpace ? "/client" : "/srs"
+              }/ops/${wo_id}/report`}
               className="bg-primary text-text-inverse font-mono font-semibold uppercase tracking-widest-srs text-2xs px-3 py-1.5 rounded-sm hover:bg-primary-light hover:shadow-glow-primary transition-all duration-fast ease-out-expo"
             >
               Intervention Report →
