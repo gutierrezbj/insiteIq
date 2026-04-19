@@ -14,6 +14,7 @@ import SrsLayout from "./spaces/srs/Layout";
 import SrsHome from "./spaces/srs/HomePage";
 import WorkOrdersListPage from "./spaces/srs/ops/WorkOrdersListPage";
 import WorkOrderDetailPage from "./spaces/srs/ops/WorkOrderDetailPage";
+import InterventionReportPage from "./spaces/srs/ops/InterventionReportPage";
 import ProjectsListPage from "./spaces/srs/projects/ProjectsListPage";
 import ProjectDetailPage from "./spaces/srs/projects/ProjectDetailPage";
 import SitesListPage from "./spaces/srs/sites/SitesListPage";
@@ -88,6 +89,7 @@ export default function App() {
             <Route index element={<SrsHome />} />
             <Route path="ops" element={<WorkOrdersListPage />} />
             <Route path="ops/:wo_id" element={<WorkOrderDetailPage />} />
+            <Route path="ops/:wo_id/report" element={<InterventionReportPage />} />
             <Route path="projects" element={<ProjectsListPage />} />
             <Route path="projects/:project_id" element={<ProjectDetailPage />} />
             <Route path="sites" element={<SitesListPage />} />
@@ -121,6 +123,7 @@ export default function App() {
           >
             <Route index element={<TechHome />} />
             <Route path="ops/:wo_id" element={<WorkOrderDetailPage />} />
+            <Route path="ops/:wo_id/report" element={<InterventionReportPage />} />
             <Route path="briefing" element={<TechHome />} />
             <Route path="profile" element={<TechHome />} />
           </Route>

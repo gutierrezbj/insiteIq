@@ -280,11 +280,12 @@ export default function WorkOrderDetailPage() {
             subpath={`/api/work-orders/${wo_id}/ratings`}
           />
           {wo.status === "closed" && (
-            <RelatedLink
-              to={`#report-${wo_id}`}
-              label="Intervention Report"
-              subpath={`/api/work-orders/${wo_id}/report`}
-            />
+            <Link
+              to={`${backHref === "/tech" ? "/tech" : "/srs"}/ops/${wo_id}/report`}
+              className="bg-primary text-text-inverse font-mono font-semibold uppercase tracking-widest-srs text-2xs px-3 py-1.5 rounded-sm hover:bg-primary-light hover:shadow-glow-primary transition-all duration-fast ease-out-expo"
+            >
+              Intervention Report →
+            </Link>
           )}
         </div>
         <p className="font-body text-2xs text-text-tertiary mt-3">
