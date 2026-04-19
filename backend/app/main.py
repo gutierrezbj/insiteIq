@@ -11,12 +11,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.database import close_db, connect_db
 from app.middleware.audit_log import AuditLogMiddleware
+from app.routes import audit_log as audit_log_routes
 from app.routes import auth as auth_routes
 from app.routes import health as health_routes
 from app.routes import budget_approvals as budget_approvals_routes
 from app.routes import copilot_briefings as copilot_briefings_routes
 from app.routes import equipment as equipment_routes
 from app.routes import intervention_reports as intervention_reports_routes
+from app.routes import organizations as organizations_routes
 from app.routes import projects as projects_routes
 from app.routes import service_agreements as service_agreements_routes
 from app.routes import sites as sites_routes
@@ -58,6 +60,8 @@ app.include_router(health_routes.router)                # /health (docker/local)
 app.include_router(health_routes.router, prefix="/api") # /api/health (via nginx)
 app.include_router(auth_routes.router, prefix="/api")
 app.include_router(users_routes.router, prefix="/api")
+app.include_router(organizations_routes.router, prefix="/api")
+app.include_router(audit_log_routes.router, prefix="/api")
 app.include_router(sites_routes.router, prefix="/api")
 app.include_router(service_agreements_routes.router, prefix="/api")
 app.include_router(work_orders_routes.router, prefix="/api")
