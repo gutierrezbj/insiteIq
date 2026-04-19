@@ -26,6 +26,7 @@ import ActionDialog, {
   DialogCheckbox,
 } from "../../../components/ui/ActionDialog";
 import PartsSection from "../../../components/workorder/PartsSection";
+import ThreadsSection from "../../../components/workorder/ThreadsSection";
 
 // The 7 stages per Blueprint Modo 1 Decision #1
 const STAGES = [
@@ -246,6 +247,14 @@ export default function WorkOrderDetailPage() {
           </div>
         </section>
       )}
+
+      {/* Threads (shared + internal) — kills WhatsApp */}
+      <ThreadsSection
+        wo={wo}
+        isSrs={isSrs}
+        isClient={isClient}
+        isAssignedTech={isAssignedTech}
+      />
 
       {/* Parts / Budget approvals */}
       <PartsSection wo={wo} isSrs={isSrs} isClient={isClient} />

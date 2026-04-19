@@ -23,6 +23,7 @@ from app.routes import sites as sites_routes
 from app.routes import skill_passports as skill_passports_routes
 from app.routes import tech_captures as tech_captures_routes
 from app.routes import ticket_threads as ticket_threads_routes
+from app.routes import users as users_routes
 from app.routes import work_orders as work_orders_routes
 
 
@@ -56,6 +57,7 @@ app.add_middleware(AuditLogMiddleware)
 app.include_router(health_routes.router)                # /health (docker/local)
 app.include_router(health_routes.router, prefix="/api") # /api/health (via nginx)
 app.include_router(auth_routes.router, prefix="/api")
+app.include_router(users_routes.router, prefix="/api")
 app.include_router(sites_routes.router, prefix="/api")
 app.include_router(service_agreements_routes.router, prefix="/api")
 app.include_router(work_orders_routes.router, prefix="/api")
