@@ -25,6 +25,7 @@ import ActionDialog, {
   DialogTextarea,
   DialogCheckbox,
 } from "../../../components/ui/ActionDialog";
+import BriefingSection from "../../../components/workorder/BriefingSection";
 import PartsSection from "../../../components/workorder/PartsSection";
 import ThreadsSection from "../../../components/workorder/ThreadsSection";
 
@@ -247,6 +248,13 @@ export default function WorkOrderDetailPage() {
           </div>
         </section>
       )}
+
+      {/* Copilot Briefing — tech lee antes de en_route */}
+      <BriefingSection
+        wo={wo}
+        isSrs={isSrs}
+        isAssignedTech={isAssignedTech}
+      />
 
       {/* Threads (shared + internal) — kills WhatsApp */}
       <ThreadsSection

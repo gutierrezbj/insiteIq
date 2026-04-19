@@ -21,6 +21,7 @@ from typing import Any
 
 from bson import ObjectId
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel, ConfigDict
 
 from app.core.dependencies import CurrentUser, get_current_user
 from app.database import get_db
@@ -218,6 +219,65 @@ async def get_briefing(wo_id: str, user: CurrentUser = Depends(get_current_user)
     if not doc:
         return {"exists": False, "work_order_id": wo_id}
     return {"exists": True, **_serialize(doc)}
+
+
+class CoordinatorNotesBody(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    coordinator_notes: str | None = None
+
+
+@router.patch("")
+async def patch_briefing(
+    wo_id: str,
+    body: CoordinatorNotesBody,
+    user: CurrentUser = Depends(get_current_user),
+):
+    """SRS enriches the assembled briefing with coordinator_notes before ack."""
+    if not user.has_space("srs_coordinators"):
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Only SRS can edit briefing")
+    db = get_db()
+    wo = await _load_wo(db, wo_id, user)
+    doc = await db.copilot_briefings.find_one(
+        {
+            "work_order_id": wo_id,
+            "tenant_id": user.tenant_id,
+            "status": {"$in": ["assembled", "acknowledged"]},
+        }
+    )
+    if not doc:
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND,
+            "No active briefing — assemble first",
+        )
+
+    now = _now()
+    await db.copilot_briefings.update_one(
+        {"_id": doc["_id"]},
+        {
+            "$set": {
+                "coordinator_notes": body.coordinator_notes,
+                "updated_at": now,
+                "updated_by": user.user_id,
+            }
+        },
+    )
+    await write_audit_event(
+        db,
+        tenant_id=user.tenant_id,
+        actor_user_id=user.user_id,
+        action="copilot_briefing.patch_notes",
+        entity_refs=[
+            {"collection": "work_orders", "id": wo_id, "label": wo.get("reference")},
+            {"collection": "copilot_briefings", "id": str(doc["_id"])},
+        ],
+        context_snapshot={
+            "has_notes": body.coordinator_notes is not None,
+            "length": len(body.coordinator_notes or ""),
+        },
+    )
+
+    refreshed = await db.copilot_briefings.find_one({"_id": doc["_id"]})
+    return _serialize(refreshed)
 
 
 @router.post("/acknowledge")
