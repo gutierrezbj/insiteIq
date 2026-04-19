@@ -27,6 +27,11 @@ export function setTokens({ access_token, refresh_token, user }) {
   if (user) localStorage.setItem(USER_KEY, JSON.stringify(user));
 }
 
+/** Persist the user profile blob only (keeps tokens untouched). */
+export function setStoredUser(user) {
+  if (user) localStorage.setItem(USER_KEY, JSON.stringify(user));
+}
+
 export function clearTokens() {
   localStorage.removeItem(ACCESS_KEY);
   localStorage.removeItem(REFRESH_KEY);

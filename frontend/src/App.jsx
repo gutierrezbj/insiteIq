@@ -8,6 +8,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import RequireSpace from "./components/RequireSpace";
 import LoginPage from "./pages/auth/LoginPage";
+import ChangePasswordPage from "./pages/auth/ChangePasswordPage";
 
 import SrsLayout from "./spaces/srs/Layout";
 import SrsHome from "./spaces/srs/HomePage";
@@ -25,6 +26,7 @@ import TechHome from "./spaces/tech/HomePage";
 function RootRedirect() {
   const { user } = useAuth();
   if (!user) return <Navigate to="/login" replace />;
+  if (user.must_change_password) return <Navigate to="/change-password" replace />;
   const space = user.memberships?.[0]?.space;
   const target =
     space === "srs_coordinators" ? "/srs" :
@@ -32,6 +34,14 @@ function RootRedirect() {
     space === "client_coordinator" ? "/client" :
     "/no-access";
   return <Navigate to={target} replace />;
+}
+
+/** Minimal guard for the change-password page: needs a user, nothing else. */
+function RequireUser({ children }) {
+  const { user, ready } = useAuth();
+  if (!ready) return null;
+  if (!user) return <Navigate to="/login" replace />;
+  return children;
 }
 
 function NoAccessPage() {
@@ -55,6 +65,14 @@ export default function App() {
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/no-access" element={<NoAccessPage />} />
+          <Route
+            path="/change-password"
+            element={
+              <RequireUser>
+                <ChangePasswordPage />
+              </RequireUser>
+            }
+          />
 
           {/* SRS Coordinators */}
           <Route

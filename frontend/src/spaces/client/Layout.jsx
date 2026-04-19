@@ -60,6 +60,12 @@ export default function ClientLayout() {
                 {user?.full_name || user?.email}
               </div>
             </div>
+            <button
+              onClick={() => navigate("/change-password")}
+              className="label-caps text-text-tertiary hover:text-primary"
+            >
+              Rotar pwd
+            </button>
             <button onClick={handleLogout} className="label-caps hover:text-primary">
               Sign out
             </button>

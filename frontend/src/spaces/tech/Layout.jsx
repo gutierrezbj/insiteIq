@@ -23,11 +23,19 @@ export default function TechLayout() {
 
   return (
     <div className="min-h-screen flex flex-col bg-surface-base safe-area-top safe-area-bottom">
-      <header className="px-5 py-4 bg-surface-raised border-b border-surface-border accent-bar">
-        <div className="label-caps">InsiteIQ · Tech Field</div>
-        <div className="font-display text-base text-text-primary truncate">
-          {user?.full_name || "Technician"}
+      <header className="px-5 py-4 bg-surface-raised border-b border-surface-border accent-bar flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="label-caps">InsiteIQ · Tech Field</div>
+          <div className="font-display text-base text-text-primary truncate">
+            {user?.full_name || "Technician"}
+          </div>
         </div>
+        <button
+          onClick={() => navigate("/change-password")}
+          className="label-caps text-text-tertiary hover:text-primary whitespace-nowrap"
+        >
+          Rotar pwd
+        </button>
       </header>
 
       <main className="flex-1 overflow-auto px-5 py-5">

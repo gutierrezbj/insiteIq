@@ -58,8 +58,14 @@ export default function SrsLayout() {
             {user?.full_name || user?.email}
           </div>
           <button
+            onClick={() => navigate("/change-password")}
+            className="mt-3 w-full text-left label-caps text-text-tertiary hover:text-primary"
+          >
+            Rotar password
+          </button>
+          <button
             onClick={handleLogout}
-            className="mt-3 w-full text-left label-caps hover:text-primary"
+            className="mt-2 w-full text-left label-caps hover:text-primary"
           >
             Sign out
           </button>
