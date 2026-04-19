@@ -16,6 +16,8 @@ import WorkOrdersListPage from "./spaces/srs/ops/WorkOrdersListPage";
 import WorkOrderDetailPage from "./spaces/srs/ops/WorkOrderDetailPage";
 import ProjectsListPage from "./spaces/srs/projects/ProjectsListPage";
 import ProjectDetailPage from "./spaces/srs/projects/ProjectDetailPage";
+import SitesListPage from "./spaces/srs/sites/SitesListPage";
+import SiteDetailPage from "./spaces/srs/sites/SiteDetailPage";
 
 import ClientLayout from "./spaces/client/Layout";
 import ClientHome from "./spaces/client/HomePage";
@@ -88,6 +90,8 @@ export default function App() {
             <Route path="ops/:wo_id" element={<WorkOrderDetailPage />} />
             <Route path="projects" element={<ProjectsListPage />} />
             <Route path="projects/:project_id" element={<ProjectDetailPage />} />
+            <Route path="sites" element={<SitesListPage />} />
+            <Route path="sites/:site_id" element={<SiteDetailPage />} />
             <Route path="finance" element={<SrsHome />} />
             <Route path="admin" element={<SrsHome />} />
           </Route>

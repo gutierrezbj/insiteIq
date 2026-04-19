@@ -148,7 +148,21 @@ export default function WorkOrderDetailPage() {
           <div className="label-caps mb-3">Metadata</div>
           <dl className="font-body text-sm divide-y divide-surface-border">
             <MetaRow label="Cliente org" value={shortId(wo.organization_id)} />
-            <MetaRow label="Site" value={shortId(wo.site_id)} />
+            <MetaRow
+              label="Site"
+              value={
+                wo.site_id ? (
+                  <Link
+                    to={`/srs/sites/${wo.site_id}`}
+                    className="text-primary-light hover:text-primary underline decoration-dotted"
+                  >
+                    {shortId(wo.site_id)} ↗
+                  </Link>
+                ) : (
+                  "—"
+                )
+              }
+            />
             <MetaRow label="Service agreement" value={shortId(wo.service_agreement_id)} />
             <MetaRow
               label="SRS Coordinator"
