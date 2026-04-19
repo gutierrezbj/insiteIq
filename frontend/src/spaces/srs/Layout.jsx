@@ -12,6 +12,7 @@ const nav = [
   { to: "/srs/ops", label: "Work Orders" },
   { to: "/srs/projects", label: "Projects" },
   { to: "/srs/sites", label: "Sites" },
+  { to: "/srs/techs", label: "Techs" },
   { to: "/srs/finance", label: "Finance" },
   { to: "/srs/admin", label: "Admin" },
 ];

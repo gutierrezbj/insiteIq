@@ -20,6 +20,8 @@ import ProjectDetailPage from "./spaces/srs/projects/ProjectDetailPage";
 import SitesListPage from "./spaces/srs/sites/SitesListPage";
 import SiteDetailPage from "./spaces/srs/sites/SiteDetailPage";
 import AdminPage from "./spaces/srs/admin/AdminPage";
+import TechsListPage from "./spaces/srs/techs/TechsListPage";
+import TechDetailPage from "./spaces/srs/techs/TechDetailPage";
 
 import ClientLayout from "./spaces/client/Layout";
 import ClientHome from "./spaces/client/HomePage";
@@ -95,6 +97,8 @@ export default function App() {
             <Route path="projects/:project_id" element={<ProjectDetailPage />} />
             <Route path="sites" element={<SitesListPage />} />
             <Route path="sites/:site_id" element={<SiteDetailPage />} />
+            <Route path="techs" element={<TechsListPage />} />
+            <Route path="techs/:user_id" element={<TechDetailPage />} />
             <Route path="finance" element={<SrsHome />} />
             <Route path="admin" element={<AdminPage />} />
           </Route>
