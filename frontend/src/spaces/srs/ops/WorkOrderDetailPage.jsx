@@ -170,7 +170,21 @@ export default function WorkOrderDetailPage() {
                 )
               }
             />
-            <MetaRow label="Service agreement" value={shortId(wo.service_agreement_id)} />
+            <MetaRow
+              label="Service agreement"
+              value={
+                wo.service_agreement_id && !inClientSpace ? (
+                  <Link
+                    to={`/srs/agreements/${wo.service_agreement_id}`}
+                    className="text-primary-light hover:text-primary underline decoration-dotted"
+                  >
+                    {shortId(wo.service_agreement_id)} ↗
+                  </Link>
+                ) : (
+                  shortId(wo.service_agreement_id)
+                )
+              }
+            />
             <MetaRow
               label="SRS Coordinator"
               value={shortId(wo.srs_coordinator_user_id)}

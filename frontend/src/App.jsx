@@ -22,6 +22,8 @@ import SiteDetailPage from "./spaces/srs/sites/SiteDetailPage";
 import AdminPage from "./spaces/srs/admin/AdminPage";
 import TechsListPage from "./spaces/srs/techs/TechsListPage";
 import TechDetailPage from "./spaces/srs/techs/TechDetailPage";
+import AgreementsListPage from "./spaces/srs/agreements/AgreementsListPage";
+import AgreementDetailPage from "./spaces/srs/agreements/AgreementDetailPage";
 
 import ClientLayout from "./spaces/client/Layout";
 import ClientHome from "./spaces/client/HomePage";
@@ -99,6 +101,8 @@ export default function App() {
             <Route path="sites/:site_id" element={<SiteDetailPage />} />
             <Route path="techs" element={<TechsListPage />} />
             <Route path="techs/:user_id" element={<TechDetailPage />} />
+            <Route path="agreements" element={<AgreementsListPage />} />
+            <Route path="agreements/:agreement_id" element={<AgreementDetailPage />} />
             <Route path="finance" element={<SrsHome />} />
             <Route path="admin" element={<AdminPage />} />
           </Route>
