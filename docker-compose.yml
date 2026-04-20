@@ -25,6 +25,9 @@ services:
       - "127.0.0.1:4110:8000"
     volumes:
       - ./backend:/app
+      - insiteiq_uploads:/app/uploads
+    environment:
+      - INSITEIQ_UPLOADS_ROOT=/app/uploads
     depends_on:
       - mongo
       - redis
@@ -55,3 +58,4 @@ services:
 volumes:
   mongo_data:
   redis_data:
+  insiteiq_uploads:

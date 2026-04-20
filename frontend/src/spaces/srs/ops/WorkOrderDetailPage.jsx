@@ -25,7 +25,10 @@ import ActionDialog, {
   DialogTextarea,
   DialogCheckbox,
 } from "../../../components/ui/ActionDialog";
+import AuthImage from "../../../components/ui/AuthImage";
+import { uploadFile } from "../../../lib/api";
 import BriefingSection from "../../../components/workorder/BriefingSection";
+import CaptureSection from "../../../components/workorder/CaptureSection";
 import PartsSection from "../../../components/workorder/PartsSection";
 import ThreadsSection from "../../../components/workorder/ThreadsSection";
 
@@ -270,6 +273,13 @@ export default function WorkOrderDetailPage() {
 
       {/* Copilot Briefing — tech lee antes de en_route */}
       <BriefingSection
+        wo={wo}
+        isSrs={isSrs}
+        isAssignedTech={isAssignedTech}
+      />
+
+      {/* Tech Capture + photos (Domain 10.4) — tech records post-intervention */}
+      <CaptureSection
         wo={wo}
         isSrs={isSrs}
         isAssignedTech={isAssignedTech}
@@ -623,8 +633,63 @@ function SubmitCaptureAction({ wo, reload }) {
   const [minutes, setMinutes] = useState("");
   const [followUp, setFollowUp] = useState(false);
   const [followUpNotes, setFollowUpNotes] = useState("");
+  // photos: list of {url, kind, label, size_bytes, uploading?, error?}
+  const [photos, setPhotos] = useState([]);
 
-  const canSubmit = whatFound.trim().length > 0 && whatDid.trim().length > 0;
+  const canSubmit =
+    whatFound.trim().length > 0 &&
+    whatDid.trim().length > 0 &&
+    photos.every((p) => !p.uploading && !p.error);
+
+  async function handleFiles(files) {
+    const list = Array.from(files || []);
+    if (!list.length) return;
+    // Insert pending rows optimistically
+    const placeholders = list.map((f) => ({
+      local_id: `pending-${Math.random()}-${f.name}`,
+      url: null,
+      kind: f.type.startsWith("image/") ? "image" : "file",
+      label: f.name,
+      size_bytes: f.size,
+      uploading: true,
+      error: null,
+    }));
+    setPhotos((p) => [...p, ...placeholders]);
+
+    for (let i = 0; i < list.length; i++) {
+      const file = list[i];
+      const placeholder = placeholders[i];
+      try {
+        const up = await uploadFile(file);
+        setPhotos((prev) =>
+          prev.map((row) =>
+            row.local_id === placeholder.local_id
+              ? {
+                  url: up.url,
+                  kind: up.kind === "image" ? "image" : "file",
+                  label: up.filename || file.name,
+                  size_bytes: up.size_bytes,
+                  uploading: false,
+                  error: null,
+                }
+              : row
+          )
+        );
+      } catch (err) {
+        setPhotos((prev) =>
+          prev.map((row) =>
+            row.local_id === placeholder.local_id
+              ? { ...row, uploading: false, error: err.message || "upload fail" }
+              : row
+          )
+        );
+      }
+    }
+  }
+
+  function removePhoto(idx) {
+    setPhotos((p) => p.filter((_, i) => i !== idx));
+  }
 
   async function submit() {
     const body = {
@@ -635,12 +700,21 @@ function SubmitCaptureAction({ wo, reload }) {
       follow_up_needed: followUp,
       follow_up_notes: followUp ? followUpNotes || null : null,
       devices_touched: [],
-      photos: [],
+      photos: photos
+        .filter((p) => p.url && !p.error)
+        .map((p) => ({
+          url: p.url,
+          kind: p.kind,
+          label: p.label,
+          size_bytes: p.size_bytes,
+        })),
       parts_used: [],
     };
     await api.post(`/work-orders/${wo.id}/capture/submit`, body);
     reload();
   }
+
+  const uploading = photos.some((p) => p.uploading);
 
   return (
     <>
@@ -650,8 +724,8 @@ function SubmitCaptureAction({ wo, reload }) {
         onClose={() => setOpen(false)}
         title="Tech Capture"
         subtitle="Ritual post-intervencion — requerido antes de resolver"
-        submitLabel="Submit capture"
-        submitDisabled={!canSubmit}
+        submitLabel={uploading ? "Subiendo…" : "Submit capture"}
+        submitDisabled={!canSubmit || uploading}
         onSubmit={submit}
       >
         <div>
@@ -688,6 +762,62 @@ function SubmitCaptureAction({ wo, reload }) {
             placeholder="Cambio de acceso, layout, contacto, rack…"
           />
         </div>
+
+        {/* Photo picker */}
+        <div>
+          <DialogLabel htmlFor="cap-photos" optional>
+            Fotos / evidencia (15MB max por archivo)
+          </DialogLabel>
+          <input
+            id="cap-photos"
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/heic,image/heif,application/pdf"
+            multiple
+            capture="environment"
+            onChange={(e) => handleFiles(e.target.files)}
+            className="block w-full text-sm text-text-primary file:mr-3 file:py-2 file:px-3 file:rounded-sm file:border-0 file:bg-primary file:text-text-inverse file:font-mono file:font-semibold file:uppercase file:tracking-widest-srs file:text-2xs hover:file:bg-primary-light cursor-pointer"
+          />
+          {photos.length > 0 && (
+            <div className="mt-3 grid grid-cols-3 gap-2">
+              {photos.map((p, i) => (
+                <div
+                  key={p.local_id || p.url || i}
+                  className="relative bg-surface-base rounded-sm overflow-hidden aspect-square"
+                >
+                  {p.uploading ? (
+                    <div className="w-full h-full flex items-center justify-center font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+                      subiendo…
+                    </div>
+                  ) : p.error ? (
+                    <div className="w-full h-full flex items-center justify-center font-mono text-2xs uppercase tracking-widest-srs text-danger p-1 text-center">
+                      {p.error}
+                    </div>
+                  ) : p.kind === "image" ? (
+                    <AuthImage
+                      src={p.url}
+                      alt={p.label}
+                      thumb
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center font-mono text-2xs uppercase tracking-widest-srs text-text-secondary p-1 text-center">
+                      {p.label || "file"}
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => removePhoto(i)}
+                    title="Quitar"
+                    className="absolute top-1 right-1 bg-surface-base/90 rounded-sm px-1.5 py-0.5 font-mono text-2xs uppercase tracking-widest-srs text-danger hover:bg-danger hover:text-text-inverse transition-colors duration-fast"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
         <div className="grid grid-cols-2 gap-3">
           <div>
             <DialogLabel htmlFor="cap-min" optional>

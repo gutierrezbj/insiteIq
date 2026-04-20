@@ -53,3 +53,33 @@ export const api = {
   patch: (path, body, opts) => request(path, { ...opts, method: "PATCH", body }),
   delete: (path, opts) => request(path, { ...opts, method: "DELETE" }),
 };
+
+/**
+ * uploadFile — multipart/form-data, JWT-authed.
+ * Returns server payload: { id, url, filename, size_bytes, mime_type, kind }.
+ * Use the returned `url` (e.g. "/api/uploads/:id") to reference the asset;
+ * GET to that URL requires the same auth token.
+ */
+export async function uploadFile(file) {
+  const fd = new FormData();
+  fd.append("file", file);
+  const tok = getAccessToken();
+  const res = await fetch(`${BASE_URL}/uploads`, {
+    method: "POST",
+    headers: tok ? { Authorization: `Bearer ${tok}` } : {},
+    body: fd,
+  });
+  if (res.status === 401) {
+    clearTokens();
+    window.dispatchEvent(new CustomEvent("iiq:unauthorized"));
+  }
+  const isJson = (res.headers.get("content-type") || "").includes(
+    "application/json"
+  );
+  const payload = isJson ? await res.json().catch(() => null) : await res.text();
+  if (!res.ok) {
+    const msg = isJson && payload?.detail ? payload.detail : `HTTP ${res.status}`;
+    throw new ApiError(msg, res.status, payload);
+  }
+  return payload;
+}

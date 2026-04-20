@@ -25,6 +25,7 @@ from app.routes import sites as sites_routes
 from app.routes import skill_passports as skill_passports_routes
 from app.routes import tech_captures as tech_captures_routes
 from app.routes import ticket_threads as ticket_threads_routes
+from app.routes import uploads as uploads_routes
 from app.routes import users as users_routes
 from app.routes import work_orders as work_orders_routes
 
@@ -73,6 +74,7 @@ app.include_router(budget_approvals_routes.router, prefix="/api")
 app.include_router(skill_passports_routes.router, prefix="/api")
 app.include_router(projects_routes.router, prefix="/api")
 app.include_router(equipment_routes.router, prefix="/api")
+app.include_router(uploads_routes.router, prefix="/api")
 
 
 @app.get("/")
