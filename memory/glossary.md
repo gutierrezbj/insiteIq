@@ -9,9 +9,18 @@ Shorthand, acronimos y lenguaje interno de SRS y del proyecto InsiteIQ.
 | SDD | System Design Document | 8 secciones obligatorias pre-codigo |
 | ADR | Architecture Decision Record | SDD-04, cada decision con contexto y alternativas |
 | SRS | System Rapid Solutions | La empresa, Madrid |
-| MVP | Minimum Viable Product | Fase 1 del Manifiesto |
-| SLA | Service Level Agreement | Compromisos de tiempo/calidad |
+| MVP | Minimum Viable Product | Fase 1 del Manifiesto — NO aplica a InsiteIQ (herramienta interna, no producto) |
+| SLA | Service Level Agreement | Compromisos de tiempo/calidad embebidos en service_agreement, snapshot al work_order.intake |
 | ITIL | IT Infrastructure Library | Framework de gestion IT |
+| NBD | Next Business Day | Unidad de SLA (bronze_plus Fractalia = 1/2/3 NBD, ~9h working-day) |
+| PoW | Proof of Work | Evidencia trazable de intervencion (fotos geolocalizadas + handshakes + capture) |
+| PWA | Progressive Web App | Tech Field space — mobile-first offline-capable |
+| RBAC | Role-Based Access Control | `require_space()` + memberships en JWT payload |
+| BUMM | Burn Up + Monthly Metrics | KPI dashboard de un project rollout (Modo 2) |
+| AP | Accounts Payable | Vendor payables layer con three-way match |
+| AR | Accounts Receivable | Cobranza cliente + Invoice Inbox + collections ball |
+| JV | Joint Venture | Tipo 4 de `organization.partner_relationships` (Fervimax en Bepensa con revenue_split_pct) |
+| CMDB | Configuration Management Database | Export canonico del Master Report al cierre de un project |
 
 ## Secciones SDD
 
@@ -30,24 +39,63 @@ Shorthand, acronimos y lenguaje interno de SRS y del proyecto InsiteIQ.
 
 | Term | Meaning |
 |------|---------|
-| Site Bible | Base de conocimiento por sitio fisico (historial, quirks, acceso, rack layout) |
-| Copilot | IA de asistencia en tiempo real durante intervencion |
+| Site Bible | Base de conocimiento por sitio fisico (historial, quirks, acceso, rack layout) — Fase 5 completa |
+| Copilot Briefing | Paquete pre-intervencion que el tech LEE antes de salir (site summary + history + device bible + coordinator_notes). Ack bloquea `dispatched → en_route` |
 | TechMatch AI | Motor de seleccion inteligente de tecnicos (no solo cercania, adecuacion) |
-| Shield | Sistema de garantia/cobertura segun nivel del tecnico |
-| Ghost Tech | White-label — cliente usa la plataforma con su marca |
+| Shield | Nivel de cobertura contractual — vive en `service_agreement`, se snapshotea al WO intake |
+| Ghost Tech | White-label — cliente usa la plataforma con su marca (multi-tenant ready desde dia 0) |
 | Control Tower | Dashboard coordinador — vision de aguila de operaciones |
 | Playbook | Guia paso a paso para intervenciones especificas |
-| Skill Passport | Perfil profesional verificado del tecnico |
-| Proof of Work | Documentacion: fotos geolocalizadas + firma digital |
+| Skill Passport | Perfil profesional del tecnico: level (bronze/silver/gold), jobs_completed, rating_avg, certs, skills con tier, countries_covered, quality_marks |
+| Proof of Work | Documentacion: fotos geolocalizadas + handshakes (check_in/resolution/closure) + tech_capture |
 | Panic Button | Boton de emergencia para clientes |
 | Shadow Mode | Onboarding automatizado de tecnicos nuevos |
-| Pre-Flight Check | Verificacion pre-intervencion (herramientas, repuestos, Site Bible leida) |
+| Pre-Flight Check | Verificacion pre-intervencion: `kit_verified` + `parts_ready` + `site_bible_read` → `all_green`. Desbloquea `pre_flight → dispatched` sin emergency |
+| Tech Capture | Ritual post-intervencion (Domain 10.4): `what_found`, `what_did`, `anything_new_about_site`, devices_touched, photos, time_on_site. Bloquea `on_site → resolved` |
 | Client Handshake | Confirmacion automatica con contacto del site 24h antes |
 | Parts & Tools Intel | Generacion automatica de lista de materiales |
 | Live Escalation Path | Videollamada a tecnico senior si se atasca |
 | Post-Mortem Automatico | Resumen post-intervencion + mejoras identificadas |
 | Coverage Map | Mapa de tecnicos disponibles por zona |
 | Seasonal Forecast | Planificacion de demanda estacional |
+
+## Work Order State Machine (Modo 1 Decision #1)
+
+| Stage | Ball default | Guard para avanzar |
+|-------|--------------|--------------------|
+| intake | srs | — |
+| triage | srs | — |
+| pre_flight | srs | `pre_flight_checklist.all_green=true` o `emergency=true` para pasar a dispatched |
+| dispatched | tech | briefing acknowledged por assigned_tech o emergency para pasar a en_route |
+| en_route | tech | — |
+| on_site | tech | tech_capture submitted por assigned_tech o emergency para pasar a resolved |
+| resolved | client | (esperando sign-off — auto-emit intervention_report al pasar a closed) |
+| closed | srs | terminal · sella threads · auto-assembla intervention_report · billing_line hook |
+| cancelled | srs | terminal · requiere `reason` |
+
+## Terminos del Core
+
+| Term | Meaning |
+|------|---------|
+| Ball-in-court | Quien tiene el balon ahora: `srs` / `tech` / `client`. Con `actor_user_id` + `since` timestamp. Expone tiempo sentado por lado en reporte ejecutivo |
+| Handshake | Evento explicito con geo snapshot: `check_in` / `resolution` / `closure`. Se appendea al WO y entra al intervention_report |
+| Shield Level | `bronze` (4h recv / 72h resolve) · `bronze_plus` (1/2/3 NBD Fractalia-Telefonica) · `silver` (2h / 48h) · `gold` (1h / 24h · 24x7 · copilot RO cliente) |
+| SLA snapshot | Copia inmutable del sla_spec en el WO al intake. Si el contrato se renegocia, WOs viejos preservan su SLA original |
+| Thread Kind | `shared` (SRS + tech + cliente NOC/resident ven) · `internal` (solo SRS — "ropa en casa"). Lazy-created, sealed al cerrar/cancelar WO |
+| System Event | Tipo de mensaje auto-emitido al thread shared cuando advance state (no es mensaje humano, kind=`system_event`) |
+| Exchange (parts) | Back-and-forth en un budget_approval: `quote_sent`, `client_question`, `srs_answer`, `approval`, `rejection`, `auto_purchase`, `srs_revision`, `timeout_noted`. Cada uno flipea el ball |
+| Auto-purchase | Flag en budget_approval_request: SRS compro ya sin esperar sign-off (urgent ops). Queda grabado con `reason` |
+| Below-threshold | `total_amount_usd <= service_agreement.parts_approval_threshold_usd`. Auto-aprobado sin mover ball al cliente |
+| Intervention Report | Paquete auto-ensamblado al cierre del WO. 5 canales emit: JSON portal / HTML / CSV / email outbox / webhook outbox. Versionable (regenerate supersedes) |
+| Emit Channel | Canal de salida scoped por rol (cliente ve vista scoped sin internal_message_count) |
+| Deliveries Log | Registro append-only por intervention_report: channel, target, status, attempts |
+| Equipment Plan Entry | Fila de equipment planeada (Excel/email/portal/scan). Estatus: `planned` / `match` / `substituted` / `missing` / `sin_plan` / `conflicto` |
+| Reconciliation Status | Resultado de reconcile project plan vs scanned assets (los 5 estatus arriba — calculados por algoritmo backend) |
+| Tech Scan | Tech on-site registra un asset via `POST /sites/:id/equipment/scan`. Backend decide event_type: `installed` (nuevo) / `relocated` (estaba en otro site) / `inspected` (mismo site) |
+| Asset Event | Append-only log por asset (Domain 11 Visibility Model C — public/internal/restricted) |
+| Forced Rotation | Flag `must_change_password=true` en user. `RequireSpace` rebota a `/change-password` antes de entrar a cualquier space. Seed marca todos los users asi |
+| Pasito | Unidad de avance nombrada con letra (F-T hoy). Cada pasito = commit + deploy. Se usa como shorthand de "incremento funcional entregable" |
+| Backhref adaptativo | `location.pathname.startsWith()` para que un mismo componente (WO detail, report) se quede dentro del espacio del caller: `/tech`, `/client`, `/srs` |
 
 ## Capas de Plataforma
 
@@ -61,11 +109,11 @@ Shorthand, acronimos y lenguaje interno de SRS y del proyecto InsiteIQ.
 
 ## Espacios de Usuario
 
-| Espacio | Tipo | Para quien |
-|---------|------|------------|
-| Tecnico | App movil | Tecnicos de campo |
-| Coordinador | Dashboard web | Operaciones SRS |
-| Cliente | Portal web | Clientes finales |
+| Espacio | Tipo | Para quien | Layout |
+|---------|------|------------|--------|
+| SRS Coordinators | Web desktop | JuanCho, Sajid (RO), Andros, Adriana, Luis, Agustin, Yunus | Sidebar con 8 items (Overview, Work Orders, Projects, Sites, Techs, Agreements, Finance, Admin) |
+| Client Coordinator | Web desktop | Rackel Fractalia + contactos cliente tier_contractual | Top nav 3 items + drill-down WO |
+| Tech Field | PWA mobile | Tech plantilla + external_sub | Bottom nav 4 items (Jobs, Briefing, Profile, Sign out) |
 
 ## Design System — SRS Nucleus v2.0
 

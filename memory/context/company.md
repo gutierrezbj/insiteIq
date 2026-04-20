@@ -1,10 +1,14 @@
 # Company Context — System Rapid Solutions (SRS)
 
 ## Overview
-System Rapid Solutions (SRS), Madrid, Espana. 25 anos de experiencia en soporte IT internacional. Opera red de tecnicos en Centroamerica, Sudamerica y Europa.
+System Rapid Solutions (SRS), Madrid, Espana. 25 anos de experiencia en soporte IT internacional. Opera red de tecnicos en Centroamerica, Sudamerica, Europa y KSA.
+
+**Multi-entity (2026-04 estado):** SR-UK (Londres, Yunus) · SR-US · SR-SA (Arabia Saudita) activas. SR-ES (España) cerrada 2026-04-15.
 
 ## Tesis de Negocio
 El trabajo onsite es a prueba de IA. No hay modelo de lenguaje que resetee un switch en un rack en Bogota a las 3am. Ese es el moat permanente de InsiteIQ.
+
+**InsiteIQ como herramienta interna (confirmado 2026-04-15):** NO es producto comercial, NO es SaaS, NO es MVP para validar mercado. Es sistema operativo interno SRS. Fractalia / Claro / clientes ven OUTPUT (reportes, portales scoped, email/webhook) — nunca el software. Tagline canonico: *"InsiteIQ sirve para arreglar las cagadas de cualquier compania que nos hace sufrir."* — JuanCho 2026-04-15.
 
 ## Tools & Systems
 
@@ -25,9 +29,11 @@ El trabajo onsite es a prueba de IA. No hay modelo de lenguaje que resetee un sw
 
 | Server | IP | Tailscale IP | Uso |
 |--------|----|-------------|-----|
-| vps-prod | 72.62.41.234 | 100.71.174.77 | Produccion |
-| vps-staging | 187.77.71.102 | 100.110.52.22 | Staging |
+| vps-prod (VPS 1) | 72.62.41.234 | 100.71.174.77 | Produccion (InsiteIQ vive aqui) |
+| vps-staging (VPS 2) | 187.77.71.102 | 100.110.52.22 | Staging / PROD secundario |
 | bleu (Mac Mini) | local | - | Desarrollo |
+
+**InsiteIQ deploy path en PROD:** `/opt/apps/insiteiq/` · no hay staging para InsiteIQ (herramienta interna, flujo directo bleu → VPS 1).
 
 ## Convencion de Puertos
 - Frontend: 3xxx
@@ -57,7 +63,7 @@ Todo proyecto desplegado debe:
 | SA99 | Produccion | sa99.systemrapid.io |
 | SKYPRO360 | Produccion | skypro360.systemrapid.io |
 | MOEVE-T | Produccion | moevet.systemrapid.io |
-| InsiteIQ | Fase 4 — MVP local | insiteiq.systemrapid.io |
+| InsiteIQ | **Produccion — v1 Foundation Fase 2 UI plumbing (15+ pasitos live)** | insiteiq.systemrapid.io |
 
 ## Mercados Objetivo InsiteIQ
 

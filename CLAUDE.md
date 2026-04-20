@@ -5,16 +5,35 @@ Sistema operativo **interno SRS** para field services IT internacional. Construi
 
 > *"InsiteIQ sirve para arreglar las cagadas de cualquier compania que nos hace sufrir."* — JuanCho, 2026-04-15
 
-## Current State
-- **Fase:** 0 — Foundation (reinicio total 2026-04-15, clean build radical)
+## Current State (2026-04-20)
+- **Fase real:** Fase 2 UI plumbing · **live en PROD** en `insiteiq.systemrapid.io` · 15+ pasitos deployed (F-T)
 - **Branch activo:** `v1-foundation` (el v0 vive en `main` como referencia historica)
 - **Blueprint:** v1.1 validado — 11 domains, 8 principios cross-cutting, 7 fases roadmap
 - **SDD:** 8 secciones completas en Notion (v1.1 alineado)
-- **Kickoff Notion:** Fases 0-3 cerradas, Fase 4 (desarrollo local) en curso
-- **UX/UI checklist:** Fase 0 pre-poblada para 3 espacios — Track B Identity Sprint pendiente
-- **Dominio reservado:** insiteiq.systemrapid.io
+- **Kickoff Notion:** Fases 0-3 cerradas, Fase 4 (desarrollo local) cerrada. v1 Foundation deployada a VPS 1 PROD.
+- **UX/UI checklist:** Fase 0 pre-poblada para 3 espacios — Track B Identity Sprint cerrado 5 pasos. Fase 4 visual polish pendiente.
+- **Dominio live:** https://insiteiq.systemrapid.io
 - **Repo:** github.com/gutierrezbj/insiteIq
-- **Design System:** SRS Nucleus v2.0 preservado como base. Track B revisitara Identity Sprint por espacio.
+- **Design System:** SRS Nucleus v2.0 preservado. War-room applied en login + change-password + todos los action dialogs. Track B Fase 4 (polish por espacio) pendiente.
+
+### Pasitos deployed en PROD (v1-foundation)
+| # | Pasito | Qué cierra |
+|---|---|---|
+| F | Change password + forced rotation | first-login seed flow |
+| G | WO actions | advance 7-state + preflight + ack briefing + capture submit + rate + cancel + emergency override |
+| H | Parts / Budget approvals | WhatsApp-partes muerto · threshold + exchanges + auto-purchase |
+| I | Sites list + detail | drill-down desde WO + base Site Bible Fase 5 |
+| J | Intervention Report viewer | Principle #1 emit · 5 canales (JSON/HTML/CSV/email outbox/webhook outbox) · regenerate |
+| K | Threads shared + internal | Decision #8 "WhatsApp kill from day 1" + `/api/users` dir |
+| L | Copilot Briefing in-app | SRS assemble/edit notes + tech read + ack · Domain 10.5 |
+| M | Equipment reconciliation | Modo 2 Decision #4 · 5 estatus (match/substituted/missing/sin_plan/conflicto) |
+| N | Admin page | Users / Orgs / Audit log · `/api/organizations` + `/api/audit-log` |
+| O | Techs + Skill Passports | Decision #4 Modo 1 · rating + jobs + level + quality marks |
+| P | Client drill-down | Rackel (Fractalia) entra al WO + thread + parts + report scoped |
+| Q | Tech scan equipment | Domain 11 · tech on-site crea asset + asset_event append-only |
+| R | Service Agreements | Shield catalog + SLA detail + bind con WOs |
+| S | Finance scaffold | Pre-invoice por org + channel/JV commissions + collections ball-in-court |
+| T | Tech Profile + Briefing Today | Cirujano de campo PWA completo |
 
 ## Tech Stack (confirmado)
 - **Frontend:** React 19 + Vite 6 + Tailwind CSS 4 + React Router 7
@@ -25,57 +44,94 @@ Sistema operativo **interno SRS** para field services IT internacional. Construi
 - **Infra:** Docker Compose, Nginx reverse proxy, Certbot SSL
 - **Fonts:** Instrument Sans (display), DM Sans (body), JetBrains Mono (mono)
 
-## Project Structure (v1 Foundation)
+## Project Structure (v1 Foundation — actualizada)
 ```
 InsiteIQ/
   backend/
     app/
-      core/
-        config.py          # Settings (env-loaded)
-        security.py        # JWT + bcrypt
-        dependencies.py    # get_current_user + require_space + require_authority
+      core/            # config + security (JWT/bcrypt) + dependencies (RBAC)
       middleware/
-        audit_log.py       # The heart — every mutation stamped
-      models/
-        base.py            # BaseMongoModel (tenant_id, timestamps)
-        tenant.py          # Tenant (SRS = tenant 1, Ghost Tech ready)
-        organization.py    # partner_relationships (8 tipos, multi-rol)
-        user.py            # employment_type + space_memberships
-        srs_entity.py      # SR-UK / SR-US / SR-SA / SR-ES
-        asset.py           # Domain 11 — asset + asset_event + Visibility Model C
-        audit_log.py       # AuditLogEntry (append-only)
+        audit_log.py   # The heart — every mutation stamped (Principio #7)
+      models/          # Tenant, Organization (partner_relationships 8 tipos),
+                       # User (employment_type + space_memberships + must_change_password),
+                       # SRSEntity (SR-UK/US/SA), Asset + AssetEvent (Domain 11),
+                       # AuditLogEntry (append-only), Site, ServiceAgreement (Shield + SLA),
+                       # WorkOrder (7 stages + ball_in_court + handshakes),
+                       # TicketThread + TicketMessage (shared/internal),
+                       # CopilotBriefing (Domain 10.5), TechCapture (Domain 10.4),
+                       # InterventionReport (5 emit channels + deliveries log),
+                       # BudgetApprovalRequest (threshold + exchanges),
+                       # SkillPassport + TechRating (Decision #4),
+                       # Project + ClusterGroup (Modo 2), EquipmentPlanEntry
       routes/
-        health.py          # /health (no auth, no audit)
-        auth.py            # /api/auth/login, /api/auth/refresh, /api/auth/me
-      main.py              # FastAPI + CORS + AuditLogMiddleware
-      database.py          # Motor client + indexes Foundation
+        health.py               # /health (no auth, no audit)
+        auth.py                 # login + refresh + /me + change-password
+        users.py                # /api/users read-only dir (SRS full / tech-client narrowed)
+        organizations.py        # /api/organizations read-only
+        audit_log.py            # /api/audit-log (SRS only) con filtros action/actor/entity
+        sites.py                # read-only + client scope
+        service_agreements.py   # read-only + shield-levels catalog
+        work_orders.py          # intake + list + detail + advance + cancel + preflight
+        ticket_threads.py       # list + kind + messages (lazy creation + sealing)
+        copilot_briefings.py    # assemble + PATCH notes + acknowledge
+        tech_captures.py        # submit + get
+        intervention_reports.py # JSON + HTML + CSV + dispatch email/webhook + regenerate
+        budget_approvals.py     # create + send-to-client + client-approve/reject + auto-purchase + exchange
+        skill_passports.py      # /techs/me/passport + PATCH + rate-tech + ratings list
+        projects.py             # CRUD + dashboard BUMM + clusters + bulk-upload CSV aliasing
+        equipment.py            # plan bulk + scan site + reconcile project
+      main.py                   # FastAPI + CORS + AuditLogMiddleware + 16 routers
+      database.py               # Motor client + ensure_indexes Foundation
     scripts/
-      seed_foundation.py   # SRS tenant + 4 entities + 16 orgs + 9 users + audit
+      seed_foundation.py        # SRS tenant + 4 entities + 16 orgs + 10 users +
+                                # 19 sites + 4 agreements + 14 WOs all stages +
+                                # Arcos rollout + 2 passports + 2 budget approvals +
+                                # plan entries + assets + briefings + captures
+      smoke_test.py             # End-to-end ~158 assertions
     requirements.txt
   frontend/
     src/
-      lib/
-        api.js             # fetch wrapper (JWT inject, 401 broadcast)
-        auth.js            # token storage, space helpers
-      contexts/
-        AuthContext.jsx    # user state + login/logout
+      lib/               # api.js (fetch + JWT + 401 broadcast), auth.js, useFetch.js
+      contexts/          # AuthContext (user + must_change_password + changePassword)
       components/
-        RequireSpace.jsx   # route guard por espacio
+        RequireSpace.jsx # route guard por espacio + force rotation redirect
+        ui/
+          Badges.jsx     # StatusBadge, ShieldBadge, BallBadge, SeverityBadge, etc
+          KpiCard.jsx
+          ActionDialog.jsx  # Shared modal + DialogInput/Textarea/Checkbox primitives
+        workorder/
+          BriefingSection.jsx  # Copilot Briefing assemble/edit/read/ack
+          PartsSection.jsx     # Budget approvals with exchanges + actions
+          ThreadsSection.jsx   # Shared + Internal tabs with composer
+        project/
+          EquipmentSection.jsx # Plan vs Scan reconciliation (5 statuses)
       pages/
-        auth/LoginPage.jsx # login compartido
+        auth/LoginPage.jsx           # war-room login
+        auth/ChangePasswordPage.jsx  # forced rotation on first login
       spaces/
-        srs/               # Layout + HomePage (war room, desktop)
-        client/            # Layout + HomePage (minimal, desktop)
-        tech/              # Layout + HomePage (PWA, mobile, bottom nav)
-      App.jsx              # Router 3 espacios + guards
+        srs/               # Layout + HomePage (war room cockpit, desktop)
+          ops/             # WorkOrderDetailPage (acciones completas) +
+                           # WorkOrdersListPage + InterventionReportPage
+          projects/        # ProjectsListPage + ProjectDetailPage (BUMM + reconciliation)
+          sites/           # SitesListPage + SiteDetailPage
+          techs/           # TechsListPage + TechDetailPage (Skill Passport)
+          agreements/      # AgreementsListPage + AgreementDetailPage (Shield catalog)
+          finance/         # FinancePage (pre-invoice / channels / collections)
+          admin/           # AdminPage (Users / Orgs / Audit log tabs)
+        client/            # Layout + HomePage (hotel 5 estrellas, desktop)
+                           # + /client/ops/:wo_id + /client/ops/:wo_id/report
+        tech/              # Layout + HomePage (cirujano de campo, PWA mobile) +
+                           # ProfilePage + BriefingTodayPage +
+                           # /tech/ops/:wo_id + /tech/ops/:wo_id/report
+      App.jsx              # Router 3 espacios + guards + RequireUser
       main.jsx
-      index.css            # SRS Nucleus foundation (accent-bar, label-caps, ...)
+      index.css            # SRS Nucleus foundation
     tailwind.config.js     # SRS Nucleus v2.0 tokens
     index.html             # Google Fonts + PWA meta
   docker/
     api/Dockerfile
     frontend/Dockerfile + nginx.conf
-  docker-compose.yml       # 4 services: frontend, api, mongo, redis (litellm v0 removed)
+  docker-compose.yml       # 4 services: frontend, api, mongo, redis
   memory/                  # Claude Code project memory (fuente canonica viva)
 ```
 
@@ -123,8 +179,26 @@ docker compose up -d --build
 docker compose exec api python -m scripts.seed_foundation
 # Frontend: http://localhost:3110
 # API: http://localhost:4110 (docs at /docs)
-# Default seed password: InsiteIQ2026!
+# Default seed password: InsiteIQ2026! (forced rotation on first login)
 ```
+
+## Deploy flow (mac bleu → PROD VPS 1)
+```bash
+# local
+docker compose build frontend && docker compose up -d --force-recreate frontend
+git add <files> && git commit && git push origin v1-foundation
+
+# PROD (via SSH)
+ssh root@72.62.41.234 'cd /opt/apps/insiteiq && git pull && \
+  docker compose build frontend api && \
+  docker compose up -d --force-recreate frontend api && \
+  git log --oneline -1'
+```
+
+## Seed users (passwords = `InsiteIQ2026!`, todos `must_change_password=True`)
+- SRS: `juang@systemrapid.io`, `sajid@systemrapid.com`, `adrianab@systemrapid.com`, `androsb@systemrapid.com`, `luiss@systemrapid.com`, `yunush@systemrapid.com`
+- Tech: `agustinc@systemrapid.com` (plantilla), `arlindoo@systemrapid.com` (external sub), `hugoq@systemrapid.com`
+- Client: `rackel.rocha@fractaliasystems.es` (Fractalia)
 
 ## Memory canonical files (read order)
 1. `memory/MEMORY.md` — master index
