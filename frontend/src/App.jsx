@@ -31,6 +31,8 @@ import ClientHome from "./spaces/client/HomePage";
 
 import TechLayout from "./spaces/tech/Layout";
 import TechHome from "./spaces/tech/HomePage";
+import TechProfilePage from "./spaces/tech/ProfilePage";
+import BriefingTodayPage from "./spaces/tech/BriefingTodayPage";
 
 function RootRedirect() {
   const { user } = useAuth();
@@ -136,8 +138,8 @@ export default function App() {
             <Route index element={<TechHome />} />
             <Route path="ops/:wo_id" element={<WorkOrderDetailPage />} />
             <Route path="ops/:wo_id/report" element={<InterventionReportPage />} />
-            <Route path="briefing" element={<TechHome />} />
-            <Route path="profile" element={<TechHome />} />
+            <Route path="briefing" element={<BriefingTodayPage />} />
+            <Route path="profile" element={<TechProfilePage />} />
           </Route>
 
           {/* Root */}
