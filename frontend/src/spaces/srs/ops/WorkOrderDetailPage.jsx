@@ -378,6 +378,10 @@ function ActionBar({ wo, reload, isSrs, isClient, isAssignedTech }) {
   const canPreflight = (isSrs || isAssignedTech) && status === "pre_flight";
   const canAckBriefing = isAssignedTech && status === "dispatched";
   const canSubmitCapture = isAssignedTech && status === "on_site";
+  // Scan equipment: tech on_site (most realistic window) + SRS anytime non-terminal
+  const canScan =
+    ((isAssignedTech && status === "on_site") || (isSrs && !isTerminal)) &&
+    !!wo.site_id;
 
   const hasAny =
     availableAdvance.length > 0 ||
@@ -385,7 +389,8 @@ function ActionBar({ wo, reload, isSrs, isClient, isAssignedTech }) {
     canCancel ||
     canPreflight ||
     canAckBriefing ||
-    canSubmitCapture;
+    canSubmitCapture ||
+    canScan;
 
   if (!hasAny) return null;
 
@@ -408,6 +413,7 @@ function ActionBar({ wo, reload, isSrs, isClient, isAssignedTech }) {
         {canPreflight && <PreflightAction wo={wo} reload={reload} />}
         {canAckBriefing && <AckBriefingAction wo={wo} reload={reload} />}
         {canSubmitCapture && <SubmitCaptureAction wo={wo} reload={reload} />}
+        {canScan && <ScanEquipmentAction wo={wo} reload={reload} />}
         {canRate && <RateTechAction wo={wo} reload={reload} isClient={isClient} />}
         {canCancel && <CancelAction wo={wo} reload={reload} />}
       </div>
@@ -1004,4 +1010,223 @@ function formatMinutes(m) {
   if (hours < 24) return `${hours}h`;
   const days = Math.round(hours / 24);
   return `${days}d`;
+}
+
+// -------------------- Scan equipment action --------------------
+//
+// Tech on-site registra equipment que encontro (Domain 11 Asset Management).
+// Backend crea/update asset + inserta asset_event (append-only). Si el serial
+// ya existia en otro site, el event_type es 'relocated'; si es nuevo,
+// 'installed'; si esta en el mismo site, 'inspected'.
+//
+// Despues de scan, el assetId + event_type vuelven y los mostramos en una
+// lista in-dialog (session buffer) para que el tech vea lo que lleva escaneado
+// sin cerrar el dialog.
+
+const CATEGORY_OPTIONS = [
+  { v: "", l: "— elegir —" },
+  { v: "switch", l: "switch" },
+  { v: "router", l: "router" },
+  { v: "firewall", l: "firewall" },
+  { v: "access_point", l: "access point" },
+  { v: "ups", l: "UPS" },
+  { v: "display", l: "display/TV" },
+  { v: "printer", l: "printer" },
+  { v: "camera", l: "camera" },
+  { v: "server", l: "server" },
+  { v: "storage", l: "storage" },
+  { v: "cable", l: "cable" },
+  { v: "other", l: "other" },
+];
+
+function ScanEquipmentAction({ wo, reload }) {
+  const [open, setOpen] = useState(false);
+  const [serial, setSerial] = useState("");
+  const [assetTag, setAssetTag] = useState("");
+  const [make, setMake] = useState("");
+  const [model, setModel] = useState("");
+  const [category, setCategory] = useState("");
+  const [notes, setNotes] = useState("");
+  const [recent, setRecent] = useState([]); // session buffer
+
+  function resetForm() {
+    setSerial("");
+    setAssetTag("");
+    setMake("");
+    setModel("");
+    setCategory("");
+    setNotes("");
+  }
+
+  async function submit() {
+    const body = {
+      serial_number: serial.trim(),
+      asset_tag: assetTag.trim() || null,
+      make: make.trim() || null,
+      model: model.trim() || null,
+      category: category || null,
+      notes: notes.trim() || null,
+    };
+    const result = await api.post(
+      `/sites/${wo.site_id}/equipment/scan`,
+      body
+    );
+    setRecent((r) => [
+      {
+        ...result,
+        make,
+        model,
+        asset_tag: assetTag || null,
+        ts: new Date().toISOString(),
+      },
+      ...r,
+    ].slice(0, 10));
+    resetForm();
+    reload();
+    // Keep dialog open — tech is typically scanning multiple items
+  }
+
+  function close() {
+    setOpen(false);
+    // Clear session buffer when dialog closes
+    setTimeout(() => setRecent([]), 300);
+  }
+
+  const canSubmit = serial.trim().length >= 2;
+
+  return (
+    <>
+      <ActionButton onClick={() => setOpen(true)} label="Scan equipment" />
+      <ActionDialog
+        open={open}
+        onClose={close}
+        title="Scan equipment on-site"
+        subtitle={`Site ${shortId(wo.site_id)} · crea asset + evento append-only (Domain 11)`}
+        submitLabel="Registrar scan"
+        submitDisabled={!canSubmit}
+        onSubmit={submit}
+      >
+        <div>
+          <DialogLabel htmlFor="scan-serial">Serial number</DialogLabel>
+          <DialogInput
+            id="scan-serial"
+            value={serial}
+            onChange={(e) => setSerial(e.target.value)}
+            placeholder="e.g. FOC1234X567"
+            autoCapitalize="characters"
+            autoComplete="off"
+            autoCorrect="off"
+            spellCheck="false"
+            required
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <DialogLabel htmlFor="scan-tag" optional>
+              Asset tag
+            </DialogLabel>
+            <DialogInput
+              id="scan-tag"
+              value={assetTag}
+              onChange={(e) => setAssetTag(e.target.value)}
+              placeholder="inventory tag"
+              autoCapitalize="characters"
+            />
+          </div>
+          <div>
+            <DialogLabel htmlFor="scan-cat" optional>
+              Categoria
+            </DialogLabel>
+            <select
+              id="scan-cat"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="w-full bg-surface-overlay border border-surface-border rounded-sm px-3 py-2 text-text-primary font-body focus:outline-none focus:border-primary focus:shadow-glow-primary transition-all duration-fast ease-out-expo"
+            >
+              {CATEGORY_OPTIONS.map((o) => (
+                <option key={o.v} value={o.v}>
+                  {o.l}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <DialogLabel htmlFor="scan-make" optional>
+              Make
+            </DialogLabel>
+            <DialogInput
+              id="scan-make"
+              value={make}
+              onChange={(e) => setMake(e.target.value)}
+              placeholder="Cisco, HP, Samsung…"
+            />
+          </div>
+          <div>
+            <DialogLabel htmlFor="scan-model" optional>
+              Model
+            </DialogLabel>
+            <DialogInput
+              id="scan-model"
+              value={model}
+              onChange={(e) => setModel(e.target.value)}
+              placeholder="C9300-24T, QM55R…"
+            />
+          </div>
+        </div>
+        <div>
+          <DialogLabel htmlFor="scan-notes" optional>
+            Notas
+          </DialogLabel>
+          <DialogTextarea
+            id="scan-notes"
+            rows={2}
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Ubicacion en rack, condicion, serial ilegible…"
+          />
+        </div>
+
+        {/* Session buffer: lo que el tech lleva scaneado en esta apertura */}
+        {recent.length > 0 && (
+          <div className="pt-3 border-t border-surface-border">
+            <div className="label-caps mb-2">
+              Scaneados en esta sesion ({recent.length})
+            </div>
+            <div className="space-y-1.5 max-h-40 overflow-y-auto">
+              {recent.map((r, i) => (
+                <div
+                  key={i}
+                  className="bg-surface-base rounded-sm px-3 py-2 flex items-center justify-between gap-2"
+                >
+                  <div className="min-w-0">
+                    <div className="font-mono text-sm text-text-primary truncate">
+                      {r.serial_number}
+                    </div>
+                    {(r.make || r.model) && (
+                      <div className="font-mono text-2xs text-text-tertiary truncate">
+                        {[r.make, r.model].filter(Boolean).join(" · ")}
+                      </div>
+                    )}
+                  </div>
+                  <span
+                    className={`font-mono text-2xs uppercase tracking-widest-srs ${
+                      r.event_type === "installed"
+                        ? "text-success"
+                        : r.event_type === "relocated"
+                        ? "text-warning"
+                        : "text-text-secondary"
+                    }`}
+                  >
+                    {r.event_type}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </ActionDialog>
+    </>
+  );
 }
