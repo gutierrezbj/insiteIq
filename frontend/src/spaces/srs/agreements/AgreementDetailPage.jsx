@@ -4,11 +4,13 @@
 import { useMemo } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useFetch } from "../../../lib/useFetch";
+import { useAuth } from "../../../contexts/AuthContext";
 import {
   BallBadge,
   SeverityBadge,
   StatusBadge,
 } from "../../../components/ui/Badges";
+import RateCardSection from "../../../components/agreement/RateCardSection";
 
 const SHIELD_TINT = {
   bronze: "text-[#B08968]",
@@ -19,7 +21,14 @@ const SHIELD_TINT = {
 
 export default function AgreementDetailPage() {
   const { agreement_id } = useParams();
-  const { data: agreement, loading, error } = useFetch(
+  const { user } = useAuth();
+  const srsMem = user?.memberships?.find(
+    (m) => m.space === "srs_coordinators"
+  );
+  const isSrsAdmin =
+    !!srsMem && ["owner", "director"].includes(srsMem.authority_level);
+
+  const { data: agreement, loading, error, reload } = useFetch(
     `/service-agreements/${agreement_id}`,
     { deps: [agreement_id] }
   );
@@ -169,6 +178,13 @@ export default function AgreementDetailPage() {
           )}
         </section>
       </div>
+
+      {/* Rate card (X-a) */}
+      <RateCardSection
+        agreement={agreement}
+        isSrs={isSrsAdmin}
+        reload={reload}
+      />
 
       {/* Active WOs bajo este contrato */}
       <section className="bg-surface-raised accent-bar rounded-sm mt-4">

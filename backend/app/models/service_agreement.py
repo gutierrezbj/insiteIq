@@ -86,6 +86,44 @@ SHIELD_DEFAULTS: dict[ShieldLevel, dict] = {
 }
 
 
+class RateCard(BaseModel):
+    """
+    Precios por agreement (Fase 3 Admin/Finance — X-a).
+
+    Cubre los 3 patrones dominantes de contratacion SRS:
+      - break-fix reactivo (Modo 1): base_price_per_wo
+      - recurring/subscription (Panama $154K descubierto): monthly_fee
+      - hourly (audit/survey Modo 4/5): hourly_rate
+
+    parts_markup_pct snapshot del 60% default Blueprint (srs_procured_with_markup).
+    travel_* segmenta si travel entra en el flat o es extra.
+    """
+    model_config = ConfigDict(extra="ignore")
+
+    # Core per-intervention
+    base_price_per_wo: float | None = None
+    hourly_rate: float | None = None
+
+    # Recurring (subscription-style agreements)
+    monthly_fee: float | None = None
+    quarterly_fee: float | None = None
+
+    # Parts / materials (SRS procures + markup per Blueprint Domain 11)
+    parts_markup_pct: float = 60.0   # default srs_procured_with_markup
+    parts_pass_through: bool = False  # if true, cost to SRS = cost to client
+
+    # Travel / expenses
+    travel_included: bool = True     # if false, travel_flat_fee applies per trip
+    travel_flat_fee: float | None = None
+    mileage_rate_per_km: float | None = None
+
+    # After-hours / weekend uplift
+    after_hours_multiplier: float | None = None  # e.g. 1.5 for nights/weekends
+
+    # Notes per-rate-card (e.g., "base includes up to 4h on site, extra at hourly")
+    notes: str | None = None
+
+
 class ServiceAgreement(BaseMongoModel):
     organization_id: str = Field(..., description="Client org")
     contract_ref: str                        # client's contract number
@@ -96,6 +134,9 @@ class ServiceAgreement(BaseMongoModel):
     # Parts auto-purchase threshold (Decision #5 — Ball-in-court)
     # Below this USD, SRS auto-compra sin esperar aprobacion. Above, espera.
     parts_approval_threshold_usd: float = 200.0
+
+    # Rate card (X-a — Fase 3). None = legacy agreement sin precios cargados.
+    rate_card: RateCard | None = None
 
     # Facturacion
     srs_entity_id: str | None = None  # which SR-UK/US/SA entity invoices
