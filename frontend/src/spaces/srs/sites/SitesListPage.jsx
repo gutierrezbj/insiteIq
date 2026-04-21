@@ -5,9 +5,10 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useFetch } from "../../../lib/useFetch";
+import CreateSiteAction from "../../../components/admin/CreateSiteAction";
 
 export default function SitesListPage() {
-  const { data: sites, loading } = useFetch("/sites");
+  const { data: sites, loading, reload } = useFetch("/sites");
   const [country, setCountry] = useState("");
   const [query, setQuery] = useState("");
 
@@ -36,14 +37,17 @@ export default function SitesListPage() {
 
   return (
     <div className="px-4 md:px-8 py-5 md:py-7 max-w-wide">
-      <div className="accent-bar pl-4 mb-6">
-        <div className="label-caps">Sites</div>
-        <h1 className="font-display text-2xl text-text-primary leading-tight">
-          {list.length} sites registrados
-        </h1>
-        <p className="font-body text-text-secondary text-sm mt-1">
-          Fase 2 plumbing · Site Bible completo aterriza en Fase 5 (Domain 10 Knowledge)
-        </p>
+      <div className="accent-bar pl-4 mb-6 flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <div className="label-caps">Sites</div>
+          <h1 className="font-display text-2xl text-text-primary leading-tight">
+            {list.length} sites registrados
+          </h1>
+          <p className="font-body text-text-secondary text-sm mt-1">
+            Fase 2 plumbing · Site Bible completo aterriza en Fase 5 (Domain 10 Knowledge)
+          </p>
+        </div>
+        <CreateSiteAction onCreated={() => reload()} />
       </div>
 
       {/* Filters */}

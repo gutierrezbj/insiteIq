@@ -10,6 +10,8 @@
 import { useMemo, useState } from "react";
 import { useFetch } from "../../../lib/useFetch";
 import { formatAge } from "../../../components/ui/Badges";
+import CreateUserAction from "../../../components/admin/CreateUserAction";
+import CreateOrgAction from "../../../components/admin/CreateOrgAction";
 
 const TABS = [
   { key: "users", label: "Users" },
@@ -59,7 +61,7 @@ export default function AdminPage() {
 // -------------------- Users tab --------------------
 
 function UsersTab() {
-  const { data: users, loading } = useFetch("/users");
+  const { data: users, loading, reload } = useFetch("/users");
   const [query, setQuery] = useState("");
   const [spaceFilter, setSpaceFilter] = useState("");
 
@@ -101,8 +103,11 @@ function UsersTab() {
           <option value="tech_field">Tech field</option>
           <option value="client_coordinator">Client coordinator</option>
         </select>
-        <div className="ml-auto font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
-          {filtered.length} / {list.length}
+        <div className="ml-auto flex items-center gap-3">
+          <span className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+            {filtered.length} / {list.length}
+          </span>
+          <CreateUserAction onCreated={() => reload()} />
         </div>
       </header>
 
@@ -167,7 +172,7 @@ function UsersTab() {
 // -------------------- Organizations tab --------------------
 
 function OrgsTab() {
-  const { data: orgs, loading } = useFetch("/organizations");
+  const { data: orgs, loading, reload } = useFetch("/organizations");
   const [query, setQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
 
@@ -212,8 +217,11 @@ function OrgsTab() {
           <option value="vendor_service">vendor_service</option>
           <option value="end_client_metadata">end_client_metadata</option>
         </select>
-        <div className="ml-auto font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
-          {filtered.length} / {list.length}
+        <div className="ml-auto flex items-center gap-3">
+          <span className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+            {filtered.length} / {list.length}
+          </span>
+          <CreateOrgAction onCreated={() => reload()} />
         </div>
       </header>
 
