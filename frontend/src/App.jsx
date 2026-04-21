@@ -21,6 +21,7 @@ import SitesListPage from "./spaces/srs/sites/SitesListPage";
 import SiteDetailPage from "./spaces/srs/sites/SiteDetailPage";
 import AdminPage from "./spaces/srs/admin/AdminPage";
 import FinancePage from "./spaces/srs/finance/FinancePage";
+import InvoiceDetailPage from "./spaces/srs/finance/InvoiceDetailPage";
 import TechsListPage from "./spaces/srs/techs/TechsListPage";
 import TechDetailPage from "./spaces/srs/techs/TechDetailPage";
 import AgreementsListPage from "./spaces/srs/agreements/AgreementsListPage";
@@ -107,6 +108,7 @@ export default function App() {
             <Route path="agreements" element={<AgreementsListPage />} />
             <Route path="agreements/:agreement_id" element={<AgreementDetailPage />} />
             <Route path="finance" element={<FinancePage />} />
+            <Route path="finance/invoices/:invoice_id" element={<InvoiceDetailPage />} />
             <Route path="admin" element={<AdminPage />} />
           </Route>
 
@@ -122,6 +124,7 @@ export default function App() {
             <Route index element={<ClientHome />} />
             <Route path="ops/:wo_id" element={<WorkOrderDetailPage />} />
             <Route path="ops/:wo_id/report" element={<InterventionReportPage />} />
+            <Route path="invoices/:invoice_id" element={<InvoiceDetailPage />} />
             <Route path="tickets" element={<ClientHome />} />
             <Route path="deliverables" element={<ClientHome />} />
           </Route>
