@@ -13,15 +13,22 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../../contexts/AuthContext";
 import { useFetch } from "../../../lib/useFetch";
+import { api } from "../../../lib/api";
 import {
   BallBadge,
   StatusBadge,
   formatAge,
 } from "../../../components/ui/Badges";
 import GenerateInvoiceAction from "../../../components/finance/GenerateInvoiceAction";
+import CreateSubscriptionAction from "../../../components/finance/CreateSubscriptionAction";
+import ActionDialog, {
+  DialogTextarea,
+  DialogLabel,
+} from "../../../components/ui/ActionDialog";
 
 const TABS = [
   { key: "invoices", label: "Invoices" },
+  { key: "recurring", label: "Recurring" },
   { key: "preinvoice", label: "Pre-invoice" },
   { key: "channels", label: "Channel partners" },
   { key: "collections", label: "Collections ball" },
@@ -92,6 +99,9 @@ export default function FinancePage() {
 
       {tab === "invoices" && (
         <InvoicesTab orgById={orgById} isSrsAdmin={isSrsAdmin} />
+      )}
+      {tab === "recurring" && (
+        <RecurringTab orgById={orgById} isSrsAdmin={isSrsAdmin} />
       )}
       {tab === "preinvoice" && (
         <PreInvoiceTab
@@ -629,4 +639,265 @@ function formatCommission(rule) {
   if (rule.floor_usd != null) parts.push(`floor $${rule.floor_usd}`);
   if (rule.cap_usd != null) parts.push(`cap $${rule.cap_usd}`);
   return parts.length ? parts.join(" · ") : JSON.stringify(rule);
+}
+
+// -------------------- Recurring tab (X-c) --------------------
+
+const SUB_STATUS_LOOK = {
+  active: { bg: "bg-success", text: "text-success", label: "active" },
+  paused: { bg: "bg-warning", text: "text-warning", label: "paused" },
+  cancelled: {
+    bg: "bg-text-tertiary",
+    text: "text-text-tertiary",
+    label: "cancelled",
+  },
+};
+
+function RecurringTab({ orgById, isSrsAdmin }) {
+  const { data: subs, loading, reload } = useFetch("/subscriptions");
+
+  const list = subs || [];
+  const monthlyRunRate = useMemo(() => {
+    let total = 0;
+    for (const s of list) {
+      if (s.status !== "active") continue;
+      if (s.cadence === "monthly") total += s.amount;
+      else if (s.cadence === "quarterly") total += s.amount / 3;
+      else if (s.cadence === "annual") total += s.amount / 12;
+    }
+    return total;
+  }, [list]);
+
+  const currencyMix = useMemo(() => {
+    const c = new Set(list.filter((s) => s.status === "active").map((s) => s.currency));
+    return [...c];
+  }, [list]);
+
+  return (
+    <div className="space-y-4">
+      <section className="bg-surface-raised accent-bar rounded-sm p-4">
+        <div className="flex items-start justify-between gap-3 flex-wrap">
+          <div>
+            <div className="label-caps mb-1">Recurring streams</div>
+            <h2 className="font-display text-base text-text-primary">
+              {list.filter((s) => s.status === "active").length} activos ·{" "}
+              {list.filter((s) => s.status === "paused").length} paused ·{" "}
+              {list.filter((s) => s.status === "cancelled").length} cancelled
+            </h2>
+            {monthlyRunRate > 0 && (
+              <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary mt-1">
+                run-rate ≈ {monthlyRunRate.toFixed(0)} /mo{" "}
+                {currencyMix.length === 1 ? currencyMix[0] : `(mix: ${currencyMix.join(", ")})`}
+              </div>
+            )}
+          </div>
+          {isSrsAdmin && <CreateSubscriptionAction onCreated={() => reload()} />}
+        </div>
+      </section>
+
+      <section className="bg-surface-raised accent-bar rounded-sm">
+        <div className="grid grid-cols-12 gap-3 px-4 py-2 border-b border-surface-border text-text-tertiary">
+          <div className="col-span-3 label-caps">Titulo</div>
+          <div className="col-span-2 label-caps">Cliente</div>
+          <div className="col-span-2 label-caps text-right">Amount</div>
+          <div className="col-span-1 label-caps">Cadence</div>
+          <div className="col-span-2 label-caps">Next run</div>
+          <div className="col-span-1 label-caps text-right">Status</div>
+          <div className="col-span-1 label-caps text-right">Acciones</div>
+        </div>
+
+        <div className="divide-y divide-surface-border">
+          {loading && <Empty text="cargando…" />}
+          {!loading && list.length === 0 && (
+            <Empty text="— sin subscriptions · crea la primera —" />
+          )}
+          {list.map((s) => (
+            <SubscriptionRow
+              key={s.id}
+              sub={s}
+              orgById={orgById}
+              isSrsAdmin={isSrsAdmin}
+              reload={reload}
+            />
+          ))}
+        </div>
+      </section>
+
+      <p className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+        X-c · run-now manual hoy · cron worker aterriza Horizonte 3
+      </p>
+    </div>
+  );
+}
+
+function SubscriptionRow({ sub, orgById, isSrsAdmin, reload }) {
+  const look = SUB_STATUS_LOOK[sub.status] || SUB_STATUS_LOOK.active;
+
+  return (
+    <div className="grid grid-cols-12 gap-3 px-4 py-2.5 items-center">
+      <div className="col-span-3 min-w-0">
+        <div className="font-body text-sm text-text-primary truncate">
+          {sub.title}
+        </div>
+        <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+          runs {sub.runs_count}
+          {sub.last_invoice_id && (
+            <>
+              {" · "}
+              <Link
+                to={`/srs/finance/invoices/${sub.last_invoice_id}`}
+                className="text-primary-light hover:text-primary"
+              >
+                last invoice ↗
+              </Link>
+            </>
+          )}
+        </div>
+      </div>
+      <div className="col-span-2 font-body text-sm text-text-secondary truncate">
+        {orgById.get(sub.organization_id)?.legal_name || sub.organization_id.slice(-6)}
+      </div>
+      <div className="col-span-2 text-right">
+        <div className="font-display text-base text-text-primary leading-none">
+          {sub.amount.toFixed(2)}
+        </div>
+        <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+          {sub.currency}
+          {sub.tax_rate_pct > 0 && ` +${sub.tax_rate_pct}%`}
+        </div>
+      </div>
+      <div className="col-span-1 font-mono text-2xs uppercase tracking-widest-srs text-text-secondary">
+        {sub.cadence}
+      </div>
+      <div className="col-span-2 font-mono text-2xs uppercase tracking-widest-srs text-text-secondary">
+        {new Date(sub.next_run).toISOString().slice(0, 10)}
+      </div>
+      <div className="col-span-1 text-right">
+        <span
+          className={`inline-flex items-center gap-1 font-mono text-2xs uppercase tracking-widest-srs ${look.text}`}
+        >
+          <span className={`w-1.5 h-1.5 rounded-full ${look.bg}`} />
+          {look.label}
+        </span>
+      </div>
+      <div className="col-span-1 text-right">
+        {isSrsAdmin && <SubActions sub={sub} reload={reload} />}
+      </div>
+    </div>
+  );
+}
+
+function SubActions({ sub, reload }) {
+  const [busy, setBusy] = useState(false);
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
+
+  async function run(path, body = {}) {
+    setBusy(true);
+    try {
+      await api.post(path, body);
+      reload();
+    } catch (e) {
+      alert(e.message || "error");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (sub.status === "cancelled") {
+    return (
+      <span className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+        —
+      </span>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-1 justify-end">
+      {sub.status === "active" && (
+        <>
+          <IconButton
+            label="run"
+            title="Run now (genera invoice)"
+            onClick={() => run(`/subscriptions/${sub.id}/run-now`)}
+            disabled={busy}
+            tone="primary"
+          />
+          <IconButton
+            label="||"
+            title="Pausar"
+            onClick={() => run(`/subscriptions/${sub.id}/pause`)}
+            disabled={busy}
+          />
+        </>
+      )}
+      {sub.status === "paused" && (
+        <IconButton
+          label="▶"
+          title="Resume"
+          onClick={() => run(`/subscriptions/${sub.id}/resume`)}
+          disabled={busy}
+          tone="success"
+        />
+      )}
+      <IconButton
+        label="×"
+        title="Cancel"
+        onClick={() => setCancelOpen(true)}
+        disabled={busy}
+        tone="danger"
+      />
+      <ActionDialog
+        open={cancelOpen}
+        onClose={() => setCancelOpen(false)}
+        title={`Cancelar subscription · ${sub.title}`}
+        subtitle="Terminal. Para re-crear hay que hacer una nueva."
+        submitLabel="Cancel subscription"
+        destructive
+        submitDisabled={!cancelReason.trim()}
+        onSubmit={async () => {
+          await api.post(`/subscriptions/${sub.id}/cancel`, {
+            reason: cancelReason.trim(),
+          });
+          setCancelOpen(false);
+          setCancelReason("");
+          reload();
+        }}
+      >
+        <div>
+          <DialogLabel htmlFor="sc-reason">Razon</DialogLabel>
+          <DialogTextarea
+            id="sc-reason"
+            rows={3}
+            value={cancelReason}
+            onChange={(e) => setCancelReason(e.target.value)}
+            placeholder="Cliente cambio plan · scope reducido · fin contrato…"
+            required
+          />
+        </div>
+      </ActionDialog>
+    </div>
+  );
+}
+
+function IconButton({ label, title, onClick, disabled, tone = "default" }) {
+  const toneClass =
+    tone === "primary"
+      ? "text-primary-light border-primary/40 hover:bg-primary hover:text-text-inverse"
+      : tone === "success"
+      ? "text-success border-success/40 hover:bg-success hover:text-text-inverse"
+      : tone === "danger"
+      ? "text-text-tertiary border-surface-border hover:text-danger hover:border-danger"
+      : "text-text-secondary border-surface-border hover:text-text-primary hover:border-primary";
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      title={title}
+      className={`font-mono text-2xs uppercase tracking-widest-srs px-2 py-1 rounded-sm border transition-colors duration-fast disabled:opacity-50 ${toneClass}`}
+    >
+      {label}
+    </button>
+  );
 }
