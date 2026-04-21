@@ -12,6 +12,7 @@ import {
   StatusBadge,
   formatAge,
 } from "../../../components/ui/Badges";
+import IntakeWorkOrderAction from "../../../components/workorder/IntakeWorkOrderAction";
 
 const STATUS_FILTERS = [
   "all",
@@ -65,14 +66,17 @@ export default function WorkOrdersListPage() {
   return (
     <div className="px-8 py-7 max-w-wide">
       {/* Header */}
-      <div className="accent-bar pl-4 mb-6">
-        <div className="label-caps">Operations</div>
-        <h1 className="font-display text-2xl text-text-primary leading-tight">
-          Work Orders
-        </h1>
-        <p className="font-body text-text-secondary text-sm mt-1">
-          {loading ? "cargando…" : `${rows.length} de ${data?.length || 0} visibles`}
-        </p>
+      <div className="accent-bar pl-4 mb-6 flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <div className="label-caps">Operations</div>
+          <h1 className="font-display text-2xl text-text-primary leading-tight">
+            Work Orders
+          </h1>
+          <p className="font-body text-text-secondary text-sm mt-1">
+            {loading ? "cargando…" : `${rows.length} de ${data?.length || 0} visibles`}
+          </p>
+        </div>
+        <IntakeWorkOrderAction />
       </div>
 
       {/* Filters */}
