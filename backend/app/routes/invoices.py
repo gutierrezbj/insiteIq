@@ -583,20 +583,26 @@ async def void_invoice(
     return _serialize(refreshed)
 
 
-# ---------------- P&L · 3 margenes (X-g) ----------------
+# ---------------- P&L · 3 margenes (X-g Fase 1 + Fase 2) ----------------
 
 @router.get("/{invoice_id}/pnl")
 async def invoice_pnl(
     invoice_id: str, user: CurrentUser = Depends(get_current_user)
 ):
     """
-    Calcula los 3 margenes del Blueprint para este invoice:
-      - nominal       : revenue - (labor + parts + travel + other)
-      - cash_flow     : revenue_if_paid - cost_real (cost real se puede matar
-                        por vendor invoice no pagado aun — en X-g simplicado:
-                        = nominal si invoice paid, 0 si invoice no paid)
-      - proxy_adjusted: nominal - coord_cost (coordination absorbida monetizada
-                        con coordination_hours × coordination_hourly_rate)
+    Calcula los 3 margenes del Blueprint para este invoice (X-g Fase 2):
+
+      - nominal        : revenue - cost_committed
+                         cost_committed = max(cost_snapshot, vendor_invoices_committed)
+                         vendor_invoices_committed = sum(vi.total for vi in approved|paid|matched)
+      - cash_flow      : revenue_received - cash_out
+                         revenue_received = invoice.total si paid, else 0
+                         cash_out = sum(vi.total for vi in paid ONLY)
+      - proxy_adjusted : nominal - coord_cost absorbed (monetized)
+
+    Source priority: cuando un WO tiene linked vendor_invoices con total > 0
+    en status approved/paid/matched, ese numero manda (real). cost_snapshot
+    queda como fallback cuando AP no esta capturado aun.
     """
     db = get_db()
     try:
@@ -608,11 +614,9 @@ async def invoice_pnl(
     if not inv:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Invoice not found")
 
-    # Client only sees own + no P&L (SRS-internal)
+    # SRS-internal
     if not user.has_space("srs_coordinators"):
-        raise HTTPException(
-            status.HTTP_403_FORBIDDEN, "P&L is SRS-internal"
-        )
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "P&L is SRS-internal")
 
     wo_ids = inv.get("work_order_ids") or []
     wos = []
@@ -621,64 +625,121 @@ async def invoice_pnl(
             {"_id": {"$in": [ObjectId(i) for i in wo_ids]}}
         ).to_list(len(wo_ids))
 
-    # Aggregate cost
+    # Pre-fetch all vendor_invoices that link to any of these WOs
+    vis_by_wo: dict[str, list[dict]] = {}
+    if wo_ids:
+        async for vi in db.vendor_invoices.find(
+            {
+                "tenant_id": user.tenant_id,
+                "linked_work_order_ids": {"$in": wo_ids},
+                "status": {"$in": ["matched", "approved", "paid"]},
+            }
+        ):
+            # Distribute vi.total pro-rata across its linked WOs that overlap
+            # with this invoice's WOs. Naive even split for Fase 2.
+            overlap = [w for w in (vi.get("linked_work_order_ids") or []) if w in wo_ids]
+            if not overlap:
+                continue
+            share = float(vi.get("total") or 0) / len(overlap)
+            vi_record = {
+                "vi_id": str(vi["_id"]),
+                "vi_number": vi.get("vendor_invoice_number"),
+                "vi_status": vi.get("status"),
+                "vi_total": float(vi.get("total") or 0),
+                "share": round(share, 2),
+                "paid": vi.get("status") == "paid",
+            }
+            for wo_id in overlap:
+                vis_by_wo.setdefault(wo_id, []).append(vi_record)
+
     per_wo: list[dict] = []
-    total_labor = 0.0
-    total_parts = 0.0
-    total_travel = 0.0
-    total_other = 0.0
+    total_cost_committed = 0.0
+    total_cash_out = 0.0
+    total_snapshot_cost = 0.0
     total_coord_cost = 0.0
-    covered_count = 0
+    snapshot_covered = 0
+    vendor_covered = 0
+    both_sources = 0
 
     for w in wos:
+        wo_id = str(w["_id"])
         cs = w.get("cost_snapshot") or {}
-        has_any = any(
+        snapshot_any = any(
             cs.get(k) is not None
             for k in ("labor", "parts", "travel", "other", "coordination_hours")
         )
-        if has_any:
-            covered_count += 1
-        labor = float(cs.get("labor") or 0)
-        parts = float(cs.get("parts") or 0)
-        travel = float(cs.get("travel") or 0)
-        other = float(cs.get("other") or 0)
+        snapshot_cost = (
+            float(cs.get("labor") or 0)
+            + float(cs.get("parts") or 0)
+            + float(cs.get("travel") or 0)
+            + float(cs.get("other") or 0)
+        )
         ch = float(cs.get("coordination_hours") or 0)
         rate = float(cs.get("coordination_hourly_rate") or 0)
         coord = round(ch * rate, 2)
 
-        total_labor += labor
-        total_parts += parts
-        total_travel += travel
-        total_other += other
+        vi_list = vis_by_wo.get(wo_id, [])
+        vendor_committed = round(sum(v["share"] for v in vi_list), 2)
+        vendor_paid = round(
+            sum(v["share"] for v in vi_list if v["paid"]), 2
+        )
+
+        # Pick cost_committed: vendor_committed manda si existe, else snapshot
+        if vendor_committed > 0:
+            cost_committed = vendor_committed
+            source = "vendor_invoice"
+            if snapshot_any:
+                both_sources += 1
+        elif snapshot_any:
+            cost_committed = round(snapshot_cost, 2)
+            source = "cost_snapshot"
+        else:
+            cost_committed = 0.0
+            source = "none"
+
+        if snapshot_any:
+            snapshot_covered += 1
+        if vi_list:
+            vendor_covered += 1
+
+        total_cost_committed += cost_committed
+        total_cash_out += vendor_paid
+        total_snapshot_cost += snapshot_cost if source == "cost_snapshot" else 0
         total_coord_cost += coord
 
         per_wo.append({
-            "work_order_id": str(w["_id"]),
+            "work_order_id": wo_id,
             "reference": w.get("reference"),
             "title": w.get("title"),
-            "labor": labor,
-            "parts": parts,
-            "travel": travel,
-            "other": other,
+            "cost_source": source,
+            "cost_committed": cost_committed,
+            "cash_out": vendor_paid,
+            "snapshot_cost": round(snapshot_cost, 2),
+            "vendor_committed": vendor_committed,
+            "vendor_paid": vendor_paid,
             "coordination_cost": coord,
-            "cost_total": round(labor + parts + travel + other, 2),
-            "has_snapshot": has_any,
+            "has_snapshot": snapshot_any,
+            "has_vendor_invoices": bool(vi_list),
+            "vendor_invoices_count": len(vi_list),
+            "vendor_invoices": vi_list,
         })
 
-    cost_direct = round(total_labor + total_parts + total_travel + total_other, 2)
+    cost_committed = round(total_cost_committed, 2)
+    cash_out = round(total_cash_out, 2)
     revenue = float(inv.get("total") or 0)
+    invoice_paid = inv.get("status") == "paid"
+    cashflow_revenue = revenue if invoice_paid else 0.0
 
-    nominal_margin = round(revenue - cost_direct, 2)
+    nominal_margin = round(revenue - cost_committed, 2)
     nominal_pct = round((nominal_margin / revenue * 100), 2) if revenue else 0.0
 
-    # Cash-flow: revenue solo si paid, cost_direct como approximacion pagado
-    # (refinamos con vendor_invoices en X-d)
-    cashflow_revenue = revenue if inv.get("status") == "paid" else 0.0
-    # Assume costs are paid when marked (snapshot = paid). Conservative.
-    cashflow_margin = round(cashflow_revenue - cost_direct, 2)
-    cashflow_pct = round((cashflow_margin / cashflow_revenue * 100), 2) if cashflow_revenue else 0.0
+    cashflow_margin = round(cashflow_revenue - cash_out, 2)
+    cashflow_pct = (
+        round((cashflow_margin / cashflow_revenue * 100), 2)
+        if cashflow_revenue
+        else 0.0
+    )
 
-    # Proxy-adjusted: nominal minus coordination cost absorbed
     proxy_margin = round(nominal_margin - total_coord_cost, 2)
     proxy_pct = round((proxy_margin / revenue * 100), 2) if revenue else 0.0
 
@@ -687,27 +748,46 @@ async def invoice_pnl(
         "invoice_number": inv.get("invoice_number"),
         "currency": inv.get("currency"),
         "revenue": revenue,
-        "cost_direct": cost_direct,
-        "cost_breakdown": {
-            "labor": round(total_labor, 2),
-            "parts": round(total_parts, 2),
-            "travel": round(total_travel, 2),
-            "other": round(total_other, 2),
-        },
+        "cost_committed": cost_committed,
+        "cash_out": cash_out,
         "coordination_cost": round(total_coord_cost, 2),
         "margins": {
-            "nominal": {"amount": nominal_margin, "pct": nominal_pct},
+            "nominal": {
+                "amount": nominal_margin,
+                "pct": nominal_pct,
+                "based_on": "cost_committed (vendor_invoices prioritarias · cost_snapshot fallback)",
+            },
             "cash_flow": {
                 "amount": cashflow_margin,
                 "pct": cashflow_pct,
-                "invoice_paid": inv.get("status") == "paid",
+                "invoice_paid": invoice_paid,
+                "cash_out": cash_out,
+                "based_on": "revenue_if_paid - vendor_invoices paid only",
             },
-            "proxy_adjusted": {"amount": proxy_margin, "pct": proxy_pct},
+            "proxy_adjusted": {
+                "amount": proxy_margin,
+                "pct": proxy_pct,
+                "based_on": "nominal - coordination absorbed",
+            },
         },
         "coverage": {
             "wo_count": len(wo_ids),
-            "wo_with_snapshot": covered_count,
-            "pct": round(covered_count / len(wo_ids) * 100, 2) if wo_ids else 0.0,
+            "wo_with_snapshot": snapshot_covered,
+            "wo_with_vendor_invoice": vendor_covered,
+            "wo_with_both": both_sources,
+            "wo_with_any_cost": len(
+                [p for p in per_wo if p["cost_source"] != "none"]
+            ),
+            "pct_any_cost": (
+                round(
+                    len([p for p in per_wo if p["cost_source"] != "none"])
+                    / len(wo_ids)
+                    * 100,
+                    2,
+                )
+                if wo_ids
+                else 0.0
+            ),
         },
         "per_wo": per_wo,
     }

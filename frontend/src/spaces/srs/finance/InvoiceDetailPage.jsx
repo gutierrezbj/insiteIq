@@ -474,23 +474,35 @@ function InvoicePnLSection({ invoice }) {
   }
 
   const coverage = pnl.coverage || {};
-  const lowCoverage = (coverage.pct ?? 0) < 60;
+  const lowCoverage = (coverage.pct_any_cost ?? 0) < 60;
 
   return (
     <section className="bg-surface-raised accent-bar rounded-sm mt-4">
       <header className="px-4 py-3 border-b border-surface-border flex items-start justify-between gap-3 flex-wrap">
         <div>
-          <div className="label-caps">P&L · 3 margenes</div>
+          <div className="label-caps">P&L · 3 margenes · X-g Fase 2</div>
           <h2 className="font-display text-base text-text-primary leading-tight">
-            Revenue {pnl.revenue.toFixed(2)} {pnl.currency} · cost directo{" "}
-            {pnl.cost_direct.toFixed(2)}
+            Revenue {pnl.revenue.toFixed(2)} {pnl.currency} · cost committed{" "}
+            {pnl.cost_committed.toFixed(2)} · cash out {pnl.cash_out.toFixed(2)}
           </h2>
           <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary mt-0.5">
-            Snapshot coverage {coverage.wo_with_snapshot}/{coverage.wo_count}{" "}
-            ({coverage.pct?.toFixed(0)}%)
+            Coverage {coverage.wo_with_any_cost}/{coverage.wo_count} ({coverage.pct_any_cost?.toFixed(0)}%)
+            {" · "}
+            <span className="text-primary-light">
+              {coverage.wo_with_vendor_invoice} vendor_invoice
+            </span>
+            {" · "}
+            <span className="text-text-secondary">
+              {coverage.wo_with_snapshot} snapshot
+            </span>
+            {coverage.wo_with_both > 0 && (
+              <span className="ml-1 text-info">
+                · {coverage.wo_with_both} both (vendor gana)
+              </span>
+            )}
             {lowCoverage && (
               <span className="ml-2 text-warning">
-                · algunos WOs sin cost — P&L incompleto
+                · low coverage — P&L incompleto
               </span>
             )}
           </div>
@@ -503,7 +515,7 @@ function InvoicePnLSection({ invoice }) {
           tone="primary"
           data={pnl.margins.nominal}
           currency={pnl.currency}
-          footnote="price − (labor+parts+travel+other)"
+          footnote={pnl.margins.nominal.based_on}
         />
         <MarginCard
           label="Cash-flow"
@@ -512,7 +524,7 @@ function InvoicePnLSection({ invoice }) {
           currency={pnl.currency}
           footnote={
             pnl.margins.cash_flow.invoice_paid
-              ? "invoice paid · cost asumido pagado"
+              ? `invoice paid · cash out ${pnl.margins.cash_flow.cash_out.toFixed(2)} (solo vendors paid)`
               : "invoice no-paid aun · revenue=0 hasta cobro"
           }
         />
@@ -525,85 +537,86 @@ function InvoicePnLSection({ invoice }) {
         />
       </div>
 
-      {/* Cost breakdown + per-WO table */}
-      <div className="px-4 py-3 border-t border-surface-border grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <div className="label-caps mb-2">Cost breakdown</div>
-          <div className="space-y-1.5">
-            <CostRow label="Labor" value={pnl.cost_breakdown.labor} currency={pnl.currency} />
-            <CostRow label="Parts" value={pnl.cost_breakdown.parts} currency={pnl.currency} />
-            <CostRow label="Travel" value={pnl.cost_breakdown.travel} currency={pnl.currency} />
-            <CostRow label="Other" value={pnl.cost_breakdown.other} currency={pnl.currency} />
-            <div className="flex items-center justify-between pt-1.5 border-t border-surface-border font-mono text-sm">
-              <span className="text-text-tertiary uppercase tracking-widest-srs text-2xs">
-                Total directo
-              </span>
-              <span className="text-text-primary">
-                {pnl.cost_direct.toFixed(2)} {pnl.currency}
-              </span>
-            </div>
-            {pnl.coordination_cost > 0 && (
-              <div className="flex items-center justify-between font-mono text-sm">
-                <span className="text-warning uppercase tracking-widest-srs text-2xs">
-                  + Coord absorbido
-                </span>
-                <span className="text-warning">
-                  {pnl.coordination_cost.toFixed(2)} {pnl.currency}
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div>
-          <div className="label-caps mb-2">Per-WO breakdown</div>
-          <div className="space-y-1.5 max-h-64 overflow-y-auto">
-            {(pnl.per_wo || []).map((w) => (
-              <Link
-                key={w.work_order_id}
-                to={`/srs/ops/${w.work_order_id}`}
-                className="block bg-surface-base rounded-sm px-3 py-2 hover:bg-surface-overlay/80 transition-colors duration-fast"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <div className="min-w-0">
-                    <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+      {/* Per-WO table (full width ahora que removimos cost_breakdown agregado) */}
+      <div className="px-4 py-3 border-t border-surface-border">
+        <div className="label-caps mb-2">Per-WO breakdown</div>
+        <div className="space-y-1.5 max-h-96 overflow-y-auto">
+          {(pnl.per_wo || []).map((w) => (
+            <Link
+              key={w.work_order_id}
+              to={`/srs/ops/${w.work_order_id}`}
+              className="block bg-surface-base rounded-sm px-3 py-2 hover:bg-surface-overlay/80 transition-colors duration-fast"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <span className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
                       {w.reference || w.work_order_id.slice(-6)}
-                    </div>
-                    <div className="font-body text-sm text-text-primary truncate">
-                      {w.title || "—"}
-                    </div>
-                  </div>
-                  <div className="text-right flex-shrink-0">
-                    {w.has_snapshot ? (
-                      <>
-                        <div className="font-mono text-sm text-text-primary">
-                          {w.cost_total.toFixed(2)}
-                        </div>
-                        {w.coordination_cost > 0 && (
-                          <div className="font-mono text-2xs text-warning">
-                            +{w.coordination_cost.toFixed(2)} coord
-                          </div>
-                        )}
-                      </>
-                    ) : (
-                      <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
-                        sin cost
-                      </div>
+                    </span>
+                    <CostSourcePill source={w.cost_source} />
+                    {w.vendor_invoices_count > 0 && (
+                      <span className="font-mono text-2xs uppercase tracking-widest-srs text-primary-light">
+                        · {w.vendor_invoices_count} VI
+                      </span>
                     )}
                   </div>
+                  <div className="font-body text-sm text-text-primary truncate">
+                    {w.title || "—"}
+                  </div>
                 </div>
-              </Link>
-            ))}
-          </div>
+                <div className="text-right flex-shrink-0">
+                  {w.cost_source === "none" ? (
+                    <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+                      sin cost
+                    </div>
+                  ) : (
+                    <>
+                      <div className="font-mono text-sm text-text-primary">
+                        {w.cost_committed.toFixed(2)}
+                      </div>
+                      {w.cash_out > 0 && w.cash_out !== w.cost_committed && (
+                        <div className="font-mono text-2xs text-success">
+                          {w.cash_out.toFixed(2)} cash
+                        </div>
+                      )}
+                      {w.coordination_cost > 0 && (
+                        <div className="font-mono text-2xs text-warning">
+                          +{w.coordination_cost.toFixed(2)} coord
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
+            </Link>
+          ))}
         </div>
       </div>
 
       <div className="px-4 py-2 border-t border-surface-border font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
-        X-g Fase 1 · cost manual hoy · X-g Fase 2 leera vendor_invoices reales
-        (X-d)
+        X-g Fase 2 · vendor_invoices prioritarias (AP real) · cost_snapshot
+        como fallback cuando AP aun no capturado
       </div>
     </section>
   );
+}
+
+function CostSourcePill({ source }) {
+  if (source === "vendor_invoice") {
+    return (
+      <span className="font-mono text-2xs uppercase tracking-widest-srs text-primary-light">
+        · vendor_invoice
+      </span>
+    );
+  }
+  if (source === "cost_snapshot") {
+    return (
+      <span className="font-mono text-2xs uppercase tracking-widest-srs text-text-secondary">
+        · snapshot
+      </span>
+    );
+  }
+  return null;
 }
 
 function MarginCard({ label, tone, data, currency, footnote }) {
@@ -642,15 +655,3 @@ function MarginCard({ label, tone, data, currency, footnote }) {
   );
 }
 
-function CostRow({ label, value, currency }) {
-  return (
-    <div className="flex items-center justify-between font-mono text-sm">
-      <span className="text-text-tertiary uppercase tracking-widest-srs text-2xs">
-        {label}
-      </span>
-      <span className="text-text-primary">
-        {value.toFixed(2)} {currency}
-      </span>
-    </div>
-  );
-}
