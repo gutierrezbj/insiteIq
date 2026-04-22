@@ -222,6 +222,9 @@ export default function InvoiceDetailPage() {
         </div>
       </section>
 
+      {/* P&L section · SRS only (X-g) */}
+      {isSrsAdmin && <InvoicePnLSection invoice={inv} />}
+
       {inv.notes && (
         <section className="bg-surface-raised accent-bar rounded-sm p-4 mt-4">
           <div className="label-caps mb-1.5">Notas</div>
@@ -232,8 +235,8 @@ export default function InvoiceDetailPage() {
       )}
 
       <p className="mt-6 text-text-tertiary font-mono text-2xs uppercase tracking-widest-srs">
-        Fase 3 Admin/Finance · X-b · PDF + email outbox delivery ·
-        aterriza cuando cerremos SMTP/PDF workers
+        Fase 3 Admin/Finance · X-b + X-g · PDF + email outbox delivery ·
+        aterriza cuando cerremos SMTP/PDF workers + X-d AP vendor invoices
       </p>
     </div>
   );
@@ -440,4 +443,214 @@ function shortDate(iso) {
   } catch {
     return "—";
   }
+}
+
+// -------------------- P&L 3 margenes (X-g) --------------------
+
+function InvoicePnLSection({ invoice }) {
+  const { data: pnl, loading, error } = useFetch(`/invoices/${invoice.id}/pnl`, {
+    deps: [invoice.id],
+  });
+
+  if (loading) {
+    return (
+      <section className="bg-surface-raised accent-bar rounded-sm p-4 mt-4">
+        <div className="label-caps mb-1">P&L · 3 margenes</div>
+        <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+          calculando…
+        </div>
+      </section>
+    );
+  }
+  if (error || !pnl) {
+    return (
+      <section className="bg-surface-raised accent-bar rounded-sm p-4 mt-4">
+        <div className="label-caps mb-1">P&L · 3 margenes</div>
+        <p className="font-body text-sm text-danger">
+          {error?.message || "No se pudo computar P&L"}
+        </p>
+      </section>
+    );
+  }
+
+  const coverage = pnl.coverage || {};
+  const lowCoverage = (coverage.pct ?? 0) < 60;
+
+  return (
+    <section className="bg-surface-raised accent-bar rounded-sm mt-4">
+      <header className="px-4 py-3 border-b border-surface-border flex items-start justify-between gap-3 flex-wrap">
+        <div>
+          <div className="label-caps">P&L · 3 margenes</div>
+          <h2 className="font-display text-base text-text-primary leading-tight">
+            Revenue {pnl.revenue.toFixed(2)} {pnl.currency} · cost directo{" "}
+            {pnl.cost_direct.toFixed(2)}
+          </h2>
+          <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary mt-0.5">
+            Snapshot coverage {coverage.wo_with_snapshot}/{coverage.wo_count}{" "}
+            ({coverage.pct?.toFixed(0)}%)
+            {lowCoverage && (
+              <span className="ml-2 text-warning">
+                · algunos WOs sin cost — P&L incompleto
+              </span>
+            )}
+          </div>
+        </div>
+      </header>
+
+      <div className="px-4 py-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+        <MarginCard
+          label="Nominal"
+          tone="primary"
+          data={pnl.margins.nominal}
+          currency={pnl.currency}
+          footnote="price − (labor+parts+travel+other)"
+        />
+        <MarginCard
+          label="Cash-flow"
+          tone={pnl.margins.cash_flow.invoice_paid ? "success" : "muted"}
+          data={pnl.margins.cash_flow}
+          currency={pnl.currency}
+          footnote={
+            pnl.margins.cash_flow.invoice_paid
+              ? "invoice paid · cost asumido pagado"
+              : "invoice no-paid aun · revenue=0 hasta cobro"
+          }
+        />
+        <MarginCard
+          label="Proxy-adjusted"
+          tone="warning"
+          data={pnl.margins.proxy_adjusted}
+          currency={pnl.currency}
+          footnote={`menos ${pnl.coordination_cost.toFixed(2)} coordination absorbido`}
+        />
+      </div>
+
+      {/* Cost breakdown + per-WO table */}
+      <div className="px-4 py-3 border-t border-surface-border grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <div className="label-caps mb-2">Cost breakdown</div>
+          <div className="space-y-1.5">
+            <CostRow label="Labor" value={pnl.cost_breakdown.labor} currency={pnl.currency} />
+            <CostRow label="Parts" value={pnl.cost_breakdown.parts} currency={pnl.currency} />
+            <CostRow label="Travel" value={pnl.cost_breakdown.travel} currency={pnl.currency} />
+            <CostRow label="Other" value={pnl.cost_breakdown.other} currency={pnl.currency} />
+            <div className="flex items-center justify-between pt-1.5 border-t border-surface-border font-mono text-sm">
+              <span className="text-text-tertiary uppercase tracking-widest-srs text-2xs">
+                Total directo
+              </span>
+              <span className="text-text-primary">
+                {pnl.cost_direct.toFixed(2)} {pnl.currency}
+              </span>
+            </div>
+            {pnl.coordination_cost > 0 && (
+              <div className="flex items-center justify-between font-mono text-sm">
+                <span className="text-warning uppercase tracking-widest-srs text-2xs">
+                  + Coord absorbido
+                </span>
+                <span className="text-warning">
+                  {pnl.coordination_cost.toFixed(2)} {pnl.currency}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div>
+          <div className="label-caps mb-2">Per-WO breakdown</div>
+          <div className="space-y-1.5 max-h-64 overflow-y-auto">
+            {(pnl.per_wo || []).map((w) => (
+              <Link
+                key={w.work_order_id}
+                to={`/srs/ops/${w.work_order_id}`}
+                className="block bg-surface-base rounded-sm px-3 py-2 hover:bg-surface-overlay/80 transition-colors duration-fast"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+                      {w.reference || w.work_order_id.slice(-6)}
+                    </div>
+                    <div className="font-body text-sm text-text-primary truncate">
+                      {w.title || "—"}
+                    </div>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    {w.has_snapshot ? (
+                      <>
+                        <div className="font-mono text-sm text-text-primary">
+                          {w.cost_total.toFixed(2)}
+                        </div>
+                        {w.coordination_cost > 0 && (
+                          <div className="font-mono text-2xs text-warning">
+                            +{w.coordination_cost.toFixed(2)} coord
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+                        sin cost
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="px-4 py-2 border-t border-surface-border font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+        X-g Fase 1 · cost manual hoy · X-g Fase 2 leera vendor_invoices reales
+        (X-d)
+      </div>
+    </section>
+  );
+}
+
+function MarginCard({ label, tone, data, currency, footnote }) {
+  const toneClass =
+    tone === "primary"
+      ? "text-primary-light"
+      : tone === "success"
+      ? "text-success"
+      : tone === "warning"
+      ? "text-warning"
+      : "text-text-tertiary";
+  const neg = data.amount < 0;
+  return (
+    <div className="bg-surface-base rounded-sm p-4">
+      <div className="label-caps mb-1">{label}</div>
+      <div
+        className={`font-display text-3xl leading-none ${
+          neg ? "text-danger" : toneClass
+        }`}
+      >
+        {data.amount.toFixed(2)}
+      </div>
+      <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary mt-1">
+        {currency}
+        {" · "}
+        <span className={neg ? "text-danger" : toneClass}>
+          {data.pct.toFixed(1)}%
+        </span>
+      </div>
+      {footnote && (
+        <div className="font-mono text-2xs text-text-tertiary mt-2 leading-relaxed">
+          {footnote}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CostRow({ label, value, currency }) {
+  return (
+    <div className="flex items-center justify-between font-mono text-sm">
+      <span className="text-text-tertiary uppercase tracking-widest-srs text-2xs">
+        {label}
+      </span>
+      <span className="text-text-primary">
+        {value.toFixed(2)} {currency}
+      </span>
+    </div>
+  );
 }

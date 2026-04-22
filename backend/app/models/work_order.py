@@ -93,6 +93,31 @@ class Handshake(BaseModel):
     lng: float | None = None
 
 
+class CostSnapshot(BaseModel):
+    """
+    Costo que SRS absorbio para entregar este WO (X-g · Fase 3 Admin/Finance).
+
+    Alimenta el P&L per invoice con 3 margenes:
+      - nominal       : price - (labor+parts+travel)
+      - cash-flow     : cobrado - pagado (usa invoice.paid_at + vendor paid)
+      - proxy-adjusted: nominal - coordination_pct * total_price
+
+    Fields son 'lo que salio de SRS al mundo'. NO 'lo que cobra SRS al cliente'.
+    """
+    model_config = ConfigDict(extra="ignore")
+
+    labor: float | None = None         # tech pay para esta WO
+    parts: float | None = None         # costo de partes (no lo que SRS cobra al cliente)
+    travel: float | None = None        # gasto real de travel (no travel_flat del rate_card)
+    coordination_hours: float | None = None  # horas de SRS coord absorbidas (no billed)
+    coordination_hourly_rate: float | None = None  # $$/h para monetizar coord
+    other: float | None = None
+    notes: str | None = None
+    currency: str = "USD"
+    updated_at: datetime | None = None
+    updated_by: str | None = None
+
+
 class WorkOrder(BaseMongoModel):
     # Client / scope
     organization_id: str = Field(..., description="Client org")
@@ -134,6 +159,12 @@ class WorkOrder(BaseMongoModel):
 
     # Billing line emitted at close (Fase 3 connects this to Finance)
     billing_line_id: str | None = None
+
+    # Cost snapshot — lo que SRS gasto para entregar este WO (X-g)
+    cost_snapshot: CostSnapshot | None = None
+
+    # After-hours flag — setea billing_rate × after_hours_multiplier al invoice
+    after_hours: bool = False
 
     closed_at: datetime | None = None
     cancelled_at: datetime | None = None

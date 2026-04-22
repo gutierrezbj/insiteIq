@@ -581,3 +581,133 @@ async def void_invoice(
     )
     refreshed = await db.invoices.find_one({"_id": doc["_id"]})
     return _serialize(refreshed)
+
+
+# ---------------- P&L · 3 margenes (X-g) ----------------
+
+@router.get("/{invoice_id}/pnl")
+async def invoice_pnl(
+    invoice_id: str, user: CurrentUser = Depends(get_current_user)
+):
+    """
+    Calcula los 3 margenes del Blueprint para este invoice:
+      - nominal       : revenue - (labor + parts + travel + other)
+      - cash_flow     : revenue_if_paid - cost_real (cost real se puede matar
+                        por vendor invoice no pagado aun — en X-g simplicado:
+                        = nominal si invoice paid, 0 si invoice no paid)
+      - proxy_adjusted: nominal - coord_cost (coordination absorbida monetizada
+                        con coordination_hours × coordination_hourly_rate)
+    """
+    db = get_db()
+    try:
+        inv = await db.invoices.find_one(
+            {"_id": ObjectId(invoice_id), "tenant_id": user.tenant_id}
+        )
+    except Exception:
+        inv = None
+    if not inv:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Invoice not found")
+
+    # Client only sees own + no P&L (SRS-internal)
+    if not user.has_space("srs_coordinators"):
+        raise HTTPException(
+            status.HTTP_403_FORBIDDEN, "P&L is SRS-internal"
+        )
+
+    wo_ids = inv.get("work_order_ids") or []
+    wos = []
+    if wo_ids:
+        wos = await db.work_orders.find(
+            {"_id": {"$in": [ObjectId(i) for i in wo_ids]}}
+        ).to_list(len(wo_ids))
+
+    # Aggregate cost
+    per_wo: list[dict] = []
+    total_labor = 0.0
+    total_parts = 0.0
+    total_travel = 0.0
+    total_other = 0.0
+    total_coord_cost = 0.0
+    covered_count = 0
+
+    for w in wos:
+        cs = w.get("cost_snapshot") or {}
+        has_any = any(
+            cs.get(k) is not None
+            for k in ("labor", "parts", "travel", "other", "coordination_hours")
+        )
+        if has_any:
+            covered_count += 1
+        labor = float(cs.get("labor") or 0)
+        parts = float(cs.get("parts") or 0)
+        travel = float(cs.get("travel") or 0)
+        other = float(cs.get("other") or 0)
+        ch = float(cs.get("coordination_hours") or 0)
+        rate = float(cs.get("coordination_hourly_rate") or 0)
+        coord = round(ch * rate, 2)
+
+        total_labor += labor
+        total_parts += parts
+        total_travel += travel
+        total_other += other
+        total_coord_cost += coord
+
+        per_wo.append({
+            "work_order_id": str(w["_id"]),
+            "reference": w.get("reference"),
+            "title": w.get("title"),
+            "labor": labor,
+            "parts": parts,
+            "travel": travel,
+            "other": other,
+            "coordination_cost": coord,
+            "cost_total": round(labor + parts + travel + other, 2),
+            "has_snapshot": has_any,
+        })
+
+    cost_direct = round(total_labor + total_parts + total_travel + total_other, 2)
+    revenue = float(inv.get("total") or 0)
+
+    nominal_margin = round(revenue - cost_direct, 2)
+    nominal_pct = round((nominal_margin / revenue * 100), 2) if revenue else 0.0
+
+    # Cash-flow: revenue solo si paid, cost_direct como approximacion pagado
+    # (refinamos con vendor_invoices en X-d)
+    cashflow_revenue = revenue if inv.get("status") == "paid" else 0.0
+    # Assume costs are paid when marked (snapshot = paid). Conservative.
+    cashflow_margin = round(cashflow_revenue - cost_direct, 2)
+    cashflow_pct = round((cashflow_margin / cashflow_revenue * 100), 2) if cashflow_revenue else 0.0
+
+    # Proxy-adjusted: nominal minus coordination cost absorbed
+    proxy_margin = round(nominal_margin - total_coord_cost, 2)
+    proxy_pct = round((proxy_margin / revenue * 100), 2) if revenue else 0.0
+
+    return {
+        "invoice_id": invoice_id,
+        "invoice_number": inv.get("invoice_number"),
+        "currency": inv.get("currency"),
+        "revenue": revenue,
+        "cost_direct": cost_direct,
+        "cost_breakdown": {
+            "labor": round(total_labor, 2),
+            "parts": round(total_parts, 2),
+            "travel": round(total_travel, 2),
+            "other": round(total_other, 2),
+        },
+        "coordination_cost": round(total_coord_cost, 2),
+        "margins": {
+            "nominal": {"amount": nominal_margin, "pct": nominal_pct},
+            "cash_flow": {
+                "amount": cashflow_margin,
+                "pct": cashflow_pct,
+                "invoice_paid": inv.get("status") == "paid",
+            },
+            "proxy_adjusted": {"amount": proxy_margin, "pct": proxy_pct},
+        },
+        "coverage": {
+            "wo_count": len(wo_ids),
+            "wo_with_snapshot": covered_count,
+            "pct": round(covered_count / len(wo_ids) * 100, 2) if wo_ids else 0.0,
+        },
+        "per_wo": per_wo,
+    }

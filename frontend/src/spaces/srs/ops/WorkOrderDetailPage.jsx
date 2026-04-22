@@ -29,6 +29,7 @@ import AuthImage from "../../../components/ui/AuthImage";
 import { uploadFile } from "../../../lib/api";
 import BriefingSection from "../../../components/workorder/BriefingSection";
 import CaptureSection from "../../../components/workorder/CaptureSection";
+import CostSnapshotAction from "../../../components/workorder/CostSnapshotAction";
 import PartsSection from "../../../components/workorder/PartsSection";
 import ThreadsSection from "../../../components/workorder/ThreadsSection";
 
@@ -296,6 +297,11 @@ export default function WorkOrderDetailPage() {
       {/* Parts / Budget approvals */}
       <PartsSection wo={wo} isSrs={isSrs} isClient={isClient} />
 
+      {/* Cost snapshot + after-hours — SRS internal, alimenta P&L (X-g) */}
+      {isSrs && (
+        <CostAfterHoursSection wo={wo} reload={reload} />
+      )}
+
       {/* Related tabs stub */}
       <section className="bg-surface-raised accent-bar rounded-sm p-4 mt-4">
         <div className="label-caps mb-3">Related</div>
@@ -377,6 +383,108 @@ const ADVANCE_TARGETS = {
   closed:     [],
   cancelled:  [],
 };
+
+// -------------------- CostAfterHoursSection (X-g) --------------------
+
+function CostAfterHoursSection({ wo, reload }) {
+  const cs = wo.cost_snapshot || null;
+  const currency = cs?.currency || "USD";
+  const directCost =
+    (cs?.labor || 0) + (cs?.parts || 0) + (cs?.travel || 0) + (cs?.other || 0);
+  const coordCost =
+    (cs?.coordination_hours || 0) * (cs?.coordination_hourly_rate || 0);
+
+  async function toggleAfterHours() {
+    try {
+      await api.post(`/work-orders/${wo.id}/after-hours`, {
+        after_hours: !wo.after_hours,
+      });
+      reload();
+    } catch (e) {
+      alert(e.message || "error");
+    }
+  }
+
+  return (
+    <section className="bg-surface-raised accent-bar rounded-sm mt-4">
+      <header className="px-4 py-3 border-b border-surface-border flex items-start justify-between gap-3 flex-wrap">
+        <div>
+          <div className="label-caps">Cost snapshot · SRS internal</div>
+          <h2 className="font-display text-base text-text-primary leading-tight">
+            {cs
+              ? `${directCost.toFixed(2)} ${currency} direct` +
+                (coordCost > 0 ? ` · ${coordCost.toFixed(2)} coord` : "")
+              : "Sin registrar — carga lo que gastaste"}
+          </h2>
+          <p className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary mt-0.5">
+            Alimenta P&L · no facturable al cliente
+          </p>
+        </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            type="button"
+            onClick={toggleAfterHours}
+            className={`font-mono font-semibold uppercase tracking-widest-srs text-2xs px-3 py-2 rounded-sm border transition-colors duration-fast ${
+              wo.after_hours
+                ? "bg-warning text-text-inverse border-warning hover:bg-warning/90"
+                : "bg-surface-overlay text-text-tertiary border-surface-border hover:border-warning hover:text-warning"
+            }`}
+            title="Marca si la WO se ejecutó en horario nocturno / fin de semana — aplica multiplier del rate_card"
+          >
+            {wo.after_hours ? "✓ after-hours" : "after-hours"}
+          </button>
+          <CostSnapshotAction wo={wo} reload={reload} />
+        </div>
+      </header>
+
+      {cs && (
+        <div className="px-4 py-3 grid grid-cols-2 md:grid-cols-5 gap-3">
+          <CostPill label="Labor" value={cs.labor} currency={currency} />
+          <CostPill label="Parts" value={cs.parts} currency={currency} />
+          <CostPill label="Travel" value={cs.travel} currency={currency} />
+          <CostPill label="Other" value={cs.other} currency={currency} />
+          <CostPill
+            label="Coord absorbido"
+            value={coordCost || null}
+            currency={currency}
+            hint={
+              cs.coordination_hours
+                ? `${cs.coordination_hours}h × ${cs.coordination_hourly_rate || 0}`
+                : null
+            }
+            tone="warning"
+          />
+        </div>
+      )}
+      {cs?.notes && (
+        <div className="px-4 pb-3">
+          <div className="bg-surface-base rounded-sm p-3">
+            <div className="label-caps mb-0.5">Notas</div>
+            <p className="font-body text-sm text-text-primary whitespace-pre-line">
+              {cs.notes}
+            </p>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function CostPill({ label, value, currency, hint, tone = "default" }) {
+  const tint = tone === "warning" ? "text-warning" : "text-text-primary";
+  return (
+    <div className="bg-surface-base rounded-sm p-3">
+      <div className="label-caps mb-0.5">{label}</div>
+      <div className={`font-display text-base leading-none ${tint}`}>
+        {value != null ? value.toFixed(2) : "—"}
+      </div>
+      <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary mt-1">
+        {value != null ? currency : "sin cargar"}
+        {hint && ` · ${hint}`}
+      </div>
+    </div>
+  );
+}
 
 function ActionBar({ wo, reload, isSrs, isClient, isAssignedTech }) {
   const status = wo.status;

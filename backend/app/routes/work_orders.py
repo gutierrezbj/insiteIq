@@ -96,6 +96,24 @@ class PreflightBody(BaseModel):
     checklist: dict = Field(default_factory=dict)
 
 
+class CostSnapshotBody(BaseModel):
+    """X-g · Fase 3 · SRS captura costo que absorbio para entregar este WO."""
+    model_config = ConfigDict(extra="ignore")
+    labor: float | None = None
+    parts: float | None = None
+    travel: float | None = None
+    coordination_hours: float | None = None
+    coordination_hourly_rate: float | None = None
+    other: float | None = None
+    notes: str | None = None
+    currency: str | None = None
+
+
+class AfterHoursBody(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    after_hours: bool
+
+
 # ---------------- Scope helpers ----------------
 
 async def _scope_query(user: CurrentUser) -> dict:
@@ -528,6 +546,106 @@ async def set_preflight(
         action="work_order.preflight.set",
         entity_refs=[{"collection": "work_orders", "id": wo_id, "label": doc.get("reference")}],
         context_snapshot={"checklist": body.checklist},
+    )
+
+    refreshed = await db.work_orders.find_one({"_id": doc["_id"]})
+    return _serialize(refreshed)
+
+
+# -------------------- Cost snapshot + after-hours flag (X-g) --------------------
+
+@router.post("/{wo_id}/cost-snapshot")
+async def set_cost_snapshot(
+    wo_id: str,
+    body: CostSnapshotBody,
+    user: CurrentUser = Depends(get_current_user),
+):
+    """
+    SRS coord registra los costos que absorbio para entregar este WO.
+    Alimenta el P&L per invoice (nominal / cash-flow / proxy-adjusted).
+    Todos los campos opcionales; se mergea con el snapshot existente.
+    """
+    if not user.has_space("srs_coordinators"):
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Solo SRS coord")
+
+    db = get_db()
+    doc = await _fetch_wo_or_404(db, wo_id, user)
+
+    current = doc.get("cost_snapshot") or {}
+    snap = {**current}
+    for k in (
+        "labor", "parts", "travel",
+        "coordination_hours", "coordination_hourly_rate",
+        "other", "notes", "currency",
+    ):
+        v = getattr(body, k, None)
+        if v is not None:
+            snap[k] = v
+
+    now = _now()
+    snap["updated_at"] = now
+    snap["updated_by"] = user.user_id
+
+    await db.work_orders.update_one(
+        {"_id": doc["_id"]},
+        {
+            "$set": {
+                "cost_snapshot": snap,
+                "updated_at": now,
+                "updated_by": user.user_id,
+            }
+        },
+    )
+
+    await write_audit_event(
+        db,
+        tenant_id=user.tenant_id,
+        actor_user_id=user.user_id,
+        action="work_order.cost_snapshot.set",
+        entity_refs=[
+            {"collection": "work_orders", "id": wo_id, "label": doc.get("reference")}
+        ],
+        context_snapshot={"fields": [k for k in snap if k not in ("updated_at", "updated_by")]},
+    )
+
+    refreshed = await db.work_orders.find_one({"_id": doc["_id"]})
+    return _serialize(refreshed)
+
+
+@router.post("/{wo_id}/after-hours")
+async def set_after_hours(
+    wo_id: str,
+    body: AfterHoursBody,
+    user: CurrentUser = Depends(get_current_user),
+):
+    """SRS coord marca/desmarca after-hours flag — alimenta rate_card uplift."""
+    if not user.has_space("srs_coordinators"):
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Solo SRS coord")
+
+    db = get_db()
+    doc = await _fetch_wo_or_404(db, wo_id, user)
+
+    now = _now()
+    await db.work_orders.update_one(
+        {"_id": doc["_id"]},
+        {
+            "$set": {
+                "after_hours": bool(body.after_hours),
+                "updated_at": now,
+                "updated_by": user.user_id,
+            }
+        },
+    )
+
+    await write_audit_event(
+        db,
+        tenant_id=user.tenant_id,
+        actor_user_id=user.user_id,
+        action="work_order.after_hours.set",
+        entity_refs=[
+            {"collection": "work_orders", "id": wo_id, "label": doc.get("reference")}
+        ],
+        context_snapshot={"after_hours": bool(body.after_hours)},
     )
 
     refreshed = await db.work_orders.find_one({"_id": doc["_id"]})
