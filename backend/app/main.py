@@ -29,6 +29,7 @@ from app.routes import tech_captures as tech_captures_routes
 from app.routes import ticket_threads as ticket_threads_routes
 from app.routes import uploads as uploads_routes
 from app.routes import users as users_routes
+from app.routes import vendor_invoices as vendor_invoices_routes
 from app.routes import work_orders as work_orders_routes
 
 
@@ -79,6 +80,7 @@ app.include_router(equipment_routes.router, prefix="/api")
 app.include_router(uploads_routes.router, prefix="/api")
 app.include_router(invoices_routes.router, prefix="/api")
 app.include_router(recurring_billing_routes.router, prefix="/api")
+app.include_router(vendor_invoices_routes.router, prefix="/api")
 
 
 @app.get("/")

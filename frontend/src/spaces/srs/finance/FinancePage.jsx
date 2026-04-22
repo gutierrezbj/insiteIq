@@ -21,13 +21,15 @@ import {
 } from "../../../components/ui/Badges";
 import GenerateInvoiceAction from "../../../components/finance/GenerateInvoiceAction";
 import CreateSubscriptionAction from "../../../components/finance/CreateSubscriptionAction";
+import CreateVendorInvoiceAction from "../../../components/finance/CreateVendorInvoiceAction";
 import ActionDialog, {
   DialogTextarea,
   DialogLabel,
 } from "../../../components/ui/ActionDialog";
 
 const TABS = [
-  { key: "invoices", label: "Invoices" },
+  { key: "invoices", label: "Invoices (AR)" },
+  { key: "vendor_payables", label: "Vendor payables (AP)" },
   { key: "recurring", label: "Recurring" },
   { key: "preinvoice", label: "Pre-invoice" },
   { key: "channels", label: "Channel partners" },
@@ -99,6 +101,9 @@ export default function FinancePage() {
 
       {tab === "invoices" && (
         <InvoicesTab orgById={orgById} isSrsAdmin={isSrsAdmin} />
+      )}
+      {tab === "vendor_payables" && (
+        <VendorPayablesTab orgById={orgById} isSrsAdmin={isSrsAdmin} />
       )}
       {tab === "recurring" && (
         <RecurringTab orgById={orgById} isSrsAdmin={isSrsAdmin} />
@@ -899,5 +904,212 @@ function IconButton({ label, title, onClick, disabled, tone = "default" }) {
     >
       {label}
     </button>
+  );
+}
+
+// -------------------- Vendor payables tab (X-d AP) --------------------
+
+const VI_STATUS_LOOK = {
+  received: { bg: "bg-text-tertiary", text: "text-text-tertiary", label: "received" },
+  matched: { bg: "bg-info", text: "text-info", label: "matched" },
+  approved: { bg: "bg-warning", text: "text-warning", label: "approved" },
+  paid: { bg: "bg-success", text: "text-success", label: "paid" },
+  disputed: { bg: "bg-danger", text: "text-danger", label: "disputed" },
+  rejected: { bg: "bg-text-tertiary", text: "text-text-tertiary", label: "rejected" },
+};
+
+function VendorPayablesTab({ orgById, isSrsAdmin }) {
+  const [statusFilter, setStatusFilter] = useState("");
+  const path = statusFilter
+    ? `/vendor-invoices?status_filter=${statusFilter}&limit=200`
+    : "/vendor-invoices?limit=200";
+  const { data: vendorInvoices, loading, reload } = useFetch(path, {
+    deps: [statusFilter],
+  });
+  const { data: aging } = useFetch("/vendor-invoices/aging/summary");
+
+  const list = vendorInvoices || [];
+  const counts = useMemo(() => {
+    const c = { received: 0, matched: 0, approved: 0, paid: 0, disputed: 0, rejected: 0 };
+    for (const v of list) c[v.status] = (c[v.status] || 0) + 1;
+    return c;
+  }, [list]);
+
+  return (
+    <div className="space-y-4">
+      <section className="bg-surface-raised accent-bar rounded-sm p-4">
+        <div className="flex items-start justify-between gap-3 flex-wrap mb-3">
+          <div>
+            <div className="label-caps mb-1">Deudas con proveedores · AP</div>
+            <h2 className="font-display text-base text-text-primary">
+              {list.length} facturas · recibidas {counts.received} · approved {counts.approved}
+              {counts.disputed ? ` · disputed ${counts.disputed}` : ""}
+            </h2>
+          </div>
+          {isSrsAdmin && <CreateVendorInvoiceAction onCreated={() => reload()} />}
+        </div>
+        {aging && aging.buckets && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2">
+            <AgingCard
+              label="Current (0-30d)"
+              count={aging.buckets.current.count}
+              total={aging.buckets.current.total}
+              tone="default"
+            />
+            <AgingCard
+              label="30-60d"
+              count={aging.buckets["30_60"].count}
+              total={aging.buckets["30_60"].total}
+              tone="warning"
+            />
+            <AgingCard
+              label="60-90d"
+              count={aging.buckets["60_90"].count}
+              total={aging.buckets["60_90"].total}
+              tone="warning"
+            />
+            <AgingCard
+              label="90d+"
+              count={aging.buckets.over_90.count}
+              total={aging.buckets.over_90.total}
+              tone="danger"
+            />
+          </div>
+        )}
+      </section>
+
+      <section className="bg-surface-raised accent-bar rounded-sm">
+        <header className="px-4 py-3 border-b border-surface-border flex items-center gap-3 flex-wrap">
+          <label htmlFor="vi-status" className="label-caps">
+            Status
+          </label>
+          <select
+            id="vi-status"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="bg-surface-overlay border border-surface-border rounded-sm px-3 py-1.5 text-text-primary font-body text-sm focus:outline-none focus:border-primary focus:shadow-glow-primary transition-all duration-fast"
+          >
+            <option value="">todos</option>
+            <option value="received">received</option>
+            <option value="matched">matched</option>
+            <option value="approved">approved</option>
+            <option value="paid">paid</option>
+            <option value="disputed">disputed</option>
+            <option value="rejected">rejected</option>
+          </select>
+          <div className="ml-auto font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+            {list.length}
+          </div>
+        </header>
+
+        <div className="grid grid-cols-12 gap-3 px-4 py-2 border-b border-surface-border text-text-tertiary">
+          <div className="col-span-3 label-caps">Vendor invoice #</div>
+          <div className="col-span-3 label-caps">Vendor</div>
+          <div className="col-span-2 label-caps">Received</div>
+          <div className="col-span-2 label-caps text-right">Total</div>
+          <div className="col-span-1 label-caps text-right">Match</div>
+          <div className="col-span-1 label-caps text-right">Status</div>
+        </div>
+
+        <div className="divide-y divide-surface-border max-h-[65vh] overflow-y-auto">
+          {loading && <Empty text="cargando…" />}
+          {!loading && list.length === 0 && (
+            <Empty text="— sin vendor invoices · registra la primera —" />
+          )}
+          {list.map((v) => (
+            <VendorInvoiceRow key={v.id} vi={v} orgById={orgById} />
+          ))}
+        </div>
+      </section>
+
+      <p className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+        X-d · AP con three-way match · paid tracking · aging
+      </p>
+    </div>
+  );
+}
+
+function VendorInvoiceRow({ vi, orgById }) {
+  const look = VI_STATUS_LOOK[vi.status] || VI_STATUS_LOOK.received;
+  const match = vi.match_report;
+  const matchLabel = match
+    ? match.result === "match"
+      ? { t: "text-success", l: "MATCH" }
+      : match.result === "partial_match"
+      ? { t: "text-warning", l: "PARTIAL" }
+      : match.result === "mismatch"
+      ? { t: "text-danger", l: "MISMATCH" }
+      : { t: "text-text-tertiary", l: "NO PO" }
+    : null;
+
+  return (
+    <Link
+      to={`/srs/finance/vendor-invoices/${vi.id}`}
+      className="grid grid-cols-12 gap-3 px-4 py-2.5 items-center hover:bg-surface-overlay/60 transition-colors duration-fast"
+    >
+      <div className="col-span-3 min-w-0">
+        <div className="font-mono text-sm text-text-primary truncate">
+          {vi.vendor_invoice_number}
+        </div>
+        <div className="font-mono text-2xs text-text-tertiary">
+          {(vi.linked_work_order_ids || []).length} WOs ·{" "}
+          {(vi.linked_budget_approval_ids || []).length} POs
+        </div>
+      </div>
+      <div className="col-span-3 font-body text-sm text-text-secondary truncate">
+        {orgById.get(vi.vendor_organization_id)?.legal_name ||
+          vi.vendor_organization_id.slice(-6)}
+      </div>
+      <div className="col-span-2 font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+        {vi.received_at ? formatAge(vi.received_at) + " ago" : "—"}
+      </div>
+      <div className="col-span-2 text-right">
+        <div className="font-display text-base text-warning leading-none">
+          {vi.total.toFixed(2)}
+        </div>
+        <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+          {vi.currency}
+        </div>
+      </div>
+      <div className="col-span-1 text-right">
+        {matchLabel ? (
+          <span
+            className={`font-mono text-2xs uppercase tracking-widest-srs ${matchLabel.t}`}
+          >
+            {matchLabel.l}
+          </span>
+        ) : (
+          <span className="font-mono text-2xs text-text-tertiary">—</span>
+        )}
+      </div>
+      <div className="col-span-1 text-right">
+        <span
+          className={`inline-flex items-center gap-1 font-mono text-2xs uppercase tracking-widest-srs ${look.text}`}
+        >
+          <span className={`w-1.5 h-1.5 rounded-full ${look.bg}`} />
+          {look.label}
+        </span>
+      </div>
+    </Link>
+  );
+}
+
+function AgingCard({ label, count, total, tone }) {
+  const tint =
+    tone === "danger"
+      ? "text-danger"
+      : tone === "warning"
+      ? "text-warning"
+      : "text-text-primary";
+  return (
+    <div className="bg-surface-base rounded-sm p-3">
+      <div className="label-caps mb-0.5">{label}</div>
+      <div className={`font-display text-xl leading-none ${tint}`}>
+        {total.toFixed(2)}
+      </div>
+      <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary mt-1">
+        {count} factura{count === 1 ? "" : "s"}
+      </div>
+    </div>
   );
 }
