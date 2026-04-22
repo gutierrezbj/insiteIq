@@ -17,6 +17,7 @@ from app.routes import health as health_routes
 from app.routes import budget_approvals as budget_approvals_routes
 from app.routes import copilot_briefings as copilot_briefings_routes
 from app.routes import equipment as equipment_routes
+from app.routes import insights as insights_routes
 from app.routes import intervention_reports as intervention_reports_routes
 from app.routes import invoices as invoices_routes
 from app.routes import organizations as organizations_routes
@@ -81,6 +82,7 @@ app.include_router(uploads_routes.router, prefix="/api")
 app.include_router(invoices_routes.router, prefix="/api")
 app.include_router(recurring_billing_routes.router, prefix="/api")
 app.include_router(vendor_invoices_routes.router, prefix="/api")
+app.include_router(insights_routes.router, prefix="/api")
 
 
 @app.get("/")

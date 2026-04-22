@@ -23,6 +23,7 @@ import AdminPage from "./spaces/srs/admin/AdminPage";
 import FinancePage from "./spaces/srs/finance/FinancePage";
 import InvoiceDetailPage from "./spaces/srs/finance/InvoiceDetailPage";
 import VendorInvoiceDetailPage from "./spaces/srs/finance/VendorInvoiceDetailPage";
+import InsightsPage from "./spaces/srs/insights/InsightsPage";
 import TechsListPage from "./spaces/srs/techs/TechsListPage";
 import TechDetailPage from "./spaces/srs/techs/TechDetailPage";
 import AgreementsListPage from "./spaces/srs/agreements/AgreementsListPage";
@@ -111,6 +112,7 @@ export default function App() {
             <Route path="finance" element={<FinancePage />} />
             <Route path="finance/invoices/:invoice_id" element={<InvoiceDetailPage />} />
             <Route path="finance/vendor-invoices/:vi_id" element={<VendorInvoiceDetailPage />} />
+            <Route path="insights" element={<InsightsPage />} />
             <Route path="admin" element={<AdminPage />} />
           </Route>
 
