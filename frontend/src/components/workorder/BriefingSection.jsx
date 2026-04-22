@@ -129,6 +129,9 @@ export default function BriefingSection({ wo, isSrs, isAssignedTech }) {
 
       {/* Body */}
       <div className="px-4 py-3 space-y-4">
+        {/* AI Summary · Y-c · el sistema aprende */}
+        <AiSummaryBlock briefing={briefing} />
+
         <SiteBible s={briefing.site_bible_summary} />
 
         {briefing.coordinator_notes && (
@@ -168,6 +171,55 @@ function Section({ label, children }) {
       </div>
       {children}
     </section>
+  );
+}
+
+function AiSummaryBlock({ briefing }) {
+  const text = briefing.ai_summary;
+  const model = briefing.ai_summary_model;
+  const generatedAt = briefing.ai_summary_generated_at;
+  const error = briefing.ai_summary_error;
+  const tokensIn = briefing.ai_summary_tokens_in;
+  const tokensOut = briefing.ai_summary_tokens_out;
+
+  // Sin provider o sin generar: no mostramos nada (silencioso)
+  if (!text && !error) return null;
+
+  return (
+    <div className="bg-surface-base rounded-md p-4 border-l-2 border-primary">
+      <div className="flex items-center gap-2 mb-2 flex-wrap">
+        <span className="font-mono text-2xs uppercase tracking-widest-srs text-primary-light">
+          SRS Copilot · AI brief
+        </span>
+        {model && (
+          <span className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+            · {model}
+          </span>
+        )}
+        {tokensIn != null && tokensOut != null && (
+          <span className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+            · {tokensIn}→{tokensOut} tok
+          </span>
+        )}
+        {generatedAt && (
+          <span className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+            · {formatAge(generatedAt)} ago
+          </span>
+        )}
+      </div>
+      {text ? (
+        <p className="font-body text-sm text-text-primary whitespace-pre-line leading-relaxed">
+          {text}
+        </p>
+      ) : (
+        <p className="font-mono text-2xs uppercase tracking-widest-srs text-danger">
+          error: {error}
+        </p>
+      )}
+      <p className="mt-2 font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+        Y-c Fase 1 · basado en site history + similar cases + metrics · el sistema aprende
+      </p>
+    </div>
   );
 }
 

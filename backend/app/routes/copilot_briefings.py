@@ -26,6 +26,11 @@ from pydantic import BaseModel, ConfigDict
 from app.core.dependencies import CurrentUser, get_current_user
 from app.database import get_db
 from app.middleware.audit_log import write_audit_event
+from app.services.ai_provider import (
+    BRIEFING_SYSTEM_PROMPT,
+    build_briefing_user_prompt,
+    get_ai_provider,
+)
 
 router = APIRouter(prefix="/work-orders/{wo_id}/briefing", tags=["copilot_briefings"])
 
@@ -323,6 +328,22 @@ async def assemble_briefing(wo_id: str, user: CurrentUser = Depends(get_current_
 
     sections = await _assemble_sections(db, wo)
 
+    # AI enrichment (Y-c Fase 1) · disabled si no hay provider configurado
+    ai = get_ai_provider()
+    ai_summary_text = ""
+    ai_model = None
+    ai_tokens_in = None
+    ai_tokens_out = None
+    ai_error = None
+    if ai.enabled:
+        user_prompt = build_briefing_user_prompt(wo, sections)
+        resp = await ai.generate(BRIEFING_SYSTEM_PROMPT, user_prompt)
+        ai_summary_text = resp.text
+        ai_model = resp.model
+        ai_tokens_in = resp.tokens_input
+        ai_tokens_out = resp.tokens_output
+        ai_error = resp.error
+
     now = _now()
     doc = {
         "tenant_id": user.tenant_id,
@@ -336,6 +357,12 @@ async def assemble_briefing(wo_id: str, user: CurrentUser = Depends(get_current_
         "site_metrics": sections.get("site_metrics", {}),
         "parts_estimate": sections["parts_estimate"],
         "coordinator_notes": None,
+        "ai_summary": ai_summary_text or None,
+        "ai_summary_model": ai_model,
+        "ai_summary_tokens_in": ai_tokens_in,
+        "ai_summary_tokens_out": ai_tokens_out,
+        "ai_summary_error": ai_error,
+        "ai_summary_generated_at": now if ai.enabled else None,
         "status": "assembled",
         "acknowledged_at": None,
         "acknowledged_by": None,
@@ -362,6 +389,10 @@ async def assemble_briefing(wo_id: str, user: CurrentUser = Depends(get_current_
             "history_count": len(sections["history"]),
             "similar_count": len(sections.get("similar_cross_site", [])),
             "site_wo_count_90d": sections.get("site_metrics", {}).get("wo_count_90d"),
+            "ai_provider": ai.name,
+            "ai_tokens_in": ai_tokens_in,
+            "ai_tokens_out": ai_tokens_out,
+            "ai_generated": bool(ai_summary_text),
         },
     )
 
