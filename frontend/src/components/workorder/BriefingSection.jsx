@@ -142,6 +142,10 @@ export default function BriefingSection({ wo, isSrs, isAssignedTech }) {
 
         <History history={briefing.history || []} />
 
+        <SimilarCrossSite list={briefing.similar_cross_site || []} />
+
+        <SiteMetrics m={briefing.site_metrics} />
+
         {(briefing.device_bible?.length || 0) === 0 &&
           (briefing.parts_estimate?.length || 0) === 0 && (
             <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary border-t border-surface-border pt-3">
@@ -272,31 +276,237 @@ function History({ history }) {
           — sin historial previo aqui —
         </div>
       )}
-      <div className="space-y-1.5">
+      <div className="space-y-2">
         {history.map((h) => (
+          <HistoryRow key={h.work_order_id} h={h} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function HistoryRow({ h }) {
+  const hasCapture = h.what_found_snippet || h.what_did_snippet;
+  return (
+    <div className="bg-surface-base rounded-sm px-3 py-2">
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+            {h.reference}
+            {h.status && (
+              <span className="ml-2 text-text-secondary">· {h.status}</span>
+            )}
+            {h.after_hours && (
+              <span className="ml-2 text-warning">· after-hours</span>
+            )}
+            {h.time_on_site_minutes != null && (
+              <span className="ml-2 text-text-secondary">
+                · {h.time_on_site_minutes}min on site
+              </span>
+            )}
+          </div>
+          <div className="font-body text-sm text-text-primary truncate">
+            {h.title}
+          </div>
+        </div>
+        <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary flex-shrink-0">
+          {h.closed_at ? formatAge(h.closed_at) + " ago" : "—"}
+        </div>
+      </div>
+      {hasCapture && (
+        <div className="mt-2 text-2xs space-y-0.5 pl-2 border-l border-surface-border">
+          {h.what_found_snippet && (
+            <div>
+              <span className="font-mono uppercase tracking-widest-srs text-text-tertiary">
+                found:
+              </span>{" "}
+              <span className="font-body text-sm text-text-primary">
+                {h.what_found_snippet}
+              </span>
+            </div>
+          )}
+          {h.what_did_snippet && (
+            <div>
+              <span className="font-mono uppercase tracking-widest-srs text-text-tertiary">
+                did:
+              </span>{" "}
+              <span className="font-body text-sm text-text-primary">
+                {h.what_did_snippet}
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SimilarCrossSite({ list }) {
+  if (!list || list.length === 0) return null;
+  return (
+    <div>
+      <div className="label-caps mb-2 flex items-center gap-2">
+        Similar cases · mismo cliente otros sites
+        <span className="font-mono text-2xs uppercase tracking-widest-srs text-primary-light normal-case">
+          · Y-a · sistema que aprende
+        </span>
+      </div>
+      <p className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary mb-2">
+        Keyword overlap · usa lo que ya se hizo antes antes de improvisar
+      </p>
+      <div className="space-y-2">
+        {list.map((s) => (
           <div
-            key={h.work_order_id}
-            className="bg-surface-base rounded-sm px-3 py-2 flex items-center justify-between gap-3"
+            key={s.work_order_id}
+            className="bg-surface-base rounded-sm px-3 py-2"
           >
-            <div className="min-w-0">
-              <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
-                {h.reference}
-                {h.status && (
-                  <span className="ml-2 text-text-secondary">· {h.status}</span>
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-mono text-2xs uppercase tracking-widest-srs text-primary-light">
+                    score {s.match_score}
+                  </span>
+                  <span className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+                    {s.reference}
+                  </span>
+                  {s.site_name && (
+                    <span className="font-mono text-2xs uppercase tracking-widest-srs text-text-secondary">
+                      @ {s.site_name}
+                    </span>
+                  )}
+                  {s.severity && (
+                    <span className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+                      · {s.severity}
+                    </span>
+                  )}
+                </div>
+                <div className="font-body text-sm text-text-primary truncate mt-0.5">
+                  {s.title}
+                </div>
+                {s.matched_terms && s.matched_terms.length > 0 && (
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    {s.matched_terms.map((t) => (
+                      <span
+                        key={t}
+                        className="bg-surface-overlay rounded-sm px-1.5 py-0.5 font-mono text-2xs uppercase tracking-widest-srs text-primary-light"
+                      >
+                        {t}
+                      </span>
+                    ))}
+                  </div>
                 )}
               </div>
-              <div className="font-body text-sm text-text-primary truncate">
-                {h.title}
+              <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary flex-shrink-0 text-right">
+                {s.closed_at ? formatAge(s.closed_at) + " ago" : "—"}
+                {s.time_on_site_minutes != null && (
+                  <div>{s.time_on_site_minutes}min</div>
+                )}
               </div>
             </div>
-            <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary flex-shrink-0">
-              {h.closed_at ? formatAge(h.closed_at) + " ago" : "—"}
-            </div>
+            {(s.what_found_snippet || s.what_did_snippet) && (
+              <div className="mt-2 text-2xs space-y-0.5 pl-2 border-l border-primary/40">
+                {s.what_found_snippet && (
+                  <div>
+                    <span className="font-mono uppercase tracking-widest-srs text-text-tertiary">
+                      found:
+                    </span>{" "}
+                    <span className="font-body text-sm text-text-primary">
+                      {s.what_found_snippet}
+                    </span>
+                  </div>
+                )}
+                {s.what_did_snippet && (
+                  <div>
+                    <span className="font-mono uppercase tracking-widest-srs text-text-tertiary">
+                      did:
+                    </span>{" "}
+                    <span className="font-body text-sm text-text-primary">
+                      {s.what_did_snippet}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         ))}
       </div>
     </div>
   );
+}
+
+function SiteMetrics({ m }) {
+  if (!m || !m.window_days) return null;
+  const warning = (m.after_hours_pct ?? 0) >= 30 || (m.repeat_count_30d ?? 0) >= 3;
+  return (
+    <div>
+      <div className="label-caps mb-2">
+        Site metrics · ultimos {m.window_days}d
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+        <MetricCard
+          label="WOs"
+          value={m.wo_count_90d ?? 0}
+          hint="en 90d"
+        />
+        <MetricCard
+          label="Avg resolve"
+          value={
+            m.avg_resolution_minutes != null
+              ? formatMin(m.avg_resolution_minutes)
+              : "—"
+          }
+          hint="closed → created"
+        />
+        <MetricCard
+          label="Repeat 30d"
+          value={m.repeat_count_30d ?? 0}
+          hint="posible root-cause"
+          tone={(m.repeat_count_30d ?? 0) >= 3 ? "warning" : "default"}
+        />
+        <MetricCard
+          label="After-hours"
+          value={`${m.after_hours_pct ?? 0}%`}
+          hint="noches/fines"
+          tone={(m.after_hours_pct ?? 0) >= 30 ? "warning" : "default"}
+        />
+      </div>
+      {warning && (
+        <div className="mt-2 font-mono text-2xs uppercase tracking-widest-srs text-warning">
+          · señal: site con patron anormal — revisar root cause o scheduling
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MetricCard({ label, value, hint, tone = "default" }) {
+  const tint =
+    tone === "warning"
+      ? "text-warning"
+      : tone === "danger"
+      ? "text-danger"
+      : "text-text-primary";
+  return (
+    <div className="bg-surface-base rounded-sm p-3">
+      <div className="label-caps mb-0.5">{label}</div>
+      <div className={`font-display text-lg leading-none ${tint}`}>
+        {value}
+      </div>
+      {hint && (
+        <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary mt-1">
+          {hint}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function formatMin(m) {
+  if (m == null) return "—";
+  if (m < 60) return `${Math.round(m)}m`;
+  const h = m / 60;
+  if (h < 24) return `${h.toFixed(1)}h`;
+  return `${(h / 24).toFixed(1)}d`;
 }
 
 // -------------------- Actions --------------------

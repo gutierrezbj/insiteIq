@@ -16,7 +16,7 @@ Assembly (Fase 1 minimal):
   Site Bible + Device Bible completos llegan en Fase 5 — la FUNCION assemble
   ya deja hueco estructural para ellos.
 """
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from bson import ObjectId
@@ -65,24 +65,88 @@ async def _load_wo(db, wo_id: str, user: CurrentUser) -> dict:
     return wo
 
 
+STOPWORDS = {
+    "the", "a", "an", "of", "for", "in", "on", "at", "to", "and", "or",
+    "with", "de", "la", "el", "los", "las", "un", "una", "en", "del",
+    "y", "o", "con", "para", "por", "se", "es", "no", "si", "al",
+    "wo", "ticket", "incident", "incidencia", "soporte", "sistema",
+}
+
+
+def _tokens(text: str | None) -> set[str]:
+    """Naive keyword tokenizer: lowercase, alphanumeric >=4 chars, minus stopwords."""
+    if not text:
+        return set()
+    out = set()
+    cur = []
+    for ch in text.lower():
+        if ch.isalnum():
+            cur.append(ch)
+        else:
+            if cur:
+                w = "".join(cur)
+                if len(w) >= 4 and w not in STOPWORDS:
+                    out.add(w)
+            cur = []
+    if cur:
+        w = "".join(cur)
+        if len(w) >= 4 and w not in STOPWORDS:
+            out.add(w)
+    return out
+
+
+def _snippet(text: str | None, max_chars: int = 160) -> str | None:
+    if not text:
+        return None
+    t = text.strip().replace("\n", " ")
+    if len(t) <= max_chars:
+        return t
+    return t[: max_chars - 1] + "…"
+
+
+async def _capture_snippets_for_wo(db, wo_id: str) -> dict:
+    """Return {what_found_snippet, what_did_snippet, time_on_site_minutes} from active capture."""
+    cap = await db.tech_captures.find_one(
+        {"work_order_id": wo_id, "status": "submitted"}
+    )
+    if not cap:
+        return {}
+    return {
+        "what_found_snippet": _snippet(cap.get("what_found")),
+        "what_did_snippet": _snippet(cap.get("what_did")),
+        "time_on_site_minutes": cap.get("time_on_site_minutes"),
+    }
+
+
 async def _assemble_sections(db, wo: dict) -> dict:
     """
-    Fase 1 minimal assembly. Pulls what's reachable today:
-      - Site fields (onsite_contact, access_notes, has_physical_resident)
-      - Last 3 historical work_orders on same site (excluding this one)
-    Expands in Fase 5 when Site Bible + Device Bible land.
+    Y-a assembly (AI Learning Engine · Fase 1 sin LLM):
+      - site_bible_summary   (same as before)
+      - history              enriquecido con capture snippets + time_on_site
+      - similar_cross_site   top-5 WOs del mismo cliente en OTROS sites, con
+                             keyword overlap con title+description
+      - site_metrics         wo_count_90d / avg_resolution_minutes /
+                             repeat_rate_30d / after_hours_pct
+      - device_bible         empty (Fase 5)
+      - parts_estimate       empty (Fase 5)
     """
     sections: dict[str, Any] = {
         "site_bible_summary": {},
         "device_bible": [],
         "history": [],
+        "similar_cross_site": [],
+        "site_metrics": {},
         "parts_estimate": [],
     }
 
-    # Site Bible summary (from Site entity — minimal)
+    tenant_id = wo["tenant_id"]
+    site_id = wo.get("site_id")
+    org_id = wo.get("organization_id")
+
+    # ---- Site Bible summary
     try:
         site = await db.sites.find_one(
-            {"_id": ObjectId(wo["site_id"]), "tenant_id": wo["tenant_id"]}
+            {"_id": ObjectId(site_id), "tenant_id": tenant_id}
         )
     except Exception:
         site = None
@@ -96,15 +160,15 @@ async def _assemble_sections(db, wo: dict) -> dict:
             "onsite_contact": site.get("onsite_contact"),
             "access_notes": site.get("access_notes"),
             "has_physical_resident": site.get("has_physical_resident", False),
-            "known_issues": [],    # Fase 5 populates from site_bible collection
-            "confidence": "draft",  # Fase 5 workflow
+            "known_issues": [],
+            "confidence": "draft",
         }
 
-    # Historical interventions on the same site — last 3 closed
+    # ---- History same site · enriquecido con capture
     history_cursor = (
         db.work_orders.find({
-            "tenant_id": wo["tenant_id"],
-            "site_id": wo["site_id"],
+            "tenant_id": tenant_id,
+            "site_id": site_id,
             "_id": {"$ne": wo["_id"]},
             "status": {"$in": ["closed", "resolved"]},
         })
@@ -112,16 +176,124 @@ async def _assemble_sections(db, wo: dict) -> dict:
         .limit(3)
     )
     async for h in history_cursor:
+        cap = await _capture_snippets_for_wo(db, str(h["_id"]))
         sections["history"].append({
             "work_order_id": str(h["_id"]),
             "reference": h.get("reference"),
             "title": h.get("title"),
             "status": h.get("status"),
             "closed_at": h.get("closed_at"),
-            "outcome_summary": None,  # Fase 5: from post_mortem
+            "severity": h.get("severity"),
+            "after_hours": h.get("after_hours", False),
+            **cap,
         })
 
-    # Device Bible + parts_estimate: empty until Fase 5
+    # ---- Similar cross-site (mismo cliente, otros sites, keyword overlap)
+    target_tokens = _tokens(
+        (wo.get("title") or "") + " " + (wo.get("description") or "")
+    )
+    if target_tokens and org_id:
+        # Pull candidates — limit to same org, different site, closed/resolved
+        candidates = await db.work_orders.find(
+            {
+                "tenant_id": tenant_id,
+                "organization_id": org_id,
+                "site_id": {"$ne": site_id},
+                "_id": {"$ne": wo["_id"]},
+                "status": {"$in": ["closed", "resolved"]},
+            },
+            {
+                "reference": 1, "title": 1, "description": 1, "site_id": 1,
+                "status": 1, "closed_at": 1, "severity": 1,
+            },
+        ).sort("updated_at", -1).limit(200).to_list(200)
+
+        scored: list[tuple[int, set, dict]] = []
+        for c in candidates:
+            c_tokens = _tokens(
+                (c.get("title") or "") + " " + (c.get("description") or "")
+            )
+            overlap = target_tokens & c_tokens
+            if overlap:
+                scored.append((len(overlap), overlap, c))
+
+        scored.sort(key=lambda x: x[0], reverse=True)
+        top = scored[:5]
+
+        # Resolve site names batch
+        site_ids = {c[2].get("site_id") for c in top if c[2].get("site_id")}
+        sites_map: dict[str, str] = {}
+        if site_ids:
+            async for s in db.sites.find(
+                {"_id": {"$in": [ObjectId(i) for i in site_ids]}},
+                {"name": 1},
+            ):
+                sites_map[str(s["_id"])] = s.get("name")
+
+        for score, overlap, c in top:
+            cap = await _capture_snippets_for_wo(db, str(c["_id"]))
+            sections["similar_cross_site"].append({
+                "work_order_id": str(c["_id"]),
+                "reference": c.get("reference"),
+                "title": c.get("title"),
+                "site_id": c.get("site_id"),
+                "site_name": sites_map.get(c.get("site_id")),
+                "status": c.get("status"),
+                "closed_at": c.get("closed_at"),
+                "severity": c.get("severity"),
+                "match_score": score,
+                "matched_terms": sorted(overlap)[:6],
+                **cap,
+            })
+
+    # ---- Site metrics (90d window)
+    now = datetime.now(timezone.utc)
+    cutoff_90d = now - timedelta(days=90)
+    cutoff_30d = now - timedelta(days=30)
+
+    site_wos = await db.work_orders.find(
+        {
+            "tenant_id": tenant_id,
+            "site_id": site_id,
+            "_id": {"$ne": wo["_id"]},
+            "created_at": {"$gte": cutoff_90d},
+        },
+        {"status": 1, "created_at": 1, "closed_at": 1, "after_hours": 1},
+    ).to_list(1000)
+
+    wo_count_90d = len(site_wos)
+    closed_with_time = [
+        w for w in site_wos
+        if w.get("status") == "closed" and w.get("closed_at") and w.get("created_at")
+    ]
+    if closed_with_time:
+        deltas = [
+            (w["closed_at"] - w["created_at"]).total_seconds() / 60.0
+            for w in closed_with_time
+        ]
+        avg_resolution_minutes = round(sum(deltas) / len(deltas), 1)
+    else:
+        avg_resolution_minutes = None
+
+    after_hours_count = sum(1 for w in site_wos if w.get("after_hours"))
+    after_hours_pct = (
+        round(after_hours_count / wo_count_90d * 100, 1) if wo_count_90d else 0.0
+    )
+
+    # Repeat rate: WOs en los ultimos 30d en este site
+    repeat_30d = sum(
+        1 for w in site_wos
+        if w.get("created_at") and w["created_at"] >= cutoff_30d
+    )
+
+    sections["site_metrics"] = {
+        "window_days": 90,
+        "wo_count_90d": wo_count_90d,
+        "avg_resolution_minutes": avg_resolution_minutes,
+        "repeat_count_30d": repeat_30d,
+        "after_hours_pct": after_hours_pct,
+        "computed_at": now,
+    }
 
     return sections
 
@@ -160,6 +332,8 @@ async def assemble_briefing(wo_id: str, user: CurrentUser = Depends(get_current_
         "site_bible_summary": sections["site_bible_summary"],
         "device_bible": sections["device_bible"],
         "history": sections["history"],
+        "similar_cross_site": sections.get("similar_cross_site", []),
+        "site_metrics": sections.get("site_metrics", {}),
         "parts_estimate": sections["parts_estimate"],
         "coordinator_notes": None,
         "status": "assembled",
@@ -186,6 +360,8 @@ async def assemble_briefing(wo_id: str, user: CurrentUser = Depends(get_current_
         context_snapshot={
             "supersedes_id": supersedes_id,
             "history_count": len(sections["history"]),
+            "similar_count": len(sections.get("similar_cross_site", [])),
+            "site_wo_count_90d": sections.get("site_metrics", {}).get("wo_count_90d"),
         },
     )
 
