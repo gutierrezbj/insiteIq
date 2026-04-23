@@ -5,16 +5,19 @@ Sistema operativo **interno SRS** para field services IT internacional. Construi
 
 > *"InsiteIQ sirve para arreglar las cagadas de cualquier compania que nos hace sufrir."* — JuanCho, 2026-04-15
 
-## Current State (2026-04-20)
-- **Fase real:** Fase 2 UI plumbing · **live en PROD** en `insiteiq.systemrapid.io` · 15+ pasitos deployed (F-T)
-- **Branch activo:** `v1-foundation` (el v0 vive en `main` como referencia historica)
-- **Blueprint:** v1.1 validado — 11 domains, 8 principios cross-cutting, 7 fases roadmap
-- **SDD:** 8 secciones completas en Notion (v1.1 alineado)
-- **Kickoff Notion:** Fases 0-3 cerradas, Fase 4 (desarrollo local) cerrada. v1 Foundation deployada a VPS 1 PROD.
-- **UX/UI checklist:** Fase 0 pre-poblada para 3 espacios — Track B Identity Sprint cerrado 5 pasos. Fase 4 visual polish pendiente.
+## Current State (2026-04-23)
+- **Fase real:** Fase 2 UI plumbing + Horizonte 2 Admin/Finance + Horizonte 3 AI Learning Engine · **live en PROD** en `insiteiq.systemrapid.io` · 20+ pasitos deployed (F-T + X-a..X-g + Y-a..Y-c + Z-a..Z-d)
+- **Branch activo:** `v1-foundation`
+- **Blueprint:** v1.1 evolucionando a **v1.2** (Principio #1 refinado + Cockpit de Operaciones)
 - **Dominio live:** https://insiteiq.systemrapid.io
 - **Repo:** github.com/gutierrezbj/insiteIq
-- **Design System:** SRS Nucleus v2.0 preservado. War-room applied en login + change-password + todos los action dialogs. Track B Fase 4 (polish por espacio) pendiente.
+- **Design System:** SRS Nucleus v2.0 preservado + war-room amber + Leaflet Stadia dark tiles en mapa operativo
+
+### Principio #1 refinado (camino Blueprint v1.2)
+Juan clarificó el 22-abr-2026:
+- **"La ropa se lava en casa"** = numeros/clientes/desacuerdos comerciales/facturación/margenes/threads internos/tech GPS/AI internals · **OPACO al cliente**
+- **"OPERATIVO"** = donde va el tech, tech asignado, acciones, mapa, ETA, cards, timeline, alertas · **TRANSPARENTE AL CLIENTE**
+- El "hotel 5 estrellas minimalist" estaba en el espacio equivocado (Client). Lo correcto: Client desktop = cockpit radical transparente (como Rackel Fractalia, Adrian Arcos). Tech mobile = visión reducida porque usa el movil.
 
 ### Pasitos deployed en PROD (v1-foundation)
 | # | Pasito | Qué cierra |
@@ -34,6 +37,15 @@ Sistema operativo **interno SRS** para field services IT internacional. Construi
 | R | Service Agreements | Shield catalog + SLA detail + bind con WOs |
 | S | Finance scaffold | Pre-invoice por org + channel/JV commissions + collections ball-in-court |
 | T | Tech Profile + Briefing Today | Cirujano de campo PWA completo |
+| X-a..X-g | Horizonte 2 Admin/Finance | RateCard + Invoice + Recurring + Vendor Invoice AP + three-way match + P&L 3 margins con vendor_invoices reales |
+| Y-a | Similar cases retrieval + site metrics en Briefing | AI Learning Engine Fase 1 sin LLM (DB aggregations) |
+| Y-b | Insights dashboard SRS-wide | `/api/insights/dashboard` · overview + clients + repeat_sites + tech_drift + finance_snapshot |
+| Y-c | LLM briefing enrichment · OpenAI gpt-4o-mini | AIProvider abstract (disabled/openai) + build_briefing_user_prompt + ai_summary persisted en briefing |
+| Z-a | Quick-access demo chips + BackLink shared | 6 one-click login buttons (seed pwd `InsiteIQ2026!`) + back navigation visible con border + hover amber |
+| Z-b | Site lat/lng/site_type + OperationalAlert entity | 8 kinds (traffic/no_show/accident/site_closed/weather/access_denied/fleet/other) · 55 sites + 18 alertas seed demo |
+| Z-c | Cockpit de Operaciones UI (SRS + Client compartido) | KpiStrip + AlertsWidget + ActiveInterventions con hora local site + hora origen user |
+| Z-d | Mapa interactivo Leaflet | Stadia dark tiles + markers color por status (critical/active/normal) + popup WOs + link a sitio |
+| Z-e | Sidebar renombrado | Operaciones/Intervenciones/Proyectos/Sitios/Tecnicos/Contratos/Inteligencia/Finanzas/Admin + Overview clasico como fallback |
 
 ## Tech Stack (confirmado)
 - **Frontend:** React 19 + Vite 6 + Tailwind CSS 4 + React Router 7
