@@ -1,117 +1,116 @@
 /**
- * KpiStrip · row of 4-5 KPI tiles for the cockpit header.
- * Computes from /insights/dashboard (SRS-wide) + /alerts/active/summary.
- * For client scope: computes over WOs visible to the user + alerts scoped.
+ * KpiStrip · los 5 KPIs que un gerente de operaciones de campo mira
+ * al abrir la app a las 8am.
+ *
+ * Recibe data pre-cargada desde CockpitPage · no fetch propio
+ * para evitar duplicar requests con OperationsMap / cards.
  */
-import { useEffect, useState } from "react";
-import { api } from "../../lib/api";
+import { useMemo } from "react";
 
-function KpiTile({ label, value, sub, tone = "neutral" }) {
-  const toneCls =
+function KpiTile({ label, value, sub, tone = "neutral", onClick }) {
+  const borderCls =
     tone === "danger"
-      ? "border-danger/50 bg-danger/5"
+      ? "border-l-[3px] border-l-danger"
       : tone === "warn"
-      ? "border-primary/50 bg-primary/5"
-      : tone === "success"
-      ? "border-success/40 bg-success/5"
-      : "border-surface-border bg-surface-overlay/40";
+      ? "border-l-[3px] border-l-primary"
+      : "border-l-[3px] border-l-surface-border";
+  const valueCls =
+    tone === "danger" ? "text-danger"
+    : tone === "warn" ? "text-primary-light"
+    : "text-text-primary";
+  const Base = onClick ? "button" : "div";
   return (
-    <div className={`rounded-md border px-4 py-3 ${toneCls}`}>
-      <div className="label-caps mb-1">{label}</div>
-      <div className="font-display text-2xl text-text-primary leading-none tracking-tight">
+    <Base
+      onClick={onClick}
+      className={`${borderCls} bg-surface-raised hover:bg-surface-overlay/60 rounded-sm px-4 py-3 text-left transition-colors duration-fast w-full`}
+    >
+      <div className="font-mono text-[10px] uppercase tracking-widest-srs text-text-tertiary leading-tight">
+        {label}
+      </div>
+      <div className={`font-display text-3xl leading-none mt-1 tabular-nums ${valueCls}`}>
         {value}
       </div>
       {sub && (
-        <div className="font-mono text-[10px] uppercase tracking-widest-srs text-text-tertiary mt-1">
+        <div className="font-mono text-[10px] uppercase tracking-widest-srs text-text-tertiary mt-1.5 leading-tight">
           {sub}
         </div>
       )}
-    </div>
+    </Base>
   );
 }
 
-export default function KpiStrip({ isSrs = false }) {
-  const [data, setData] = useState({
-    active: "—",
-    at_risk: "—",
-    after_hours: "—",
-    alerts_crit: "—",
-    alerts_warn: "—",
-  });
+function isActiveStatus(status) {
+  return ["assigned", "dispatched", "in_progress", "in_closeout", "en_route", "on_site"].includes(status);
+}
 
-  async function load() {
-    try {
-      const [woList, alertSummary] = await Promise.all([
-        api.get("/work-orders?limit=500"),
-        api.get("/alerts/active/summary"),
-      ]);
-      const items = Array.isArray(woList) ? woList : woList?.items || [];
-      const active = items.filter((w) =>
-        ["assigned", "dispatched", "in_progress", "in_closeout"].includes(w.status)
-      ).length;
-      const atRisk = items.filter((w) => {
-        // heuristic: ball_in_court "since" > 6h or explicit at_risk flag
-        if (w.at_risk) return true;
-        const since = w?.ball_in_court?.since;
-        if (!since) return false;
-        const ageH = (Date.now() - new Date(since).getTime()) / 36e5;
-        return ageH > 6;
-      }).length;
-      const afterHours = items.filter((w) => w.after_hours).length;
-      setData({
-        active,
-        at_risk: atRisk,
-        after_hours: afterHours,
-        alerts_crit: alertSummary.counts.critical,
-        alerts_warn: alertSummary.counts.warning,
-      });
-    } catch (e) {
-      // keep previous
-    }
-  }
+export default function KpiStrip({ workOrders = [], alerts = [] }) {
+  const stats = useMemo(() => {
+    const now = Date.now();
+    const h = (ms) => (now - new Date(ms).getTime()) / 36e5;
+    const active = workOrders.filter((w) => isActiveStatus(w.status));
 
-  useEffect(() => {
-    load();
-    const int = setInterval(load, 45000);
-    return () => clearInterval(int);
-  }, []);
+    const criticals = active.filter((w) => w.severity === "critical").length;
+
+    // SLA @ riesgo próximas 2h. Heurística: activas con ball stuck > 4h
+    // (SLA breach inminente). Cuando exista sla_deadline real, mejoramos.
+    const slaRisk = active.filter((w) => {
+      const since = w?.ball_in_court?.since;
+      if (!since) return false;
+      const age = h(since);
+      return age > 4 && age < 10;
+    }).length;
+
+    const ballSrs6h = active.filter((w) => {
+      if (w?.ball_in_court?.side !== "srs") return false;
+      const since = w?.ball_in_court?.since;
+      if (!since) return false;
+      return h(since) > 6;
+    }).length;
+
+    const unassigned = active.filter(
+      (w) => !w.assigned_tech_user_id && !w.assignment?.tech_user_id
+    ).length;
+
+    // After-hours hoy: activas con after_hours=true y created_at hoy UTC
+    const todayUTC = new Date().toISOString().slice(0, 10);
+    const afterHours = active.filter(
+      (w) => w.after_hours && (w.created_at || "").slice(0, 10) === todayUTC
+    ).length;
+
+    return { criticals, slaRisk, ballSrs6h, unassigned, afterHours };
+  }, [workOrders]);
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+    <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
       <KpiTile
-        label="Intervenciones activas"
-        value={data.active}
-        sub="assigned · dispatched · in_progress"
+        label="Criticos abiertos"
+        value={stats.criticals}
+        tone={stats.criticals > 0 ? "danger" : "neutral"}
+        sub="severity critical · activos"
       />
       <KpiTile
-        label="En riesgo"
-        value={data.at_risk}
-        sub="ball stuck > 6h"
-        tone={typeof data.at_risk === "number" && data.at_risk > 0 ? "warn" : "neutral"}
+        label="SLA @ riesgo"
+        value={stats.slaRisk}
+        tone={stats.slaRisk > 0 ? "warn" : "neutral"}
+        sub="ball stuck 4-10h"
       />
       <KpiTile
-        label="After-hours"
-        value={data.after_hours}
+        label="Ball SRS >6h"
+        value={stats.ballSrs6h}
+        tone={stats.ballSrs6h > 0 ? "warn" : "neutral"}
+        sub="pendiente accion nuestra"
+      />
+      <KpiTile
+        label="Sin asignar"
+        value={stats.unassigned}
+        tone={stats.unassigned > 0 ? "warn" : "neutral"}
+        sub="activa sin tech"
+      />
+      <KpiTile
+        label="After-hours hoy"
+        value={stats.afterHours}
+        tone="neutral"
         sub="nocturnas / fin-semana"
-      />
-      <KpiTile
-        label="Alertas criticas"
-        value={data.alerts_crit}
-        tone={
-          typeof data.alerts_crit === "number" && data.alerts_crit > 0
-            ? "danger"
-            : "neutral"
-        }
-        sub={isSrs ? "tenant-wide" : "en tu operacion"}
-      />
-      <KpiTile
-        label="Alertas warning"
-        value={data.alerts_warn}
-        tone={
-          typeof data.alerts_warn === "number" && data.alerts_warn > 0
-            ? "warn"
-            : "neutral"
-        }
       />
     </div>
   );

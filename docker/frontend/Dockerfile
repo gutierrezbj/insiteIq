@@ -1,5 +1,13 @@
 FROM node:20-alpine AS build
 WORKDIR /app
+
+# Vite build-time vars. Inyectadas desde docker-compose.yml (build.args).
+# Necesarias para que el bundle JS las tenga inlined (Vite las lee en build, no runtime).
+ARG VITE_MAPBOX_TOKEN
+ARG VITE_MAPBOX_STYLE
+ENV VITE_MAPBOX_TOKEN=$VITE_MAPBOX_TOKEN
+ENV VITE_MAPBOX_STYLE=$VITE_MAPBOX_STYLE
+
 COPY frontend/package.json frontend/package-lock.json* ./
 RUN npm install
 COPY frontend/ .

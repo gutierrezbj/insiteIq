@@ -7,6 +7,9 @@ services:
     build:
       context: .
       dockerfile: docker/frontend/Dockerfile
+      args:
+        - VITE_MAPBOX_TOKEN=${VITE_MAPBOX_TOKEN}
+        - VITE_MAPBOX_STYLE=${VITE_MAPBOX_STYLE:-mapbox://styles/mapbox/dark-v11}
     container_name: insiteiq-frontend
     ports:
       - "127.0.0.1:3110:80"
