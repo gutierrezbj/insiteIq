@@ -16,13 +16,15 @@ Sistema operativo **interno SRS** para field services IT internacional. Construi
 
 > *"InsiteIQ sirve para arreglar las cagadas de cualquier compania que nos hace sufrir."* — JuanCho, 2026-04-15
 
-## Current State (2026-04-23)
-- **Fase real:** Fase 2 UI plumbing + Horizonte 2 Admin/Finance + Horizonte 3 AI Learning Engine · **live en PROD** en `insiteiq.systemrapid.io` · 20+ pasitos deployed (F-T + X-a..X-g + Y-a..Y-c + Z-a..Z-d)
+## Estado final (2026-04-23 · proyecto pausado)
+- **Status:** ⏸ PAUSADO por decisión del owner (JuanCho). Ver `PROJECT_STATUS.md` para contexto completo.
+- **Último commit live en PROD:** `1cc3cd6` en rama `v1-foundation`. Después vino `830df05` (docs de cierre).
+- **Fase alcanzada:** Fase 2 UI plumbing + Horizonte 2 Admin/Finance + Horizonte 3 AI Learning Engine · 22+ pasitos deployed (F-T + X-a..X-g + Y-a..Y-c + Z-a..Z-e)
 - **Branch activo:** `v1-foundation`
-- **Blueprint:** v1.1 evolucionando a **v1.2** (Principio #1 refinado + Cockpit de Operaciones)
-- **Dominio live:** https://insiteiq.systemrapid.io
+- **Blueprint:** v1.1 (v1.2 conceptualmente arrancado con Principio #1 refinado pero NO formalizado)
+- **Dominio live:** https://insiteiq.systemrapid.io (activo hasta que owner decida lo contrario)
 - **Repo:** github.com/gutierrezbj/insiteIq
-- **Design System:** SRS Nucleus v2.0 preservado + war-room amber + Leaflet Stadia dark tiles en mapa operativo
+- **Motivo de pausa:** incompatibilidad entre complejidad del dominio y alcance de ejecución autónoma de agente LLM para diseño UX de producto corporativo sin mock Figma pixel-perfect. Backend + data model + flujos sólidos. La capa visual del cockpit operativo no cerró tras 3 iteraciones.
 
 ### Principio #1 refinado (camino Blueprint v1.2)
 Juan clarificó el 22-abr-2026:
@@ -57,6 +59,15 @@ Juan clarificó el 22-abr-2026:
 | Z-c | Cockpit de Operaciones UI (SRS + Client compartido) | KpiStrip + AlertsWidget + ActiveInterventions con hora local site + hora origen user |
 | Z-d | Mapa interactivo Leaflet | Stadia dark tiles + markers color por status (critical/active/normal) + popup WOs + link a sitio |
 | Z-e | Sidebar renombrado | Operaciones/Intervenciones/Proyectos/Sitios/Tecnicos/Contratos/Inteligencia/Finanzas/Admin + Overview clasico como fallback |
+
+### Intentos de cockpit operativo (todos rechazados por owner)
+| Intento | Qué tenía | Por qué fue rechazado |
+|---|---|---|
+| 1 | Leaflet + Stadia tiles + CircleMarker + widget alertas con emojis unicode + KPI strip + cards con hora local | "Iconos genéricos de IA-vibe-coded", pidió Mapbox no Leaflet, apestaba a producto SaaS genérico |
+| 2 | CartoDB Dark tiles + copy explicativo fuera + cleanup headers | "Sigue siendo panel de Telefónica aburrido, no WOW, no evidente qué es" |
+| 3 | Mapbox GL + markers SVG custom por site_type + cards densas + drawer 480px + iconos Lucide | Markers ambiguos sin leyenda, labels desalineados, z-index controls mapa encima del drawer, timestamps duplicados, botón "más detalles" casi invisible |
+
+**Patrón del fallo:** agente reinventa layout cada iteración en vez de adherirse 1:1 a una referencia visual. Diseño UX complejo sin mock Figma pixel-perfect no es territorio agentic fiable.
 
 ## Tech Stack (confirmado)
 - **Frontend:** React 19 + Vite 6 + Tailwind CSS 4 + React Router 7

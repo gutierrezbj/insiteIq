@@ -1,5 +1,10 @@
 # Company Context — System Rapid Solutions (SRS)
 
+> **Nota 2026-04-23:** InsiteIQ pausado por owner. Backend + data model quedan vivos
+> en PROD. La capa UX del cockpit operativo no cerró tras 3 iteraciones. Ver
+> `PROJECT_STATUS.md` en la raíz del repo InsiteIQ para contexto completo y
+> recomendaciones de retoma.
+
 ## Overview
 System Rapid Solutions (SRS), Madrid, Espana. 25 anos de experiencia en soporte IT internacional. Opera red de tecnicos en Centroamerica, Sudamerica, Europa y KSA.
 
@@ -63,7 +68,7 @@ Todo proyecto desplegado debe:
 | SA99 | Produccion | sa99.systemrapid.io |
 | SKYPRO360 | Produccion | skypro360.systemrapid.io |
 | MOEVE-T | Produccion | moevet.systemrapid.io |
-| InsiteIQ | **Produccion — v1 Foundation Fase 2 UI plumbing (15+ pasitos live)** | insiteiq.systemrapid.io |
+| InsiteIQ | **Pausado 2026-04-23 · PROD activo con 22+ pasitos live** (ver `PROJECT_STATUS.md`) | insiteiq.systemrapid.io |
 
 ## Mercados Objetivo InsiteIQ
 

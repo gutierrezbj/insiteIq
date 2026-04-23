@@ -2,6 +2,10 @@
 
 Shorthand, acronimos y lenguaje interno de SRS y del proyecto InsiteIQ.
 
+> **Nota 2026-04-23:** InsiteIQ pausado. Ver `PROJECT_STATUS.md` en la raíz.
+> El glosario se mantiene como registro histórico del vocabulario operativo
+> acuñado durante el diseño. Si se retoma, sigue siendo la fuente canónica.
+
 ## Acronimos SRS
 
 | Term | Meaning | Context |
@@ -94,8 +98,19 @@ Shorthand, acronimos y lenguaje interno de SRS y del proyecto InsiteIQ.
 | Tech Scan | Tech on-site registra un asset via `POST /sites/:id/equipment/scan`. Backend decide event_type: `installed` (nuevo) / `relocated` (estaba en otro site) / `inspected` (mismo site) |
 | Asset Event | Append-only log por asset (Domain 11 Visibility Model C — public/internal/restricted) |
 | Forced Rotation | Flag `must_change_password=true` en user. `RequireSpace` rebota a `/change-password` antes de entrar a cualquier space. Seed marca todos los users asi |
-| Pasito | Unidad de avance nombrada con letra (F-T hoy). Cada pasito = commit + deploy. Se usa como shorthand de "incremento funcional entregable" |
+| Pasito | Unidad de avance nombrada con letra (F-T, luego X-a..X-g Finance, Y-a..Y-c AI, Z-a..Z-e Cockpit). Cada pasito = commit + deploy. Se usa como shorthand de "incremento funcional entregable" |
 | Backhref adaptativo | `location.pathname.startsWith()` para que un mismo componente (WO detail, report) se quede dentro del espacio del caller: `/tech`, `/client`, `/srs` |
+| BackLink | Componente compartido `components/ui/BackLink.jsx` · chip con border + hover amber + Lift. Reemplaza el back-link text-tertiary casi invisible |
+| Quick-access chips | 6 botones demo en la página de login que rellenan email + password seed + login directo. Admin SRS / Coord SRS / Finanzas / Cliente / Tech plantilla / Tech externo. `must_change_password=false` para evitar fricción en demos |
+| OperationalAlert | Entidad Z-b · 8 kinds (traffic/no_show/accident/site_closed/weather/access_denied/fleet/other) · 3 severity · 5 scope (global/client/site/tech/wo) · ball_in_court propio · TTL con expires_at · ack/resolve/dismiss lifecycle |
+| site_type | Enum de Site añadido en Z-b: `retail`/`dc`/`office`/`warehouse`/`branch`/`other`. Usado para forma de marker en mapa operativo |
+| Cockpit de Operaciones | Vista compartida SRS + Client (intentada 3 veces) que concentra KPIs + mapa + intervenciones activas + alertas. **No cerró** — ver `PROJECT_STATUS.md` |
+| Drawer detail | Panel 480px slide-in desde la derecha con estado + alertas + acciones del WO. Intento 3 del cockpit. |
+| AI Learning Engine | Capa Y · Fase 1 sin LLM (similar cases retrieval + site metrics) · Fase 2 con OpenAI gpt-4o-mini (briefing ai_summary enrichment) |
+| AIProvider | Abstract service pluggable (disabled/openai/anthropic/ollama/sa99) · backend/app/services/ai_provider.py |
+| Three-way match | Vendor invoice · valida PO total vs invoice vs receipts. Lifecycle received→matched→approved→paid (o disputed/rejected) |
+| P&L 3 margenes | Invoice con margenes nominal / cash-flow / proxy-adjusted. Nominal usa cost_snapshot manual, cash-flow usa vendor_invoices pagadas |
+| Proxy Coordination | Tiempo que SRS absorbe coordinando entre capas que el cliente no paga. Medido, monetizable (Principio #3) |
 
 ## Capas de Plataforma
 
