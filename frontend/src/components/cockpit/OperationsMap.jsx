@@ -7,8 +7,10 @@
  *   - normal:   has only closed WOs or no WOs → stone
  *
  * Clicking a marker opens a popup with site summary + link to detail page.
- * Using default tiles from OpenStreetMap — free, no API key needed.
- * Dark-style tiles via Stadia Alidade Smooth Dark to match war-room.
+ *
+ * Tiles: CartoDB Dark Matter · gratis, no requiere API key, dark look
+ * consistente con war-room SRS (antes probé Stadia pero devolvía 401 en PROD
+ * por requerir registro de dominio).
  */
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
@@ -192,8 +194,10 @@ export default function OperationsMap({ baseLinkPrefix = "/srs", height = 420 })
             className="bg-surface-base"
           >
             <TileLayer
-              attribution='&copy; <a href="https://stadiamaps.com/">Stadia Maps</a>, &copy; <a href="https://openmaptiles.org/">OpenMapTiles</a>, &copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
-              url="https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png"
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+              url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+              subdomains={["a", "b", "c", "d"]}
+              maxZoom={19}
             />
             {sites.map((s) => {
               const stat = siteStatus(s, sitesWO, alertsBySite);
