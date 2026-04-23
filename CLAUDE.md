@@ -1,5 +1,16 @@
 # InsiteIQ — Claude Code Project Context
 
+> **⏸ PROYECTO PAUSADO · 2026-04-23**
+>
+> Ver `PROJECT_STATUS.md` en la raíz para detalles completos del cierre,
+> qué queda vivo, qué no cerró, y recomendaciones si se retoma.
+>
+> Decisión del owner (JuanCho): incompatibilidad entre complejidad del
+> dominio y alcance real de ejecución autónoma de un agente LLM sin
+> mock de diseño pixel-perfect. Backend + data model son sólidos y
+> quedan en PROD. La capa UX del cockpit operativo no llegó a cerrar
+> tras 3 iteraciones.
+
 ## What is this
 Sistema operativo **interno SRS** para field services IT internacional. Construido por y para SRS, basado en 25 anos de dolor real operando soporte IT. **No es producto comercial.** Fractalia/Claro/clientes ven OUTPUT (reportes), nunca el software.
 
