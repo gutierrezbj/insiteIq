@@ -20,6 +20,7 @@ from app.routes import equipment as equipment_routes
 from app.routes import insights as insights_routes
 from app.routes import intervention_reports as intervention_reports_routes
 from app.routes import invoices as invoices_routes
+from app.routes import operational_alerts as operational_alerts_routes
 from app.routes import organizations as organizations_routes
 from app.routes import projects as projects_routes
 from app.routes import recurring_billing as recurring_billing_routes
@@ -83,6 +84,7 @@ app.include_router(invoices_routes.router, prefix="/api")
 app.include_router(recurring_billing_routes.router, prefix="/api")
 app.include_router(vendor_invoices_routes.router, prefix="/api")
 app.include_router(insights_routes.router, prefix="/api")
+app.include_router(operational_alerts_routes.router, prefix="/api")
 
 
 @app.get("/")

@@ -155,6 +155,28 @@ async def ensure_indexes() -> None:
     await db.audit_log.create_index([("tenant_id", 1), ("action", 1), ("ts", -1)])
     await db.audit_log.create_index([("tenant_id", 1), ("source", 1), ("ts", -1)])
 
+    # --- Operational Alerts (Z-b · Cockpit) ---
+    # Cockpit queries by (tenant, status) + recent order. Scope narrowing uses
+    # scope_ref subfields; compound index covers the common "active + tenant".
+    await db.operational_alerts.create_index(
+        [("tenant_id", 1), ("status", 1), ("created_at", -1)]
+    )
+    await db.operational_alerts.create_index(
+        [("tenant_id", 1), ("severity", 1), ("status", 1)]
+    )
+    await db.operational_alerts.create_index(
+        [("scope_ref.organization_id", 1), ("status", 1)]
+    )
+    await db.operational_alerts.create_index(
+        [("scope_ref.site_id", 1), ("status", 1)]
+    )
+    await db.operational_alerts.create_index(
+        [("scope_ref.tech_user_id", 1), ("status", 1)]
+    )
+    await db.operational_alerts.create_index(
+        [("scope_ref.work_order_id", 1), ("status", 1)]
+    )
+
 
 async def close_db() -> None:
     global client

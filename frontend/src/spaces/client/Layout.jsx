@@ -6,10 +6,13 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 
+// Nav client v2 · Cockpit-first (principio #1 refined)
+// OPERATIVO transparente · COMERCIAL opaco
 const nav = [
-  { to: "/client", label: "Status", end: true },
-  { to: "/client/tickets", label: "Tickets" },
-  { to: "/client/deliverables", label: "Deliverables" },
+  { to: "/client",              label: "Operaciones", end: true },
+  { to: "/client/status",       label: "Status clasico" },
+  { to: "/client/tickets",      label: "Tickets" },
+  { to: "/client/deliverables", label: "Entregables" },
 ];
 
 export default function ClientLayout() {

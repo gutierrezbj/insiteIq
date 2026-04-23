@@ -7,16 +7,19 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 
+// Nav v2 · Juan Z-e · vocabulario operacional
+// Grupos visuales mantenidos en orden (el separator se dibuja por CSS)
 const nav = [
-  { to: "/srs", label: "Overview", end: true },
-  { to: "/srs/ops", label: "Work Orders" },
-  { to: "/srs/projects", label: "Projects" },
-  { to: "/srs/sites", label: "Sites" },
-  { to: "/srs/techs", label: "Techs" },
-  { to: "/srs/agreements", label: "Agreements" },
-  { to: "/srs/insights", label: "Insights" },
-  { to: "/srs/finance", label: "Finance" },
-  { to: "/srs/admin", label: "Admin" },
+  { to: "/srs",            label: "Operaciones",    end: true, accent: true },
+  { to: "/srs/ops",        label: "Intervenciones" },
+  { to: "/srs/projects",   label: "Proyectos" },
+  { to: "/srs/sites",      label: "Sitios" },
+  { to: "/srs/techs",      label: "Tecnicos" },
+  { to: "/srs/agreements", label: "Contratos" },
+  { to: "/srs/insights",   label: "Inteligencia" },
+  { to: "/srs/finance",    label: "Finanzas" },
+  { to: "/srs/admin",      label: "Admin" },
+  { to: "/srs/overview",   label: "Overview clasico", muted: true },
 ];
 
 export default function SrsLayout() {
@@ -43,13 +46,21 @@ export default function SrsLayout() {
               key={n.to}
               to={n.to}
               end={n.end}
-              className={({ isActive }) =>
-                `block px-3 py-2 rounded-sm font-body text-sm transition-colors duration-fast ${
-                  isActive
-                    ? "bg-surface-overlay text-text-primary"
-                    : "text-text-secondary hover:text-text-primary hover:bg-surface-overlay/60"
-                }`
-              }
+              className={({ isActive }) => {
+                const base =
+                  "block px-3 py-2 rounded-sm font-body text-sm transition-all duration-fast ease-out-expo";
+                if (isActive) {
+                  return n.accent
+                    ? `${base} bg-primary/10 text-primary-light border-l-2 border-primary pl-2.5`
+                    : `${base} bg-surface-overlay text-text-primary`;
+                }
+                const color = n.muted
+                  ? "text-text-tertiary hover:text-text-secondary"
+                  : n.accent
+                  ? "text-text-primary hover:text-primary-light"
+                  : "text-text-secondary hover:text-text-primary";
+                return `${base} ${color} hover:bg-surface-overlay/60`;
+              }}
             >
               {n.label}
             </NavLink>

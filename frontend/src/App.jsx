@@ -12,6 +12,7 @@ import ChangePasswordPage from "./pages/auth/ChangePasswordPage";
 
 import SrsLayout from "./spaces/srs/Layout";
 import SrsHome from "./spaces/srs/HomePage";
+import CockpitPage from "./components/cockpit/CockpitPage";
 import WorkOrdersListPage from "./spaces/srs/ops/WorkOrdersListPage";
 import WorkOrderDetailPage from "./spaces/srs/ops/WorkOrderDetailPage";
 import InterventionReportPage from "./spaces/srs/ops/InterventionReportPage";
@@ -97,7 +98,8 @@ export default function App() {
               </RequireSpace>
             }
           >
-            <Route index element={<SrsHome />} />
+            <Route index element={<CockpitPage scope="srs" />} />
+            <Route path="overview" element={<SrsHome />} />
             <Route path="ops" element={<WorkOrdersListPage />} />
             <Route path="ops/:wo_id" element={<WorkOrderDetailPage />} />
             <Route path="ops/:wo_id/report" element={<InterventionReportPage />} />
@@ -125,7 +127,8 @@ export default function App() {
               </RequireSpace>
             }
           >
-            <Route index element={<ClientHome />} />
+            <Route index element={<CockpitPage scope="client" />} />
+            <Route path="status" element={<ClientHome />} />
             <Route path="ops/:wo_id" element={<WorkOrderDetailPage />} />
             <Route path="ops/:wo_id/report" element={<InterventionReportPage />} />
             <Route path="invoices/:invoice_id" element={<InvoiceDetailPage />} />

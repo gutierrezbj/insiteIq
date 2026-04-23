@@ -35,6 +35,18 @@ class Site(BaseMongoModel):
     address: str | None = None
     timezone: str | None = None  # IANA TZ ("Europe/Madrid", "America/Santiago")
 
+    # Geolocation (Z-b · cockpit + mapa)
+    # lat/lng almacenados como float decimal. geofence_radius_m usado por
+    # Modo 1 tech-arrival confirm + WO distance validation.
+    lat: float | None = None
+    lng: float | None = None
+    geofence_radius_m: int | None = None  # default null → 200m implicit
+
+    # Site typology for cockpit color/icon (Z-b)
+    # "retail"=tienda · "dc"=datacenter · "office"=oficina ·
+    # "warehouse"=almacen · "branch"=sucursal bancaria · "other"
+    site_type: Literal["retail", "dc", "office", "warehouse", "branch", "other"] = "retail"
+
     # Contacts
     onsite_contact: SiteContact | None = None
 
