@@ -187,7 +187,7 @@ export default function AlertsWidget({ isSrs = false, isClient = false }) {
         )}
         {summary && summary.recent.length === 0 && !error && (
           <div className="py-6 text-center font-mono text-2xs text-text-tertiary uppercase tracking-widest-srs">
-            sin alertas · operacion fluyendo
+            sin alertas
           </div>
         )}
         {summary &&

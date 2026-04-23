@@ -146,18 +146,12 @@ export default function LoginPage() {
             {busy ? "Validando…" : "Iniciar sesion"}
           </button>
 
-          <p className="mt-6 text-text-tertiary text-2xs font-mono tracking-widest-srs uppercase">
-            Herramienta interna SRS · Solo usuarios autorizados
-          </p>
         </form>
 
         {/* Quick-access demo chips */}
         <div className="mt-6 p-4 bg-surface-raised/50 border border-surface-border rounded-md">
           <div className="flex items-center justify-between mb-3">
-            <span className="label-caps">Acceso rapido · demo</span>
-            <span className="font-mono text-[10px] uppercase tracking-widest-srs text-text-tertiary">
-              seed · rotar al entrar
-            </span>
+            <span className="label-caps">Demo</span>
           </div>
           <div className="grid grid-cols-2 gap-2">
             {DEMO_ROLES.map((role) => {
@@ -186,9 +180,6 @@ export default function LoginPage() {
               );
             })}
           </div>
-          <p className="mt-3 text-text-tertiary text-[10px] font-mono tracking-widest-srs uppercase leading-relaxed">
-            Pass seed · {SEED_PASSWORD} · forzada rotacion al primer login
-          </p>
         </div>
       </div>
     </div>
