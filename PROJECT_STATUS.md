@@ -136,10 +136,12 @@ Recomendación operativa concreta:
 
 ## Decisión final
 
-Owner (JuanCho, 2026-04-23):
-
-> "Proyecto muy complejo, incompatible con las directrices o el alcance
-> de Anthropic. Nos dedicaremos a hacer landing pages."
+Owner (JuanCho, 2026-04-23): **pausar el proyecto.** Motivo registrado:
+proyecto complejo, incompatible con el alcance de ejecución autónoma
+del agente LLM (Claude) para la capa UX de producto corporativo sin
+mock Figma pixel-perfect.
 
 Proyecto pausado. El código queda disponible en el repo y el entorno
-PROD activo hasta que el owner decida lo contrario.
+PROD activo hasta que el owner decida lo contrario. La capa UX se
+retomará cuando haya un diseñador humano enfrente con referencias
+visuales concretas; el agente ejecuta, no diseña.
