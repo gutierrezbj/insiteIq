@@ -18,7 +18,19 @@ from datetime import datetime, timedelta, timezone
 
 from bson import ObjectId
 
+from app.core.security import hash_password
 from app.database import close_db, connect_db, get_db
+
+# Users visibles en los chips de Login. Para demo NO queremos forced rotation.
+DEMO_USER_EMAILS = [
+    "juang@systemrapid.io",
+    "androsb@systemrapid.com",
+    "adrianab@systemrapid.com",
+    "rackel.rocha@fractaliasystems.es",
+    "agustinc@systemrapid.com",
+    "arlindoo@systemrapid.com",
+]
+DEMO_PASSWORD = "InsiteIQ2026!"
 
 random.seed(42)
 
@@ -182,6 +194,24 @@ async def enrich():
     await connect_db()
     db = get_db()
     assert db is not None
+
+    # --- 0) demo users: reset password + kill forced rotation ---
+    # Evita fricción "cambiar contraseña" en chips one-click. Son demos con
+    # fake data, no tiene sentido el gate de first-login rotation.
+    print("Cockpit enrichment — resetting demo user passwords (no forced rotation)...")
+    hashed = hash_password(DEMO_PASSWORD)
+    reset_count = 0
+    for email in DEMO_USER_EMAILS:
+        r = await db.users.update_one(
+            {"email": email},
+            {"$set": {
+                "hashed_password": hashed,
+                "must_change_password": False,
+                "updated_at": _now(),
+            }},
+        )
+        reset_count += r.matched_count
+    print(f"  ✓ {reset_count}/{len(DEMO_USER_EMAILS)} demo users ready for one-click login")
 
     # --- 1) patch existing sites with coords + site_type ---
     print("Cockpit enrichment — patching coords on existing sites...")
