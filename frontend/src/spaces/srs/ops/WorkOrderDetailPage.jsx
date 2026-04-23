@@ -302,51 +302,25 @@ export default function WorkOrderDetailPage() {
         <CostAfterHoursSection wo={wo} reload={reload} />
       )}
 
-      {/* Related tabs stub */}
-      <section className="bg-surface-raised accent-bar rounded-sm p-4 mt-4">
-        <div className="label-caps mb-3">Related</div>
-        <div className="flex flex-wrap gap-2">
-          <RelatedLink
-            to={`#briefing-${wo_id}`}
-            label="Copilot Briefing"
-            subpath={`/api/work-orders/${wo_id}/briefing`}
-          />
-          <RelatedLink
-            to={`#threads-${wo_id}`}
-            label="Threads (shared + internal)"
-            subpath={`/api/work-orders/${wo_id}/threads`}
-          />
-          <RelatedLink
-            to={`#capture-${wo_id}`}
-            label="Tech Capture"
-            subpath={`/api/work-orders/${wo_id}/capture`}
-          />
-          <RelatedLink
-            to={`#parts-${wo_id}`}
-            label="Parts / Budget Approvals"
-            subpath={`/api/work-orders/${wo_id}/parts`}
-          />
-          <RelatedLink
-            to={`#ratings-${wo_id}`}
-            label="Ratings"
-            subpath={`/api/work-orders/${wo_id}/ratings`}
-          />
-          {wo.status === "closed" && (
-            <Link
-              to={`${
-                inTech ? "/tech" : inClientSpace ? "/client" : "/srs"
-              }/ops/${wo_id}/report`}
-              className="bg-primary text-text-inverse font-mono font-semibold uppercase tracking-widest-srs text-2xs px-3 py-1.5 rounded-sm hover:bg-primary-light hover:shadow-glow-primary transition-all duration-fast ease-out-expo"
-            >
-              Intervention Report →
-            </Link>
-          )}
-        </div>
-        <p className="font-body text-2xs text-text-tertiary mt-3">
-          Rendering inline de relacionados pendiente (Track B Fase 4). Los links
-          apuntan a los endpoints API para consulta directa.
-        </p>
-      </section>
+      {/* Intervention Report link (solo cuando WO cerrada) */}
+      {wo.status === "closed" && (
+        <section className="bg-surface-raised accent-bar rounded-sm p-4 mt-4 flex items-center justify-between gap-3 flex-wrap">
+          <div>
+            <div className="label-caps">Intervention Report</div>
+            <p className="font-body text-sm text-text-secondary">
+              Reporte final auto-ensamblado al cierre · 5 canales emit
+            </p>
+          </div>
+          <Link
+            to={`${
+              inTech ? "/tech" : inClientSpace ? "/client" : "/srs"
+            }/ops/${wo_id}/report`}
+            className="bg-primary text-text-inverse font-mono font-semibold uppercase tracking-widest-srs text-2xs px-3 py-2 rounded-sm hover:bg-primary-light hover:shadow-glow-primary transition-all duration-fast ease-out-expo"
+          >
+            Abrir reporte →
+          </Link>
+        </section>
+      )}
 
       <p className="mt-6 text-text-tertiary font-mono text-2xs uppercase tracking-widest-srs">
         Fase 2 plumbing · state-machine vivo · audit_log graba todo
@@ -1209,19 +1183,6 @@ function SlaItem({ label, minutes, text }) {
           : "—"}
       </div>
     </div>
-  );
-}
-
-function RelatedLink({ label, subpath }) {
-  return (
-    <a
-      href={subpath}
-      target="_blank"
-      rel="noreferrer"
-      className="bg-surface-base border border-surface-border rounded-sm px-3 py-1.5 font-mono text-2xs uppercase tracking-widest-srs text-text-secondary hover:text-primary-light hover:border-primary transition-colors duration-fast"
-    >
-      {label} ↗
-    </a>
   );
 }
 
