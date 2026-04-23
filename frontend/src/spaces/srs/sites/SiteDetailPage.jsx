@@ -5,6 +5,7 @@
 import { useMemo } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useFetch } from "../../../lib/useFetch";
+import BackLink from "../../../components/ui/BackLink";
 import {
   BallBadge,
   SeverityBadge,
@@ -37,12 +38,7 @@ export default function SiteDetailPage() {
 
   return (
     <div className="px-4 md:px-8 py-5 md:py-7 max-w-wide">
-      <Link
-        to="/srs/sites"
-        className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary hover:text-primary-light inline-block mb-3"
-      >
-        ← Sites
-      </Link>
+      <BackLink to="/srs/sites" label="Sites" />
 
       <div className="accent-bar pl-4 mb-6">
         <div className="flex items-center gap-3 mb-1">

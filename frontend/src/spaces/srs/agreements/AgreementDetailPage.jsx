@@ -5,6 +5,7 @@ import { useMemo } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useFetch } from "../../../lib/useFetch";
 import { useAuth } from "../../../contexts/AuthContext";
+import BackLink from "../../../components/ui/BackLink";
 import {
   BallBadge,
   SeverityBadge,
@@ -61,12 +62,7 @@ export default function AgreementDetailPage() {
 
   return (
     <div className="px-4 md:px-8 py-5 md:py-7 max-w-wide">
-      <Link
-        to="/srs/agreements"
-        className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary hover:text-primary-light inline-block mb-3"
-      >
-        ← Service Agreements
-      </Link>
+      <BackLink to="/srs/agreements" label="Service Agreements" />
 
       <div className="accent-bar pl-4 mb-6">
         <div className="flex items-center gap-3 mb-1 flex-wrap">

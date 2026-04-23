@@ -157,7 +157,7 @@ export default function ChangePasswordPage() {
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="mt-3 w-full text-text-tertiary font-mono text-2xs uppercase tracking-widest-srs py-2 hover:text-text-primary transition-colors duration-fast"
+            className="mt-3 w-full text-text-secondary font-mono text-2xs uppercase tracking-widest-srs py-2 border border-surface-border rounded-sm hover:text-primary-light hover:border-primary transition-all duration-fast ease-out-expo"
           >
             Cancelar
           </button>

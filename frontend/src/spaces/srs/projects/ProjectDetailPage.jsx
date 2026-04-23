@@ -5,6 +5,7 @@
 import { Link, useParams } from "react-router-dom";
 import { useFetch } from "../../../lib/useFetch";
 import { useAuth } from "../../../contexts/AuthContext";
+import BackLink from "../../../components/ui/BackLink";
 import KpiCard from "../../../components/ui/KpiCard";
 import {
   BallBadge,
@@ -42,12 +43,7 @@ export default function ProjectDetailPage() {
 
   return (
     <div className="px-8 py-7 max-w-wide">
-      <Link
-        to="/srs/projects"
-        className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary hover:text-primary-light inline-block mb-3"
-      >
-        ← Projects
-      </Link>
+      <BackLink to="/srs/projects" label="Projects" />
 
       {/* Header */}
       <div className="accent-bar pl-4 mb-6">

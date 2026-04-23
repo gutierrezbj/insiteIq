@@ -26,6 +26,7 @@ import ActionDialog, {
   DialogCheckbox,
 } from "../../../components/ui/ActionDialog";
 import AuthImage from "../../../components/ui/AuthImage";
+import BackLink from "../../../components/ui/BackLink";
 import { uploadFile } from "../../../lib/api";
 import BriefingSection from "../../../components/workorder/BriefingSection";
 import CaptureSection from "../../../components/workorder/CaptureSection";
@@ -78,12 +79,7 @@ export default function WorkOrderDetailPage() {
   return (
     <div className="px-4 md:px-8 py-5 md:py-7 max-w-wide">
       {/* Back link */}
-      <Link
-        to={backHref}
-        className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary hover:text-primary-light inline-block mb-3"
-      >
-        ← {backLabel}
-      </Link>
+      <BackLink to={backHref} label={backLabel} />
 
       {/* Header */}
       <div className="accent-bar pl-4 mb-6">

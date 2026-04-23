@@ -13,6 +13,7 @@ import { Link, useLocation, useParams } from "react-router-dom";
 import { useFetch } from "../../../lib/useFetch";
 import { api } from "../../../lib/api";
 import { useAuth } from "../../../contexts/AuthContext";
+import BackLink from "../../../components/ui/BackLink";
 import ActionDialog, {
   DialogCheckbox,
   DialogInput,
@@ -44,12 +45,7 @@ export default function InterventionReportPage() {
     const is404 = error.status === 404;
     return (
       <div className="px-4 md:px-8 py-5 md:py-7 max-w-wide">
-        <Link
-          to={backHref}
-          className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary hover:text-primary-light inline-block mb-3"
-        >
-          ← Work order
-        </Link>
+        <BackLink to={backHref} label="Work order" />
         <div className="accent-bar bg-surface-raised p-5 rounded-md">
           <div className="label-caps mb-1">Intervention report</div>
           <h1 className="font-display text-xl text-text-primary leading-tight mb-2">
@@ -77,12 +73,7 @@ export default function InterventionReportPage() {
 
   return (
     <div className="px-4 md:px-8 py-5 md:py-7 max-w-wide">
-      <Link
-        to={backHref}
-        className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary hover:text-primary-light inline-block mb-3"
-      >
-        ← Work order
-      </Link>
+      <BackLink to={backHref} label="Work order" />
 
       {/* Header */}
       <div className="accent-bar pl-4 mb-6">
