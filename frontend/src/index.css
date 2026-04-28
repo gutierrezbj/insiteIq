@@ -300,6 +300,35 @@
   color: #F59E0B !important;
 }
 
+/* Kanban (Fase Epsilon · DS v1.7 §5.2) */
+.kanban-col {
+  position: relative;
+  outline: 2px dashed transparent;
+  outline-offset: -2px;
+  transition: outline-color 180ms ease, background 180ms ease;
+}
+body.drag-active .kanban-col {
+  outline-color: #2A2A2A;
+}
+body.drag-active .kanban-col.is-drop-target {
+  outline-color: #0EA5E9;
+  background: rgba(14, 165, 233, 0.05);
+}
+.wo-kanban-card[draggable="true"] {
+  cursor: grab;
+}
+.wo-kanban-card[draggable="true"]:active {
+  cursor: grabbing;
+}
+.wo-kanban-card.is-dragging {
+  opacity: 0.4;
+  transform: scale(0.98);
+}
+.wo-kanban-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px -2px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.25);
+}
+
 /* SideDetailPanel slide-in */
 .detail-overlay {
   position: fixed;

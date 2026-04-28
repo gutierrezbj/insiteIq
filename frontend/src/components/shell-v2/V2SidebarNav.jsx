@@ -17,8 +17,8 @@ import { NavLink } from "react-router-dom";
 
 const NAV_ITEMS = [
   { to: "/srs",             label: "Operaciones",       end: true, accent: true },
-  { to: "/srs/espacio-ops", label: "Espacio OPS" },
-  { to: "/srs/ops",         label: "Intervenciones" },
+  { to: "/srs/espacio-ops",     label: "Espacio OPS" },
+  { to: "/srs/intervenciones",  label: "Intervenciones" },
   { to: "/srs/projects",    label: "Proyectos" },
   { to: "/srs/sites",       label: "Sitios" },
   { to: "/srs/techs",       label: "Técnicos" },

@@ -15,6 +15,7 @@ import SrsHome from "./spaces/srs/HomePage";
 import CockpitPage from "./components/cockpit/CockpitPage";
 import V2CockpitPage from "./spaces/srs/v2/CockpitPage";
 import V2EspacioOpsPage from "./spaces/srs/v2/EspacioOpsPage";
+import V2InterventionsKanbanPage from "./spaces/srs/v2/InterventionsKanbanPage";
 import WorkOrdersListPage from "./spaces/srs/ops/WorkOrdersListPage";
 import WorkOrderDetailPage from "./spaces/srs/ops/WorkOrderDetailPage";
 import InterventionReportPage from "./spaces/srs/ops/InterventionReportPage";
@@ -82,6 +83,15 @@ function SrsCockpitRouter() {
   return useV2 ? <V2CockpitPage scope="srs" /> : <CockpitPage scope="srs" />;
 }
 
+/** SrsInterventionsRouter — Kanban v2 si ?v2=1, lista clásica v1 si no. */
+function SrsInterventionsRouter() {
+  const location = useLocation();
+  const envV2 = import.meta.env.VITE_V2_SHELL === "1";
+  const queryV2 = new URLSearchParams(location.search).get("v2") === "1";
+  const useV2 = envV2 || queryV2;
+  return useV2 ? <V2InterventionsKanbanPage /> : <WorkOrdersListPage />;
+}
+
 function NoAccessPage() {
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
@@ -123,6 +133,7 @@ export default function App() {
           >
             <Route index element={<SrsCockpitRouter />} />
             <Route path="espacio-ops" element={<V2EspacioOpsPage />} />
+            <Route path="intervenciones" element={<SrsInterventionsRouter />} />
             <Route path="overview" element={<SrsHome />} />
             <Route path="ops" element={<WorkOrdersListPage />} />
             <Route path="ops/:wo_id" element={<WorkOrderDetailPage />} />
