@@ -36,3 +36,7 @@ logs/
 
 # OS
 Thumbs.db
+
+# Claude Code session locals
+.claude/settings.local.json
+.claude/scheduled_tasks.lock

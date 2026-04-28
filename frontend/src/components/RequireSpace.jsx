@@ -19,7 +19,14 @@ export default function RequireSpace({ space, children }) {
   }
 
   // Force rotation before any space is allowed in.
-  if (user.must_change_password) {
+  //
+  // En dev mode saltamos este guard por default para quitar fricción en
+  // desarrollo local (seeds con must_change_password=true por diseño).
+  // En prod build el guard queda activo (seguridad intacta).
+  // Si necesitas probar el flow completo en dev, arranca Vite con
+  // `VITE_FORCE_ROTATION=1 npm run dev` para re-activar el redirect.
+  const skipRotation = import.meta.env.DEV && import.meta.env.VITE_FORCE_ROTATION !== "1";
+  if (user.must_change_password && !skipRotation) {
     return <Navigate to="/change-password" replace />;
   }
 

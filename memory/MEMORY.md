@@ -1,4 +1,5 @@
 - [Glossary](glossary.md) — Acronimos, modulos, capas, fases del protocolo SRS/InsiteIQ
 - [Infra Notion](reference_infra_notion.md) — Referencia a docs de infraestructura SRS: servidores, puertos, VPN, backups
 - [Design System SRS](design_system_srs.md) — SRS Nucleus v2.0: metodologia, Identity Sprint, tokens, blacklist
+- [Design System InsiteIQ v2](design_system_insiteiq_v2.md) — Merge OverWatch + SKYPRO360 · supersede Identity Sprint v1 (war-room/amber fracasó) · Kanban + modales context-aware + shell light-first con header dark band · cyan + verde brand
 - [Company Context](context/company.md) — SRS overview, servidores, puertos, deploy, proyectos activos

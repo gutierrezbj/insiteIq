@@ -1,11 +1,20 @@
 /**
  * SRS Coordinators — Layout (desktop, war-room feel)
- * Foundation placeholder. Track B (Identity Sprint by space) will define the
- * full SRS personality — this is just the scaffolding that proves routing
- * and RBAC work end-to-end.
+ *
+ * Soporta dos shells coexistiendo durante la migración v1 → v2:
+ *   - v1 (legacy): sidebar 56w warm dark amber (war-room classic)
+ *   - v2 (DS v1.7): V2Shell con sidebar 200px + top header + bottom strip
+ *
+ * Toggle para probar v2 sin restart:
+ *   - env var: `VITE_V2_SHELL=1` al arrancar Vite
+ *   - query param: `?v2=1` en la URL (override local)
+ *
+ * Default: v1. Se cambiará a v2 una vez cerradas Gamma/Delta/Epsilon y
+ * validadas en PROD (ver sprint_reanudacion_v2.md fase Eta).
  */
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
+import V2Shell from "../../components/shell-v2/V2Shell";
 
 // Nav v2 · Juan Z-e · vocabulario operacional
 // Grupos visuales mantenidos en orden (el separator se dibuja por CSS)
@@ -25,10 +34,20 @@ const nav = [
 export default function SrsLayout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   function handleLogout() {
     logout();
     navigate("/login", { replace: true });
+  }
+
+  // v2 toggle: env var OR ?v2=1 en la URL
+  const envV2 = import.meta.env.VITE_V2_SHELL === "1";
+  const queryV2 = new URLSearchParams(location.search).get("v2") === "1";
+  const useV2Shell = envV2 || queryV2;
+
+  if (useV2Shell) {
+    return <V2Shell headerProps={{ liveCount: 11, liveLabel: "activas" }} />;
   }
 
   return (

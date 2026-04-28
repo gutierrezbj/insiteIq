@@ -62,7 +62,7 @@ export default {
           tertiary: "#78716C",   /* stone-500 */
           inverse: "#0C0A09",
         },
-        /* Status colors for interventions */
+        /* Status colors for interventions (v1 — legacy, conservado) */
         status: {
           created: "#78716C",
           assigned: "#06B6D4",
@@ -73,6 +73,59 @@ export default {
           completed: "#22C55E",
           cancelled: "#6B7280",
           failed: "#EF4444",
+        },
+
+        /* ─────────────────────────────────────────────────────────────── */
+        /* v2 · War Room SRS dark (Design System v1.7 · SKYPRO360 aligned) */
+        /* Tokens prefijo `wr-*`. Coexisten con `surface.*` y `primary.*` */
+        /* Aplican en componentes nuevos bajo `shell-v2/`, `warroom/` etc. */
+        /* ─────────────────────────────────────────────────────────────── */
+        wr: {
+          bg: "#000000",
+          surface: "#0A0A0A",
+          "surface-2": "#141414",
+          border: "#1F1F1F",
+          "border-strong": "#2A2A2A",
+          text: "#E5E5E5",
+          "text-mid": "#9CA3AF",
+          "text-dim": "#6B7280",
+          amber: "#F59E0B",
+          "amber-soft": "#D97706",
+          red: "#DC2626",
+          "red-soft": "#991B1B",
+          green: "#22C55E",
+          cyan: "#06B6D4",
+          "cyan-bright": "#22D3EE",
+          violet: "#8B5CF6",
+        },
+
+        /* Stage colors v2 · state machine 9 stages (DS v1.7 §3.2) */
+        stage: {
+          intake: "#3B82F6",
+          triage: "#3B82F6",
+          preflight: "#8B5CF6",
+          dispatched: "#7C3AED",
+          enroute: "#F59E0B",
+          onsite: "#EA580C",
+          resolved: "#22C55E",
+          closed: "#16A34A",
+          cancelled: "#6B7280",
+        },
+
+        /* Priority v2 (DS v1.7 §3.3) */
+        prio: {
+          urgent: "#DC2626",
+          high: "#F59E0B",
+          normal: "#475569",
+          low: "#60A5FA",
+        },
+
+        /* Shield levels v2 (DS v1.7 §3.4) */
+        shield: {
+          bronze: "#B45309",
+          "bronze-plus": "#D97706",
+          silver: "#64748B",
+          gold: "#CA8A04",
         },
       },
       fontFamily: {

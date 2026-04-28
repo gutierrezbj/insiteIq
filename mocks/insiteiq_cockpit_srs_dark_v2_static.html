@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1440, initial-scale=1">
+<title>InsiteIQ · SRS Coordinators · Cockpit de Operaciones (mock v2 dark)</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
+
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          display: ['"Instrument Sans"', 'sans-serif'],
+          mono: ['"JetBrains Mono"', 'monospace'],
+          body: ['"JetBrains Mono"', 'monospace'],
+        },
+        colors: {
+          'srs-bg': '#000000',
+          'srs-surface': '#0A0A0A',
+          'srs-surface-2': '#141414',
+          'srs-border': '#1F1F1F',
+          'srs-border-strong': '#2A2A2A',
+          'srs-text': '#E5E5E5',
+          'srs-text-mid': '#9CA3AF',
+          'srs-text-dim': '#6B7280',
+          'srs-amber': '#F59E0B',
+          'srs-amber-soft': '#D97706',
+          'srs-red': '#DC2626',
+          'srs-green': '#22C55E',
+          'srs-cyan': '#06B6D4',
+          'srs-cyan-bright': '#22D3EE',
+          'srs-violet': '#8B5CF6',
+        },
+      }
+    }
+  }
+</script>
+
+<style>
+  body {
+    font-family: 'JetBrains Mono', monospace;
+    background: #000000;
+    color: #E5E5E5;
+    margin: 0;
+    font-variant-numeric: tabular-nums;
+    overflow: hidden;
+  }
+  html, body { height: 100vh; }
+
+  .label-caps {
+    font-size: 10px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: #6B7280;
+  }
+
+  /* Scrollbars */
+  .srs-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+  .srs-scroll::-webkit-scrollbar-thumb { background: #2A2A2A; border-radius: 3px; }
+  .srs-scroll::-webkit-scrollbar-track { background: transparent; }
+
+  /* Card stage border-top */
+  .stage-border {
+    position: relative;
+  }
+  .stage-border::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 2px;
+    background: var(--stage-color, #F59E0B);
+  }
+
+  .pulse-dot { animation: pulseDot 1.6s ease-in-out infinite; }
+  @keyframes pulseDot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .btn-outline {
+    background: transparent;
+    border: 1px solid var(--btn-color, #2A2A2A);
+    color: var(--btn-color, #9CA3AF);
+    padding: 7px 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    border-radius: 2px;
+    transition: background 180ms, color 180ms;
+    cursor: pointer;
+  }
+  .btn-outline:hover {
+    background: var(--btn-bg, rgba(255,255,255,0.03));
+  }
+</style>
+</head>
+
+<body class="h-screen flex">
+
+<!-- =================================================================== -->
+<!-- SIDEBAR IZQ                                                          -->
+<!-- =================================================================== -->
+<aside class="w-[200px] bg-srs-bg border-r border-srs-border flex-shrink-0 flex flex-col">
+  <div class="px-5 py-5 border-b border-srs-border">
+    <p class="label-caps mb-0.5" style="color: #F59E0B;">InsiteIQ</p>
+    <h1 class="text-[15px] text-srs-text font-semibold font-display">SRS Coordinators</h1>
+  </div>
+  <nav class="flex-1 py-3 px-2 space-y-0.5 text-[13px]">
+    <a href="#" class="flex items-center justify-between px-3 py-2 rounded text-srs-amber bg-srs-amber/10 border-l-2 border-srs-amber">
+      <span>Operaciones</span>
+    </a>
+    <a href="insiteiq_map_srs_dark_v2_static.html" class="flex items-center px-3 py-2 rounded text-srs-text-mid hover:text-srs-text hover:bg-srs-surface-2 transition">Espacio OPS</a>
+    <a href="insiteiq_kanban_v2_static.html" class="flex items-center px-3 py-2 rounded text-srs-text-mid hover:text-srs-text hover:bg-srs-surface-2 transition">Intervenciones</a>
+    <a href="#" class="flex items-center px-3 py-2 rounded text-srs-text-mid hover:text-srs-text hover:bg-srs-surface-2 transition">Proyectos</a>
+    <a href="#" class="flex items-center px-3 py-2 rounded text-srs-text-mid hover:text-srs-text hover:bg-srs-surface-2 transition">Sitios</a>
+    <a href="#" class="flex items-center px-3 py-2 rounded text-srs-text-mid hover:text-srs-text hover:bg-srs-surface-2 transition">Técnicos</a>
+    <a href="#" class="flex items-center px-3 py-2 rounded text-srs-text-mid hover:text-srs-text hover:bg-srs-surface-2 transition">Contratos</a>
+    <a href="#" class="flex items-center px-3 py-2 rounded text-srs-text-mid hover:text-srs-text hover:bg-srs-surface-2 transition">Inteligencia</a>
+    <a href="#" class="flex items-center px-3 py-2 rounded text-srs-text-mid hover:text-srs-text hover:bg-srs-surface-2 transition">Finanzas</a>
+    <a href="#" class="flex items-center px-3 py-2 rounded text-srs-text-mid hover:text-srs-text hover:bg-srs-surface-2 transition">Admin</a>
+  </nav>
+  <div class="px-4 py-3 border-t border-srs-border text-[10px] text-srs-text-dim space-y-1">
+    <div class="flex items-center gap-1.5">
+      <span class="w-1.5 h-1.5 rounded-full bg-srs-green pulse-dot"></span>
+      <span style="color: #22C55E;">SISTEMA OPERATIVO</span>
+    </div>
+    <div class="flex items-center justify-between mt-2">
+      <span>Build</span>
+      <span>1cc3cd6</span>
+    </div>
+  </div>
+</aside>
+
+<!-- =================================================================== -->
+<!-- MAIN · COCKPIT CONTENT                                               -->
+<!-- =================================================================== -->
+<div class="flex-1 flex flex-col min-w-0">
+
+  <!-- TOP BAR · título + fecha + live pill -->
+  <header class="px-6 py-4 border-b border-srs-border flex items-center justify-between flex-shrink-0">
+    <div class="flex items-center gap-5">
+      <h1 class="font-display text-[18px] font-semibold text-srs-text" style="letter-spacing: 0.02em;">
+        COCKPIT DE <span style="color: #F59E0B;">OPERACIONES</span>
+      </h1>
+    </div>
+    <div class="flex items-center gap-4 text-[12px] text-srs-text-mid">
+      <span id="current-datetime" class="font-mono">vie, 24 abr · 18:32</span>
+      <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-srs-green/40 bg-srs-green/10">
+        <span class="w-1.5 h-1.5 rounded-full bg-srs-green pulse-dot"></span>
+        <span class="text-srs-green font-mono font-semibold">11 activas</span>
+      </span>
+    </div>
+  </header>
+
+  <!-- SCROLLABLE CONTENT + RIGHT SIDEBAR -->
+  <div class="flex-1 flex min-h-0">
+
+    <!-- CENTER SCROLL COL -->
+    <div class="flex-1 overflow-y-auto srs-scroll">
+
+      <!-- KPI STRIP · 4 grandes -->
+      <section class="px-6 pt-5 pb-4 grid grid-cols-4 gap-px bg-srs-border">
+
+        <!-- KPI 1: SLA en riesgo -->
+        <div class="bg-srs-bg px-5 py-4 border-l-2" style="border-left-color: #DC2626;">
+          <div class="flex items-center justify-between mb-3">
+            <p class="label-caps" style="color: #DC2626;">SLA en riesgo</p>
+            <iconify-icon icon="solar:danger-triangle-linear" width="16" style="color: #DC2626;"></iconify-icon>
+          </div>
+          <div class="flex items-baseline gap-2 mb-2">
+            <span class="text-[44px] font-semibold leading-none" style="color: #DC2626;">2</span>
+          </div>
+          <p class="label-caps text-[9px]">Breach o próximo breach</p>
+        </div>
+
+        <!-- KPI 2: Ball SRS >6h -->
+        <div class="bg-srs-bg px-5 py-4 border-l-2" style="border-left-color: #F59E0B;">
+          <div class="flex items-center justify-between mb-3">
+            <p class="label-caps" style="color: #F59E0B;">Ball SRS &gt;6h</p>
+            <iconify-icon icon="solar:clock-circle-linear" width="16" style="color: #F59E0B;"></iconify-icon>
+          </div>
+          <div class="flex items-baseline gap-2 mb-2">
+            <span class="text-[44px] font-semibold leading-none" style="color: #F59E0B;">3</span>
+          </div>
+          <p class="label-caps text-[9px]">Pendiente acción nuestra</p>
+        </div>
+
+        <!-- KPI 3: Sin asignar -->
+        <div class="bg-srs-bg px-5 py-4 border-l-2" style="border-left-color: #06B6D4;">
+          <div class="flex items-center justify-between mb-3">
+            <p class="label-caps" style="color: #06B6D4;">Sin asignar</p>
+            <iconify-icon icon="solar:user-cross-linear" width="16" style="color: #06B6D4;"></iconify-icon>
+          </div>
+          <div class="flex items-baseline gap-2 mb-2">
+            <span class="text-[44px] font-semibold leading-none" style="color: #06B6D4;">4</span>
+          </div>
+          <p class="label-caps text-[9px]">Activa sin técnico</p>
+        </div>
+
+        <!-- KPI 4: Activas + Completadas mix -->
+        <div class="bg-srs-bg px-5 py-4 border-l-2" style="border-left-color: #22C55E;">
+          <div class="flex items-center justify-between mb-3">
+            <p class="label-caps" style="color: #22C55E;">Activas · hoy</p>
+            <iconify-icon icon="solar:map-point-linear" width="16" style="color: #22C55E;"></iconify-icon>
+          </div>
+          <div class="flex items-baseline gap-2 mb-2">
+            <span class="text-[44px] font-semibold leading-none" style="color: #22C55E;">11</span>
+            <span class="text-[13px] text-srs-text-mid">/ 18</span>
+          </div>
+          <p class="label-caps text-[9px]">3 en ruta · 3 en sitio</p>
+        </div>
+      </section>
+
+      <!-- SECTION: INTERVENCIONES EN CURSO (3 cards horizontales full-width grid-3) -->
+      <section class="px-6 pt-6 pb-2">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-3">
+            <p class="label-caps">Intervenciones en curso</p>
+            <span class="font-mono text-[11px] text-srs-text">3</span>
+          </div>
+          <a href="insiteiq_kanban_v2_static.html" class="text-[11px] text-srs-amber hover:text-srs-amber-soft transition flex items-center gap-1">
+            Ver todas
+            <iconify-icon icon="solar:arrow-right-linear" width="11"></iconify-icon>
+          </a>
+        </div>
+        <div class="grid grid-cols-3 gap-3">
+
+          <!-- Card 1: Madrid Sur (on_site · critical) -->
+          <article class="stage-border bg-srs-surface border border-srs-border rounded-sm p-4 hover:border-srs-border-strong transition cursor-pointer" style="--stage-color: #EA580C;">
+            <div class="flex items-center justify-between mb-2 pt-1">
+              <span class="font-mono text-[11px]" style="color: #EA580C; font-weight: 600;">FRC-ES-WO-2026-0041</span>
+              <span style="font-size: 10px; padding: 2px 7px; border-radius: 2px; background: #EA580C22; color: #EA580C; border: 1px solid #EA580C; font-weight: 600; letter-spacing: 0.12em;">EN SITIO</span>
+            </div>
+            <h3 class="font-display text-[15px] font-semibold text-white mb-1 leading-tight">Fractalia Madrid Sur NOC</h3>
+            <p class="text-[11px] text-srs-text-dim mb-3">SITE <span class="text-srs-text-mid">ES-MAD-11</span> · Switch core crítico</p>
+            <div class="space-y-1.5 text-[11px] mb-4">
+              <div class="flex items-center gap-2">
+                <iconify-icon icon="solar:user-linear" width="12" style="color: #9CA3AF;"></iconify-icon>
+                <span class="text-srs-text">Agustín C.</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <iconify-icon icon="solar:box-linear" width="12" style="color: #9CA3AF;"></iconify-icon>
+                <span class="text-srs-text-mid">Cisco 9300 de reemplazo on-site</span>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <button class="btn-outline" style="--btn-color: #06B6D4; --btn-bg: rgba(6, 182, 212, 0.06);">Detalle</button>
+              <button class="btn-outline" style="--btn-color: #DC2626; --btn-bg: rgba(220, 38, 38, 0.06);">Compliance</button>
+            </div>
+          </article>
+
+          <!-- Card 2: Málaga (on_site · critical) -->
+          <article class="stage-border bg-srs-surface border border-srs-border rounded-sm p-4 hover:border-srs-border-strong transition cursor-pointer" style="--stage-color: #EA580C;">
+            <div class="flex items-center justify-between mb-2 pt-1">
+              <span class="font-mono text-[11px]" style="color: #EA580C; font-weight: 600;">FRC-ES-WO-2026-0049</span>
+              <span style="font-size: 10px; padding: 2px 7px; border-radius: 2px; background: #EA580C22; color: #EA580C; border: 1px solid #EA580C; font-weight: 600; letter-spacing: 0.12em;">EN SITIO</span>
+            </div>
+            <h3 class="font-display text-[15px] font-semibold text-white mb-1 leading-tight">Fractalia Málaga</h3>
+            <p class="text-[11px] text-srs-text-dim mb-3">SITE <span class="text-srs-text-mid">ES-MLG-03</span> · Fallo switch redundancia</p>
+            <div class="space-y-1.5 text-[11px] mb-4">
+              <div class="flex items-center gap-2">
+                <iconify-icon icon="solar:user-linear" width="12" style="color: #9CA3AF;"></iconify-icon>
+                <span class="text-srs-text">Agustín C.</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <iconify-icon icon="solar:box-linear" width="12" style="color: #9CA3AF;"></iconify-icon>
+                <span class="text-srs-text-mid">Partes ya en sitio</span>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <button class="btn-outline" style="--btn-color: #06B6D4; --btn-bg: rgba(6, 182, 212, 0.06);">Detalle</button>
+              <button class="btn-outline" style="--btn-color: #DC2626; --btn-bg: rgba(220, 38, 38, 0.06);">Compliance</button>
+            </div>
+          </article>
+
+          <!-- Card 3: Barcelona (en_route · active) -->
+          <article class="stage-border bg-srs-surface border border-srs-border rounded-sm p-4 hover:border-srs-border-strong transition cursor-pointer" style="--stage-color: #F59E0B;">
+            <div class="flex items-center justify-between mb-2 pt-1">
+              <span class="font-mono text-[11px]" style="color: #F59E0B; font-weight: 600;">FRC-ES-WO-2026-0042</span>
+              <span style="font-size: 10px; padding: 2px 7px; border-radius: 2px; background: #F59E0B22; color: #F59E0B; border: 1px solid #F59E0B; font-weight: 600; letter-spacing: 0.12em;">EN RUTA</span>
+            </div>
+            <h3 class="font-display text-[15px] font-semibold text-white mb-1 leading-tight">Fractalia Barcelona Centro</h3>
+            <p class="text-[11px] text-srs-text-dim mb-3">SITE <span class="text-srs-text-mid">ES-BCN-04</span> · Router de respaldo del core</p>
+            <div class="space-y-1.5 text-[11px] mb-4">
+              <div class="flex items-center gap-2">
+                <iconify-icon icon="solar:user-linear" width="12" style="color: #9CA3AF;"></iconify-icon>
+                <span class="text-srs-text">Hugo Q. · ETA 19:45</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <iconify-icon icon="solar:calendar-linear" width="12" style="color: #9CA3AF;"></iconify-icon>
+                <span class="text-srs-text-mid">Ventana 02:00-04:00 AM</span>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <button class="btn-outline" style="--btn-color: #06B6D4; --btn-bg: rgba(6, 182, 212, 0.06);">Detalle</button>
+              <button class="btn-outline" style="--btn-color: #DC2626; --btn-bg: rgba(220, 38, 38, 0.06);">Compliance</button>
+            </div>
+          </article>
+
+        </div>
+      </section>
+
+      <!-- SECTION: HISTORIAL RECIENTE (grid 4xN) -->
+      <section class="px-6 pt-4 pb-6">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-3">
+            <p class="label-caps">Historial reciente</p>
+            <span class="font-mono text-[11px] text-srs-text">8</span>
+          </div>
+          <a href="#" class="text-[11px] text-srs-amber hover:text-srs-amber-soft transition flex items-center gap-1">
+            Ver todas
+            <iconify-icon icon="solar:arrow-right-linear" width="11"></iconify-icon>
+          </a>
+        </div>
+        <div class="grid grid-cols-4 gap-3">
+
+          <!-- 8 cards compactas -->
+          <article class="stage-border bg-srs-surface border border-srs-border rounded-sm p-3" style="--stage-color: #DC2626;">
+            <p class="font-mono text-[10px]" style="color: #DC2626; font-weight: 600; margin-top: 3px;">DXC-AR-WO-2026-0001</p>
+            <h4 class="font-display text-[13px] font-semibold text-white leading-tight mt-1 mb-2">DXC Buenos Aires</h4>
+            <div class="flex items-center justify-between">
+              <span class="text-[10px]" style="color: #DC2626;">URGENTE</span>
+              <span style="font-size: 9px; padding: 1.5px 6px; border-radius: 2px; background: #EA580C22; color: #EA580C; font-weight: 600; letter-spacing: 0.12em;">EN SITIO</span>
+            </div>
+          </article>
+
+          <article class="stage-border bg-srs-surface border border-srs-border rounded-sm p-3" style="--stage-color: #22C55E;">
+            <p class="font-mono text-[10px]" style="color: #22C55E; font-weight: 600; margin-top: 3px;">CLR-US-WO-2026-0005</p>
+            <h4 class="font-display text-[13px] font-semibold text-white leading-tight mt-1 mb-2">Claro US Orlando</h4>
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] text-srs-text-mid">Normal</span>
+              <span style="font-size: 9px; padding: 1.5px 6px; border-radius: 2px; background: #22C55E22; color: #22C55E; font-weight: 600; letter-spacing: 0.12em;">RESUELTA</span>
+            </div>
+          </article>
+
+          <article class="stage-border bg-srs-surface border border-srs-border rounded-sm p-3" style="--stage-color: #16A34A;">
+            <p class="font-mono text-[10px]" style="color: #16A34A; font-weight: 600; margin-top: 3px;">MBE-MX-WO-2026-0018</p>
+            <h4 class="font-display text-[13px] font-semibold text-white leading-tight mt-1 mb-2">Mabe CDMX Datacenter</h4>
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] text-srs-text-mid">Normal</span>
+              <span style="font-size: 9px; padding: 1.5px 6px; border-radius: 2px; background: #16A34A22; color: #16A34A; font-weight: 600; letter-spacing: 0.12em;">CERRADA</span>
+            </div>
+          </article>
+
+          <article class="stage-border bg-srs-surface border border-srs-border rounded-sm p-3" style="--stage-color: #6B7280;">
+            <p class="font-mono text-[10px]" style="color: #9CA3AF; font-weight: 600; margin-top: 3px;">FRC-ES-WO-2026-0040</p>
+            <h4 class="font-display text-[13px] font-semibold text-white leading-tight mt-1 mb-2">Fractalia Alicante</h4>
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] text-srs-text-mid">Normal</span>
+              <span style="font-size: 9px; padding: 1.5px 6px; border-radius: 2px; background: #6B728022; color: #9CA3AF; font-weight: 600; letter-spacing: 0.12em;">CANCELADA</span>
+            </div>
+          </article>
+
+          <article class="stage-border bg-srs-surface border border-srs-border rounded-sm p-3" style="--stage-color: #8B5CF6;">
+            <p class="font-mono text-[10px]" style="color: #8B5CF6; font-weight: 600; margin-top: 3px;">FRC-ES-WO-2026-0044</p>
+            <h4 class="font-display text-[13px] font-semibold text-white leading-tight mt-1 mb-2">Fractalia Valencia Norte</h4>
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] text-srs-text-mid">Normal</span>
+              <span style="font-size: 9px; padding: 1.5px 6px; border-radius: 2px; background: #8B5CF622; color: #8B5CF6; font-weight: 600; letter-spacing: 0.12em;">PREPARANDO</span>
+            </div>
+          </article>
+
+          <article class="stage-border bg-srs-surface border border-srs-border rounded-sm p-3" style="--stage-color: #7C3AED;">
+            <p class="font-mono text-[10px]" style="color: #7C3AED; font-weight: 600; margin-top: 3px;">ARC-ES-WO-2026-0012</p>
+            <h4 class="font-display text-[13px] font-semibold text-white leading-tight mt-1 mb-2">Arcos Sevilla-07</h4>
+            <div class="flex items-center justify-between">
+              <span class="text-[10px]" style="color: #F59E0B;">ALTA</span>
+              <span style="font-size: 9px; padding: 1.5px 6px; border-radius: 2px; background: #7C3AED22; color: #7C3AED; font-weight: 600; letter-spacing: 0.12em;">DESPACHADA</span>
+            </div>
+          </article>
+
+          <article class="stage-border bg-srs-surface border border-srs-border rounded-sm p-3" style="--stage-color: #3B82F6;">
+            <p class="font-mono text-[10px]" style="color: #3B82F6; font-weight: 600; margin-top: 3px;">CLR-US-WO-2026-0003</p>
+            <h4 class="font-display text-[13px] font-semibold text-white leading-tight mt-1 mb-2">Claro US Miami Tower</h4>
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] text-srs-text-mid">Normal</span>
+              <span style="font-size: 9px; padding: 1.5px 6px; border-radius: 2px; background: #3B82F622; color: #3B82F6; font-weight: 600; letter-spacing: 0.12em;">ENTRADA</span>
+            </div>
+          </article>
+
+          <article class="stage-border bg-srs-surface border border-srs-border rounded-sm p-3" style="--stage-color: #3B82F6;">
+            <p class="font-mono text-[10px]" style="color: #3B82F6; font-weight: 600; margin-top: 3px;">FRC-ES-WO-2026-0046</p>
+            <h4 class="font-display text-[13px] font-semibold text-white leading-tight mt-1 mb-2">Fractalia Bilbao</h4>
+            <div class="flex items-center justify-between">
+              <span class="text-[10px]" style="color: #F59E0B;">ALTA</span>
+              <span style="font-size: 9px; padding: 1.5px 6px; border-radius: 2px; background: #3B82F622; color: #3B82F6; font-weight: 600; letter-spacing: 0.12em;">TRIAJE</span>
+            </div>
+          </article>
+
+        </div>
+      </section>
+
+    </div>
+
+    <!-- RIGHT SIDEBAR · widgets -->
+    <aside class="w-[340px] bg-srs-bg border-l border-srs-border flex-shrink-0 overflow-y-auto srs-scroll">
+
+      <!-- ALERTAS OPERATIVAS -->
+      <section class="border-b border-srs-border">
+        <header class="px-5 py-3 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-srs-red"></span>
+            <p class="label-caps" style="color: #DC2626;">Alertas operativas</p>
+          </div>
+          <button class="text-srs-text-dim hover:text-srs-amber transition">
+            <iconify-icon icon="solar:refresh-linear" width="13"></iconify-icon>
+          </button>
+        </header>
+        <div class="px-5 pb-4 space-y-2">
+          <div class="p-3 bg-srs-red/5 border-l-2 border-srs-red">
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-mono text-[10px]" style="color: #DC2626; font-weight: 600;">DXC-UK-WO-2026-0007</span>
+              <span class="text-[9px] font-mono text-srs-text-dim">5D 21H</span>
+            </div>
+            <p class="text-[12px] text-srs-text">SLA BREACH · Madison NY</p>
+            <p class="text-[10px] text-srs-text-dim mt-0.5">Site cerrado sin notificar · escalado</p>
+          </div>
+          <div class="p-3 bg-srs-red/5 border-l-2 border-srs-red">
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-mono text-[10px]" style="color: #DC2626; font-weight: 600;">FRC-ES-WO-2026-0041</span>
+              <span class="text-[9px] font-mono text-srs-text-dim">0H 42M</span>
+            </div>
+            <p class="text-[12px] text-srs-text">SLA at risk · Madrid Sur</p>
+            <p class="text-[10px] text-srs-text-dim mt-0.5">Gold SLA · breach en 42min</p>
+          </div>
+          <div class="p-3" style="background: rgba(245, 158, 11, 0.05); border-left: 2px solid #F59E0B;">
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-mono text-[10px]" style="color: #F59E0B; font-weight: 600;">FRC-ES-WO-2026-0046</span>
+              <span class="text-[9px] font-mono text-srs-text-dim">2D 12H</span>
+            </div>
+            <p class="text-[12px] text-srs-text">Repuesto bloqueado · Bilbao</p>
+            <p class="text-[10px] text-srs-text-dim mt-0.5">UPS en aduana Bilbao Puerto</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SHIELDS -->
+      <section class="border-b border-srs-border">
+        <header class="px-5 py-3 flex items-center justify-between">
+          <p class="label-caps">Shields</p>
+          <span class="text-[10px] font-mono" style="color: #22C55E;">13 activos</span>
+        </header>
+        <div class="px-5 pb-4">
+          <div class="flex items-center gap-3 p-3 bg-srs-green/5 border-l-2 border-srs-green mb-2">
+            <iconify-icon icon="solar:check-circle-linear" width="16" style="color: #22C55E;"></iconify-icon>
+            <div>
+              <p class="text-[12px]" style="color: #22C55E; font-weight: 500;">Todo en regla</p>
+              <p class="text-[10px] text-srs-text-dim">Sin vencimientos próximos 15 días</p>
+            </div>
+          </div>
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between text-[11px] py-1.5 border-b border-srs-border">
+              <div class="flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full" style="background: #CA8A04;"></span>
+                <span class="text-srs-text-mid">Fractalia España · Gold</span>
+              </div>
+              <span class="font-mono text-srs-text-dim">18d</span>
+            </div>
+            <div class="flex items-center justify-between text-[11px] py-1.5 border-b border-srs-border">
+              <div class="flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full" style="background: #64748B;"></span>
+                <span class="text-srs-text-mid">Claro US · Silver</span>
+              </div>
+              <span class="font-mono text-srs-text-dim">42d</span>
+            </div>
+            <div class="flex items-center justify-between text-[11px] py-1.5">
+              <div class="flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full" style="background: #D97706;"></span>
+                <span class="text-srs-text-mid">Grupo Arcos · Bronze+</span>
+              </div>
+              <span class="font-mono text-srs-text-dim">68d</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- METEOROLOGÍA -->
+      <section class="border-b border-srs-border">
+        <header class="px-5 py-3 flex items-center justify-between">
+          <p class="label-caps">Meteorología</p>
+          <span class="text-[10px] text-srs-text-dim">Sites activos</span>
+        </header>
+        <div class="px-5 pb-4">
+          <!-- Filtro pills por WO -->
+          <div class="mb-3">
+            <p class="text-[9px] text-srs-text-dim mb-1.5 letter-spacing-wider uppercase">Intervenciones activas</p>
+            <div class="flex flex-wrap gap-1.5">
+              <button class="px-2 py-1 rounded-sm border border-srs-amber/40 bg-srs-amber/10 text-[10px] text-srs-amber font-mono">WO-0041</button>
+              <button class="px-2 py-1 rounded-sm border border-srs-border text-[10px] text-srs-text-mid font-mono">WO-0042</button>
+              <button class="px-2 py-1 rounded-sm border border-srs-border text-[10px] text-srs-text-mid font-mono">WO-0049</button>
+            </div>
+          </div>
+          <!-- Filtro pills por ciudad -->
+          <div class="mb-3">
+            <p class="text-[9px] text-srs-text-dim mb-1.5 letter-spacing-wider uppercase">Ciudades</p>
+            <div class="flex flex-wrap gap-1.5">
+              <button class="inline-flex items-center gap-1 px-2 py-1 rounded-sm border border-srs-border text-[10px] text-srs-text-mid">
+                <iconify-icon icon="solar:map-point-linear" width="9"></iconify-icon>Madrid
+              </button>
+              <button class="inline-flex items-center gap-1 px-2 py-1 rounded-sm border border-srs-border text-[10px] text-srs-text-mid">
+                <iconify-icon icon="solar:map-point-linear" width="9"></iconify-icon>Barcelona
+              </button>
+              <button class="inline-flex items-center gap-1 px-2 py-1 rounded-sm border border-srs-border text-[10px] text-srs-text-mid">
+                <iconify-icon icon="solar:map-point-linear" width="9"></iconify-icon>Málaga
+              </button>
+              <button class="inline-flex items-center gap-1 px-2 py-1 rounded-sm border border-srs-border text-[10px] text-srs-text-mid">
+                <iconify-icon icon="solar:map-point-linear" width="9"></iconify-icon>Bilbao
+              </button>
+            </div>
+          </div>
+          <!-- Weather card actual -->
+          <div class="bg-srs-surface border border-srs-border rounded-sm p-3">
+            <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center gap-2">
+                <iconify-icon icon="solar:cloud-linear" width="20" style="color: #9CA3AF;"></iconify-icon>
+                <div>
+                  <p class="text-[13px] text-srs-text font-medium">Parcialmente nublado</p>
+                  <p class="text-[10px] text-srs-text-dim">Madrid · WO-0041 activo</p>
+                </div>
+              </div>
+              <span class="inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-semibold" style="background: #22C55E22; color: #22C55E;">
+                <iconify-icon icon="solar:check-circle-linear" width="10"></iconify-icon>
+                Apto
+              </span>
+            </div>
+            <div class="grid grid-cols-3 gap-2 pt-2 border-t border-srs-border">
+              <div>
+                <p class="text-[9px] text-srs-text-dim uppercase">Temp</p>
+                <p class="text-[12px] font-mono text-srs-text">14° / 21°</p>
+              </div>
+              <div>
+                <p class="text-[9px] text-srs-text-dim uppercase">Viento</p>
+                <p class="text-[12px] font-mono text-srs-text">18 km/h</p>
+              </div>
+              <div>
+                <p class="text-[9px] text-srs-text-dim uppercase">Precip</p>
+                <p class="text-[12px] font-mono text-srs-text">20%</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- RESUMEN -->
+      <section>
+        <header class="px-5 py-3 flex items-center justify-between">
+          <p class="label-caps">Resumen</p>
+        </header>
+        <div class="px-5 pb-5 space-y-2.5">
+          <div class="flex items-center justify-between py-1">
+            <span class="text-[12px] text-srs-text-mid">Completadas hoy</span>
+            <span class="font-mono text-[18px]" style="color: #22C55E; font-weight: 600;">8</span>
+          </div>
+          <div class="flex items-center justify-between py-1">
+            <span class="text-[12px] text-srs-text-mid">Total intervenciones</span>
+            <span class="font-mono text-[18px]" style="color: #06B6D4; font-weight: 600;">19</span>
+          </div>
+          <div class="flex items-center justify-between py-1">
+            <span class="text-[12px] text-srs-text-mid">Técnicos asignables</span>
+            <span class="font-mono text-[18px]" style="color: #06B6D4; font-weight: 600;">5<span class="text-srs-text-dim">/7</span></span>
+          </div>
+          <div class="flex items-center justify-between py-1">
+            <span class="text-[12px] text-srs-text-mid">Flota de vehículos</span>
+            <span class="font-mono text-[18px]" style="color: #06B6D4; font-weight: 600;">4</span>
+          </div>
+          <div class="flex items-center justify-between py-1 pt-3 border-t border-srs-border">
+            <span class="text-[12px] text-srs-text-mid">Facturado MTD</span>
+            <span class="font-mono text-[14px]" style="color: #F59E0B; font-weight: 600;">€ 124.180</span>
+          </div>
+        </div>
+      </section>
+
+    </aside>
+
+  </div>
+
+  <!-- BOTTOM STRIP · FLOTA + PERSONAL -->
+  <footer class="h-[84px] border-t border-srs-border bg-srs-bg flex items-center px-6 gap-4 flex-shrink-0">
+    <span class="label-caps mr-2">Equipo activo</span>
+
+    <!-- Vehículos -->
+    <div class="flex items-center gap-2 flex-shrink-0">
+      <div class="flex items-center gap-2 px-3 py-2 bg-srs-surface border border-srs-border rounded-sm">
+        <iconify-icon icon="solar:bus-linear" width="16" style="color: #F59E0B;"></iconify-icon>
+        <div class="leading-tight">
+          <p class="text-[10px] text-srs-text-mid uppercase tracking-wider">Furgoneta SRS-01</p>
+          <p class="text-[11px] font-mono text-srs-text">Madrid · Agustín C.</p>
+        </div>
+        <span class="w-1.5 h-1.5 rounded-full bg-srs-green ml-1"></span>
+      </div>
+      <div class="flex items-center gap-2 px-3 py-2 bg-srs-surface border border-srs-border rounded-sm">
+        <iconify-icon icon="solar:bus-linear" width="16" style="color: #F59E0B;"></iconify-icon>
+        <div class="leading-tight">
+          <p class="text-[10px] text-srs-text-mid uppercase tracking-wider">Furgoneta SRS-02</p>
+          <p class="text-[11px] font-mono text-srs-text">Barcelona · Hugo Q.</p>
+        </div>
+        <span class="w-1.5 h-1.5 rounded-full bg-srs-amber ml-1"></span>
+      </div>
+    </div>
+
+    <div class="w-px h-12 bg-srs-border"></div>
+
+    <!-- Técnicos -->
+    <div class="flex items-center gap-2 overflow-x-auto srs-scroll flex-1 pb-1">
+      <div class="flex items-center gap-2 px-3 py-2 bg-srs-surface border border-srs-border rounded-sm flex-shrink-0">
+        <iconify-icon icon="solar:user-linear" width="14" style="color: #9CA3AF;"></iconify-icon>
+        <div class="leading-tight">
+          <p class="text-[11px] text-srs-text">Agustín C.</p>
+          <p class="text-[10px] font-mono text-srs-text-dim">Madrid · 12:28 CET</p>
+        </div>
+        <span class="w-1.5 h-1.5 rounded-full bg-srs-green ml-1 pulse-dot"></span>
+      </div>
+      <div class="flex items-center gap-2 px-3 py-2 bg-srs-surface border border-srs-border rounded-sm flex-shrink-0">
+        <iconify-icon icon="solar:user-linear" width="14" style="color: #9CA3AF;"></iconify-icon>
+        <div class="leading-tight">
+          <p class="text-[11px] text-srs-text">Hugo Q.</p>
+          <p class="text-[10px] font-mono text-srs-text-dim">Barcelona · 12:28 CET</p>
+        </div>
+        <span class="w-1.5 h-1.5 rounded-full bg-srs-amber ml-1"></span>
+      </div>
+      <div class="flex items-center gap-2 px-3 py-2 bg-srs-surface border border-srs-border rounded-sm flex-shrink-0">
+        <iconify-icon icon="solar:user-linear" width="14" style="color: #9CA3AF;"></iconify-icon>
+        <div class="leading-tight">
+          <p class="text-[11px] text-srs-text">Arlindo O.</p>
+          <p class="text-[10px] font-mono text-srs-text-dim">Madrid · 12:28 CET</p>
+        </div>
+        <span class="w-1.5 h-1.5 rounded-full bg-srs-green ml-1"></span>
+      </div>
+      <div class="flex items-center gap-2 px-3 py-2 bg-srs-surface border border-srs-border rounded-sm flex-shrink-0">
+        <iconify-icon icon="solar:user-linear" width="14" style="color: #9CA3AF;"></iconify-icon>
+        <div class="leading-tight">
+          <p class="text-[11px] text-srs-text">Luis S.</p>
+          <p class="text-[10px] font-mono text-srs-text-dim" id="luis-time">Lima · —</p>
+        </div>
+        <span class="w-1.5 h-1.5 rounded-full bg-srs-red ml-1" id="luis-dot"></span>
+      </div>
+      <div class="flex items-center gap-2 px-3 py-2 bg-srs-surface border border-srs-border rounded-sm flex-shrink-0">
+        <iconify-icon icon="solar:user-linear" width="14" style="color: #9CA3AF;"></iconify-icon>
+        <div class="leading-tight">
+          <p class="text-[11px] text-srs-text">Yunus H.</p>
+          <p class="text-[10px] font-mono text-srs-text-dim" id="yunus-time">London · —</p>
+        </div>
+        <span class="w-1.5 h-1.5 rounded-full bg-srs-green ml-1" id="yunus-dot"></span>
+      </div>
+    </div>
+  </footer>
+</div>
+
+<script>
+  // Live clock header
+  function updateClock() {
+    const now = new Date();
+    const fmt = new Intl.DateTimeFormat('es-ES', {
+      timeZone: 'Europe/Madrid',
+      weekday: 'short', day: '2-digit', month: 'short',
+      hour: '2-digit', minute: '2-digit', hour12: false,
+    }).format(now);
+    document.getElementById('current-datetime').textContent = fmt.replace(',', ' ·');
+
+    // Luis (Lima)
+    const limaTime = new Intl.DateTimeFormat('es-ES', {
+      timeZone: 'America/Lima', hour: '2-digit', minute: '2-digit', hour12: false,
+    }).format(now);
+    const limaHour = parseInt(new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/Lima', hour: '2-digit', hour12: false,
+    }).format(now), 10);
+    document.getElementById('luis-time').textContent = `Lima · ${limaTime} PET`;
+    document.getElementById('luis-dot').style.background =
+      (limaHour >= 8 && limaHour < 17) ? '#22C55E'
+      : (limaHour >= 17 && limaHour < 22) ? '#F59E0B'
+      : '#DC2626';
+
+    // Yunus (London)
+    const londonTime = new Intl.DateTimeFormat('es-ES', {
+      timeZone: 'Europe/London', hour: '2-digit', minute: '2-digit', hour12: false,
+    }).format(now);
+    const londonHour = parseInt(new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Europe/London', hour: '2-digit', hour12: false,
+    }).format(now), 10);
+    document.getElementById('yunus-time').textContent = `London · ${londonTime} GMT`;
+    document.getElementById('yunus-dot').style.background =
+      (londonHour >= 9 && londonHour < 18) ? '#22C55E'
+      : (londonHour >= 18 && londonHour < 22) ? '#F59E0B'
+      : '#DC2626';
+  }
+
+  updateClock();
+  setInterval(updateClock, 30000);
+</script>
+
+</body>
+</html>

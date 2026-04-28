@@ -1,0 +1,1406 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1440, initial-scale=1">
+<title>InsiteIQ · SRS Coordinators · Operaciones (mock v2 dark)</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
+
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          display: ['"Instrument Sans"', 'sans-serif'],
+          mono: ['"JetBrains Mono"', 'monospace'],
+          body: ['"JetBrains Mono"', 'monospace'],
+        },
+        colors: {
+          'srs-bg': '#000000',
+          'srs-surface': '#0A0A0A',
+          'srs-surface-2': '#141414',
+          'srs-border': '#1F1F1F',
+          'srs-border-strong': '#2A2A2A',
+          'srs-text': '#E5E5E5',
+          'srs-text-mid': '#9CA3AF',
+          'srs-text-dim': '#6B7280',
+          'srs-amber': '#F59E0B',
+          'srs-amber-soft': '#D97706',
+          'srs-red': '#DC2626',
+          'srs-red-soft': '#991B1B',
+          'srs-green': '#22C55E',
+          'srs-cyan': '#06B6D4',
+          'srs-violet': '#8B5CF6',
+        },
+      }
+    }
+  }
+</script>
+
+<style>
+  body {
+    font-family: 'JetBrains Mono', monospace;
+    background: #000000;
+    color: #E5E5E5;
+    margin: 0;
+    font-variant-numeric: tabular-nums;
+    overflow: hidden;
+  }
+  html, body { height: 100vh; }
+
+  .label-caps {
+    font-size: 10px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: #6B7280;
+  }
+  .label-caps-amber { color: #F59E0B; }
+  .label-caps-red { color: #DC2626; }
+
+  /* ==================== LEAFLET · MAPA LIGHT (Positron, pattern SKYPRO360) ==================== */
+  .leaflet-container {
+    background: #F3F4F6;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .leaflet-control-zoom {
+    border: none !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3) !important;
+  }
+  .leaflet-control-zoom a {
+    background: #0A0A0A !important;
+    color: #E5E5E5 !important;
+    border: 1px solid #2A2A2A !important;
+    border-radius: 4px !important;
+    margin-bottom: 4px !important;
+    width: 32px !important;
+    height: 32px !important;
+    line-height: 32px !important;
+    font-weight: 400 !important;
+  }
+  .leaflet-control-zoom a:hover {
+    background: #1F1F1F !important;
+    color: #F59E0B !important;
+  }
+  .leaflet-control-attribution {
+    background: rgba(10, 10, 10, 0.78) !important;
+    color: #9CA3AF !important;
+    font-size: 10px !important;
+  }
+  .leaflet-control-attribution a {
+    color: #F59E0B !important;
+  }
+
+  /* ==================== MARKER PILL (pattern SKYPRO360 1:1) ==================== */
+  .srs-marker {
+    background: transparent !important;
+    border: none !important;
+    cursor: pointer;
+  }
+  .wo-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #FFFFFF;
+    border: 1px solid #D1D5DB;
+    padding: 4px 9px 4px 7px;
+    border-radius: 999px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    font-weight: 500;
+    color: #1F2937;
+    white-space: nowrap;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12), 0 1px 2px rgba(15, 23, 42, 0.06);
+    transition: transform 180ms ease, box-shadow 180ms ease;
+    position: relative;
+  }
+  .wo-pill:hover {
+    transform: translateY(-1px) scale(1.05);
+    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.2), 0 2px 4px rgba(15, 23, 42, 0.08);
+  }
+  .wo-pill.is-active {
+    transform: translateY(-2px) scale(1.08);
+    box-shadow: 0 6px 14px rgba(15, 23, 42, 0.25), 0 0 0 2px #F59E0B;
+  }
+  .wo-pill .wo-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .wo-pill.is-urgent::after {
+    content: '';
+    position: absolute;
+    top: -3px;
+    right: -3px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #DC2626;
+    box-shadow: 0 0 0 2px #FFFFFF;
+    animation: pulseDot 1.5s ease-in-out infinite;
+  }
+
+  /* NOTAM / zone pill style alternativa */
+  .wo-pill.is-zone {
+    background: rgba(59, 130, 246, 0.12);
+    border-color: rgba(59, 130, 246, 0.3);
+    color: #1E40AF;
+    backdrop-filter: blur(4px);
+  }
+
+  /* ==================== QUICK POPUP (referencia rápida al click) ==================== */
+  .leaflet-popup-content-wrapper,
+  .leaflet-popup-tip {
+    background: #0A0A0A !important;
+    color: #E5E5E5 !important;
+    border: 1px solid #2A2A2A !important;
+    box-shadow: 0 12px 28px -4px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(245, 158, 11, 0.2) !important;
+    border-radius: 4px !important;
+  }
+  .leaflet-popup-tip {
+    background: #0A0A0A !important;
+    border-right: 1px solid #2A2A2A !important;
+    border-bottom: 1px solid #2A2A2A !important;
+  }
+  .leaflet-popup-content {
+    margin: 0 !important;
+    width: 320px !important;
+    font-family: 'JetBrains Mono', monospace !important;
+  }
+  .leaflet-popup-close-button {
+    color: #6B7280 !important;
+    top: 10px !important;
+    right: 10px !important;
+    font-size: 18px !important;
+  }
+  .leaflet-popup-close-button:hover { color: #F59E0B !important; }
+
+  /* ==================== SCROLLBARS ==================== */
+  .srs-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+  .srs-scroll::-webkit-scrollbar-thumb { background: #2A2A2A; border-radius: 3px; }
+  .srs-scroll::-webkit-scrollbar-track { background: transparent; }
+
+  /* ==================== BANDS ==================== */
+  .accent-left {
+    position: relative;
+  }
+  .accent-left::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 2px;
+    background: var(--bar-color, #F59E0B);
+  }
+
+  /* ==================== KPI AS FILTER BUTTONS ==================== */
+  .kpi-filter {
+    text-align: left;
+    background: #000000;
+    border: none;
+    cursor: pointer;
+    position: relative;
+    transition: background 180ms ease;
+    font-family: inherit;
+  }
+  .kpi-filter:hover {
+    background: rgba(255, 255, 255, 0.02);
+  }
+  .kpi-filter::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border: 1px solid transparent;
+    transition: border-color 180ms ease, box-shadow 180ms ease;
+  }
+  .kpi-filter.is-active::after {
+    border-color: #F59E0B;
+    box-shadow: inset 0 0 0 1px #F59E0B, 0 0 12px rgba(245, 158, 11, 0.25);
+  }
+  .kpi-filter.is-disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+  .kpi-filter.is-disabled:hover {
+    background: #000000;
+  }
+  .kpi-clear-hint {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    font-size: 9px;
+    color: #F59E0B;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    opacity: 0;
+    transition: opacity 180ms ease;
+    pointer-events: none;
+  }
+  .kpi-filter.is-active .kpi-clear-hint {
+    opacity: 1;
+  }
+
+  .pulse-dot { animation: pulseDot 1.6s ease-in-out infinite; }
+  @keyframes pulseDot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  /* ==================== RIGHT DETAIL PANEL (slide-in) ==================== */
+  #detail-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(2px);
+    z-index: 900;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 240ms ease;
+  }
+  #detail-overlay.is-open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  #detail-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 520px;
+    max-width: 92vw;
+    background: #0A0A0A;
+    border-left: 1px solid #2A2A2A;
+    box-shadow: -24px 0 60px -8px rgba(0, 0, 0, 0.6);
+    z-index: 910;
+    transform: translateX(100%);
+    transition: transform 360ms cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex;
+    flex-direction: column;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  #detail-panel.is-open {
+    transform: translateX(0);
+  }
+
+  .detail-section-label {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: #6B7280;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  /* Timeline vertical */
+  .detail-tl-item {
+    display: flex;
+    gap: 12px;
+    padding: 8px 0;
+    position: relative;
+  }
+  .detail-tl-item:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 20px;
+    bottom: -4px;
+    width: 1px;
+    background: #2A2A2A;
+  }
+  .detail-tl-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 6px;
+    background: #2A2A2A;
+    border: 2px solid #0A0A0A;
+    box-shadow: 0 0 0 1px #2A2A2A;
+  }
+  .detail-tl-dot.is-done {
+    background: #22C55E;
+    box-shadow: 0 0 0 1px #22C55E;
+  }
+  .detail-tl-dot.is-active {
+    background: #F59E0B;
+    box-shadow: 0 0 0 1px #F59E0B;
+    animation: pulseDot 1.6s ease-in-out infinite;
+  }
+  .detail-tl-dot.is-error {
+    background: #DC2626;
+    box-shadow: 0 0 0 1px #DC2626;
+  }
+</style>
+</head>
+
+<body class="h-screen flex">
+
+<!-- =================================================================== -->
+<!-- SIDEBAR IZQ                                                          -->
+<!-- =================================================================== -->
+<aside class="w-[200px] bg-srs-bg border-r border-srs-border flex-shrink-0 flex flex-col">
+  <div class="px-5 py-5 border-b border-srs-border">
+    <p class="label-caps label-caps-amber mb-0.5">InsiteIQ</p>
+    <h1 class="text-[15px] text-srs-text font-semibold font-display">SRS Coordinators</h1>
+  </div>
+  <nav class="flex-1 py-3 px-2 space-y-0.5 text-[13px]">
+    <a href="#" class="flex items-center justify-between px-3 py-2 rounded text-srs-amber bg-srs-amber/10 border-l-2 border-srs-amber">
+      <span>Operaciones</span>
+    </a>
+    <a href="insiteiq_kanban_v2_static.html" class="flex items-center px-3 py-2 rounded text-srs-text-mid hover:text-srs-text hover:bg-srs-surface-2 transition">Intervenciones</a>
+    <a href="#" class="flex items-center px-3 py-2 rounded text-srs-text-mid hover:text-srs-text hover:bg-srs-surface-2 transition">Proyectos</a>
+    <a href="#" class="flex items-center px-3 py-2 rounded text-srs-text-mid hover:text-srs-text hover:bg-srs-surface-2 transition">Sitios</a>
+    <a href="#" class="flex items-center px-3 py-2 rounded text-srs-text-mid hover:text-srs-text hover:bg-srs-surface-2 transition">Técnicos</a>
+    <a href="#" class="flex items-center px-3 py-2 rounded text-srs-text-mid hover:text-srs-text hover:bg-srs-surface-2 transition">Contratos</a>
+    <a href="#" class="flex items-center px-3 py-2 rounded text-srs-text-mid hover:text-srs-text hover:bg-srs-surface-2 transition">Inteligencia</a>
+    <a href="#" class="flex items-center px-3 py-2 rounded text-srs-text-mid hover:text-srs-text hover:bg-srs-surface-2 transition">Finanzas</a>
+    <a href="#" class="flex items-center px-3 py-2 rounded text-srs-text-mid hover:text-srs-text hover:bg-srs-surface-2 transition">Admin</a>
+    <div class="pt-3 mt-3 border-t border-srs-border">
+      <a href="#" class="flex items-center px-3 py-2 rounded text-srs-text-dim hover:text-srs-text-mid transition text-[12px]">Overview clásico</a>
+    </div>
+  </nav>
+  <div class="px-4 py-3 border-t border-srs-border text-[10px] text-srs-text-dim space-y-1">
+    <div class="flex items-center justify-between">
+      <span>Build</span>
+      <span>1cc3cd6</span>
+    </div>
+    <div class="flex items-center justify-between">
+      <span>Region</span>
+      <span>EU-West</span>
+    </div>
+    <div class="flex items-center gap-1.5 mt-2">
+      <span class="w-1.5 h-1.5 rounded-full bg-srs-green pulse-dot"></span>
+      <span>API saludable · sync 38s</span>
+    </div>
+  </div>
+</aside>
+
+<!-- =================================================================== -->
+<!-- MAIN AREA                                                            -->
+<!-- =================================================================== -->
+<div class="flex-1 flex flex-col min-w-0">
+
+  <!-- KPI STRIP · 5 filter buttons (KPI-as-facet pattern) -->
+  <section class="px-6 py-4 border-b border-srs-border flex items-stretch gap-px bg-srs-border">
+    <!-- 1. Críticos abiertos -->
+    <button type="button" class="kpi-filter flex-1 px-4 py-3 border-l-2 border-srs-red" data-filter="critical">
+      <p class="label-caps label-caps-red mb-2">Críticos abiertos</p>
+      <div class="flex items-baseline gap-2">
+        <span class="text-[36px] font-semibold text-srs-red leading-none" data-count="critical">—</span>
+      </div>
+      <p class="label-caps mt-2 text-[9px]">Severity critical · activos</p>
+      <span class="kpi-clear-hint">Quitar filtro ×</span>
+    </button>
+    <!-- 2. SLA @ riesgo -->
+    <button type="button" class="kpi-filter flex-1 px-4 py-3 border-l-2" style="border-left-color: #F59E0B;" data-filter="sla-risk">
+      <p class="label-caps label-caps-amber mb-2">SLA @ riesgo</p>
+      <div class="flex items-baseline gap-2">
+        <span class="text-[36px] font-semibold leading-none" style="color: #F59E0B;" data-count="sla-risk">—</span>
+      </div>
+      <p class="label-caps mt-2 text-[9px]">Breach o próximo breach</p>
+      <span class="kpi-clear-hint">Quitar filtro ×</span>
+    </button>
+    <!-- 3. Ball SRS -->
+    <button type="button" class="kpi-filter flex-1 px-4 py-3 border-l-2 border-srs-amber" data-filter="ball-srs">
+      <p class="label-caps label-caps-amber mb-2">Ball SRS</p>
+      <div class="flex items-baseline gap-2">
+        <span class="text-[36px] font-semibold text-srs-amber leading-none" data-count="ball-srs">—</span>
+      </div>
+      <p class="label-caps mt-2 text-[9px]">Pendiente acción nuestra</p>
+      <span class="kpi-clear-hint">Quitar filtro ×</span>
+    </button>
+    <!-- 4. Sin asignar -->
+    <button type="button" class="kpi-filter flex-1 px-4 py-3 border-l-2" style="border-left-color: #06B6D4;" data-filter="unassigned">
+      <p class="label-caps mb-2" style="color: #06B6D4;">Sin asignar</p>
+      <div class="flex items-baseline gap-2">
+        <span class="text-[36px] font-semibold leading-none" style="color: #06B6D4;" data-count="unassigned">—</span>
+      </div>
+      <p class="label-caps mt-2 text-[9px]">Activa sin técnico</p>
+      <span class="kpi-clear-hint">Quitar filtro ×</span>
+    </button>
+    <!-- 5. After-hours hoy -->
+    <button type="button" class="kpi-filter flex-1 px-4 py-3" data-filter="after-hours">
+      <p class="label-caps mb-2">After-hours hoy</p>
+      <div class="flex items-baseline gap-2">
+        <span class="text-[36px] font-semibold text-srs-text leading-none" data-count="after-hours">—</span>
+      </div>
+      <p class="label-caps mt-2 text-[9px]">Nocturnas / fin-semana</p>
+      <span class="kpi-clear-hint">Quitar filtro ×</span>
+    </button>
+  </section>
+
+  <!-- MAP + BOTTOM PANEL -->
+  <div class="flex-1 flex flex-col min-h-0">
+
+    <!-- MAP -->
+    <div class="relative" style="height: 62%;">
+      <div class="absolute top-3 left-5 z-[400] flex items-center gap-3">
+        <p class="label-caps">Mapa operativo</p>
+        <span class="font-mono text-[11px] text-srs-text">53 sitios</span>
+      </div>
+      <div class="absolute top-3 right-5 z-[400] flex items-center gap-4 text-[11px]">
+        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-srs-red"></span><span class="text-srs-text-mid">CRÍTICO</span></span>
+        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-srs-amber"></span><span class="text-srs-text-mid">ACTIVO</span></span>
+        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-srs-text-dim"></span><span class="text-srs-text-mid">NORMAL</span></span>
+      </div>
+      <div class="absolute bottom-3 left-5 z-[400] bg-srs-surface/95 border border-srs-border rounded-sm px-3 py-2 flex items-center gap-3 text-[10px] backdrop-blur-sm">
+        <p class="label-caps">Estado intervención</p>
+        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full" style="background: #3B82F6;"></span><span class="text-srs-text-mid">Entrada</span></span>
+        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full" style="background: #8B5CF6;"></span><span class="text-srs-text-mid">Preparando</span></span>
+        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full" style="background: #F59E0B;"></span><span class="text-srs-text-mid">En ruta</span></span>
+        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full" style="background: #EA580C;"></span><span class="text-srs-text-mid">En sitio</span></span>
+        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full" style="background: #22C55E;"></span><span class="text-srs-text-mid">Resuelta</span></span>
+        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full" style="background: #DC2626;"></span><span class="text-srs-text-mid">Urgente</span></span>
+      </div>
+      <div id="map" class="absolute inset-0"></div>
+    </div>
+
+    <!-- BOTTOM PANEL · intervenciones en marcha -->
+    <section class="flex-1 border-t border-srs-border bg-srs-bg flex flex-col min-h-0">
+      <header class="px-6 py-3 flex items-center justify-between border-b border-srs-border flex-shrink-0">
+        <div class="flex items-center gap-3">
+          <p class="label-caps">Intervenciones en marcha</p>
+          <span class="font-mono text-[11px] text-srs-text" id="intervention-count">—</span>
+          <span id="filter-badge" class="hidden items-center gap-2 pl-3 ml-1 border-l border-srs-border">
+            <span class="label-caps" style="color: #F59E0B;">Filtro activo:</span>
+            <span id="filter-badge-label" class="text-[11px] font-mono" style="color: #F59E0B;"></span>
+            <button id="filter-clear" class="text-srs-text-dim hover:text-srs-amber transition" title="Quitar filtro">
+              <iconify-icon icon="solar:close-circle-linear" width="14"></iconify-icon>
+            </button>
+          </span>
+        </div>
+        <div class="flex items-center gap-3">
+          <button class="text-[11px] text-srs-text-mid hover:text-srs-amber uppercase tracking-wider transition flex items-center gap-1">
+            <iconify-icon icon="solar:refresh-linear" width="12"></iconify-icon>
+            Refrescar
+          </button>
+        </div>
+      </header>
+
+      <div class="flex-1 overflow-y-auto srs-scroll px-6 py-3" id="intervention-list" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 8px; align-content: start;">
+        <!-- Minicards injected by JS -->
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- =================================================================== -->
+<!-- RIGHT DETAIL PANEL                                                   -->
+<!-- =================================================================== -->
+<div id="detail-overlay"></div>
+<aside id="detail-panel" role="dialog" aria-labelledby="detail-title" aria-modal="true">
+  <!-- Content injected by JS -->
+</aside>
+
+<!-- =================================================================== -->
+<!-- SEED DATA + LOGIC                                                    -->
+<!-- =================================================================== -->
+<script>
+  // Severity: critical | active | normal
+  // SiteType: office | retail | datacenter | emergency → shape
+  const SITES = [
+    { id: 'CH-US-NY01', name: 'Emergency LED flagship CH Madison', country: 'US', city: 'New York',  lat: 40.7128, lng: -74.0060, type: 'emergency', severity: 'critical', wo: 'DXC-UK-WO-2026-0007', status: 'EN_ROUTE', sla: 'BREACH', slaTime: '5D 21H', client: 'DXC UK', tech: 'Agustin Rivera', ball: 'TECH', ballTime: '5D 21H', tag: 'Emergency · Retail', warning: { type: 'SITE_CERRADO', detail: 'Tienda cerrada por decoración remodelación · Sevilla' } },
+    { id: 'ES-MAD-11', name: 'Fractalia Madrid Sur NOC',            country: 'ES', city: 'Madrid',    lat: 40.3572, lng: -3.6806, type: 'datacenter', severity: 'critical', wo: 'FRC-ES-WO-2026-0041', status: 'ON_SITE',  sla: 'AT_RISK', slaTime: '0H 42M', client: 'Fractalia ES', tech: 'Agustín C.',  ball: 'SRS', ballTime: '1H 10M', tag: 'Correctivo · Switch core', warning: null },
+    { id: 'ES-BCN-04', name: 'Fractalia Barcelona Centro',         country: 'ES', city: 'Barcelona', lat: 41.3851, lng: 2.1734,  type: 'office',     severity: 'active',   wo: 'FRC-ES-WO-2026-0042', status: 'EN_ROUTE', sla: 'OK',     slaTime: '3H 22M', client: 'Fractalia ES', tech: 'Hugo Q.',     ball: 'TECH', ballTime: '1H 12M', tag: 'Correctivo · Router backup', warning: null },
+    { id: 'ES-VLC-02', name: 'Fractalia Valencia Norte',           country: 'ES', city: 'Valencia',  lat: 39.4940, lng: -0.3720, type: 'office',     severity: 'active',   wo: 'FRC-ES-WO-2026-0044', status: 'PRE_FLIGHT', sla: 'OK',   slaTime: '8H 15M', client: 'Fractalia ES', tech: 'Arlindo O.',  ball: 'SRS', ballTime: '4H 00M', tag: 'Preventivo · Rack principal', warning: null },
+    { id: 'ES-SVQ-07', name: 'Grupo Arcos Sevilla-07',             country: 'ES', city: 'Sevilla',   lat: 37.3891, lng: -5.9845, type: 'retail',     severity: 'active',   wo: 'ARC-ES-WO-2026-0012', status: 'DISPATCHED', sla: 'OK',   slaTime: '12H',    client: 'Grupo Arcos', tech: 'Agustín C.', ball: 'TECH', ballTime: '0H 30M', tag: 'Rollout · POS + red', warning: null },
+    { id: 'ES-BIO-01', name: 'Fractalia Bilbao',                   country: 'ES', city: 'Bilbao',    lat: 43.2630, lng: -2.9350, type: 'office',     severity: 'active',   wo: 'FRC-ES-WO-2026-0046', status: 'TRIAGE',   sla: 'AT_RISK', slaTime: '6H 00M', client: 'Fractalia ES', tech: null,         ball: 'PARTS', ballTime: '2D 12H', tag: 'Correctivo · UPS', warning: { type: 'PARTS_CUSTOMS', detail: 'UPS reemplazo en aduana Bilbao Puerto' } },
+    { id: 'US-MIA-09', name: 'Claro US Miami Tower',               country: 'US', city: 'Miami',     lat: 25.7617, lng: -80.1918, type: 'datacenter', severity: 'normal',  wo: 'CLR-US-WO-2026-0003', status: 'INTAKE',   sla: 'OK',     slaTime: '24H',    client: 'Claro US', tech: null,           ball: 'SRS', ballTime: '3H 00M', tag: 'Correctivo · Fiber splice', warning: null },
+    { id: 'US-ORL-02', name: 'Claro US Orlando',                   country: 'US', city: 'Orlando',   lat: 28.5383, lng: -81.3792, type: 'retail',     severity: 'normal',   wo: 'CLR-US-WO-2026-0005', status: 'RESOLVED', sla: 'OK',     slaTime: '—',      client: 'Claro US', tech: 'Hugo Q.',      ball: 'CLIENT', ballTime: '8H 00M', tag: 'Rollout · Cableado piso 3', warning: null },
+    { id: 'MX-CDMX-02', name: 'Mabe CDMX Datacenter',              country: 'MX', city: 'CDMX',      lat: 19.4326, lng: -99.1332, type: 'datacenter', severity: 'normal',   wo: 'MBE-MX-WO-2026-0018', status: 'CLOSED',   sla: 'OK',     slaTime: '—',      client: 'Mabe MX', tech: 'Luis S.',       ball: '—', ballTime: '—', tag: 'Auditoría · Compliance', warning: null },
+    { id: 'CO-BOG-01', name: 'Fractalia Colombia Bogotá',          country: 'CO', city: 'Bogotá',    lat: 4.7110, lng: -74.0721, type: 'office',     severity: 'active',   wo: 'FRC-CO-WO-2026-0005', status: 'EN_ROUTE', sla: 'OK',     slaTime: '2H 00M', client: 'Fractalia CO', tech: 'Arlindo O.', ball: 'TECH', ballTime: '1H 05M', tag: 'Correctivo · Link perdido', warning: null },
+    { id: 'VE-CCS-01', name: 'Fractalia Caracas',                  country: 'VE', city: 'Caracas',   lat: 10.4806, lng: -66.9036, type: 'office',     severity: 'normal',  wo: 'FRC-VE-WO-2026-0002', status: 'INTAKE',   sla: 'OK',     slaTime: '48H',    client: 'Fractalia VE', tech: null,         ball: 'SRS', ballTime: '2H 00M', tag: 'Preventivo · Calendario', warning: null },
+    { id: 'PE-LIM-03', name: 'Sodimac Lima Centro',                country: 'PE', city: 'Lima',      lat: -12.0464, lng: -77.0428, type: 'emergency', severity: 'active',   wo: 'SDM-PE-WO-2026-0008', status: 'ON_SITE',  sla: 'AT_RISK', slaTime: '1H 15M', client: 'Sodimac PE', tech: 'Luis S.',   ball: 'TECH', ballTime: '2H 45M', tag: 'Emergency · POS caído', warning: null },
+    { id: 'CL-SCL-02', name: 'Falabella Santiago',                 country: 'CL', city: 'Santiago',  lat: -33.4489, lng: -70.6693, type: 'retail',    severity: 'active',   wo: 'FLB-CL-WO-2026-0011', status: 'DISPATCHED', sla: 'OK',   slaTime: '6H 00M', client: 'Falabella CL', tech: 'Arlindo O.', ball: 'TECH', ballTime: '1H 00M', tag: 'Rollout · POS nuevo', warning: null },
+    { id: 'AR-BUE-01', name: 'DXC Buenos Aires',                   country: 'AR', city: 'Buenos Aires', lat: -34.6037, lng: -58.3816, type: 'datacenter', severity: 'critical', wo: 'DXC-AR-WO-2026-0001', status: 'ON_SITE', sla: 'BREACH', slaTime: '2H 30M', client: 'DXC AR', tech: 'Luis S.',    ball: 'TECH', ballTime: '4H 00M', tag: 'Emergency · Caída total', warning: { type: 'WEATHER', detail: 'Alerta meteo nivel 3' } },
+    { id: 'UY-MVD-01', name: 'Scotiabank Montevideo',              country: 'UY', city: 'Montevideo', lat: -34.9011, lng: -56.1645, type: 'office',    severity: 'normal',   wo: 'SCB-UY-WO-2026-0003', status: 'RESOLVED', sla: 'OK',     slaTime: '—',      client: 'Scotiabank UY', tech: 'Luis S.',  ball: 'CLIENT', ballTime: '12H', tag: 'Correctivo · Conectividad', warning: null },
+    { id: 'UK-LDN-01', name: 'DXC London HQ',                      country: 'UK', city: 'London',    lat: 51.5074, lng: -0.1278, type: 'office',     severity: 'active',   wo: 'DXC-UK-WO-2026-0008', status: 'EN_ROUTE', sla: 'OK',     slaTime: '4H',     client: 'DXC UK', tech: 'Yunus H.',     ball: 'TECH', ballTime: '0H 40M', tag: 'Correctivo · Switch HQ', warning: null },
+    { id: 'FR-PAR-02', name: 'Carrefour Paris La Défense',         country: 'FR', city: 'Paris',     lat: 48.8566, lng: 2.3522,  type: 'retail',     severity: 'active',   wo: 'CRF-FR-WO-2026-0015', status: 'PRE_FLIGHT', sla: 'OK',   slaTime: '9H',     client: 'Carrefour FR', tech: 'Hugo Q.',   ball: 'SRS', ballTime: '1H 30M', tag: 'Preventivo · Rack', warning: null },
+    { id: 'IT-MIL-01', name: 'UniCredit Milano',                   country: 'IT', city: 'Milano',    lat: 45.4642, lng: 9.1900,  type: 'datacenter', severity: 'normal',   wo: 'UCR-IT-WO-2026-0004', status: 'INTAKE',   sla: 'OK',     slaTime: '24H',    client: 'UniCredit IT', tech: null,         ball: 'SRS', ballTime: '0H 30M', tag: 'Correctivo · Core switch', warning: null },
+    { id: 'DE-FRA-01', name: 'Siemens Frankfurt',                  country: 'DE', city: 'Frankfurt', lat: 50.1109, lng: 8.6821,  type: 'datacenter', severity: 'normal',  wo: 'SMN-DE-WO-2026-0002', status: 'CLOSED',   sla: 'OK',     slaTime: '—',      client: 'Siemens DE', tech: 'Yunus H.',    ball: '—', ballTime: '—', tag: 'Auditoría · Anual', warning: null },
+  ];
+
+  const STATUS_COLOR = {
+    INTAKE:     '#3B82F6',
+    TRIAGE:     '#3B82F6',
+    PRE_FLIGHT: '#8B5CF6',
+    DISPATCHED: '#7C3AED',
+    EN_ROUTE:   '#F59E0B',
+    ON_SITE:    '#EA580C',
+    RESOLVED:   '#22C55E',
+    CLOSED:     '#16A34A',
+    CANCELLED:  '#6B7280',
+  };
+
+  const SEVERITY_LABEL = {
+    critical: { label: 'CRITICAL', color: '#DC2626' },
+    active:   { label: 'ACTIVE',   color: '#F59E0B' },
+    normal:   { label: 'NORMAL',   color: '#6B7280' },
+  };
+
+  const SLA_BADGE = {
+    BREACH:  { label: 'BREACH',  bg: '#DC262622', color: '#DC2626', border: '#DC2626' },
+    AT_RISK: { label: 'AT RISK', bg: '#F59E0B22', color: '#F59E0B', border: '#F59E0B' },
+    OK:      { label: 'OK',      bg: '#22C55E22', color: '#22C55E', border: '#22C55E' },
+  };
+
+  const SHAPE_CLASS = {
+    office:     'shape-square',
+    retail:     'shape-hexagon',
+    datacenter: 'shape-diamond',
+    emergency:  'shape-triangle',
+  };
+
+  let map, markers = {}, activePopup = null;
+
+  // =================================================================
+  // TECH REGISTRY · timezone por técnico (Principio #8)
+  // =================================================================
+  // Viewer por default: quién está mirando el mock (Rackel en Madrid, o Juan)
+  const VIEWER_TZ = 'Europe/Madrid';
+  const VIEWER_TZ_LABEL = 'Madrid';
+
+  const TECH_REGISTRY = {
+    'Agustin Rivera': { tz: 'America/New_York', tzLabel: 'NY',        workStart: 9, workEnd: 18 },
+    'Agustín C.':     { tz: 'Europe/Madrid',    tzLabel: 'Madrid',    workStart: 8, workEnd: 19 },
+    'Hugo Q.':        { tz: 'Europe/Madrid',    tzLabel: 'Madrid',    workStart: 8, workEnd: 19 },
+    'Arlindo O.':     { tz: 'Europe/Madrid',    tzLabel: 'Madrid',    workStart: 8, workEnd: 19 },
+    'Luis S.':        { tz: 'America/Lima',     tzLabel: 'Lima',      workStart: 8, workEnd: 17 },
+    'Yunus H.':       { tz: 'Europe/London',    tzLabel: 'London',    workStart: 9, workEnd: 18 },
+  };
+
+  function getTechTimeInfo(techName) {
+    const meta = TECH_REGISTRY[techName];
+    if (!meta) return null;
+    const now = new Date();
+
+    const fmt = (tz) => new Intl.DateTimeFormat('es-ES', {
+      timeZone: tz, hour: '2-digit', minute: '2-digit', hour12: false,
+    }).format(now);
+
+    const hourOnly = (tz) => parseInt(new Intl.DateTimeFormat('en-US', {
+      timeZone: tz, hour: '2-digit', hour12: false,
+    }).format(now), 10);
+
+    const weekday = (tz) => new Intl.DateTimeFormat('en-US', {
+      timeZone: tz, weekday: 'short',
+    }).format(now);
+
+    const techTime = fmt(meta.tz);
+    const viewerTime = fmt(VIEWER_TZ);
+    const techHour = hourOnly(meta.tz);
+    const techMinute = parseInt(new Intl.DateTimeFormat('en-US', {
+      timeZone: meta.tz, minute: '2-digit', hour12: false,
+    }).format(now), 10);
+    const isWeekend = ['Sat', 'Sun'].includes(weekday(meta.tz));
+
+    let status, label, color;
+    if (isWeekend) {
+      status = 'weekend'; label = 'FIN DE SEMANA · NO MOLESTAR'; color = '#6B7280';
+    } else if (techHour >= meta.workStart && techHour < meta.workEnd) {
+      status = 'onduty'; label = 'EN HORARIO'; color = '#22C55E';
+    } else if (techHour >= meta.workEnd && techHour < 22) {
+      status = 'afterhours'; label = 'POST-HORARIO'; color = '#F59E0B';
+    } else if (techHour >= 22 || techHour < 6) {
+      status = 'sleeping'; label = 'NO MOLESTAR · DURMIENDO'; color = '#DC2626';
+    } else {
+      status = 'starting'; label = 'INICIANDO JORNADA'; color = '#06B6D4';
+    }
+
+    // Offset vs viewer
+    const techOffsetDate = new Date(now.toLocaleString('en-US', { timeZone: meta.tz }));
+    const viewerOffsetDate = new Date(now.toLocaleString('en-US', { timeZone: VIEWER_TZ }));
+    const diffHours = Math.round((techOffsetDate - viewerOffsetDate) / 3600000);
+    const offsetText = diffHours === 0
+      ? 'misma hora que tú'
+      : diffHours > 0
+        ? `+${diffHours}h de ti`
+        : `${diffHours}h de ti`;
+
+    // Time until end of workday (if on duty)
+    let untilEndOfDay = null;
+    if (status === 'onduty') {
+      const minutesToEnd = (meta.workEnd - techHour) * 60 - techMinute;
+      const h = Math.floor(minutesToEnd / 60);
+      const m = minutesToEnd % 60;
+      untilEndOfDay = h > 0 ? `${h}h ${m}min` : `${m}min`;
+    }
+
+    return { techTime, viewerTime, status, label, color, offsetText, diffHours, tzLabel: meta.tzLabel, untilEndOfDay };
+  }
+
+  // =================================================================
+  // MAP INIT
+  // =================================================================
+  function initMap() {
+    map = L.map('map', {
+      zoomControl: true,
+      attributionControl: true,
+      preferCanvas: true,
+      worldCopyJump: true,
+    }).setView([20, -20], 2);
+
+    // CartoDB Positron — light tiles (SKYPRO360 pattern · mapa light sobre shell dark)
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap &copy; CARTO',
+      subdomains: 'abcd',
+    }).addTo(map);
+
+    SITES.forEach(site => {
+      const stageColor = STATUS_COLOR[site.status] || '#6B7280';
+      const urgentClass = site.severity === 'critical' ? ' is-urgent' : '';
+      // Extract short WO code (last segment) for pill label
+      const shortCode = site.wo.split('-').slice(-2).join('-');
+      const markerHtml = `
+        <div class="wo-pill${urgentClass}" data-site="${site.id}">
+          <span class="wo-dot" style="background: ${stageColor};"></span>
+          <span>${shortCode}</span>
+        </div>
+      `;
+
+      const icon = L.divIcon({
+        className: 'srs-marker',
+        html: markerHtml,
+        iconSize: null,
+        iconAnchor: [50, 12],
+      });
+      const marker = L.marker([site.lat, site.lng], { icon, riseOnHover: true }).addTo(map);
+
+      marker.bindPopup(buildQuickPopup(site), {
+        closeButton: true,
+        autoClose: true,
+        closeOnEscapeKey: true,
+        maxWidth: 340,
+        minWidth: 320,
+        className: 'srs-popup',
+        offset: [0, -6],
+      });
+
+      // Regenerar contenido al abrir para tener horas live (Principio #8)
+      marker.on('popupopen', () => {
+        marker.getPopup().setContent(buildQuickPopup(site));
+        setActiveMarker(site.id);
+      });
+
+      marker.on('click', () => setActiveMarker(site.id));
+      markers[site.id] = marker;
+    });
+
+    // Abre popup del WO crítico destacado al cargar — referencia visual
+    setTimeout(() => {
+      markers['CH-US-NY01'].openPopup();
+      setActiveMarker('CH-US-NY01');
+    }, 350);
+  }
+
+  function setActiveMarker(siteId) {
+    Object.entries(markers).forEach(([id, m]) => {
+      const el = m.getElement();
+      if (!el) return;
+      const pill = el.querySelector('.wo-pill');
+      if (pill) pill.classList.toggle('is-active', id === siteId);
+    });
+  }
+
+  // =================================================================
+  // QUICK POPUP · referencia rápida al click (LO QUE PEDISTE)
+  // =================================================================
+  function buildQuickPopup(site) {
+    const sev = SEVERITY_LABEL[site.severity];
+    const sla = SLA_BADGE[site.sla] || SLA_BADGE.OK;
+    const statusColor = STATUS_COLOR[site.status] || '#6B7280';
+
+    return `
+      <div style="background: #0A0A0A; color: #E5E5E5; font-family: 'JetBrains Mono', monospace;">
+        <!-- Header bar · WO code + SLA -->
+        <div style="padding: 11px 14px 10px; border-bottom: 1px solid #1F1F1F; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+          <span style="font-size: 11px; color: ${sev.color}; font-weight: 600; letter-spacing: 0.05em;">${site.wo}</span>
+          <span style="font-size: 9px; padding: 2px 6px; border-radius: 2px; background: ${sla.bg}; color: ${sla.color}; border: 1px solid ${sla.border}; font-weight: 600; letter-spacing: 0.1em;">${sla.label} · ${site.slaTime}</span>
+        </div>
+
+        <!-- Status + severity row -->
+        <div style="padding: 8px 14px; border-bottom: 1px solid #1F1F1F; display: flex; align-items: center; gap: 10px;">
+          <span style="display: inline-flex; align-items: center; gap: 5px; font-size: 10px; color: ${statusColor}; font-weight: 600; letter-spacing: 0.1em;">
+            <span style="width: 6px; height: 6px; border-radius: 50%; background: ${statusColor};"></span>
+            ${site.status}
+          </span>
+          <span style="font-size: 10px; color: ${sev.color}; font-weight: 600; letter-spacing: 0.1em;">· ${sev.label}</span>
+        </div>
+
+        <!-- Title -->
+        <div style="padding: 12px 14px 10px;">
+          <p style="margin: 0 0 3px; font-family: 'Instrument Sans', sans-serif; font-size: 15px; font-weight: 600; color: #FFFFFF; line-height: 1.25;">${site.name}</p>
+          <p style="margin: 0; font-size: 11px; color: #6B7280;">
+            <span style="color: #9CA3AF;">${site.id}</span> · ${site.city}, ${site.country}
+          </p>
+        </div>
+
+        <!-- Metadata 2 cols -->
+        <div style="padding: 4px 14px 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 6px 16px;">
+          <div>
+            <p style="margin: 0 0 2px; font-size: 9px; color: #6B7280; letter-spacing: 0.14em; text-transform: uppercase;">CLI</p>
+            <p style="margin: 0; font-size: 12px; color: #E5E5E5;">${site.client}</p>
+          </div>
+          <div>
+            <p style="margin: 0 0 2px; font-size: 9px; color: #6B7280; letter-spacing: 0.14em; text-transform: uppercase;">BALL</p>
+            <p style="margin: 0; font-size: 12px; color: ${site.ball === 'SRS' ? '#F59E0B' : site.ball === 'CLIENT' ? '#DC2626' : '#E5E5E5'}; font-weight: 500;">
+              ${site.ball} <span style="color: #6B7280; font-weight: 400;">· ${site.ballTime}</span>
+            </p>
+          </div>
+          <div>
+            <p style="margin: 0 0 2px; font-size: 9px; color: #6B7280; letter-spacing: 0.14em; text-transform: uppercase;">TECH</p>
+            <p style="margin: 0; font-size: 12px; color: ${site.tech ? '#E5E5E5' : '#6B7280'};">${site.tech || 'Sin asignar'}</p>
+          </div>
+          <div>
+            <p style="margin: 0 0 2px; font-size: 9px; color: #6B7280; letter-spacing: 0.14em; text-transform: uppercase;">TAG</p>
+            <p style="margin: 0; font-size: 12px; color: #E5E5E5;">${site.tag}</p>
+          </div>
+        </div>
+
+        ${(() => {
+          // Timezone block del tech — Principio #8, dejen de joder al personal
+          if (!site.tech) return '';
+          const info = getTechTimeInfo(site.tech);
+          if (!info) return '';
+          return `
+            <div style="margin: 0 14px 10px; padding: 9px 11px; background: ${info.color}12; border-left: 2px solid ${info.color};">
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 3px;">
+                <div style="display: flex; align-items: baseline; gap: 6px;">
+                  <span style="font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 600; color: #FFFFFF;">${info.techTime}</span>
+                  <span style="font-size: 10px; color: #9CA3AF; letter-spacing: 0.1em; text-transform: uppercase;">${info.tzLabel}</span>
+                </div>
+                <span style="font-size: 9px; padding: 2px 6px; border-radius: 2px; background: ${info.color}22; color: ${info.color}; font-weight: 600; letter-spacing: 0.1em;">${info.label}</span>
+              </div>
+              <p style="margin: 0; font-size: 10px; color: #6B7280; font-family: 'JetBrains Mono', monospace;">
+                Tu hora ${info.viewerTime} ${VIEWER_TZ_LABEL} · ${info.offsetText}
+                ${info.untilEndOfDay ? ` · fin jornada en ${info.untilEndOfDay}` : ''}
+              </p>
+            </div>
+          `;
+        })()}
+
+        ${site.warning ? `
+          <!-- Warning row -->
+          <div style="margin: 0 14px 10px; padding: 8px 10px; background: rgba(245, 158, 11, 0.06); border-left: 2px solid #F59E0B; font-size: 11px; color: #F59E0B;">
+            <span style="font-weight: 600; letter-spacing: 0.08em;">${site.warning.type.replace('_', ' ')}</span>
+            <p style="margin: 2px 0 0; color: #9CA3AF; font-weight: 400; font-size: 11px; line-height: 1.35;">${site.warning.detail}</p>
+          </div>
+        ` : ''}
+
+        <!-- Actions -->
+        <div style="padding: 0 14px 12px; display: flex; gap: 6px;">
+          <button onclick="goToWoDetail('${site.wo}')" style="flex: 1; height: 28px; background: #1F1F1F; color: #F59E0B; border: 1px solid #2A2A2A; border-radius: 3px; font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; cursor: pointer; transition: background 180ms ease; display: flex; align-items: center; justify-content: center; gap: 6px;" onmouseover="this.style.background='#2A2A2A'" onmouseout="this.style.background='#1F1F1F'">
+            Ver detalle →
+          </button>
+          ${site.tech ? `
+          <button onclick="contactTech('${site.tech}')" style="flex: 1; height: 28px; background: transparent; color: #9CA3AF; border: 1px solid #2A2A2A; border-radius: 3px; font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; cursor: pointer; transition: color 180ms ease, border-color 180ms ease;" onmouseover="this.style.color='#E5E5E5'; this.style.borderColor='#3A3A3A'" onmouseout="this.style.color='#9CA3AF'; this.style.borderColor='#2A2A2A'">
+            Contactar tech
+          </button>
+          ` : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  window.goToWoDetail = function(woCode) {
+    const site = SITES.find(s => s.wo === woCode);
+    if (site) openSideDetail(site);
+  };
+  window.contactTech = function(tech) {
+    console.log('Contactar', tech);
+  };
+
+  // =================================================================
+  // SIDE DETAIL PANEL · detalle completo del WO (derecha)
+  // =================================================================
+
+  // Detalles extra por WO (timeline, threads, parts, briefing, capture, report, audit)
+  const WO_EXTRAS = {
+    'DXC-UK-WO-2026-0007': {
+      description: 'Emergency LED flagship CH Madison NY — reemplazo panel LED fachada tras corto por sobretensión. Panel de 8m x 2m, requiere elevador + 2 técnicos. Escalado desde Level 1 DXC UK por criticidad marca.',
+      scope: 'Diagnóstico on-site · retiro panel dañado · instalación panel reemplazo (en tránsito desde proveedor) · calibración color + brillo · prueba remota con control central DXC London · firma acta cliente.',
+      shield: 'Gold',
+      intervention_type: 'Emergency · Retail',
+      timeline: [
+        { label: 'Solicitada por cliente',          time: '2026-04-18 14:30',  done: true,   kind: 'done' },
+        { label: 'Triaje SRS · Andros',              time: '2026-04-18 14:58',  done: true,   kind: 'done' },
+        { label: 'Asignada a Agustín Rivera',        time: '2026-04-18 16:12',  done: true,   kind: 'done' },
+        { label: 'Briefing firmado · checklist OK',  time: '2026-04-19 09:20',  done: true,   kind: 'done' },
+        { label: 'Tech en ruta · ETA 13:40',         time: '2026-04-19 11:45',  done: true,   kind: 'done' },
+        { label: 'Llegada al sitio',                 time: '2026-04-19 13:52',  done: true,   kind: 'done' },
+        { label: 'SITE_CERRADO reportado por tech',  time: '2026-04-19 14:05',  done: true,   kind: 'error', detail: 'Tienda cerrada por decoración remodelación no informada por cliente. Foto adjunta.' },
+        { label: 'Escalado a DXC UK · sin respuesta', time: '2026-04-19 14:20', done: true,   kind: 'error', detail: '3 intentos de contacto · ticket cliente abierto en su sistema' },
+        { label: 'Ball devuelta a tech · pending',   time: '2026-04-24 08:30',  done: false,  kind: 'active' },
+        { label: 'Reprogramación esperada',          time: 'pendiente',         done: false,  kind: 'pending' },
+      ],
+      threads_shared: [
+        { who: 'Rackel (DXC UK)', when: 'hace 5d',  msg: 'Confirmado técnico llegará mañana 19 abr entre 13-15h. Contact on-site: manager tienda +1 212 555-0174.' },
+        { who: 'Agustín (SRS)',    when: 'hace 5d',  msg: 'Briefing firmado. En ruta a primera hora.' },
+        { who: 'Agustín (SRS)',    when: 'hace 5d',  msg: 'Llegado a sitio. Tienda cerrada, rótulos de remodelación. Manager no contesta al teléfono. Envío fotos.' },
+        { who: 'Rackel (DXC UK)',  when: 'hace 4d',  msg: 'Verifico con retail ops DXC. Te confirmo.', pending: true },
+      ],
+      threads_internal: [
+        { who: 'Andros',  when: 'hace 5d',  msg: 'Subiendo fotos al ticket cliente y escalando a Yunus.' },
+        { who: 'Yunus',   when: 'hace 4d',  msg: 'Ping a Rackel directo por WhatsApp. Si no responde mañana activamos cláusula de compensación.' },
+        { who: 'Juan',    when: 'hace 2d',  msg: 'Reviso la cláusula con Adriana. SLA Gold aplica compensación por día perdido hasta reprogramación.' },
+      ],
+      parts: [
+        { code: 'LED-PANEL-8X2-IP65', desc: 'Panel LED flagship 8m × 2m · IP65', qty: 1, status: 'EN_TRANSITO', detail: 'DHL tracking 4291-8821-0017 · ETA warehouse NY 25 abr' },
+        { code: 'LED-CTRL-NOVASTAR-A8S', desc: 'Controlador NovaStar A8s', qty: 1, status: 'IN_STOCK', detail: 'Almacén NY · pickup directo' },
+      ],
+      briefing: { status: 'SIGNED', signed_by: 'Agustín Rivera', signed_at: '2026-04-19 09:20' },
+      capture: { status: 'PARTIAL', photos: 8, signature: null, notes: 'Fotos site_cerrado subidas. Pending firma cliente post-intervención.' },
+      report: { status: 'BLOCKED', reason: 'Esperando resolución de bloqueo SITE_CERRADO' },
+      audit_count: 23,
+      audit_recent: [
+        { actor: 'agustinc@systemrapid.com', action: 'asset_event.append', target: 'WO-0007', when: 'hace 5d' },
+        { actor: 'system',                     action: 'sla_alert.fired',    target: 'WO-0007', when: 'hace 2d' },
+        { actor: 'system',                     action: 'sla_alert.breach',   target: 'WO-0007', when: 'hace 8h' },
+      ],
+    }
+  };
+
+  // Fallback para cualquier otro WO
+  function getWoExtras(site) {
+    if (WO_EXTRAS[site.wo]) return WO_EXTRAS[site.wo];
+    return {
+      description: site.tag + ' en ' + site.name + '. Escalado desde NOC cliente.',
+      scope: 'Diagnóstico · reparación · firma acta cliente.',
+      shield: site.severity === 'critical' ? 'Gold' : site.severity === 'active' ? 'Silver' : 'Bronze+',
+      intervention_type: site.tag,
+      timeline: [
+        { label: 'Solicitada por cliente', time: 'hace ' + site.ballTime,     done: true, kind: 'done' },
+        { label: 'Triaje SRS',             time: 'hace ' + site.ballTime,     done: true, kind: 'done' },
+        { label: site.tech ? 'Asignada a ' + site.tech : 'Pendiente asignación', time: '—', done: !!site.tech, kind: site.tech ? 'done' : 'pending' },
+        { label: 'Estado actual: ' + site.status, time: 'ahora', done: false, kind: 'active' },
+      ],
+      threads_shared: [
+        { who: site.client, when: 'hace 3h', msg: 'Ticket abierto. Esperamos reporte.' },
+      ],
+      threads_internal: [
+        { who: 'Andros', when: 'hace 3h', msg: 'Monitorizando.' },
+      ],
+      parts: [],
+      briefing: { status: site.status === 'INTAKE' || site.status === 'TRIAGE' ? 'PENDING' : 'SIGNED', signed_by: site.tech, signed_at: '—' },
+      capture: { status: site.status === 'RESOLVED' || site.status === 'CLOSED' ? 'COMPLETE' : 'PENDING', photos: 0, signature: null, notes: '' },
+      report: { status: site.status === 'CLOSED' ? 'EMITTED' : 'PENDING', reason: '' },
+      audit_count: 4,
+      audit_recent: [
+        { actor: 'system', action: 'wo.create', target: site.wo, when: 'hace ' + site.ballTime },
+      ],
+    };
+  }
+
+  function renderTimelineItems(items) {
+    return items.map(item => {
+      const kindClass = item.kind === 'done' ? 'is-done' : item.kind === 'active' ? 'is-active' : item.kind === 'error' ? 'is-error' : '';
+      const labelColor = item.kind === 'pending' ? '#6B7280' : item.kind === 'error' ? '#DC2626' : item.kind === 'active' ? '#F59E0B' : '#E5E5E5';
+      return `
+        <div class="detail-tl-item">
+          <div class="detail-tl-dot ${kindClass}"></div>
+          <div style="flex: 1; min-width: 0;">
+            <div style="display: flex; justify-content: space-between; gap: 10px; align-items: center;">
+              <span style="font-size: 12px; color: ${labelColor}; font-weight: 500;">${item.label}</span>
+              <span style="font-size: 10px; color: #6B7280;">${item.time}</span>
+            </div>
+            ${item.detail ? `<p style="font-size: 11px; color: #9CA3AF; margin: 3px 0 0; line-height: 1.5;">${item.detail}</p>` : ''}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function renderThread(messages, kind) {
+    if (messages.length === 0) {
+      return '<p style="font-size: 11px; color: #6B7280; padding: 8px 0;">Sin mensajes.</p>';
+    }
+    return messages.map(m => `
+      <div style="padding: 8px 0; border-bottom: 1px solid #1F1F1F;">
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 4px;">
+          <span style="font-size: 11px; color: ${kind === 'shared' ? '#06B6D4' : '#F59E0B'}; font-weight: 500;">${m.who}</span>
+          <span style="font-size: 10px; color: #6B7280;">${m.when}${m.pending ? ' · pending reply' : ''}</span>
+        </div>
+        <p style="font-size: 12px; color: #E5E5E5; line-height: 1.5; margin: 0;">${m.msg}</p>
+      </div>
+    `).join('');
+  }
+
+  function renderSideDetail(site) {
+    const extras = getWoExtras(site);
+    const sla = SLA_BADGE[site.sla] || SLA_BADGE.OK;
+    const sev = SEVERITY_LABEL[site.severity];
+    const statusColor = STATUS_COLOR[site.status] || '#6B7280';
+
+    return `
+      <!-- Header sticky -->
+      <header style="flex-shrink: 0; border-bottom: 1px solid #1F1F1F; background: #0A0A0A;">
+        <div style="padding: 14px 18px 10px; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 11px; color: ${sev.color}; font-weight: 600; letter-spacing: 0.05em;">${site.wo}</span>
+            <span style="font-size: 10px; padding: 2px 7px; border-radius: 2px; background: ${sla.bg}; color: ${sla.color}; border: 1px solid ${sla.border}; font-weight: 600; letter-spacing: 0.12em;">${sla.label} · ${site.slaTime}</span>
+          </div>
+          <button onclick="closeSideDetail()" style="background: transparent; border: none; color: #6B7280; cursor: pointer; padding: 4px; display: flex; align-items: center;" onmouseover="this.style.color='#F59E0B'" onmouseout="this.style.color='#6B7280'" aria-label="Cerrar">
+            <iconify-icon icon="solar:close-circle-linear" width="22"></iconify-icon>
+          </button>
+        </div>
+        <div style="padding: 0 18px 10px; display: flex; align-items: center; gap: 10px;">
+          <span style="display: inline-flex; align-items: center; gap: 5px; font-size: 10px; color: ${statusColor}; font-weight: 600; letter-spacing: 0.12em;">
+            <span style="width: 6px; height: 6px; border-radius: 50%; background: ${statusColor};"></span>
+            ${site.status}
+          </span>
+          <span style="font-size: 10px; color: ${sev.color}; font-weight: 600; letter-spacing: 0.12em;">· ${sev.label}</span>
+          <span style="font-size: 10px; color: #6B7280;">· ${extras.shield} Shield</span>
+        </div>
+        <div style="padding: 0 18px 16px;">
+          <h2 id="detail-title" style="font-family: 'Instrument Sans', sans-serif; font-size: 20px; font-weight: 600; color: #FFFFFF; margin: 0 0 4px; line-height: 1.2;">${site.name}</h2>
+          <p style="font-size: 11px; color: #6B7280; margin: 0;"><span style="color: #9CA3AF;">${site.id}</span> · ${site.city}, ${site.country} · ${site.client}</p>
+        </div>
+      </header>
+
+      <!-- Body scrollable -->
+      <div class="srs-scroll" style="flex: 1; overflow-y: auto; padding: 18px; display: flex; flex-direction: column; gap: 20px;">
+
+        <!-- WARNING BANNER (si aplica) -->
+        ${site.warning ? `
+          <div style="padding: 10px 12px; background: rgba(245, 158, 11, 0.06); border-left: 2px solid #F59E0B;">
+            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+              <iconify-icon icon="solar:danger-triangle-linear" width="13" style="color: #F59E0B;"></iconify-icon>
+              <span style="font-size: 11px; color: #F59E0B; font-weight: 600; letter-spacing: 0.1em;">${site.warning.type.replace('_', ' ')}</span>
+            </div>
+            <p style="font-size: 12px; color: #E5E5E5; margin: 0; line-height: 1.5;">${site.warning.detail}</p>
+          </div>
+        ` : ''}
+
+        <!-- TIMEZONE BLOCK · antes que nada, para que nadie moleste al tech fuera de hora -->
+        ${(() => {
+          if (!site.tech) return '';
+          const info = getTechTimeInfo(site.tech);
+          if (!info) return '';
+          return `
+            <section style="padding: 12px 14px; background: ${info.color}0F; border: 1px solid ${info.color}33; border-left: 3px solid ${info.color}; border-radius: 3px;">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+                <span style="font-size: 9px; color: #6B7280; letter-spacing: 0.14em; text-transform: uppercase;">Hora del técnico</span>
+                <span style="font-size: 10px; padding: 2px 7px; border-radius: 2px; background: ${info.color}22; color: ${info.color}; font-weight: 600; letter-spacing: 0.12em;">${info.label}</span>
+              </div>
+              <div style="display: flex; align-items: baseline; gap: 12px; margin-bottom: 6px;">
+                <div style="display: flex; align-items: baseline; gap: 6px;">
+                  <span style="font-family: 'JetBrains Mono', monospace; font-size: 28px; font-weight: 600; color: #FFFFFF; line-height: 1;">${info.techTime}</span>
+                  <span style="font-size: 11px; color: #9CA3AF; letter-spacing: 0.14em; text-transform: uppercase;">${info.tzLabel}</span>
+                </div>
+                <span style="font-size: 11px; color: #6B7280;">·</span>
+                <span style="font-size: 12px; color: #9CA3AF;">${site.tech}</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px; font-size: 11px; color: #6B7280; font-family: 'JetBrains Mono', monospace;">
+                <span>Tú estás en ${info.viewerTime} ${VIEWER_TZ_LABEL}</span>
+                <span>·</span>
+                <span style="color: ${info.diffHours !== 0 ? '#F59E0B' : '#9CA3AF'};">${info.offsetText}</span>
+                ${info.untilEndOfDay ? `<span>·</span><span>fin jornada en ${info.untilEndOfDay}</span>` : ''}
+              </div>
+              ${info.status === 'sleeping' || info.status === 'weekend' ? `
+                <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid ${info.color}22; display: flex; align-items: center; gap: 6px; font-size: 11px; color: ${info.color};">
+                  <iconify-icon icon="solar:moon-linear" width="13"></iconify-icon>
+                  <span>No contactar salvo emergencia crítica · escalación vía Luis (Lima CET cover)</span>
+                </div>
+              ` : ''}
+            </section>
+          `;
+        })()}
+
+        <!-- METADATA GRID -->
+        <section>
+          <div class="detail-section-label">Referencias</div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px 18px;">
+            <div>
+              <p style="font-size: 9px; color: #6B7280; letter-spacing: 0.14em; text-transform: uppercase; margin: 0 0 2px;">BALL</p>
+              <p style="font-size: 13px; color: ${site.ball === 'SRS' ? '#F59E0B' : site.ball === 'CLIENT' ? '#DC2626' : '#E5E5E5'}; font-weight: 500; margin: 0;">${site.ball} <span style="color: #6B7280; font-weight: 400;">· ${site.ballTime} stuck</span></p>
+            </div>
+            <div>
+              <p style="font-size: 9px; color: #6B7280; letter-spacing: 0.14em; text-transform: uppercase; margin: 0 0 2px;">TECH</p>
+              <p style="font-size: 13px; color: ${site.tech ? '#E5E5E5' : '#6B7280'}; margin: 0;">${site.tech || 'Sin asignar'}</p>
+            </div>
+            <div>
+              <p style="font-size: 9px; color: #6B7280; letter-spacing: 0.14em; text-transform: uppercase; margin: 0 0 2px;">TAG</p>
+              <p style="font-size: 13px; color: #E5E5E5; margin: 0;">${extras.intervention_type}</p>
+            </div>
+            <div>
+              <p style="font-size: 9px; color: #6B7280; letter-spacing: 0.14em; text-transform: uppercase; margin: 0 0 2px;">AUDIT LOG</p>
+              <p style="font-size: 13px; color: #E5E5E5; margin: 0;">${extras.audit_count} eventos</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- DESCRIPTION -->
+        <section>
+          <div class="detail-section-label">Descripción</div>
+          <p style="font-size: 12px; color: #E5E5E5; line-height: 1.6; margin: 0;">${extras.description}</p>
+        </section>
+
+        <!-- SCOPE -->
+        <section>
+          <div class="detail-section-label">Alcance</div>
+          <p style="font-size: 12px; color: #9CA3AF; line-height: 1.6; margin: 0;">${extras.scope}</p>
+        </section>
+
+        <!-- TIMELINE -->
+        <section>
+          <div class="detail-section-label">
+            Timeline
+            <span style="font-size: 10px; color: #6B7280; text-transform: none; letter-spacing: 0; font-weight: 400;">${extras.timeline.filter(t=>t.done).length}/${extras.timeline.length}</span>
+          </div>
+          <div>${renderTimelineItems(extras.timeline)}</div>
+        </section>
+
+        <!-- THREADS · SHARED -->
+        <section>
+          <div class="detail-section-label">
+            <span>Thread con cliente</span>
+            <span style="font-size: 10px; color: #06B6D4; text-transform: none; letter-spacing: 0; font-weight: 400;">${extras.threads_shared.length} mensajes · visible para cliente</span>
+          </div>
+          <div>${renderThread(extras.threads_shared, 'shared')}</div>
+        </section>
+
+        <!-- THREADS · INTERNAL -->
+        <section>
+          <div class="detail-section-label">
+            <span>Thread interno SRS</span>
+            <span style="font-size: 10px; color: #F59E0B; text-transform: none; letter-spacing: 0; font-weight: 400;">${extras.threads_internal.length} mensajes · opaco cliente</span>
+          </div>
+          <div>${renderThread(extras.threads_internal, 'internal')}</div>
+        </section>
+
+        <!-- PARTS -->
+        ${extras.parts.length > 0 ? `
+          <section>
+            <div class="detail-section-label">
+              <span>Repuestos / partes</span>
+              <span style="font-size: 10px; color: #6B7280; text-transform: none; letter-spacing: 0; font-weight: 400;">${extras.parts.length} ítems</span>
+            </div>
+            <div style="border: 1px solid #1F1F1F; border-radius: 3px;">
+              ${extras.parts.map((p, idx) => {
+                const statusColor = p.status === 'IN_STOCK' ? '#22C55E' : p.status === 'EN_TRANSITO' ? '#F59E0B' : '#DC2626';
+                return `
+                  <div style="padding: 10px 12px; ${idx > 0 ? 'border-top: 1px solid #1F1F1F;' : ''}">
+                    <div style="display: flex; justify-content: space-between; gap: 8px; align-items: center; margin-bottom: 3px;">
+                      <span style="font-size: 11px; color: #F59E0B; font-weight: 500;">${p.code}</span>
+                      <span style="font-size: 10px; color: ${statusColor}; font-weight: 600; letter-spacing: 0.1em;">${p.status.replace('_', ' ')}</span>
+                    </div>
+                    <p style="font-size: 12px; color: #E5E5E5; margin: 0 0 3px;">${p.desc} <span style="color: #6B7280;">× ${p.qty}</span></p>
+                    <p style="font-size: 11px; color: #9CA3AF; margin: 0; line-height: 1.4;">${p.detail}</p>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </section>
+        ` : ''}
+
+        <!-- BRIEFING / CAPTURE / REPORT -->
+        <section>
+          <div class="detail-section-label">Estado del ciclo documental</div>
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
+            ${(() => {
+              const items = [
+                { label: 'Briefing',  state: extras.briefing.status, detail: extras.briefing.signed_by ? `${extras.briefing.signed_by}` : 'sin firmar' },
+                { label: 'Capture',   state: extras.capture.status,  detail: extras.capture.photos ? `${extras.capture.photos} fotos` : 'sin evidencia' },
+                { label: 'Report',    state: extras.report.status,   detail: extras.report.reason ? extras.report.reason.slice(0, 40) + (extras.report.reason.length > 40 ? '…' : '') : 'ok' },
+              ];
+              const colorFor = (s) => s === 'SIGNED' || s === 'COMPLETE' || s === 'EMITTED' ? '#22C55E' : s === 'PARTIAL' || s === 'PENDING' ? '#F59E0B' : '#DC2626';
+              return items.map(it => `
+                <div style="padding: 10px; border: 1px solid #1F1F1F; border-radius: 3px;">
+                  <p style="font-size: 9px; color: #6B7280; letter-spacing: 0.14em; text-transform: uppercase; margin: 0 0 4px;">${it.label}</p>
+                  <p style="font-size: 11px; color: ${colorFor(it.state)}; font-weight: 600; letter-spacing: 0.1em; margin: 0 0 3px;">${it.state}</p>
+                  <p style="font-size: 10px; color: #9CA3AF; margin: 0; line-height: 1.4;">${it.detail}</p>
+                </div>
+              `).join('');
+            })()}
+          </div>
+        </section>
+
+        <!-- AUDIT LOG reciente -->
+        <section>
+          <div class="detail-section-label">
+            <span>Audit log reciente</span>
+            <a href="#" style="font-size: 10px; color: #F59E0B; text-transform: uppercase; letter-spacing: 0.1em; text-decoration: none; font-weight: 500;">Ver ${extras.audit_count} →</a>
+          </div>
+          <div style="border: 1px solid #1F1F1F; border-radius: 3px; font-size: 11px;">
+            ${extras.audit_recent.map((a, idx) => `
+              <div style="padding: 8px 10px; ${idx > 0 ? 'border-top: 1px solid #1F1F1F;' : ''} display: flex; justify-content: space-between; gap: 10px;">
+                <div style="min-width: 0; display: flex; gap: 8px; align-items: center;">
+                  <span style="color: #F59E0B; font-weight: 500;">${a.action}</span>
+                  <span style="color: #6B7280;">·</span>
+                  <span style="color: #9CA3AF; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${a.actor}</span>
+                </div>
+                <span style="color: #6B7280; flex-shrink: 0;">${a.when}</span>
+              </div>
+            `).join('')}
+          </div>
+        </section>
+
+      </div>
+
+      <!-- Footer CTAs -->
+      <footer style="flex-shrink: 0; border-top: 1px solid #1F1F1F; padding: 14px 18px; background: #0A0A0A; display: flex; align-items: center; gap: 8px;">
+        <button onclick="overflowMenu('${site.wo}')" style="width: 36px; height: 36px; background: transparent; color: #9CA3AF; border: 1px solid #2A2A2A; border-radius: 3px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: color 180ms;" onmouseover="this.style.color='#F59E0B'" onmouseout="this.style.color='#9CA3AF'" title="Más acciones">
+          <iconify-icon icon="solar:menu-dots-linear" width="16"></iconify-icon>
+        </button>
+        <button onclick="closeSideDetail()" style="flex: 1; height: 36px; background: transparent; color: #9CA3AF; border: 1px solid #2A2A2A; border-radius: 3px; font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; cursor: pointer; transition: color 180ms, border-color 180ms;" onmouseover="this.style.color='#E5E5E5'; this.style.borderColor='#3A3A3A'" onmouseout="this.style.color='#9CA3AF'; this.style.borderColor='#2A2A2A'">
+          Cerrar
+        </button>
+        <button onclick="escalateAction('${site.wo}')" style="flex: 2; height: 36px; background: #F59E0B; color: #0A0A0A; border: 1px solid #F59E0B; border-radius: 3px; font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; cursor: pointer; transition: background 180ms; display: flex; align-items: center; justify-content: center; gap: 6px;" onmouseover="this.style.background='#D97706'" onmouseout="this.style.background='#F59E0B'">
+          Escalar ball → cliente
+          <iconify-icon icon="solar:arrow-right-linear" width="14"></iconify-icon>
+        </button>
+      </footer>
+    `;
+  }
+
+  function openSideDetail(site) {
+    const panel = document.getElementById('detail-panel');
+    const overlay = document.getElementById('detail-overlay');
+    panel.innerHTML = renderSideDetail(site);
+    overlay.classList.add('is-open');
+    panel.classList.add('is-open');
+  }
+
+  function closeSideDetail() {
+    const panel = document.getElementById('detail-panel');
+    const overlay = document.getElementById('detail-overlay');
+    panel.classList.remove('is-open');
+    overlay.classList.remove('is-open');
+  }
+
+  function overflowMenu(wo) { console.log('Overflow menu', wo); }
+  function escalateAction(wo) { console.log('Escalate', wo); }
+
+  // Overlay click + ESC close
+  document.addEventListener('click', (e) => {
+    if (e.target.id === 'detail-overlay') closeSideDetail();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeSideDetail();
+  });
+
+  // =================================================================
+  // KPI-AS-FILTER · filter state + stats
+  // =================================================================
+  let activeFilter = null; // null | 'critical' | 'sla-risk' | 'ball-srs' | 'unassigned' | 'after-hours'
+
+  const FILTER_DEFS = {
+    'critical':    { label: 'Críticos abiertos', predicate: s => s.severity === 'critical' },
+    'sla-risk':    { label: 'SLA @ riesgo',      predicate: s => s.sla === 'AT_RISK' || s.sla === 'BREACH' },
+    'ball-srs':    { label: 'Ball SRS',          predicate: s => s.ball === 'SRS' },
+    'unassigned':  { label: 'Sin asignar',       predicate: s => !s.tech && s.severity !== 'normal' },
+    'after-hours': { label: 'After-hours hoy',   predicate: s => false }, // mock: 0 en este dataset
+  };
+
+  function computeStats() {
+    return {
+      'critical':    SITES.filter(FILTER_DEFS.critical.predicate).length,
+      'sla-risk':    SITES.filter(FILTER_DEFS['sla-risk'].predicate).length,
+      'ball-srs':    SITES.filter(FILTER_DEFS['ball-srs'].predicate).length,
+      'unassigned':  SITES.filter(FILTER_DEFS.unassigned.predicate).length,
+      'after-hours': SITES.filter(FILTER_DEFS['after-hours'].predicate).length,
+    };
+  }
+
+  function updateKpiCounts() {
+    const stats = computeStats();
+    Object.entries(stats).forEach(([key, count]) => {
+      const el = document.querySelector(`[data-count="${key}"]`);
+      if (el) el.textContent = count;
+      const btn = document.querySelector(`.kpi-filter[data-filter="${key}"]`);
+      if (btn) btn.classList.toggle('is-disabled', count === 0);
+    });
+  }
+
+  function getFilteredSites() {
+    if (!activeFilter) return SITES.filter(s => s.severity !== 'normal');
+    return SITES.filter(FILTER_DEFS[activeFilter].predicate);
+  }
+
+  function applyFilter(filterKey) {
+    // Toggle off if clicking same
+    if (activeFilter === filterKey) {
+      activeFilter = null;
+    } else {
+      // Don't activate filters with zero results
+      const stats = computeStats();
+      if (stats[filterKey] === 0) return;
+      activeFilter = filterKey;
+    }
+
+    // Update KPI button visual state
+    document.querySelectorAll('.kpi-filter').forEach(btn => {
+      btn.classList.toggle('is-active', btn.dataset.filter === activeFilter);
+    });
+
+    // Update filter badge in panel header
+    const badge = document.getElementById('filter-badge');
+    const badgeLabel = document.getElementById('filter-badge-label');
+    if (activeFilter) {
+      badge.classList.remove('hidden');
+      badge.classList.add('inline-flex');
+      badgeLabel.textContent = FILTER_DEFS[activeFilter].label;
+    } else {
+      badge.classList.add('hidden');
+      badge.classList.remove('inline-flex');
+    }
+
+    // Re-render minicards + update markers visibility
+    renderInterventions();
+    updateMarkersVisibility();
+  }
+
+  function updateMarkersVisibility() {
+    const visible = new Set(getFilteredSites().map(s => s.id));
+    Object.entries(markers).forEach(([id, m]) => {
+      const el = m.getElement();
+      if (!el) return;
+      el.style.display = visible.has(id) ? '' : 'none';
+    });
+  }
+
+  // =================================================================
+  // INTERVENTION LIST BOTTOM · minicards grid auto-fit
+  // =================================================================
+  function renderInterventions() {
+    const container = document.getElementById('intervention-list');
+    const shown = getFilteredSites().slice(0, 18);
+    const total = getFilteredSites().length;
+
+    // Update count label in header
+    const countEl = document.getElementById('intervention-count');
+    if (countEl) {
+      countEl.textContent = activeFilter ? `${total} de ${SITES.filter(s => s.severity !== 'normal').length}` : `${total}`;
+    }
+
+    container.innerHTML = shown.map(site => {
+      const sla = SLA_BADGE[site.sla] || SLA_BADGE.OK;
+      const statusColor = STATUS_COLOR[site.status] || '#6B7280';
+      const sev = SEVERITY_LABEL[site.severity];
+      const borderColor = site.severity === 'critical' ? '#DC2626' : '#F59E0B';
+      const ballColor = site.ball === 'SRS' ? '#F59E0B' : site.ball === 'CLIENT' ? '#DC2626' : '#E5E5E5';
+
+      return `
+        <article class="stage-border-top bg-srs-surface border border-srs-border rounded-sm p-3 hover:border-srs-border-strong hover:bg-srs-surface-2/60 transition cursor-pointer" style="border-top: 2px solid ${borderColor};" data-site="${site.id}">
+          <!-- Top row: WO code + SLA badge -->
+          <div class="flex items-center justify-between gap-2 mb-1.5">
+            <span class="font-mono text-[10px] truncate" style="color: ${borderColor}; font-weight: 600;">${site.wo}</span>
+            <span style="font-size: 9px; padding: 1.5px 6px; border-radius: 2px; background: ${sla.bg}; color: ${sla.color}; border: 1px solid ${sla.border}; font-weight: 600; letter-spacing: 0.1em; white-space: nowrap;">${site.slaTime}</span>
+          </div>
+
+          <!-- Status row -->
+          <div class="flex items-center gap-1.5 mb-2">
+            <span style="width: 5px; height: 5px; border-radius: 50%; background: ${statusColor};"></span>
+            <span style="font-size: 9px; color: ${statusColor}; font-weight: 600; letter-spacing: 0.12em;">${site.status}</span>
+            <span class="text-srs-text-dim text-[9px]">·</span>
+            <span style="font-size: 9px; color: ${sev.color}; font-weight: 600; letter-spacing: 0.12em;">${sev.label}</span>
+          </div>
+
+          <!-- Title -->
+          <h3 class="font-display text-[13px] font-semibold text-white leading-tight truncate" title="${site.name}">${site.name}</h3>
+          <p class="text-[10px] text-srs-text-dim mb-2 truncate">${site.id} · ${site.city}</p>
+
+          <!-- Metadata compacto -->
+          <div class="pt-2 border-t border-srs-border space-y-1 text-[10px]">
+            <div class="flex items-center justify-between gap-2">
+              <span class="label-caps" style="font-size: 9px;">CLI</span>
+              <span class="text-srs-text truncate">${site.client}</span>
+            </div>
+            <div class="flex items-center justify-between gap-2">
+              <span class="label-caps" style="font-size: 9px;">TECH</span>
+              <span class="${site.tech ? 'text-srs-text' : 'text-srs-text-dim italic'} truncate">${site.tech || 'Sin asignar'}</span>
+            </div>
+            <div class="flex items-center justify-between gap-2">
+              <span class="label-caps" style="font-size: 9px;">BALL</span>
+              <span class="font-mono" style="color: ${ballColor};">${site.ball} · ${site.ballTime}</span>
+            </div>
+          </div>
+
+          ${site.warning ? `
+            <div class="mt-2 pt-2 border-t border-srs-border flex items-center gap-1.5 text-[10px]" style="color: #F59E0B;">
+              <iconify-icon icon="solar:danger-triangle-linear" width="11" style="flex-shrink: 0;"></iconify-icon>
+              <span style="font-weight: 600; letter-spacing: 0.08em; font-size: 9px;">${site.warning.type.replace('_', ' ')}</span>
+            </div>
+          ` : ''}
+        </article>
+      `;
+    }).join('');
+
+    // If filter produced no results, render an empty state
+    if (shown.length === 0) {
+      container.innerHTML = `
+        <div style="grid-column: 1 / -1; padding: 32px 16px; text-align: center; color: #6B7280;">
+          <iconify-icon icon="solar:inbox-linear" width="28" style="color: #6B7280;"></iconify-icon>
+          <p style="font-size: 12px; margin-top: 8px;">Sin intervenciones para el filtro "${FILTER_DEFS[activeFilter]?.label || 'actual'}"</p>
+          <button onclick="applyFilter(null)" style="margin-top: 12px; padding: 6px 12px; background: transparent; color: #F59E0B; border: 1px solid #2A2A2A; border-radius: 3px; cursor: pointer; font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;">Quitar filtro</button>
+        </div>
+      `;
+      return;
+    }
+
+    container.querySelectorAll('article[data-site]').forEach(card => {
+      card.addEventListener('click', () => {
+        const siteId = card.dataset.site;
+        const site = SITES.find(s => s.id === siteId);
+        if (!site) return;
+        map.flyTo([site.lat, site.lng], 6, { duration: 0.8 });
+        setTimeout(() => markers[siteId].openPopup(), 400);
+      });
+    });
+  }
+
+  function attachFilterHandlers() {
+    document.querySelectorAll('.kpi-filter').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (btn.classList.contains('is-disabled')) return;
+        applyFilter(btn.dataset.filter);
+      });
+    });
+    document.getElementById('filter-clear').addEventListener('click', (e) => {
+      e.stopPropagation();
+      applyFilter(null);
+    });
+  }
+
+  // Expose applyFilter globally for empty-state button
+  window.applyFilter = function(key) {
+    if (key === null) {
+      activeFilter = null;
+      document.querySelectorAll('.kpi-filter').forEach(btn => btn.classList.remove('is-active'));
+      const badge = document.getElementById('filter-badge');
+      badge.classList.add('hidden');
+      badge.classList.remove('inline-flex');
+      renderInterventions();
+      updateMarkersVisibility();
+      return;
+    }
+    applyFilter(key);
+  };
+
+  // =================================================================
+  // BOOT
+  // =================================================================
+  document.addEventListener('DOMContentLoaded', () => {
+    initMap();
+    updateKpiCounts();
+    attachFilterHandlers();
+    renderInterventions();
+  });
+</script>
+
+</body>
+</html>

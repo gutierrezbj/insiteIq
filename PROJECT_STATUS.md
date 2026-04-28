@@ -1,10 +1,29 @@
 # InsiteIQ — Project Status
 
-**Estado:** Pausado · 2026-04-23
+**Estado:** Reanudado · 2026-04-24
 **Decisión:** Owner (JuanCho)
 **Último commit live en PROD:** `1cc3cd6` en rama `v1-foundation`
 **Dominio:** https://insiteiq.systemrapid.io
 **Repo:** https://github.com/gutierrezbj/insiteIq
+
+---
+
+## REANUDACIÓN 2026-04-24
+
+Owner firma reanudación oficial tras cerrar el vacío que motivó la pausa. Las tres condiciones que fallaban han sido resueltas:
+
+1. **Design System v1.7 formalizado** — ver `memory/design_system_insiteiq_v2.md`. Tokens cerrados (colores, tipografía, spacing), Solar Icon Set estilo Linear como único set oficial, arquitectura dual Cockpit + War Room validada contra SKYPRO360 OpsManager PROD, regla §3.6a timezone-aware personas obligatoria cross-vista, regla dura #0 Anti-plantilla IA como principio activo.
+
+2. **Mocks HTML canónicos validados** por el owner en tres ciclos de revisión iterativa:
+   - `mocks/insiteiq_cockpit_srs_dark_v2_static.html` — Cockpit de Operaciones SRS dark con KPI strip accionable, misiones activas, historial reciente, sidebar widgets (alertas/shields/meteo/resumen), bottom strip flota + personal con timezone live.
+   - `mocks/insiteiq_map_srs_dark_v2_static.html` — Espacio OPS War Room con mapa Positron light sobre shell dark, pines pill estilo SKYPRO360, popup referencia rápida con bloque timezone del tech, panel lateral slide-in con detalle completo (timeline · threads shared/internal · parts · briefing/capture/report · audit log · CTA escalar ball), KPI-as-filter con filtrado bidireccional minicards + markers, minicards grid auto-fit.
+   - `mocks/insiteiq_kanban_v2_static.html` — Kanban Intervenciones con drag & drop + drop zones + modal context-aware por stage + drag handle 6-dots + 5 columnas con sub-stage como badge.
+
+3. **Rol del agente LLM reposicionado** — el agente deja de ser diseñador autónomo. Ahora es **ejecutor 1:1 de mocks pre-aprobados**. Cumple la recomendación #2 del propio PROJECT_STATUS pausado: _"Usar agente LLM únicamente para traducir mocks a HTML/Tailwind 1:1, sin decisiones de diseño autónomas. Ejecutor, no diseñador."_
+
+Plan de extracción a React documentado en `memory/sprint_reanudacion_v2.md`, fases Alpha → Eta. Backend existente en PROD (FastAPI + MongoDB + todos los pasitos F-T + X-a..X-g + Y-a..Y-c + Z-a..Z-e) **no se toca** — la reanudación es capa visual exclusivamente.
+
+Branch de trabajo: `v1-foundation`. Commits etiquetados con prefijo `[v2]` para trazabilidad.
 
 ---
 

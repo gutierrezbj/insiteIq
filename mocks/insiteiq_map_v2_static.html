@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1440, initial-scale=1">
+<title>InsiteIQ · Mapa operacional (mock v2 estático)</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
+
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          display: ['"Instrument Sans"', 'sans-serif'],
+          body: ['"DM Sans"', 'sans-serif'],
+          mono: ['"JetBrains Mono"', 'monospace'],
+        },
+        colors: {
+          canvas: '#F9FAFB',
+          surface: '#FFFFFF',
+          'surface-subtle': '#F3F4F6',
+          header: '#0A0A0A',
+          'border-subtle': '#E5E7EB',
+          'border-strong': '#D1D5DB',
+          'text-primary': '#0F172A',
+          'text-secondary': '#475569',
+          'text-tertiary': '#94A3B8',
+          'text-on-dark': '#F1F5F9',
+          accent: '#0EA5E9',
+          'accent-hover': '#0284C7',
+          'accent-subtle': '#E0F2FE',
+          'accent-dark': '#0C7EA4',
+          brand: '#10B981',
+          'brand-dark': '#059669',
+          'stage-intake': '#3B82F6',
+          'stage-triage': '#3B82F6',
+          'stage-preflight': '#8B5CF6',
+          'stage-dispatched': '#7C3AED',
+          'stage-enroute': '#F59E0B',
+          'stage-onsite': '#EA580C',
+          'stage-resolved': '#22C55E',
+          'stage-closed': '#16A34A',
+          'stage-cancelled': '#6B7280',
+          'prio-urgent': '#DC2626',
+          'prio-high': '#F59E0B',
+          'prio-normal': '#475569',
+          'prio-low': '#60A5FA',
+          'shield-bronze': '#B45309',
+          'shield-bronze-plus': '#D97706',
+          'shield-silver': '#64748B',
+          'shield-gold': '#CA8A04',
+          'alert-sla': '#DC2626',
+          'alert-escalation': '#F59E0B',
+          'alert-noshow': '#EA580C',
+          'alert-parts': '#8B5CF6',
+          'alert-weather': '#0EA5E9',
+        },
+      }
+    }
+  }
+</script>
+
+<style>
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: #F9FAFB;
+    color: #0F172A;
+    margin: 0;
+    overflow: hidden;
+  }
+  html, body { height: 100vh; }
+  .label-caps {
+    font-size: 10px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .pulse-dot {
+    animation: pulseDot 1.8s ease-in-out infinite;
+  }
+  @keyframes pulseDot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.15); }
+  }
+
+  /* ==================== MAP ==================== */
+  #map {
+    flex: 1;
+    background: #F9FAFB;
+  }
+  .leaflet-container {
+    font-family: 'DM Sans', sans-serif;
+    background: #F9FAFB;
+  }
+  .leaflet-control-zoom {
+    border: none !important;
+    box-shadow: 0 2px 6px -1px rgba(15, 23, 42, 0.08) !important;
+  }
+  .leaflet-control-zoom a {
+    background: #FFFFFF !important;
+    color: #475569 !important;
+    border: 1px solid #E5E7EB !important;
+    border-radius: 6px !important;
+    margin-bottom: 4px !important;
+    width: 32px !important;
+    height: 32px !important;
+    line-height: 32px !important;
+    font-weight: 500 !important;
+  }
+  .leaflet-control-zoom a:hover {
+    background: #F3F4F6 !important;
+    color: #0F172A !important;
+  }
+  .leaflet-control-attribution {
+    background: rgba(255, 255, 255, 0.85) !important;
+    font-size: 10px !important;
+    color: #94A3B8 !important;
+    padding: 2px 8px !important;
+  }
+
+  /* ==================== CUSTOM MARKER ==================== */
+  .wo-marker {
+    background: transparent !important;
+    border: none !important;
+  }
+  .wo-marker-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #0A0A0A;
+    color: #F1F5F9;
+    padding: 4px 8px 4px 6px;
+    border-radius: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    box-shadow: 0 2px 4px rgba(15, 23, 42, 0.2), 0 0 0 2px rgba(255, 255, 255, 0.85);
+    cursor: pointer;
+    transition: transform 180ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 180ms ease;
+    white-space: nowrap;
+  }
+  .wo-marker-pill:hover {
+    transform: translateY(-1px) scale(1.04);
+    box-shadow: 0 6px 12px rgba(15, 23, 42, 0.28), 0 0 0 2px rgba(255, 255, 255, 0.9);
+  }
+  .wo-marker-pill.is-active {
+    transform: translateY(-2px) scale(1.06);
+    box-shadow: 0 8px 16px rgba(15, 23, 42, 0.32), 0 0 0 2px #0EA5E9;
+  }
+  .wo-marker-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .wo-marker-pill.is-urgent::after {
+    content: '';
+    position: absolute;
+    top: -3px;
+    right: -3px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #DC2626;
+    box-shadow: 0 0 0 2px #FFFFFF;
+    animation: pulseDot 1.6s ease-in-out infinite;
+  }
+  .wo-marker-pill {
+    position: relative;
+  }
+
+  /* ==================== LEFT PANEL · ALERTS ==================== */
+  .panel-scroll::-webkit-scrollbar { width: 6px; }
+  .panel-scroll::-webkit-scrollbar-thumb { background: #D1D5DB; border-radius: 3px; }
+
+  /* ==================== RIGHT PANEL · SLIDE-IN ==================== */
+  #site-panel {
+    transform: translateX(100%);
+    transition: transform 320ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  #site-panel.is-open {
+    transform: translateX(0);
+  }
+
+  /* ==================== TOAST ==================== */
+  #toast-stack {
+    position: fixed; bottom: 24px; right: 24px;
+    display: flex; flex-direction: column; gap: 8px;
+    z-index: 60; pointer-events: none;
+  }
+  .toast {
+    background: #FFFFFF; border: 1px solid #E5E7EB; border-left: 3px solid #0EA5E9;
+    border-radius: 8px; padding: 10px 14px; display: flex; align-items: center; gap: 10px;
+    font-size: 13px; color: #0F172A;
+    box-shadow: 0 4px 10px -2px rgba(15, 23, 42, 0.08), 0 2px 4px -1px rgba(15, 23, 42, 0.04);
+    min-width: 260px; max-width: 360px;
+    animation: toastIn 280ms cubic-bezier(0.16, 1, 0.3, 1);
+    pointer-events: auto;
+  }
+  .toast.toast-success { border-left-color: #10B981; }
+  .toast.toast-error { border-left-color: #DC2626; }
+  @keyframes toastIn {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes toastOut {
+    to { opacity: 0; transform: translateX(20px); }
+  }
+</style>
+</head>
+
+<body class="h-screen flex flex-col">
+
+<!-- =================================================================== -->
+<!-- HEADER DARK BAND (idéntico al Kanban mock)                          -->
+<!-- =================================================================== -->
+<header class="bg-header text-text-on-dark h-14 flex items-center px-6 border-b border-black/40 flex-shrink-0">
+  <div class="flex items-center gap-2.5 mr-8">
+    <div class="w-7 h-7 rounded-md bg-brand flex items-center justify-center">
+      <iconify-icon icon="solar:shield-check-linear" width="16" style="color: white;"></iconify-icon>
+    </div>
+    <div class="flex flex-col leading-tight">
+      <span class="font-display font-semibold text-[15px] text-white">InsiteIQ</span>
+      <span class="text-[10px] text-text-tertiary/90">Field services control</span>
+    </div>
+  </div>
+
+  <nav class="flex items-center gap-0.5 text-[13px] font-medium self-stretch">
+    <a href="#" class="flex items-center px-3 text-text-tertiary hover:text-white">Cockpit</a>
+    <a href="insiteiq_kanban_v2_static.html" class="flex items-center px-3 text-text-tertiary hover:text-white">Intervenciones</a>
+    <a href="#" class="flex items-center px-3 text-white relative">
+      Mapa
+      <span class="absolute left-3 right-3 bottom-0 h-[2px] bg-accent"></span>
+    </a>
+    <a href="#" class="flex items-center px-3 text-text-tertiary hover:text-white">Sitios</a>
+    <a href="#" class="flex items-center px-3 text-text-tertiary hover:text-white">Técnicos</a>
+    <a href="#" class="flex items-center px-3 text-text-tertiary hover:text-white">Contratos</a>
+    <a href="#" class="flex items-center px-3 text-text-tertiary hover:text-white">Inteligencia</a>
+    <a href="#" class="flex items-center px-3 text-text-tertiary hover:text-white">Finanzas</a>
+    <a href="#" class="flex items-center px-3 text-text-tertiary hover:text-white">Admin</a>
+  </nav>
+
+  <div class="flex-1"></div>
+
+  <div class="flex items-center gap-4">
+    <div class="flex items-center gap-1.5 text-[12px]">
+      <span class="w-1.5 h-1.5 rounded-full bg-brand pulse-dot"></span>
+      <span class="font-mono text-white">11</span>
+      <span class="text-text-tertiary">intervenciones activas</span>
+    </div>
+    <button class="p-1.5 rounded-md hover:bg-white/5 text-text-tertiary hover:text-white transition">
+      <iconify-icon icon="solar:widget-5-linear" width="20"></iconify-icon>
+    </button>
+    <button class="relative p-1.5 rounded-md hover:bg-white/5 text-text-tertiary hover:text-white transition">
+      <iconify-icon icon="solar:bell-linear" width="20"></iconify-icon>
+      <span class="absolute -top-0.5 -right-0.5 bg-prio-urgent text-white text-[10px] font-semibold w-4 h-4 rounded-full flex items-center justify-center">5</span>
+    </button>
+    <div class="w-px h-6 bg-white/10"></div>
+    <div class="flex items-center gap-2 pr-1">
+      <div class="w-8 h-8 rounded-full bg-accent flex items-center justify-center text-white text-[12px] font-semibold">JG</div>
+      <div class="flex flex-col leading-tight">
+        <span class="text-[13px] text-white">Juan G.</span>
+        <span class="text-[10px] text-text-tertiary">SRS Coordinator</span>
+      </div>
+      <button class="ml-2 p-1 rounded-md hover:bg-white/5 text-text-tertiary">
+        <iconify-icon icon="solar:logout-2-linear" width="16"></iconify-icon>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- =================================================================== -->
+<!-- TOP BAR · pills contadores                                           -->
+<!-- =================================================================== -->
+<section class="bg-surface border-b border-border-subtle px-6 py-3 flex items-center gap-3 flex-shrink-0">
+  <!-- Title -->
+  <h1 class="font-display text-[16px] font-semibold text-text-primary mr-2">Mapa operacional</h1>
+
+  <!-- Pills -->
+  <div class="flex items-center gap-2">
+    <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-stage-onsite/10 border border-stage-onsite/20">
+      <span class="w-2 h-2 rounded-full bg-stage-onsite"></span>
+      <span class="font-mono text-[13px] font-semibold text-stage-onsite">3</span>
+      <span class="text-[12px] text-text-secondary">En campo</span>
+    </div>
+    <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-stage-intake/10 border border-stage-intake/20">
+      <span class="w-2 h-2 rounded-full bg-stage-intake"></span>
+      <span class="font-mono text-[13px] font-semibold text-stage-intake">12</span>
+      <span class="text-[12px] text-text-secondary">Programadas</span>
+    </div>
+    <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-stage-closed/10 border border-stage-closed/20">
+      <span class="w-2 h-2 rounded-full bg-stage-closed"></span>
+      <span class="font-mono text-[13px] font-semibold text-stage-closed">8</span>
+      <span class="text-[12px] text-text-secondary">Cerradas hoy</span>
+    </div>
+    <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-subtle border border-border-subtle">
+      <iconify-icon icon="solar:user-speak-linear" width="13" style="color: #475569;"></iconify-icon>
+      <span class="font-mono text-[13px] font-semibold text-text-primary">5<span class="text-text-tertiary">/7</span></span>
+      <span class="text-[12px] text-text-secondary">Técnicos asignables</span>
+    </div>
+  </div>
+
+  <div class="flex-1"></div>
+
+  <!-- Filter quick -->
+  <button class="h-8 px-3 flex items-center gap-1.5 text-[12px] text-text-secondary border border-border-subtle rounded-full hover:border-border-strong transition">
+    <iconify-icon icon="solar:magnifer-linear" width="13"></iconify-icon>
+    Buscar sitio
+  </button>
+  <button class="h-8 px-3 flex items-center gap-1.5 text-[12px] text-text-secondary border border-border-subtle rounded-full hover:border-border-strong transition">
+    Estado <iconify-icon icon="solar:alt-arrow-down-linear" width="13"></iconify-icon>
+  </button>
+  <button class="h-8 px-3 flex items-center gap-1.5 text-[12px] text-text-secondary border border-border-subtle rounded-full hover:border-border-strong transition">
+    Shield <iconify-icon icon="solar:alt-arrow-down-linear" width="13"></iconify-icon>
+  </button>
+  <button class="h-8 w-8 flex items-center justify-center text-text-secondary border border-border-subtle rounded-full hover:border-border-strong transition" title="Centrar mapa" onclick="resetMapView()">
+    <iconify-icon icon="solar:refresh-linear" width="14"></iconify-icon>
+  </button>
+</section>
+
+<!-- =================================================================== -->
+<!-- MAIN · left panel alerts + map + right panel site detail             -->
+<!-- =================================================================== -->
+<main class="flex-1 relative flex min-h-0">
+
+  <!-- LEFT PANEL · ALERTAS -->
+  <aside class="w-[340px] bg-surface border-r border-border-subtle flex flex-col flex-shrink-0">
+    <header class="px-5 py-4 border-b border-border-subtle">
+      <div class="flex items-center justify-between mb-1">
+        <h2 class="font-display text-[14px] font-semibold text-text-primary uppercase tracking-wide">Alertas activas</h2>
+        <span class="px-2 py-0.5 rounded-full bg-prio-urgent/10 text-prio-urgent text-[11px] font-semibold font-mono">5</span>
+      </div>
+      <p class="text-[12px] text-text-tertiary">Cockpit de atención prioritaria</p>
+    </header>
+    <div id="alert-list" class="flex-1 overflow-y-auto panel-scroll p-3 space-y-2">
+      <!-- Injected by JS -->
+    </div>
+    <footer class="px-5 py-3 border-t border-border-subtle flex items-center justify-between">
+      <span class="text-[11px] text-text-tertiary">Orden: prioridad · antigüedad</span>
+      <button class="text-[12px] text-accent hover:text-accent-hover font-medium">Ver todas</button>
+    </footer>
+  </aside>
+
+  <!-- MAP -->
+  <div class="relative flex-1 min-w-0">
+    <div id="map" class="absolute inset-0"></div>
+
+    <!-- Bottom legend -->
+    <div class="absolute bottom-4 left-4 z-[400] bg-surface border border-border-subtle rounded-lg shadow-sm px-4 py-2.5 flex items-center gap-4">
+      <span class="label-caps text-text-tertiary">Estado</span>
+      <div class="flex items-center gap-3 text-[11px]">
+        <div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-stage-intake"></span><span class="text-text-secondary">Entrada</span></div>
+        <div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-stage-preflight"></span><span class="text-text-secondary">Preparando</span></div>
+        <div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-stage-enroute"></span><span class="text-text-secondary">En ruta</span></div>
+        <div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-stage-onsite"></span><span class="text-text-secondary">En sitio</span></div>
+        <div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-stage-resolved"></span><span class="text-text-secondary">Resuelta</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL · SITE DETAIL (slide-in) -->
+  <aside id="site-panel" class="absolute top-0 right-0 bottom-0 w-[380px] bg-surface border-l border-border-subtle shadow-xl z-[500] flex flex-col">
+    <!-- Content injected by JS -->
+  </aside>
+
+</main>
+
+<!-- Toast stack -->
+<div id="toast-stack"></div>
+
+<!-- =================================================================== -->
+<!-- SEED DATA + LOGIC                                                    -->
+<!-- =================================================================== -->
+<script>
+  const STAGE_META = {
+    intake:      { col: 'solicitadas', hex: '#3B82F6', label: 'Entrada' },
+    triage:      { col: 'solicitadas', hex: '#3B82F6', label: 'Triaje' },
+    pre_flight:  { col: 'preparando',  hex: '#8B5CF6', label: 'Preparando' },
+    dispatched:  { col: 'preparando',  hex: '#7C3AED', label: 'Despachada' },
+    en_route:    { col: 'en_campo',    hex: '#F59E0B', label: 'En ruta' },
+    on_site:     { col: 'en_campo',    hex: '#EA580C', label: 'En sitio' },
+    resolved:    { col: 'cerrando',    hex: '#22C55E', label: 'Resuelta' },
+  };
+
+  const SHIELD_META = {
+    bronze:      { hex: '#B45309', label: 'Bronze' },
+    bronze_plus: { hex: '#D97706', label: 'Bronze+' },
+    silver:      { hex: '#64748B', label: 'Silver' },
+    gold:        { hex: '#CA8A04', label: 'Gold' },
+  };
+
+  const ALERT_META = {
+    sla:        { hex: '#DC2626', label: 'SLA en riesgo',  icon: 'solar:danger-triangle-linear' },
+    escalation: { hex: '#F59E0B', label: 'Escalada',       icon: 'solar:alt-arrow-up-linear' },
+    noshow:     { hex: '#EA580C', label: 'No show',        icon: 'solar:user-cross-linear' },
+    parts:      { hex: '#8B5CF6', label: 'Repuesto bloqueado', icon: 'solar:box-linear' },
+    weather:    { hex: '#0EA5E9', label: 'Meteorología',   icon: 'solar:cloud-linear' },
+  };
+
+  // Sites activos con WO en curso. Lat/lng aproximados.
+  const SITES = [
+    { id: 'S001', name: 'Fractalia Madrid Sur',     client: 'Fractalia',  city: 'Madrid',    shield: 'gold',        lat: 40.3572, lng: -3.6806, stage: 'on_site',    wo: 'WO-2026-001', prio: 'URGENTE', tech: 'Agustín C.', tag: 'Correctivo',  desc: 'Cambio HDD servidor NOC.', sla: true, history: [3,5,4,6,5,7,6,8,7,9,8,10] },
+    { id: 'S002', name: 'Fractalia Barcelona Centro', client: 'Fractalia', city: 'Barcelona', shield: 'silver',      lat: 41.3851, lng: 2.1734,  stage: 'en_route',   wo: 'WO-2026-002', prio: 'ALTA',    tech: 'Hugo Q.',    tag: 'Correctivo',  desc: 'Instalación de router de respaldo.', sla: false, history: [2,3,3,4,3,4,5,4,5,4,6,5] },
+    { id: 'S003', name: 'Claro US Miami Tower',     client: 'Claro US',   city: 'Miami',     shield: 'bronze_plus', lat: 25.7617, lng: -80.1918, stage: 'intake',     wo: 'WO-2026-003', prio: 'NORMAL',  tech: null,         tag: 'Correctivo',  desc: 'Fiber splice segmento B.', sla: false, history: [1,2,1,3,2,2,3,2,4,3,3,4] },
+    { id: 'S004', name: 'Fractalia Valencia Norte', client: 'Fractalia',  city: 'Valencia',  shield: 'silver',      lat: 39.4940, lng: -0.3720, stage: 'pre_flight', wo: 'WO-2026-004', prio: 'NORMAL',  tech: 'Arlindo O.', tag: 'Preventivo',  desc: 'Preventivo trimestral rack principal.', sla: false, history: [2,2,3,2,3,3,2,3,4,3,3,4] },
+    { id: 'S005', name: 'Arcos Sevilla-07',         client: 'Grupo Arcos', city: 'Sevilla',  shield: 'gold',        lat: 37.3891, lng: -5.9845, stage: 'dispatched', wo: 'WO-2026-005', prio: 'ALTA',    tech: 'Agustín C.', tag: 'Rollout',     desc: 'Instalación de POS y red.', sla: false, history: [0,0,1,0,2,1,3,2,4,3,5,4] },
+    { id: 'S006', name: 'Fractalia Bilbao',         client: 'Fractalia',  city: 'Bilbao',    shield: 'bronze',      lat: 43.2630, lng: -2.9350, stage: 'triage',     wo: 'WO-2026-006', prio: 'ALTA',    tech: null,         tag: 'Correctivo',  desc: 'Reemplazo UPS, ticket escalado.', sla: false, history: [3,4,3,4,3,5,4,5,6,5,4,5] },
+    { id: 'S007', name: 'Claro US Orlando',         client: 'Claro US',   city: 'Orlando',   shield: 'bronze_plus', lat: 28.5383, lng: -81.3792, stage: 'resolved',   wo: 'WO-2026-007', prio: 'NORMAL',  tech: 'Hugo Q.',    tag: 'Rollout',     desc: 'Cableado estructurado piso 3.', sla: false, history: [1,1,2,1,2,2,1,2,3,2,2,3] },
+    { id: 'S009', name: 'Fractalia Málaga',         client: 'Fractalia',  city: 'Málaga',    shield: 'gold',        lat: 36.7213, lng: -4.4213, stage: 'on_site',    wo: 'WO-2026-009', prio: 'URGENTE', tech: 'Agustín C.', tag: 'Correctivo',  desc: 'Cambio switch core tras fallo.', sla: true, history: [4,5,4,5,6,5,6,7,6,7,8,7] },
+    { id: 'S010', name: 'Arcos Madrid-12',          client: 'Grupo Arcos', city: 'Madrid',   shield: 'gold',        lat: 40.4568, lng: -3.7038, stage: 'pre_flight', wo: 'WO-2026-010', prio: 'ALTA',    tech: 'Arlindo O.', tag: 'Rollout',     desc: 'Instalación de POS tienda nueva.', sla: false, history: [0,0,0,1,1,2,1,2,3,2,3,3] },
+    { id: 'S011', name: 'Fractalia Zaragoza',       client: 'Fractalia',  city: 'Zaragoza',  shield: 'bronze',      lat: 41.6488, lng: -0.8891, stage: 'intake',     wo: 'WO-2026-011', prio: 'BAJA',    tech: null,         tag: 'Preventivo',  desc: 'Preventivo AC rack.', sla: false, history: [1,1,1,2,1,2,2,1,2,2,2,2] },
+    { id: 'S012', name: 'Claro US NYC',             client: 'Claro US',   city: 'New York',  shield: 'gold',        lat: 40.7128, lng: -74.0060, stage: 'resolved',   wo: 'WO-2026-012', prio: 'ALTA',    tech: 'Agustín C.', tag: 'Migración',   desc: 'Migración datacenter fase 2.', sla: false, history: [2,3,3,4,3,5,4,5,6,5,7,6] },
+  ];
+
+  const ALERTS = [
+    { id: 'A001', siteId: 'S001', type: 'sla',        wo: 'WO-2026-001', title: 'Fractalia Madrid Sur',  detail: 'SLA Gold: quedan 42 min al breach.',        time: 'hace 18 min' },
+    { id: 'A002', siteId: 'S009', type: 'sla',        wo: 'WO-2026-009', title: 'Fractalia Málaga',      detail: 'Switch core sin redundancia operando.',     time: 'hace 35 min' },
+    { id: 'A003', siteId: 'S005', type: 'escalation', wo: 'WO-2026-005', title: 'Arcos Sevilla-07',      detail: 'Tech asignado pero sin confirmación.',      time: 'hace 1h 10min' },
+    { id: 'A004', siteId: 'S006', type: 'parts',      wo: 'WO-2026-006', title: 'Fractalia Bilbao',      detail: 'UPS de reemplazo en aduana Bilbao Puerto.', time: 'hace 2h 30min' },
+    { id: 'A005', siteId: 'S002', type: 'weather',    wo: 'WO-2026-002', title: 'Fractalia Barcelona Centro', detail: 'Alerta meteorológica nivel 2. Posible retraso llegada.', time: 'hace 3h' },
+  ];
+
+  let map, markers = {}, activeSiteId = null;
+
+  // =================================================================
+  // MAP INIT
+  // =================================================================
+  function initMap() {
+    map = L.map('map', {
+      zoomControl: true,
+      attributionControl: true,
+      preferCanvas: true,
+    }).setView([40.0, -2.0], 5);
+
+    // CartoDB Positron — clean light tiles (design system v2 §5.5)
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap &copy; CARTO',
+      subdomains: 'abcd',
+    }).addTo(map);
+
+    SITES.forEach(site => {
+      const stageHex = STAGE_META[site.stage].hex;
+      const urgentClass = site.prio === 'URGENTE' ? ' is-urgent' : '';
+      const html = `
+        <div class="wo-marker-pill${urgentClass}" data-site-id="${site.id}">
+          <span class="wo-marker-dot" style="background: ${stageHex};"></span>
+          <span>${site.wo}</span>
+        </div>
+      `;
+      const icon = L.divIcon({
+        className: 'wo-marker',
+        html: html,
+        iconSize: null,
+        iconAnchor: [60, 12],
+      });
+      const marker = L.marker([site.lat, site.lng], { icon, riseOnHover: true }).addTo(map);
+      marker.on('click', () => openSitePanel(site.id));
+      markers[site.id] = marker;
+    });
+  }
+
+  function resetMapView() {
+    if (!map) return;
+    map.setView([40.0, -2.0], 5);
+    closeSitePanel();
+  }
+
+  // =================================================================
+  // ALERT LIST
+  // =================================================================
+  function renderAlertList() {
+    const container = document.getElementById('alert-list');
+    container.innerHTML = ALERTS.map(a => {
+      const meta = ALERT_META[a.type];
+      return `
+        <button data-site-id="${a.siteId}" class="alert-row w-full text-left p-3 rounded-md border border-border-subtle bg-surface hover:border-border-strong hover:bg-surface-subtle/50 transition">
+          <div class="flex items-start gap-3">
+            <div class="w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0" style="background: ${meta.hex}15;">
+              <iconify-icon icon="${meta.icon}" width="16" style="color: ${meta.hex};"></iconify-icon>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 mb-0.5">
+                <span class="label-caps" style="color: ${meta.hex};">${meta.label}</span>
+                <span class="font-mono text-[10px] text-text-tertiary">${a.wo}</span>
+              </div>
+              <p class="text-[13px] font-medium text-text-primary leading-tight">${a.title}</p>
+              <p class="text-[12px] text-text-secondary mt-1 leading-snug">${a.detail}</p>
+              <div class="flex items-center gap-1 mt-1.5 text-[11px] text-text-tertiary">
+                <iconify-icon icon="solar:clock-circle-linear" width="11"></iconify-icon>
+                <span>${a.time}</span>
+              </div>
+            </div>
+          </div>
+        </button>
+      `;
+    }).join('');
+
+    container.querySelectorAll('.alert-row').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const siteId = btn.dataset.siteId;
+        const site = SITES.find(s => s.id === siteId);
+        if (!site) return;
+        map.flyTo([site.lat, site.lng], 10, { duration: 0.8 });
+        setTimeout(() => openSitePanel(siteId), 400);
+      });
+    });
+  }
+
+  // =================================================================
+  // SPARKLINE · 12 meses
+  // =================================================================
+  function renderSparkline(data) {
+    const W = 320, H = 50, PAD = 4;
+    const max = Math.max(...data, 1);
+    const pts = data.map((v, i) => {
+      const x = PAD + (i * ((W - 2*PAD) / (data.length - 1)));
+      const y = H - PAD - (v / max) * (H - 2*PAD);
+      return [x.toFixed(1), y.toFixed(1)];
+    });
+    const d = 'M' + pts.map(p => p.join(',')).join(' L');
+    const lastX = pts[pts.length-1][0];
+    const lastY = pts[pts.length-1][1];
+    const areaD = d + ` L${lastX},${H} L${PAD},${H} Z`;
+
+    return `
+      <svg width="100%" height="${H}" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+        <path d="${areaD}" fill="#10B98118" stroke="none"/>
+        <path d="${d}" stroke="#10B981" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="${lastX}" cy="${lastY}" r="3" fill="#10B981" stroke="#FFFFFF" stroke-width="1.5"/>
+      </svg>
+    `;
+  }
+
+  // =================================================================
+  // RIGHT PANEL · SITE DETAIL
+  // =================================================================
+  function openSitePanel(siteId) {
+    const site = SITES.find(s => s.id === siteId);
+    if (!site) return;
+
+    // Update marker states
+    Object.entries(markers).forEach(([id, m]) => {
+      const el = m.getElement();
+      if (!el) return;
+      const pill = el.querySelector('.wo-marker-pill');
+      if (pill) pill.classList.toggle('is-active', id === siteId);
+    });
+    activeSiteId = siteId;
+
+    const panel = document.getElementById('site-panel');
+    const stageMeta = STAGE_META[site.stage];
+    const shieldMeta = SHIELD_META[site.shield];
+    const siteAlerts = ALERTS.filter(a => a.siteId === siteId);
+
+    panel.innerHTML = `
+      <!-- Header -->
+      <header class="px-5 pt-5 pb-4 border-b border-border-subtle">
+        <div class="flex items-start justify-between gap-3 mb-3">
+          <div class="min-w-0">
+            <p class="label-caps text-text-tertiary mb-1">Sitio</p>
+            <h2 class="font-display text-[20px] font-bold text-text-primary leading-tight">${site.name}</h2>
+            <p class="text-[12px] text-text-secondary mt-0.5">${site.client} · ${site.city}</p>
+          </div>
+          <button onclick="closeSitePanel()" class="p-1 rounded-md text-text-secondary hover:text-text-primary hover:bg-surface-subtle transition" aria-label="Cerrar">
+            <iconify-icon icon="solar:close-circle-linear" width="20"></iconify-icon>
+          </button>
+        </div>
+        <div class="flex items-center gap-1.5 flex-wrap">
+          <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold uppercase tracking-wide" style="color: ${stageMeta.hex}; background: ${stageMeta.hex}15;">
+            <span class="w-1.5 h-1.5 rounded-full" style="background: ${stageMeta.hex};"></span>
+            ${stageMeta.label}
+          </span>
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium" style="background: ${shieldMeta.hex}15; color: ${shieldMeta.hex};">
+            <iconify-icon icon="solar:shield-linear" width="11"></iconify-icon>
+            ${shieldMeta.label}
+          </span>
+          <span class="px-2 py-0.5 text-[11px] rounded bg-surface-subtle text-text-secondary">${site.tag}</span>
+        </div>
+      </header>
+
+      <!-- Body scrollable -->
+      <div class="flex-1 overflow-y-auto panel-scroll p-5 space-y-5">
+
+        <!-- WO actual -->
+        <section>
+          <div class="label-caps text-text-tertiary mb-2">Intervención activa</div>
+          <div class="border border-border-subtle rounded-md p-3" style="border-top: 3px solid ${stageMeta.hex}; border-radius: 0 0 6px 6px;">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="font-mono text-[11px] text-text-tertiary">${site.wo}</span>
+              <span class="label-caps px-1.5 py-0.5 rounded" style="color: ${site.prio === 'URGENTE' ? '#DC2626' : site.prio === 'ALTA' ? '#F59E0B' : '#475569'}; background: ${site.prio === 'URGENTE' ? '#FEE2E2' : site.prio === 'ALTA' ? '#FEF3C7' : '#F1F5F9'};">${site.prio}</span>
+            </div>
+            <p class="text-[13px] text-text-primary font-medium mb-1">${site.desc}</p>
+            <div class="flex items-center gap-2 text-[11px] text-text-secondary mt-2">
+              ${site.tech ? `<iconify-icon icon="solar:user-linear" width="12"></iconify-icon><span>${site.tech}</span>` : '<span class="italic text-text-tertiary">Sin asignar</span>'}
+            </div>
+          </div>
+        </section>
+
+        <!-- Sparkline -->
+        <section>
+          <div class="flex items-center justify-between mb-2">
+            <div class="label-caps text-text-tertiary">Intervenciones · últimos 12 meses</div>
+            <span class="font-mono text-[11px] text-text-secondary">${site.history.reduce((a,b)=>a+b,0)} total</span>
+          </div>
+          <div class="bg-surface-subtle rounded-md p-3">
+            ${renderSparkline(site.history)}
+            <div class="flex justify-between mt-1 px-1">
+              <span class="text-[10px] text-text-tertiary font-mono">may 25</span>
+              <span class="text-[10px] text-text-tertiary font-mono">abr 26</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Alertas activas del site -->
+        ${siteAlerts.length > 0 ? `
+          <section>
+            <div class="label-caps text-text-tertiary mb-2">Alertas activas (${siteAlerts.length})</div>
+            <div class="space-y-2">
+              ${siteAlerts.map(a => {
+                const meta = ALERT_META[a.type];
+                return `
+                  <div class="border border-border-subtle rounded-md p-2.5" style="border-left: 3px solid ${meta.hex};">
+                    <div class="flex items-center gap-2 mb-1">
+                      <iconify-icon icon="${meta.icon}" width="13" style="color: ${meta.hex};"></iconify-icon>
+                      <span class="label-caps" style="color: ${meta.hex};">${meta.label}</span>
+                    </div>
+                    <p class="text-[12px] text-text-primary leading-snug">${a.detail}</p>
+                    <div class="flex items-center gap-2 mt-2">
+                      <button onclick="acknowledgeAlert('${a.id}')" class="flex-1 h-7 text-[11px] font-medium text-text-secondary border border-border-subtle rounded hover:border-border-strong transition">Reconocer</button>
+                      <button onclick="resolveAlert('${a.id}')" class="flex-1 h-7 text-[11px] font-medium text-white bg-brand hover:bg-brand-dark rounded transition">Resolver</button>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </section>
+        ` : `
+          <section>
+            <div class="label-caps text-text-tertiary mb-2">Alertas</div>
+            <div class="flex items-center gap-2 text-[12px] text-text-secondary p-3 bg-surface-subtle rounded-md">
+              <iconify-icon icon="solar:check-circle-linear" width="14" style="color: #10B981;"></iconify-icon>
+              Sin alertas activas en este sitio.
+            </div>
+          </section>
+        `}
+
+      </div>
+
+      <!-- Footer CTA -->
+      <footer class="px-5 py-4 border-t border-border-subtle bg-surface-subtle/40 space-y-2">
+        <button onclick="createIntervention('${site.id}')" class="w-full h-10 flex items-center justify-center gap-2 text-[13px] font-semibold text-white bg-brand hover:bg-brand-dark rounded-md transition">
+          <iconify-icon icon="solar:add-circle-linear" width="16"></iconify-icon>
+          Crear intervención
+        </button>
+        <button onclick="openWoDetail('${site.wo}')" class="w-full h-9 flex items-center justify-center gap-1.5 text-[12px] font-medium text-text-secondary hover:text-text-primary border border-border-subtle hover:border-border-strong rounded-md transition">
+          Ver detalle de ${site.wo}
+          <iconify-icon icon="solar:arrow-right-linear" width="13"></iconify-icon>
+        </button>
+      </footer>
+    `;
+
+    panel.classList.add('is-open');
+  }
+
+  function closeSitePanel() {
+    const panel = document.getElementById('site-panel');
+    panel.classList.remove('is-open');
+    Object.values(markers).forEach(m => {
+      const el = m.getElement();
+      if (!el) return;
+      const pill = el.querySelector('.wo-marker-pill');
+      if (pill) pill.classList.remove('is-active');
+    });
+    activeSiteId = null;
+  }
+
+  function acknowledgeAlert(alertId) {
+    showToast(`Alerta ${alertId} reconocida.`, 'info');
+  }
+  function resolveAlert(alertId) {
+    showToast(`Alerta ${alertId} marcada como resuelta.`, 'success');
+  }
+  function createIntervention(siteId) {
+    const site = SITES.find(s => s.id === siteId);
+    showToast(`Nueva intervención iniciada en ${site.name}`, 'success');
+  }
+  function openWoDetail(woCode) {
+    showToast(`Abriendo detalle de ${woCode}...`, 'info');
+  }
+
+  // =================================================================
+  // TOAST
+  // =================================================================
+  function showToast(message, kind = 'info') {
+    const stack = document.getElementById('toast-stack');
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${kind}`;
+    const iconMap = { info: 'solar:info-circle-linear', success: 'solar:check-circle-linear', error: 'solar:danger-circle-linear' };
+    const colorMap = { info: '#0EA5E9', success: '#10B981', error: '#DC2626' };
+    toast.innerHTML = `
+      <iconify-icon icon="${iconMap[kind]}" width="16" style="color: ${colorMap[kind]}; flex-shrink: 0;"></iconify-icon>
+      <span>${message}</span>
+    `;
+    stack.appendChild(toast);
+    setTimeout(() => {
+      toast.style.animation = 'toastOut 220ms ease forwards';
+      setTimeout(() => toast.remove(), 220);
+    }, 2600);
+  }
+
+  // =================================================================
+  // BOOT
+  // =================================================================
+  document.addEventListener('DOMContentLoaded', () => {
+    initMap();
+    renderAlertList();
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeSitePanel();
+    });
+  });
+</script>
+
+</body>
+</html>

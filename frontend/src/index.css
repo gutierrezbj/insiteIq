@@ -47,6 +47,293 @@
     letter-spacing: 0.12em;
     color: #78716C;
   }
+
+  /* ─────────────────────────────────────────────────────────────── */
+  /* v2 utilities · Design System InsiteIQ v1.7                      */
+  /* ─────────────────────────────────────────────────────────────── */
+
+  /* v2 label caps variant · para shell war room (más apagado) */
+  .label-caps-v2 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: #6B7280;
+  }
+
+  /* Stage border-top (signature DS v1.7 §3.2) */
+  .stage-border-top {
+    position: relative;
+  }
+  .stage-border-top::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 2px;
+    background: var(--stage-color, #F59E0B);
+  }
+
+  /* Accent left bar v2 (más fino que v1 warm amber, war-room spec) */
+  .accent-left-v2 {
+    position: relative;
+  }
+  .accent-left-v2::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--bar-color, #F59E0B);
+  }
+
+  /* KPI-as-filter button (DS v1.7 §KPI-filter pattern) */
+  .kpi-filter {
+    text-align: left;
+    background: #000000;
+    border: none;
+    cursor: pointer;
+    position: relative;
+    transition: background 180ms ease;
+    font-family: inherit;
+  }
+  .kpi-filter:hover {
+    background: rgba(255, 255, 255, 0.02);
+  }
+  .kpi-filter::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border: 1px solid transparent;
+    transition: border-color 180ms ease, box-shadow 180ms ease;
+  }
+  .kpi-filter.is-active::after {
+    border-color: #F59E0B;
+    box-shadow: inset 0 0 0 1px #F59E0B, 0 0 12px rgba(245, 158, 11, 0.25);
+  }
+  .kpi-filter.is-disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+  .kpi-filter.is-disabled:hover {
+    background: #000000;
+  }
+
+  /* WO marker pill · War Room (Mapbox / Leaflet markers) */
+  .wo-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #FFFFFF;
+    border: 1px solid #D1D5DB;
+    padding: 4px 9px 4px 7px;
+    border-radius: 999px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    font-weight: 500;
+    color: #1F2937;
+    white-space: nowrap;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12), 0 1px 2px rgba(15, 23, 42, 0.06);
+    transition: transform 180ms ease, box-shadow 180ms ease;
+    position: relative;
+    cursor: pointer;
+  }
+  .wo-pill:hover {
+    transform: translateY(-1px) scale(1.05);
+    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.2), 0 2px 4px rgba(15, 23, 42, 0.08);
+  }
+  .wo-pill.is-active {
+    transform: translateY(-2px) scale(1.08);
+    box-shadow: 0 6px 14px rgba(15, 23, 42, 0.25), 0 0 0 2px #F59E0B;
+  }
+  .wo-pill .wo-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .wo-pill.is-urgent::after {
+    content: '';
+    position: absolute;
+    top: -3px;
+    right: -3px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #DC2626;
+    box-shadow: 0 0 0 2px #FFFFFF;
+    animation: pulse-dot 1.5s ease-in-out infinite;
+  }
+
+  /* Drag handle 6-dots (DS v1.7 §3.6b) */
+  .drag-handle {
+    color: #CBD5E1;
+    transition: color 180ms ease;
+    flex-shrink: 0;
+  }
+  .group:hover .drag-handle,
+  .wo-card:hover .drag-handle {
+    color: #64748B;
+  }
+  .wo-card.is-dragging .drag-handle,
+  .is-dragging .drag-handle {
+    color: #0EA5E9;
+  }
+
+  /* Timeline vertical · side detail panel (DS v1.7 §5.3) */
+  .detail-tl-item {
+    display: flex;
+    gap: 12px;
+    padding: 8px 0;
+    position: relative;
+  }
+  .detail-tl-item:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 20px;
+    bottom: -4px;
+    width: 1px;
+    background: #2A2A2A;
+  }
+  .detail-tl-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 6px;
+    background: #2A2A2A;
+    border: 2px solid #0A0A0A;
+    box-shadow: 0 0 0 1px #2A2A2A;
+  }
+  .detail-tl-dot.is-done {
+    background: #22C55E;
+    box-shadow: 0 0 0 1px #22C55E;
+  }
+  .detail-tl-dot.is-active {
+    background: #F59E0B;
+    box-shadow: 0 0 0 1px #F59E0B;
+    animation: pulse-dot 1.6s ease-in-out infinite;
+  }
+  .detail-tl-dot.is-error {
+    background: #DC2626;
+    box-shadow: 0 0 0 1px #DC2626;
+  }
+
+  /* War Room scrollbar · más sutil sobre #000 */
+  .wr-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+  .wr-scroll::-webkit-scrollbar-thumb { background: #2A2A2A; border-radius: 3px; }
+  .wr-scroll::-webkit-scrollbar-track { background: transparent; }
+}
+
+/* ─────────────────────────────────────────────────────────────── */
+/* Leaflet · War Room (Fase Delta · DS v1.7 §5.5)                 */
+/* Mapa light Positron sobre shell dark · controles dark           */
+/* ─────────────────────────────────────────────────────────────── */
+
+.leaflet-container {
+  background: #F3F4F6;
+  font-family: 'JetBrains Mono', monospace;
+}
+.leaflet-control-zoom {
+  border: none !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3) !important;
+}
+.leaflet-control-zoom a {
+  background: #0A0A0A !important;
+  color: #E5E5E5 !important;
+  border: 1px solid #2A2A2A !important;
+  border-radius: 4px !important;
+  margin-bottom: 4px !important;
+  width: 32px !important;
+  height: 32px !important;
+  line-height: 32px !important;
+  font-weight: 400 !important;
+}
+.leaflet-control-zoom a:hover {
+  background: #1F1F1F !important;
+  color: #F59E0B !important;
+}
+.leaflet-control-attribution {
+  background: rgba(10, 10, 10, 0.78) !important;
+  color: #9CA3AF !important;
+  font-size: 10px !important;
+}
+.leaflet-control-attribution a {
+  color: #F59E0B !important;
+}
+.srs-marker {
+  background: transparent !important;
+  border: none !important;
+}
+
+/* Popup dark theme */
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  background: #0A0A0A !important;
+  color: #E5E5E5 !important;
+  border: 1px solid #2A2A2A !important;
+  box-shadow: 0 12px 28px -4px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(245, 158, 11, 0.2) !important;
+  border-radius: 4px !important;
+}
+.leaflet-popup-tip {
+  background: #0A0A0A !important;
+  border-right: 1px solid #2A2A2A !important;
+  border-bottom: 1px solid #2A2A2A !important;
+}
+.leaflet-popup-content {
+  margin: 0 !important;
+  width: 320px !important;
+  font-family: 'JetBrains Mono', monospace !important;
+}
+.leaflet-popup-close-button {
+  color: #6B7280 !important;
+  top: 10px !important;
+  right: 10px !important;
+  font-size: 18px !important;
+}
+.leaflet-popup-close-button:hover {
+  color: #F59E0B !important;
+}
+
+/* SideDetailPanel slide-in */
+.detail-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(2px);
+  z-index: 900;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 240ms ease;
+}
+.detail-overlay.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+.detail-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 520px;
+  max-width: 92vw;
+  background: #0A0A0A;
+  border-left: 1px solid #2A2A2A;
+  box-shadow: -24px 0 60px -8px rgba(0, 0, 0, 0.6);
+  z-index: 910;
+  transform: translateX(100%);
+  transition: transform 360ms cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  font-family: 'JetBrains Mono', monospace;
+}
+.detail-panel.is-open {
+  transform: translateX(0);
 }
 
 /* Scrollbar — warm dark */

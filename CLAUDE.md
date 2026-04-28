@@ -1,23 +1,26 @@
 # InsiteIQ — Claude Code Project Context
 
-> **⏸ PROYECTO PAUSADO · 2026-04-23**
+> **🟢 PROYECTO REANUDADO · 2026-04-24**
 >
-> Ver `PROJECT_STATUS.md` en la raíz para detalles completos del cierre,
-> qué queda vivo, qué no cerró, y recomendaciones si se retoma.
+> Owner firma reanudación tras cerrar Design System v1.7 + 3 mocks canónicos
+> validados. Ver `PROJECT_STATUS.md` para el registro completo de reanudación
+> y `memory/sprint_reanudacion_v2.md` para el plan de fases Alpha → Eta.
 >
-> Decisión del owner (JuanCho): incompatibilidad entre complejidad del
-> dominio y alcance real de ejecución autónoma de un agente LLM sin
-> mock de diseño pixel-perfect. Backend + data model son sólidos y
-> quedan en PROD. La capa UX del cockpit operativo no llegó a cerrar
-> tras 3 iteraciones.
+> **Regla rectora del sprint v2:** el agente ejecuta mocks 1:1, no inventa.
+> Fuente canónica visual: `memory/design_system_insiteiq_v2.md` (v1.7) y
+> `mocks/insiteiq_*_v2_static.html`. Si una pantalla no se puede construir
+> con referencia 1:1 al mock, se para y se vuelve al doc antes de inventar.
+>
+> Backend en PROD (FastAPI + MongoDB + pasitos F-T..Z-e) **no se toca** en
+> este sprint. Reanudación es capa visual exclusivamente.
 
 ## What is this
 Sistema operativo **interno SRS** para field services IT internacional. Construido por y para SRS, basado en 25 anos de dolor real operando soporte IT. **No es producto comercial.** Fractalia/Claro/clientes ven OUTPUT (reportes), nunca el software.
 
 > *"InsiteIQ sirve para arreglar las cagadas de cualquier compania que nos hace sufrir."* — JuanCho, 2026-04-15
 
-## Estado final (2026-04-23 · proyecto pausado)
-- **Status:** ⏸ PAUSADO por decisión del owner (JuanCho). Ver `PROJECT_STATUS.md` para contexto completo.
+## Estado actual (2026-04-24 · reanudado)
+- **Status:** 🟢 REANUDADO en sprint v2 (capa visual). Ver `PROJECT_STATUS.md` y `memory/sprint_reanudacion_v2.md`.
 - **Último commit live en PROD:** `1cc3cd6` en rama `v1-foundation`. Después vino `830df05` (docs de cierre).
 - **Fase alcanzada:** Fase 2 UI plumbing + Horizonte 2 Admin/Finance + Horizonte 3 AI Learning Engine · 22+ pasitos deployed (F-T + X-a..X-g + Y-a..Y-c + Z-a..Z-e)
 - **Branch activo:** `v1-foundation`

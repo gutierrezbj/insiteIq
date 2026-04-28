@@ -3,7 +3,7 @@
  * Router for the 3 spaces + auth guards.
  * Design WOW (Track B) fills these routes with real UX per space.
  */
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import RequireSpace from "./components/RequireSpace";
@@ -13,6 +13,8 @@ import ChangePasswordPage from "./pages/auth/ChangePasswordPage";
 import SrsLayout from "./spaces/srs/Layout";
 import SrsHome from "./spaces/srs/HomePage";
 import CockpitPage from "./components/cockpit/CockpitPage";
+import V2CockpitPage from "./spaces/srs/v2/CockpitPage";
+import V2EspacioOpsPage from "./spaces/srs/v2/EspacioOpsPage";
 import WorkOrdersListPage from "./spaces/srs/ops/WorkOrdersListPage";
 import WorkOrderDetailPage from "./spaces/srs/ops/WorkOrderDetailPage";
 import InterventionReportPage from "./spaces/srs/ops/InterventionReportPage";
@@ -41,7 +43,10 @@ import BriefingTodayPage from "./spaces/tech/BriefingTodayPage";
 function RootRedirect() {
   const { user } = useAuth();
   if (!user) return <Navigate to="/login" replace />;
-  if (user.must_change_password) return <Navigate to="/change-password" replace />;
+  // En dev mode saltamos este guard (mismo patrón que RequireSpace).
+  // Activar con VITE_FORCE_ROTATION=1 npm run dev si quieres probar el flow.
+  const skipRotation = import.meta.env.DEV && import.meta.env.VITE_FORCE_ROTATION !== "1";
+  if (user.must_change_password && !skipRotation) return <Navigate to="/change-password" replace />;
   const space = user.memberships?.[0]?.space;
   const target =
     space === "srs_coordinators" ? "/srs" :
@@ -57,6 +62,24 @@ function RequireUser({ children }) {
   if (!ready) return null;
   if (!user) return <Navigate to="/login" replace />;
   return children;
+}
+
+/**
+ * SrsCockpitRouter — decide entre el CockpitPage v1 (legacy) o el V2CockpitPage
+ * (Design System v1.7) según el flag de toggle.
+ *
+ * Toggle:
+ *   - env var `VITE_V2_SHELL=1` (siempre v2)
+ *   - query param `?v2=1` (v2 solo en esa sesión)
+ *
+ * Sin toggle → cockpit v1 actual.
+ */
+function SrsCockpitRouter() {
+  const location = useLocation();
+  const envV2 = import.meta.env.VITE_V2_SHELL === "1";
+  const queryV2 = new URLSearchParams(location.search).get("v2") === "1";
+  const useV2 = envV2 || queryV2;
+  return useV2 ? <V2CockpitPage scope="srs" /> : <CockpitPage scope="srs" />;
 }
 
 function NoAccessPage() {
@@ -98,7 +121,8 @@ export default function App() {
               </RequireSpace>
             }
           >
-            <Route index element={<CockpitPage scope="srs" />} />
+            <Route index element={<SrsCockpitRouter />} />
+            <Route path="espacio-ops" element={<V2EspacioOpsPage />} />
             <Route path="overview" element={<SrsHome />} />
             <Route path="ops" element={<WorkOrdersListPage />} />
             <Route path="ops/:wo_id" element={<WorkOrderDetailPage />} />

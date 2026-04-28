@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1440, initial-scale=1">
+<title>InsiteIQ · Intervenciones (mock v2 estático)</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
+
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          display: ['"Instrument Sans"', 'sans-serif'],
+          body: ['"DM Sans"', 'sans-serif'],
+          mono: ['"JetBrains Mono"', 'monospace'],
+        },
+        colors: {
+          canvas: '#F9FAFB',
+          surface: '#FFFFFF',
+          'surface-subtle': '#F3F4F6',
+          header: '#0A0A0A',
+          'border-subtle': '#E5E7EB',
+          'border-strong': '#D1D5DB',
+          'text-primary': '#0F172A',
+          'text-secondary': '#475569',
+          'text-tertiary': '#94A3B8',
+          'text-on-dark': '#F1F5F9',
+          accent: '#0EA5E9',
+          'accent-hover': '#0284C7',
+          'accent-subtle': '#E0F2FE',
+          'accent-dark': '#0C7EA4',
+          brand: '#10B981',
+          'brand-dark': '#059669',
+          'stage-intake': '#3B82F6',
+          'stage-triage': '#3B82F6',
+          'stage-preflight': '#8B5CF6',
+          'stage-dispatched': '#7C3AED',
+          'stage-enroute': '#F59E0B',
+          'stage-onsite': '#EA580C',
+          'stage-resolved': '#22C55E',
+          'stage-closed': '#16A34A',
+          'stage-cancelled': '#6B7280',
+          'prio-urgent': '#DC2626',
+          'prio-high': '#F59E0B',
+          'prio-normal': '#475569',
+          'prio-low': '#60A5FA',
+          'shield-bronze': '#B45309',
+          'shield-bronze-plus': '#D97706',
+          'shield-silver': '#64748B',
+          'shield-gold': '#CA8A04',
+        },
+      }
+    }
+  }
+</script>
+
+<style>
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: #F9FAFB;
+    color: #0F172A;
+    margin: 0;
+  }
+  .label-caps {
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .wo-card {
+    transition: transform 180ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 180ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .wo-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px -2px rgba(15, 23, 42, 0.06), 0 2px 4px -1px rgba(15, 23, 42, 0.04);
+  }
+  .nav-link {
+    transition: color 180ms ease;
+  }
+  .kanban-scroll::-webkit-scrollbar {
+    height: 10px;
+  }
+  .kanban-scroll::-webkit-scrollbar-track {
+    background: #F3F4F6;
+  }
+  .kanban-scroll::-webkit-scrollbar-thumb {
+    background: #D1D5DB;
+    border-radius: 5px;
+  }
+  .col-scroll::-webkit-scrollbar {
+    width: 6px;
+  }
+  .col-scroll::-webkit-scrollbar-thumb {
+    background: #D1D5DB;
+    border-radius: 3px;
+  }
+  .pulse-dot {
+    animation: pulseDot 1.8s ease-in-out infinite;
+  }
+  @keyframes pulseDot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.15); }
+  }
+
+  /* ==================== DRAG & DROP STATES ==================== */
+  .wo-card[draggable="true"] {
+    cursor: grab;
+  }
+  .wo-card[draggable="true"]:active {
+    cursor: grabbing;
+  }
+  .drag-handle {
+    color: #CBD5E1;
+    transition: color 180ms ease;
+    flex-shrink: 0;
+  }
+  .wo-card:hover .drag-handle {
+    color: #64748B;
+  }
+  .wo-card.is-dragging .drag-handle {
+    color: #0EA5E9;
+  }
+  .wo-card.is-dragging {
+    opacity: 0.4;
+    transform: scale(0.98);
+  }
+  /* When drag is active, all columns show ready state */
+  body.drag-active [data-col] {
+    outline: 2px dashed #D1D5DB;
+    outline-offset: -2px;
+    transition: outline-color 180ms ease;
+  }
+  /* Column under cursor */
+  body.drag-active [data-col].is-drop-target {
+    outline: 2px dashed #0EA5E9;
+    outline-offset: -2px;
+    background: #E0F2FE;
+  }
+  body.drag-active [data-col].is-drop-target .col-scroll {
+    background: #E0F2FE;
+  }
+
+  /* ==================== TOAST ==================== */
+  #toast-stack {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 60;
+    pointer-events: none;
+  }
+  .toast {
+    background: #FFFFFF;
+    border: 1px solid #E5E7EB;
+    border-left: 3px solid #0EA5E9;
+    border-radius: 8px;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: #0F172A;
+    box-shadow: 0 4px 10px -2px rgba(15, 23, 42, 0.08), 0 2px 4px -1px rgba(15, 23, 42, 0.04);
+    min-width: 260px;
+    max-width: 360px;
+    animation: toastIn 280ms cubic-bezier(0.16, 1, 0.3, 1);
+    pointer-events: auto;
+  }
+  .toast.toast-success { border-left-color: #10B981; }
+  .toast.toast-error { border-left-color: #DC2626; }
+  @keyframes toastIn {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes toastOut {
+    to { opacity: 0; transform: translateX(20px); }
+  }
+
+  /* ==================== MODAL ==================== */
+  #wo-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(10, 10, 10, 0.55);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+    padding: 24px;
+    overflow-y: auto;
+  }
+  #wo-modal-overlay.is-open {
+    display: flex;
+    animation: overlayIn 200ms ease;
+  }
+  @keyframes overlayIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  #wo-modal-panel {
+    background: #FFFFFF;
+    width: 560px;
+    max-width: 100%;
+    border-radius: 12px;
+    box-shadow: 0 20px 40px -8px rgba(15, 23, 42, 0.2), 0 8px 16px -4px rgba(15, 23, 42, 0.1);
+    animation: panelIn 280ms cubic-bezier(0.16, 1, 0.3, 1);
+    max-height: calc(100vh - 48px);
+    display: flex;
+    flex-direction: column;
+  }
+  @keyframes panelIn {
+    from { opacity: 0; transform: scale(0.96) translateY(8px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  .modal-section-label {
+    font-size: 10px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #94A3B8;
+    margin-bottom: 6px;
+  }
+  .modal-timeline-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 8px 0;
+    position: relative;
+  }
+  .modal-timeline-item:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 18px;
+    bottom: -2px;
+    width: 1px;
+    background: #E5E7EB;
+  }
+  .modal-timeline-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 5px;
+    background: #E5E7EB;
+    border: 2px solid #FFFFFF;
+    box-shadow: 0 0 0 1px #E5E7EB;
+  }
+  .modal-timeline-dot.is-done {
+    background: #10B981;
+    box-shadow: 0 0 0 1px #10B981;
+  }
+  .modal-timeline-dot.is-active {
+    background: #0EA5E9;
+    box-shadow: 0 0 0 1px #0EA5E9;
+    animation: pulseDot 1.8s ease-in-out infinite;
+  }
+</style>
+</head>
+
+<body class="min-h-screen">
+
+<!-- =================================================================== -->
+<!-- HEADER DARK BAND (OverWatch pattern 1:1)                            -->
+<!-- =================================================================== -->
+<header class="bg-header text-text-on-dark h-14 flex items-center px-6 border-b border-black/40">
+  <!-- Logo + product name -->
+  <div class="flex items-center gap-2.5 mr-8">
+    <div class="w-7 h-7 rounded-md bg-brand flex items-center justify-center">
+      <iconify-icon icon="solar:shield-check-linear" width="16" style="color: white;"></iconify-icon>
+    </div>
+    <div class="flex flex-col leading-tight">
+      <span class="font-display font-semibold text-[15px] text-white">InsiteIQ</span>
+      <span class="text-[10px] text-text-tertiary/90">Field services control</span>
+    </div>
+  </div>
+
+  <!-- Nav horizontal · active item = white + accent underline within item -->
+  <nav class="flex items-center gap-0.5 text-[13px] font-medium self-stretch">
+    <a href="#" class="nav-link flex items-center px-3 text-text-tertiary hover:text-white">Cockpit</a>
+    <a href="#" class="nav-link flex items-center px-3 text-white relative">
+      Intervenciones
+      <span class="absolute left-3 right-3 bottom-0 h-[2px] bg-accent"></span>
+    </a>
+    <a href="#" class="nav-link flex items-center px-3 text-text-tertiary hover:text-white">Mapa</a>
+    <a href="#" class="nav-link flex items-center px-3 text-text-tertiary hover:text-white">Sitios</a>
+    <a href="#" class="nav-link flex items-center px-3 text-text-tertiary hover:text-white">Técnicos</a>
+    <a href="#" class="nav-link flex items-center px-3 text-text-tertiary hover:text-white">Contratos</a>
+    <a href="#" class="nav-link flex items-center px-3 text-text-tertiary hover:text-white">Inteligencia</a>
+    <a href="#" class="nav-link flex items-center px-3 text-text-tertiary hover:text-white">Finanzas</a>
+    <a href="#" class="nav-link flex items-center px-3 text-text-tertiary hover:text-white">Admin</a>
+  </nav>
+
+  <!-- Spacer -->
+  <div class="flex-1"></div>
+
+  <!-- Right cluster -->
+  <div class="flex items-center gap-4">
+    <!-- Counter global -->
+    <div class="flex items-center gap-1.5 text-[12px]">
+      <span class="w-1.5 h-1.5 rounded-full bg-brand pulse-dot"></span>
+      <span class="font-mono text-white">11</span>
+      <span class="text-text-tertiary">WOs activas</span>
+    </div>
+    <!-- Dashboard icon -->
+    <button class="p-1.5 rounded-md hover:bg-white/5 text-text-tertiary hover:text-white transition">
+      <iconify-icon icon="solar:widget-5-linear" width="20"></iconify-icon>
+    </button>
+    <!-- Alertas badge -->
+    <button class="relative p-1.5 rounded-md hover:bg-white/5 text-text-tertiary hover:text-white transition">
+      <iconify-icon icon="solar:bell-linear" width="20"></iconify-icon>
+      <span class="absolute -top-0.5 -right-0.5 bg-prio-urgent text-white text-[10px] font-semibold w-4 h-4 rounded-full flex items-center justify-center">1</span>
+    </button>
+    <!-- Divider -->
+    <div class="w-px h-6 bg-white/10"></div>
+    <!-- Avatar -->
+    <div class="flex items-center gap-2 pr-1">
+      <div class="w-8 h-8 rounded-full bg-accent flex items-center justify-center text-white text-[12px] font-semibold">JG</div>
+      <div class="flex flex-col leading-tight">
+        <span class="text-[13px] text-white">Juan G.</span>
+        <span class="text-[10px] text-text-tertiary">SRS Coordinator</span>
+      </div>
+      <button class="ml-2 p-1 rounded-md hover:bg-white/5 text-text-tertiary">
+        <iconify-icon icon="solar:logout-2-linear" width="16"></iconify-icon>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- =================================================================== -->
+<!-- KPI STRIP (SKYPRO360 pattern enriquecido con icon cards)            -->
+<!-- =================================================================== -->
+<section class="bg-surface border-b border-border-subtle px-6 py-4">
+  <div class="grid grid-cols-6 gap-3">
+    <!-- KPI 1: WOs activas -->
+    <div class="bg-surface border border-border-subtle rounded-md px-4 py-3 flex items-center gap-3">
+      <div class="w-10 h-10 rounded-md bg-brand flex items-center justify-center flex-shrink-0">
+        <iconify-icon icon="solar:chart-2-linear" width="20" style="color: white;"></iconify-icon>
+      </div>
+      <div class="min-w-0">
+        <div class="font-display text-[26px] font-semibold leading-none text-text-primary">11</div>
+        <div class="text-[12px] text-text-secondary mt-0.5">WOs activas</div>
+        <div class="text-[10px] text-text-tertiary">+2 desde ayer</div>
+      </div>
+    </div>
+    <!-- KPI 2: Programadas -->
+    <div class="bg-surface border border-border-subtle rounded-md px-4 py-3 flex items-center gap-3">
+      <div class="w-10 h-10 rounded-md bg-stage-intake flex items-center justify-center flex-shrink-0">
+        <iconify-icon icon="solar:calendar-linear" width="20" style="color: white;"></iconify-icon>
+      </div>
+      <div class="min-w-0">
+        <div class="font-display text-[26px] font-semibold leading-none text-text-primary">6</div>
+        <div class="text-[12px] text-text-secondary mt-0.5">Programadas</div>
+        <div class="text-[10px] text-text-tertiary">Entrada + Preparación</div>
+      </div>
+    </div>
+    <!-- KPI 3: Técnicos en campo -->
+    <div class="bg-surface border border-border-subtle rounded-md px-4 py-3 flex items-center gap-3">
+      <div class="w-10 h-10 rounded-md bg-stage-onsite flex items-center justify-center flex-shrink-0">
+        <iconify-icon icon="solar:user-speak-linear" width="20" style="color: white;"></iconify-icon>
+      </div>
+      <div class="min-w-0">
+        <div class="font-display text-[26px] font-semibold leading-none text-text-primary">2</div>
+        <div class="text-[12px] text-text-secondary mt-0.5">Técnicos en campo</div>
+        <div class="text-[10px] text-text-tertiary">Agustín · Hugo</div>
+      </div>
+    </div>
+    <!-- KPI 4: Shields OK -->
+    <div class="bg-surface border border-border-subtle rounded-md px-4 py-3 flex items-center gap-3">
+      <div class="w-10 h-10 rounded-md bg-brand-dark flex items-center justify-center flex-shrink-0">
+        <iconify-icon icon="solar:shield-check-linear" width="20" style="color: white;"></iconify-icon>
+      </div>
+      <div class="min-w-0">
+        <div class="font-display text-[26px] font-semibold leading-none text-text-primary">13</div>
+        <div class="text-[12px] text-text-secondary mt-0.5">Shields OK</div>
+        <div class="text-[10px] text-text-tertiary">1 próximo a renovar</div>
+      </div>
+    </div>
+    <!-- KPI 5: Preparaciones sin confirmar -->
+    <div class="bg-surface border border-border-subtle rounded-md px-4 py-3 flex items-center gap-3">
+      <div class="w-10 h-10 rounded-md bg-stage-preflight flex items-center justify-center flex-shrink-0">
+        <iconify-icon icon="solar:document-text-linear" width="20" style="color: white;"></iconify-icon>
+      </div>
+      <div class="min-w-0">
+        <div class="font-display text-[26px] font-semibold leading-none text-text-primary">2</div>
+        <div class="text-[12px] text-text-secondary mt-0.5">Preparaciones sin firmar</div>
+        <div class="text-[10px] text-text-tertiary">Despachadas sin confirmación del técnico</div>
+      </div>
+    </div>
+    <!-- KPI 6: Alertas SLA -->
+    <div class="bg-surface border border-border-subtle rounded-md px-4 py-3 flex items-center gap-3">
+      <div class="w-10 h-10 rounded-md bg-prio-urgent flex items-center justify-center flex-shrink-0">
+        <iconify-icon icon="solar:bell-linear" width="20" style="color: white;"></iconify-icon>
+      </div>
+      <div class="min-w-0">
+        <div class="font-display text-[26px] font-semibold leading-none text-text-primary">1</div>
+        <div class="text-[12px] text-text-secondary mt-0.5">Alertas SLA</div>
+        <div class="text-[10px] text-prio-urgent font-medium">Fractalia Madrid Sur</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =================================================================== -->
+<!-- FILTER BAR                                                           -->
+<!-- =================================================================== -->
+<section class="bg-surface border-b border-border-subtle px-6 py-3 flex items-center gap-3">
+  <!-- Search -->
+  <div class="relative">
+    <iconify-icon icon="solar:magnifer-linear" width="16" class="absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary"></iconify-icon>
+    <input type="text" placeholder="Buscar WO, site, cliente, técnico..." class="h-9 w-80 pl-9 pr-3 text-[13px] rounded-full border border-border-subtle bg-surface-subtle focus:border-accent focus:bg-white focus:outline-none transition">
+  </div>
+
+  <!-- Filter dropdowns -->
+  <button class="h-9 px-3 flex items-center gap-1.5 text-[13px] text-text-secondary border border-border-subtle rounded-full hover:border-border-strong transition">
+    Prioridad <iconify-icon icon="solar:alt-arrow-down-linear" width="14"></iconify-icon>
+  </button>
+  <button class="h-9 px-3 flex items-center gap-1.5 text-[13px] text-text-secondary border border-border-subtle rounded-full hover:border-border-strong transition">
+    Cliente <iconify-icon icon="solar:alt-arrow-down-linear" width="14"></iconify-icon>
+  </button>
+  <button class="h-9 px-3 flex items-center gap-1.5 text-[13px] text-text-secondary border border-border-subtle rounded-full hover:border-border-strong transition">
+    Shield <iconify-icon icon="solar:alt-arrow-down-linear" width="14"></iconify-icon>
+  </button>
+  <button class="h-9 px-3 flex items-center gap-1.5 text-[13px] text-text-secondary border border-border-subtle rounded-full hover:border-border-strong transition">
+    Técnico <iconify-icon icon="solar:alt-arrow-down-linear" width="14"></iconify-icon>
+  </button>
+
+  <div class="flex-1"></div>
+
+  <!-- Toggle canceladas -->
+  <label class="flex items-center gap-2 text-[12px] text-text-secondary cursor-pointer">
+    <input type="checkbox" id="toggleCancelled" class="accent-accent">
+    Ver canceladas
+  </label>
+
+  <!-- Refresh -->
+  <button class="h-9 w-9 flex items-center justify-center text-text-secondary border border-border-subtle rounded-full hover:border-border-strong transition">
+    <iconify-icon icon="solar:refresh-linear" width="16"></iconify-icon>
+  </button>
+
+  <!-- CTA primary -->
+  <button class="h-9 px-4 flex items-center gap-2 text-[13px] font-medium text-white bg-accent hover:bg-accent-hover rounded-full transition">
+    + Nueva solicitud
+  </button>
+</section>
+
+<!-- =================================================================== -->
+<!-- KANBAN BOARD                                                         -->
+<!-- =================================================================== -->
+<main class="px-6 py-4 overflow-x-auto kanban-scroll">
+  <div id="kanbanBoard" class="flex gap-4" style="min-width: max-content;">
+    <!-- Columns injected by JS -->
+  </div>
+</main>
+
+<!-- Toast stack -->
+<div id="toast-stack"></div>
+
+<!-- =================================================================== -->
+<!-- WO MODAL (context-aware por stage)                                   -->
+<!-- =================================================================== -->
+<div id="wo-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="wo-modal-title">
+  <div id="wo-modal-panel">
+    <!-- Content injected by JS -->
+  </div>
+</div>
+
+<!-- =================================================================== -->
+<!-- SEED DATA + RENDER                                                   -->
+<!-- =================================================================== -->
+<script>
+  // NOTA: las keys (intake, triage, etc) son identifiers técnicos
+  // que matchean con el state machine del backend — NO se traducen.
+  // Solo se traducen los `label` que son lo que ve el usuario.
+  const STAGE_META = {
+    intake:      { col: 'solicitadas', hex: '#3B82F6', label: 'Entrada' },
+    triage:      { col: 'solicitadas', hex: '#3B82F6', label: 'Triaje' },
+    pre_flight:  { col: 'preparando',  hex: '#8B5CF6', label: 'Preparando' },
+    dispatched:  { col: 'preparando',  hex: '#7C3AED', label: 'Despachada' },
+    en_route:    { col: 'en_campo',    hex: '#F59E0B', label: 'En ruta' },
+    on_site:     { col: 'en_campo',    hex: '#EA580C', label: 'En sitio' },
+    resolved:    { col: 'cerrando',    hex: '#22C55E', label: 'Resuelta' },
+    closed:      { col: 'cerradas',    hex: '#16A34A', label: 'Cerrada' },
+    cancelled:   { col: 'canceladas',  hex: '#6B7280', label: 'Cancelada' },
+  };
+
+  const COLUMNS = [
+    { id: 'solicitadas', title: 'Solicitadas' },
+    { id: 'preparando',  title: 'Preparando' },
+    { id: 'en_campo',    title: 'En campo' },
+    { id: 'cerrando',    title: 'Cerrando' },
+    { id: 'cerradas',    title: 'Cerradas' },
+    { id: 'canceladas',  title: 'Canceladas', hidden: true },
+  ];
+
+  const PRIO_META = {
+    URGENTE: { hex: '#DC2626', bg: '#FEE2E2' },
+    ALTA:    { hex: '#F59E0B', bg: '#FEF3C7' },
+    NORMAL:  { hex: '#475569', bg: '#F1F5F9' },
+    BAJA:    { hex: '#60A5FA', bg: '#DBEAFE' },
+  };
+
+  const SHIELD_META = {
+    bronze:       { hex: '#B45309', label: 'Bronze' },
+    bronze_plus:  { hex: '#D97706', label: 'Bronze+' },
+    silver:       { hex: '#64748B', label: 'Silver' },
+    gold:         { hex: '#CA8A04', label: 'Gold' },
+  };
+
+  const SEED_WOS = [
+    { code: 'WO-2026-001', stage: 'on_site',    prio: 'URGENTE', site: 'Fractalia Madrid Sur',     client: 'Fractalia',  city: 'Madrid',    shield: 'gold',        tag: 'Correctivo',  desc: 'Cambio HDD servidor NOC. Cluster degradado, replicación pendiente.',    tech: 'Agustín C.',   time: 'hace 38 min',  sla: true },
+    { code: 'WO-2026-002', stage: 'en_route',   prio: 'ALTA',    site: 'Fractalia Barcelona Centro', client: 'Fractalia', city: 'Barcelona', shield: 'silver',      tag: 'Correctivo',  desc: 'Instalación de router de respaldo del core. Requiere ventana de mantenimiento 02:00-04:00 AM.', tech: 'Hugo Q.',     time: 'hace 1h 12min', sla: false },
+    { code: 'WO-2026-003', stage: 'intake',     prio: 'NORMAL',  site: 'Claro US Miami Tower',     client: 'Claro US',   city: 'Miami',     shield: 'bronze_plus', tag: 'Correctivo',  desc: 'Fiber splice segmento B. Pérdida de señal intermitente reportada por NOC.', tech: null,          time: 'hace 3h',     sla: false },
+    { code: 'WO-2026-004', stage: 'pre_flight', prio: 'NORMAL',  site: 'Fractalia Valencia Norte', client: 'Fractalia',  city: 'Valencia',  shield: 'silver',      tag: 'Preventivo',  desc: 'Preventivo trimestral del rack principal. Lista de 24 ítems más limpieza de filtros.', tech: 'Arlindo O.',  time: 'hace 4h',     sla: false },
+    { code: 'WO-2026-005', stage: 'dispatched', prio: 'ALTA',    site: 'Arcos Sevilla-07',         client: 'Grupo Arcos', city: 'Sevilla',  shield: 'gold',        tag: 'Rollout',     desc: 'Instalación de POS y red en tienda nueva. Plan de equipamiento de 18 ítems.',       tech: 'Agustín C.',  time: 'hace 5h',     sla: false },
+    { code: 'WO-2026-006', stage: 'triage',     prio: 'ALTA',    site: 'Fractalia Bilbao',         client: 'Fractalia',  city: 'Bilbao',    shield: 'bronze',      tag: 'Correctivo',  desc: 'Reemplazo UPS, ticket escalado. Actualmente operando con bypass.',          tech: null,          time: 'hace 6h',     sla: false },
+    { code: 'WO-2026-007', stage: 'resolved',   prio: 'NORMAL',  site: 'Claro US Orlando',         client: 'Claro US',   city: 'Orlando',   shield: 'bronze_plus', tag: 'Rollout',     desc: 'Cableado estructurado piso 3. Certificación pendiente de firma del cliente.',   tech: 'Hugo Q.',     time: 'hace 8h',     sla: false },
+    { code: 'WO-2026-008', stage: 'closed',     prio: 'NORMAL',  site: 'Fractalia Sevilla Este',   client: 'Fractalia',  city: 'Sevilla',   shield: 'silver',      tag: 'Auditoría',   desc: 'Auditoría anual de cumplimiento. Informe emitido por 3 canales. Firma Fractalia OK.',   tech: 'Luis S.',     time: 'hace 1d',     sla: false },
+    { code: 'WO-2026-009', stage: 'on_site',    prio: 'URGENTE', site: 'Fractalia Málaga',         client: 'Fractalia',  city: 'Málaga',    shield: 'gold',        tag: 'Correctivo',  desc: 'Cambio de switch core tras fallo catastrófico. Repuestos ya en sitio.',            tech: 'Agustín C.',  time: 'hace 2h',     sla: false },
+    { code: 'WO-2026-010', stage: 'pre_flight', prio: 'ALTA',    site: 'Arcos Madrid-12',          client: 'Grupo Arcos', city: 'Madrid',   shield: 'gold',        tag: 'Rollout',     desc: 'Instalación de POS en tienda nueva. Lista de preparación en curso.',              tech: 'Arlindo O.',  time: 'hace 7h',     sla: false },
+    { code: 'WO-2026-011', stage: 'intake',     prio: 'BAJA',    site: 'Fractalia Zaragoza',       client: 'Fractalia',  city: 'Zaragoza',  shield: 'bronze',      tag: 'Preventivo',  desc: 'Preventivo AC rack según calendario. Baja prioridad, sin impacto operativo.', tech: null,          time: 'hace 1d',     sla: false },
+    { code: 'WO-2026-012', stage: 'resolved',   prio: 'ALTA',    site: 'Claro US NYC',             client: 'Claro US',   city: 'New York',  shield: 'gold',        tag: 'Migración',   desc: 'Migración del datacenter fase 2. Pendiente firma del cliente y 3 ítems del informe.',    tech: 'Agustín C.',  time: 'hace 1d',     sla: false },
+    { code: 'WO-2026-013', stage: 'closed',     prio: 'NORMAL',  site: 'Fractalia Granada',        client: 'Fractalia',  city: 'Granada',   shield: 'silver',      tag: 'Correctivo',  desc: 'Reinicio de vecinos BGP tras ventana del operador. Todo normal tras la intervención.',  tech: 'Hugo Q.',     time: 'hace 2d',     sla: false },
+    { code: 'WO-2026-014', stage: 'cancelled',  prio: 'NORMAL',  site: 'Fractalia Alicante',       client: 'Fractalia',  city: 'Alicante',  shield: 'bronze_plus', tag: 'Diagnóstico', desc: 'Cancelada por el cliente. La lentitud reportada era de la aplicación, no de la infraestructura.',   tech: null,          time: 'hace 3d',     sla: false },
+  ];
+
+  function getPrioPill(prio) {
+    const meta = PRIO_META[prio];
+    return `<span class="label-caps px-1.5 py-0.5 rounded" style="color: ${meta.hex}; background: ${meta.bg};">${prio}</span>`;
+  }
+
+  function getShieldPill(shield) {
+    const meta = SHIELD_META[shield];
+    return `
+      <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium" style="background: ${meta.hex}15; color: ${meta.hex};">
+        <iconify-icon icon="solar:shield-linear" width="11"></iconify-icon>
+        ${meta.label}
+      </span>
+    `;
+  }
+
+  function renderCard(wo) {
+    const stageMeta = STAGE_META[wo.stage];
+    return `
+      <article draggable="true" data-code="${wo.code}" class="wo-card bg-surface border border-border-subtle" style="border-top: 3px solid ${stageMeta.hex}; border-radius: 0 0 8px 8px; padding: 14px;">
+        <!-- Top row: drag handle + prio + warning -->
+        <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center gap-2">
+            <svg class="drag-handle" width="8" height="14" viewBox="0 0 8 14" fill="currentColor" aria-hidden="true">
+              <circle cx="1.5" cy="1.5" r="1.2"/>
+              <circle cx="6.5" cy="1.5" r="1.2"/>
+              <circle cx="1.5" cy="7" r="1.2"/>
+              <circle cx="6.5" cy="7" r="1.2"/>
+              <circle cx="1.5" cy="12.5" r="1.2"/>
+              <circle cx="6.5" cy="12.5" r="1.2"/>
+            </svg>
+            ${getPrioPill(wo.prio)}
+            <span class="label-caps text-text-tertiary">${stageMeta.label}</span>
+          </div>
+          ${wo.sla ? `<iconify-icon icon="solar:danger-triangle-linear" width="14" style="color: #DC2626;"></iconify-icon>` : ''}
+        </div>
+
+        <!-- Title + code -->
+        <div class="flex items-start justify-between gap-2 mb-1">
+          <h3 class="font-display text-[15px] font-semibold text-text-primary leading-tight">${wo.site}</h3>
+        </div>
+        <div class="flex items-center gap-1.5 text-[12px] text-text-secondary mb-2">
+          <span class="font-mono text-[11px] text-text-tertiary">${wo.code}</span>
+          <span class="text-text-tertiary">·</span>
+          <span>${wo.client}</span>
+          <span class="text-text-tertiary">·</span>
+          <span>${wo.city}</span>
+        </div>
+
+        <!-- Tags row -->
+        <div class="flex items-center gap-1.5 mb-2 flex-wrap">
+          <span class="px-2 py-0.5 text-[11px] rounded bg-surface-subtle text-text-secondary">${wo.tag}</span>
+          ${getShieldPill(wo.shield)}
+        </div>
+
+        <!-- Description -->
+        <p class="text-[12px] text-text-tertiary mb-3 line-clamp-2 leading-snug">${wo.desc}</p>
+
+        <!-- Footer -->
+        <div class="flex items-center justify-between pt-2 border-t border-border-subtle">
+          <div class="flex items-center gap-1.5 text-[11px]">
+            ${wo.tech
+              ? `<iconify-icon icon="solar:user-linear" width="12" style="color: #475569;"></iconify-icon><span class="text-text-secondary">${wo.tech}</span>`
+              : `<span class="text-text-tertiary italic">Sin asignar</span>`
+            }
+          </div>
+          <div class="flex items-center gap-1 text-[11px] text-text-tertiary">
+            <iconify-icon icon="solar:clock-circle-linear" width="11"></iconify-icon>
+            <span>${wo.time}</span>
+          </div>
+        </div>
+      </article>
+    `;
+  }
+
+  function renderColumn(col, wos) {
+    return `
+      <section data-col="${col.id}" class="flex-shrink-0 w-[300px] bg-surface-subtle rounded-lg flex flex-col" style="max-height: calc(100vh - 280px);">
+        <!-- Column header -->
+        <header class="px-4 py-3 flex items-center justify-between border-b border-border-subtle">
+          <h2 class="font-display font-semibold text-[13px] uppercase tracking-wide text-text-primary">${col.title}</h2>
+          <span class="px-2 py-0.5 rounded-full bg-white border border-border-subtle font-mono text-[11px] text-text-secondary">${wos.length}</span>
+        </header>
+        <!-- Column body -->
+        <div class="col-scroll flex-1 overflow-y-auto p-3 flex flex-col gap-3">
+          ${wos.length === 0
+            ? `<div class="text-center py-8 text-text-tertiary">
+                 <iconify-icon icon="solar:inbox-linear" width="24"></iconify-icon>
+                 <p class="text-[12px] mt-2">Sin intervenciones</p>
+               </div>`
+            : wos.map(renderCard).join('')
+          }
+        </div>
+      </section>
+    `;
+  }
+
+  function renderBoard() {
+    const showCancelled = document.getElementById('toggleCancelled').checked;
+    const board = document.getElementById('kanbanBoard');
+    board.innerHTML = COLUMNS
+      .filter(c => !c.hidden || (c.id === 'canceladas' && showCancelled))
+      .map(col => {
+        const wos = SEED_WOS.filter(w => STAGE_META[w.stage].col === col.id);
+        return renderColumn(col, wos);
+      })
+      .join('');
+  }
+
+  // =================================================================
+  // DRAG & DROP
+  // =================================================================
+
+  // Map de "columna destino" → stage que adopta el WO al soltar ahí.
+  // Si la columna tiene 2 sub-stages, toma el primero (upstream del flujo).
+  const COL_DEFAULT_STAGE = {
+    solicitadas: 'intake',
+    preparando:  'pre_flight',
+    en_campo:    'en_route',
+    cerrando:    'resolved',
+    cerradas:    'closed',
+    canceladas:  'cancelled',
+  };
+
+  const COL_LABEL = {
+    solicitadas: 'Solicitadas',
+    preparando:  'Preparando',
+    en_campo:    'En campo',
+    cerrando:    'Cerrando',
+    cerradas:    'Cerradas',
+    canceladas:  'Canceladas',
+  };
+
+  let draggedCode = null;
+  let lastDropTarget = null;
+
+  function attachDragHandlers() {
+    const board = document.getElementById('kanbanBoard');
+
+    // Card-level handlers (delegation via event listeners re-bound per render)
+    board.querySelectorAll('.wo-card').forEach(card => {
+      card.addEventListener('dragstart', (e) => {
+        draggedCode = card.dataset.code;
+        card.classList.add('is-dragging');
+        document.body.classList.add('drag-active');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', draggedCode);
+      });
+      card.addEventListener('dragend', (e) => {
+        card.classList.remove('is-dragging');
+        document.body.classList.remove('drag-active');
+        board.querySelectorAll('[data-col]').forEach(c => c.classList.remove('is-drop-target'));
+        draggedCode = null;
+        lastDropTarget = null;
+      });
+    });
+
+    // Column-level drop zones
+    board.querySelectorAll('[data-col]').forEach(col => {
+      col.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        if (lastDropTarget && lastDropTarget !== col) {
+          lastDropTarget.classList.remove('is-drop-target');
+        }
+        col.classList.add('is-drop-target');
+        lastDropTarget = col;
+      });
+      col.addEventListener('dragleave', (e) => {
+        // Only remove if leaving the column entirely (not entering a child)
+        if (!col.contains(e.relatedTarget)) {
+          col.classList.remove('is-drop-target');
+        }
+      });
+      col.addEventListener('drop', (e) => {
+        e.preventDefault();
+        col.classList.remove('is-drop-target');
+        if (!draggedCode) return;
+
+        const targetColId = col.dataset.col;
+        const wo = SEED_WOS.find(w => w.code === draggedCode);
+        if (!wo) return;
+
+        const currentColId = STAGE_META[wo.stage].col;
+        if (currentColId === targetColId) {
+          // Dropped in same column — no-op
+          return;
+        }
+
+        const newStage = COL_DEFAULT_STAGE[targetColId];
+        const previousLabel = COL_LABEL[currentColId];
+        wo.stage = newStage;
+
+        renderBoard();
+        showToast(`${wo.code} movida: ${previousLabel} → ${COL_LABEL[targetColId]}`, 'success');
+      });
+    });
+  }
+
+  // =================================================================
+  // TOAST
+  // =================================================================
+  function showToast(message, kind = 'info') {
+    const stack = document.getElementById('toast-stack');
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${kind}`;
+
+    const iconMap = {
+      info:    'solar:info-circle-linear',
+      success: 'solar:check-circle-linear',
+      error:   'solar:danger-circle-linear',
+    };
+    const colorMap = {
+      info:    '#0EA5E9',
+      success: '#10B981',
+      error:   '#DC2626',
+    };
+
+    toast.innerHTML = `
+      <iconify-icon icon="${iconMap[kind]}" width="16" style="color: ${colorMap[kind]}; flex-shrink: 0;"></iconify-icon>
+      <span>${message}</span>
+    `;
+    stack.appendChild(toast);
+    setTimeout(() => {
+      toast.style.animation = 'toastOut 220ms ease forwards';
+      setTimeout(() => toast.remove(), 220);
+    }, 2600);
+  }
+
+  // =================================================================
+  // MODAL · context-aware por stage
+  // =================================================================
+
+  // Tabla CTA por stage (§5.3 del design system v2) · labels en español
+  const STAGE_CTA = {
+    intake:      { label: 'Triagear',             targetStage: 'triage',     bg: '#0EA5E9', hoverBg: '#0284C7', textColor: '#FFFFFF', note: 'Mover a evaluación interna.' },
+    triage:      { label: 'Preparar intervención', targetStage: 'pre_flight', bg: '#8B5CF6', hoverBg: '#7C3AED', textColor: '#FFFFFF', note: 'Inicia la lista de preparación SRS.' },
+    pre_flight:  { label: 'Despachar',            targetStage: 'dispatched', bg: '#7C3AED', hoverBg: '#6D28D9', textColor: '#FFFFFF', note: 'Requiere lista de preparación completa.' },
+    dispatched:  { label: 'Esperando confirmación del técnico', targetStage: null, bg: '#F59E0B', hoverBg: '#F59E0B', textColor: '#FFFFFF', note: 'Bloqueado hasta que el técnico firme la preparación.', disabled: true },
+    en_route:    { label: 'Llegar al sitio',      targetStage: 'on_site',    bg: '#EA580C', hoverBg: '#C2410C', textColor: '#FFFFFF', note: 'Confirmar arribo del técnico.' },
+    on_site:     { label: 'Marcar como resuelta', targetStage: 'resolved',   bg: '#22C55E', hoverBg: '#16A34A', textColor: '#FFFFFF', note: 'Requiere captura de evidencia.' },
+    resolved:    { label: 'Cerrar intervención',  targetStage: 'closed',     bg: '#16A34A', hoverBg: '#15803D', textColor: '#FFFFFF', note: 'Requiere firma del cliente (o autorización SRS).' },
+    closed:      { label: 'Descargar informe',    targetStage: null,         bg: '#16A34A', hoverBg: '#15803D', textColor: '#FFFFFF', note: 'Informe emitido a 5 canales. PDF firmado.', terminal: true },
+    cancelled:   { label: null,                   targetStage: null,         readonly: true, note: 'Intervención cancelada. Ver razón abajo.' },
+  };
+
+  const SCOPE_BY_TAG = {
+    'Correctivo':  'Diagnóstico + reparación en sitio. Ventana objetivo según SLA Shield.',
+    'Preventivo':  'Inspección visual + test + limpieza según plan anual. Sin downtime previsto.',
+    'Rollout':     'Instalación y puesta en marcha según el plan de equipamiento. El cliente firma acta.',
+    'Auditoría':   'Verificación de cumplimiento contractual. Sin intervención física.',
+    'Migración':   'Movimiento de servicios/datos según plan. Requiere ventana coordinada.',
+    'Diagnóstico': 'Investigación sin reparación. Output: informe + recomendación.',
+  };
+
+  function getStageBadge(stage) {
+    const meta = STAGE_META[stage];
+    return `
+      <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold uppercase tracking-wide" style="color: ${meta.hex}; background: ${meta.hex}15;">
+        <span class="w-1.5 h-1.5 rounded-full" style="background: ${meta.hex};"></span>
+        ${meta.label}
+      </span>
+    `;
+  }
+
+  function getPrioBadgeInline(prio) {
+    const meta = PRIO_META[prio];
+    return `<span class="label-caps px-2 py-1 rounded" style="color: ${meta.hex}; background: ${meta.bg};">${prio}</span>`;
+  }
+
+  function buildTimeline(wo) {
+    // Simula progreso según stage actual. Usa tiempos plausibles relativos a wo.time.
+    const STAGE_ORDER = ['intake', 'triage', 'pre_flight', 'dispatched', 'en_route', 'on_site', 'resolved', 'closed'];
+    const currentIdx = STAGE_ORDER.indexOf(wo.stage);
+
+    if (wo.stage === 'cancelled') {
+      return [
+        { label: 'Solicitada', time: wo.time, done: true },
+        { label: 'Cancelada por cliente', time: 'hace 1d', done: true, cancelled: true },
+      ];
+    }
+
+    const timeline = [
+      { label: 'Solicitada',              idx: 0, time: wo.time },
+      { label: 'Asignada a técnico',      idx: 2, time: 'hace 5h' },
+      { label: 'Preparación firmada',     idx: 3, time: 'hace 4h' },
+      { label: 'Técnico en ruta',         idx: 4, time: 'hace 2h 20min' },
+      { label: 'Llegada al sitio',        idx: 5, time: 'hace 1h 45min' },
+      { label: 'Resolución firmada',      idx: 6, time: 'hace 40 min' },
+      { label: 'Informe emitido',         idx: 7, time: 'hace 20 min' },
+    ];
+
+    return timeline.map(step => ({
+      label: step.label,
+      time: step.idx <= currentIdx ? step.time : '—',
+      done: step.idx < currentIdx,
+      active: step.idx === currentIdx,
+      future: step.idx > currentIdx,
+    }));
+  }
+
+  function renderTimeline(items) {
+    return items.map(item => `
+      <div class="modal-timeline-item">
+        <div class="modal-timeline-dot ${item.done ? 'is-done' : ''} ${item.active ? 'is-active' : ''}"></div>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-[13px] ${item.future ? 'text-text-tertiary' : 'text-text-primary'} font-medium">${item.label}</span>
+            <span class="text-[11px] font-mono ${item.future ? 'text-text-tertiary' : 'text-text-secondary'}">${item.time}</span>
+          </div>
+          ${item.cancelled ? `<p class="text-[12px] text-text-tertiary mt-0.5">Motivo: reclasificación como problema de aplicación, no infra.</p>` : ''}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function renderModalContent(wo) {
+    const stageMeta = STAGE_META[wo.stage];
+    const cta = STAGE_CTA[wo.stage];
+    const shieldMeta = SHIELD_META[wo.shield];
+    const timeline = buildTimeline(wo);
+    const showResult = ['resolved', 'closed'].includes(wo.stage);
+    const showRisk = wo.stage === 'closed';
+
+    return `
+      <!-- Modal header -->
+      <header class="flex items-center justify-between px-6 pt-5 pb-4 border-b border-border-subtle">
+        <div class="flex items-center gap-2">
+          ${getStageBadge(wo.stage)}
+          ${getPrioBadgeInline(wo.prio)}
+          ${wo.sla ? `
+            <span class="inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-semibold uppercase" style="color: #DC2626; background: #FEE2E2;">
+              <iconify-icon icon="solar:danger-triangle-linear" width="12"></iconify-icon>
+              SLA en riesgo
+            </span>
+          ` : ''}
+        </div>
+        <button id="modal-close-btn" class="p-1 rounded-md text-text-secondary hover:text-text-primary hover:bg-surface-subtle transition" aria-label="Cerrar">
+          <iconify-icon icon="solar:close-circle-linear" width="22"></iconify-icon>
+        </button>
+      </header>
+
+      <!-- Title block -->
+      <div class="px-6 pt-5 pb-4">
+        <div class="flex items-start justify-between gap-3">
+          <div class="min-w-0">
+            <p class="font-mono text-[11px] text-text-tertiary mb-1">${wo.code}</p>
+            <h2 id="wo-modal-title" class="font-display text-[24px] font-bold text-text-primary leading-tight">${wo.site}</h2>
+            <p class="text-[13px] text-text-secondary mt-1">${wo.client} · ${wo.city}</p>
+          </div>
+          <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium" style="background: ${shieldMeta.hex}15; color: ${shieldMeta.hex};">
+              <iconify-icon icon="solar:shield-linear" width="11"></iconify-icon>
+              ${shieldMeta.label}
+            </span>
+            <span class="px-2 py-0.5 text-[11px] rounded bg-surface-subtle text-text-secondary">${wo.tag}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scrollable content -->
+      <div class="flex-1 overflow-y-auto px-6 pb-4 space-y-5">
+        <section>
+          <div class="modal-section-label">Descripción</div>
+          <p class="text-[13px] text-text-primary leading-relaxed">${wo.desc}</p>
+        </section>
+
+        <section>
+          <div class="modal-section-label">Alcance</div>
+          <p class="text-[13px] text-text-secondary leading-relaxed">${SCOPE_BY_TAG[wo.tag] || 'Alcance definido en la preparación SRS.'}</p>
+        </section>
+
+        <section>
+          <div class="modal-section-label">Timeline</div>
+          <div class="pl-1 mt-1">
+            ${renderTimeline(timeline)}
+          </div>
+        </section>
+
+        ${showResult ? `
+        <section>
+          <div class="modal-section-label">Resultado</div>
+          <p class="text-[13px] text-text-primary leading-relaxed">Intervención completada sin incidentes. Evidencia fotográfica y firma del cliente adjuntas. ${wo.stage === 'closed' ? 'Informe emitido por los canales configurados (JSON · HTML · CSV · correo · webhook).' : 'Pendiente firma del cliente.'}</p>
+        </section>
+        ` : ''}
+
+        ${showRisk ? `
+        <section>
+          <div class="modal-section-label">Nivel riesgo</div>
+          <div class="flex items-center gap-2">
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[12px] font-medium" style="color: #15803D; background: #DCFCE7;">
+              <iconify-icon icon="solar:check-circle-linear" width="13"></iconify-icon>
+              Nominal
+            </span>
+            <span class="text-[12px] text-text-secondary">Sin desvíos. Cliente satisfecho. SLA hit.</span>
+          </div>
+        </section>
+        ` : ''}
+
+        ${wo.stage === 'cancelled' ? `
+        <section>
+          <div class="modal-section-label">Razón cancelación</div>
+          <p class="text-[13px] text-text-primary leading-relaxed">Cliente cancela intervención tras identificar que el problema reportado no es de infraestructura sino de la aplicación de negocio. Se reasigna a equipo dev cliente.</p>
+        </section>
+        ` : ''}
+      </div>
+
+      <!-- Footer CTAs -->
+      <footer class="flex items-center justify-between gap-3 px-6 py-4 border-t border-border-subtle bg-surface-subtle/50 rounded-b-xl">
+        <p class="text-[12px] text-text-tertiary flex-1">${cta.note}</p>
+        <div class="flex items-center gap-2">
+          <button id="modal-secondary-btn" class="h-9 px-4 text-[13px] font-medium text-text-secondary hover:text-text-primary border border-border-subtle hover:border-border-strong rounded-md transition">
+            Cerrar
+          </button>
+          ${cta.readonly ? '' : `
+            <button id="modal-primary-btn" ${cta.disabled ? 'disabled' : ''} class="h-9 px-4 text-[13px] font-semibold rounded-md transition flex items-center gap-1.5 ${cta.disabled ? 'opacity-50 cursor-not-allowed' : 'hover:brightness-110'}" style="background: ${cta.bg}; color: ${cta.textColor};">
+              ${cta.label}
+              ${cta.targetStage ? '<iconify-icon icon="solar:arrow-right-linear" width="14"></iconify-icon>' : ''}
+            </button>
+          `}
+        </div>
+      </footer>
+    `;
+  }
+
+  function openWoModal(code) {
+    const wo = SEED_WOS.find(w => w.code === code);
+    if (!wo) return;
+    const overlay = document.getElementById('wo-modal-overlay');
+    const panel = document.getElementById('wo-modal-panel');
+    panel.innerHTML = renderModalContent(wo);
+    overlay.classList.add('is-open');
+    document.body.style.overflow = 'hidden';
+
+    document.getElementById('modal-close-btn').addEventListener('click', closeWoModal);
+    document.getElementById('modal-secondary-btn').addEventListener('click', closeWoModal);
+
+    const primaryBtn = document.getElementById('modal-primary-btn');
+    if (primaryBtn && !primaryBtn.disabled) {
+      primaryBtn.addEventListener('click', () => {
+        const cta = STAGE_CTA[wo.stage];
+        if (cta.targetStage) {
+          wo.stage = cta.targetStage;
+          closeWoModal();
+          renderBoard();
+          showToast(`${wo.code} avanzada a ${STAGE_META[cta.targetStage].label}`, 'success');
+        } else if (cta.terminal) {
+          showToast(`Descargando informe ${wo.code}...`, 'info');
+          closeWoModal();
+        }
+      });
+    }
+  }
+
+  function closeWoModal() {
+    const overlay = document.getElementById('wo-modal-overlay');
+    overlay.classList.remove('is-open');
+    document.body.style.overflow = '';
+  }
+
+  function attachCardClickHandlers() {
+    document.querySelectorAll('.wo-card').forEach(card => {
+      card.addEventListener('click', (e) => {
+        // Don't open modal if click started as drag
+        if (card.classList.contains('is-dragging')) return;
+        openWoModal(card.dataset.code);
+      });
+    });
+  }
+
+  // Close on overlay click or ESC
+  document.addEventListener('click', (e) => {
+    const overlay = document.getElementById('wo-modal-overlay');
+    if (e.target === overlay) closeWoModal();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeWoModal();
+  });
+
+  // =================================================================
+  // BOOT · override renderBoard to always re-bind drag handlers
+  // =================================================================
+  const _originalRenderBoard = renderBoard;
+  renderBoard = function() {
+    _originalRenderBoard();
+    attachDragHandlers();
+    attachCardClickHandlers();
+  };
+
+  document.addEventListener('DOMContentLoaded', () => {
+    renderBoard();
+    document.getElementById('toggleCancelled').addEventListener('change', renderBoard);
+  });
+</script>
+
+</body>
+</html>

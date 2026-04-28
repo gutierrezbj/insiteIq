@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1440, initial-scale=1">
+<title>InsiteIQ · Cockpit gerencial (mock v2 estático)</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
+
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          display: ['"Instrument Sans"', 'sans-serif'],
+          body: ['"DM Sans"', 'sans-serif'],
+          mono: ['"JetBrains Mono"', 'monospace'],
+        },
+        colors: {
+          canvas: '#F9FAFB', surface: '#FFFFFF', 'surface-subtle': '#F3F4F6',
+          header: '#0A0A0A', 'border-subtle': '#E5E7EB', 'border-strong': '#D1D5DB',
+          'text-primary': '#0F172A', 'text-secondary': '#475569', 'text-tertiary': '#94A3B8',
+          'text-on-dark': '#F1F5F9',
+          accent: '#0EA5E9', 'accent-hover': '#0284C7', 'accent-subtle': '#E0F2FE',
+          brand: '#10B981', 'brand-dark': '#059669',
+          'stage-intake': '#3B82F6', 'stage-preflight': '#8B5CF6', 'stage-dispatched': '#7C3AED',
+          'stage-enroute': '#F59E0B', 'stage-onsite': '#EA580C', 'stage-resolved': '#22C55E',
+          'stage-closed': '#16A34A',
+          'prio-urgent': '#DC2626', 'prio-high': '#F59E0B', 'prio-normal': '#475569', 'prio-low': '#60A5FA',
+          'shield-bronze': '#B45309', 'shield-bronze-plus': '#D97706', 'shield-silver': '#64748B', 'shield-gold': '#CA8A04',
+        },
+      }
+    }
+  }
+</script>
+
+<style>
+  body { font-family: 'DM Sans', sans-serif; background: #F9FAFB; color: #0F172A; margin: 0; }
+  .label-caps { font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; }
+  .pulse-dot { animation: pulseDot 1.8s ease-in-out infinite; }
+  @keyframes pulseDot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.15); }
+  }
+  .card-scroll::-webkit-scrollbar { width: 6px; }
+  .card-scroll::-webkit-scrollbar-thumb { background: #D1D5DB; border-radius: 3px; }
+  .accent-bar {
+    position: relative;
+  }
+  .accent-bar::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+    background: var(--bar-color, #0EA5E9);
+    border-radius: 0;
+  }
+  .stat-mono { font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums; }
+  .spark-grid {
+    background-image: linear-gradient(to bottom, transparent calc(100% - 1px), #E5E7EB 1px);
+    background-size: 100% 25%;
+  }
+  .hero-metric-label {
+    font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.1em;
+    color: #94A3B8;
+  }
+  .tick {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; font-weight: 500;
+  }
+  .tick-up { color: #059669; }
+  .tick-down { color: #DC2626; }
+  .tick-flat { color: #64748B; }
+</style>
+</head>
+
+<body class="min-h-screen">
+
+<!-- =================================================================== -->
+<!-- HEADER DARK BAND                                                     -->
+<!-- =================================================================== -->
+<header class="bg-header text-text-on-dark h-14 flex items-center px-6 border-b border-black/40">
+  <div class="flex items-center gap-2.5 mr-8">
+    <div class="w-7 h-7 rounded-md bg-brand flex items-center justify-center">
+      <iconify-icon icon="solar:shield-check-linear" width="16" style="color: white;"></iconify-icon>
+    </div>
+    <div class="flex flex-col leading-tight">
+      <span class="font-display font-semibold text-[15px] text-white">InsiteIQ</span>
+      <span class="text-[10px] text-text-tertiary/90">Field services control</span>
+    </div>
+  </div>
+
+  <nav class="flex items-center gap-0.5 text-[13px] font-medium self-stretch">
+    <a href="#" class="flex items-center px-3 text-white relative">
+      Cockpit
+      <span class="absolute left-3 right-3 bottom-0 h-[2px] bg-accent"></span>
+    </a>
+    <a href="insiteiq_kanban_v2_static.html" class="flex items-center px-3 text-text-tertiary hover:text-white">Intervenciones</a>
+    <a href="insiteiq_map_v2_static.html" class="flex items-center px-3 text-text-tertiary hover:text-white">Mapa</a>
+    <a href="#" class="flex items-center px-3 text-text-tertiary hover:text-white">Sitios</a>
+    <a href="#" class="flex items-center px-3 text-text-tertiary hover:text-white">Técnicos</a>
+    <a href="#" class="flex items-center px-3 text-text-tertiary hover:text-white">Contratos</a>
+    <a href="#" class="flex items-center px-3 text-text-tertiary hover:text-white">Inteligencia</a>
+    <a href="#" class="flex items-center px-3 text-text-tertiary hover:text-white">Finanzas</a>
+    <a href="#" class="flex items-center px-3 text-text-tertiary hover:text-white">Admin</a>
+  </nav>
+
+  <div class="flex-1"></div>
+
+  <div class="flex items-center gap-4">
+    <div class="flex items-center gap-1.5 text-[12px]">
+      <span class="w-1.5 h-1.5 rounded-full bg-brand pulse-dot"></span>
+      <span class="font-mono text-white">11</span>
+      <span class="text-text-tertiary">intervenciones activas</span>
+    </div>
+    <button class="p-1.5 rounded-md hover:bg-white/5 text-text-tertiary hover:text-white transition">
+      <iconify-icon icon="solar:widget-5-linear" width="20"></iconify-icon>
+    </button>
+    <button class="relative p-1.5 rounded-md hover:bg-white/5 text-text-tertiary hover:text-white transition">
+      <iconify-icon icon="solar:bell-linear" width="20"></iconify-icon>
+      <span class="absolute -top-0.5 -right-0.5 bg-prio-urgent text-white text-[10px] font-semibold w-4 h-4 rounded-full flex items-center justify-center">5</span>
+    </button>
+    <div class="w-px h-6 bg-white/10"></div>
+    <div class="flex items-center gap-2 pr-1">
+      <div class="w-8 h-8 rounded-full bg-accent flex items-center justify-center text-white text-[12px] font-semibold">JG</div>
+      <div class="flex flex-col leading-tight">
+        <span class="text-[13px] text-white">Juan G.</span>
+        <span class="text-[10px] text-text-tertiary">SRS Coordinator</span>
+      </div>
+      <button class="ml-2 p-1 rounded-md hover:bg-white/5 text-text-tertiary">
+        <iconify-icon icon="solar:logout-2-linear" width="16"></iconify-icon>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- =================================================================== -->
+<!-- HERO STRIP · Pulso del día (framing gerencial, no "welcome back")    -->
+<!-- =================================================================== -->
+<section class="bg-header text-text-on-dark px-6 py-5 border-b border-black/30">
+  <div class="flex items-center justify-between mb-4">
+    <div>
+      <p class="label-caps text-text-tertiary mb-0.5">Pulso del día · viernes 24 abr 2026</p>
+      <h1 class="font-display text-[22px] font-semibold text-white leading-tight">Buenos días, Juan. Esto es lo que necesita tu atención hoy.</h1>
+    </div>
+    <div class="flex items-center gap-2 text-[12px] text-text-tertiary">
+      <iconify-icon icon="solar:clock-circle-linear" width="14"></iconify-icon>
+      <span class="font-mono">08:42 GMT+2</span>
+      <span>·</span>
+      <span>Última sincronización hace 38 seg</span>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-4 gap-px bg-white/10 rounded-lg overflow-hidden">
+    <!-- Métrica 1: SLA en riesgo -->
+    <div class="bg-header px-5 py-4 relative">
+      <div class="flex items-start justify-between mb-2">
+        <p class="hero-metric-label">SLA en riesgo</p>
+        <span class="tick tick-down"><iconify-icon icon="solar:alt-arrow-up-linear" width="11"></iconify-icon>+1 vs ayer</span>
+      </div>
+      <div class="flex items-baseline gap-2 mb-1">
+        <span class="stat-mono text-[36px] font-semibold text-white leading-none">2</span>
+        <span class="text-[12px] text-text-tertiary">intervenciones</span>
+      </div>
+      <p class="text-[12px] text-prio-urgent font-medium">Madrid Sur y Málaga · acción antes de 11:00</p>
+    </div>
+
+    <!-- Métrica 2: Ball-in-court SRS -->
+    <div class="bg-header px-5 py-4">
+      <div class="flex items-start justify-between mb-2">
+        <p class="hero-metric-label">Esperando acción SRS</p>
+        <span class="tick tick-flat">sin cambio</span>
+      </div>
+      <div class="flex items-baseline gap-2 mb-1">
+        <span class="stat-mono text-[36px] font-semibold text-white leading-none">3</span>
+        <span class="text-[12px] text-text-tertiary">intervenciones</span>
+      </div>
+      <p class="text-[12px] text-accent font-medium">2 triaje pendiente · 1 asignación tech</p>
+    </div>
+
+    <!-- Métrica 3: Margen MTD -->
+    <div class="bg-header px-5 py-4">
+      <div class="flex items-start justify-between mb-2">
+        <p class="hero-metric-label">Margen bruto MTD</p>
+        <span class="tick tick-up"><iconify-icon icon="solar:alt-arrow-up-linear" width="11"></iconify-icon>+2.4 pts</span>
+      </div>
+      <div class="flex items-baseline gap-2 mb-1">
+        <span class="stat-mono text-[36px] font-semibold text-white leading-none">38.1<span class="text-[20px] text-text-tertiary">%</span></span>
+      </div>
+      <p class="text-[12px] text-brand font-medium">€ 47.320 facturable acumulado</p>
+    </div>
+
+    <!-- Métrica 4: SLA hit rate 30d -->
+    <div class="bg-header px-5 py-4">
+      <div class="flex items-start justify-between mb-2">
+        <p class="hero-metric-label">SLA hit 30 días</p>
+        <span class="tick tick-up"><iconify-icon icon="solar:alt-arrow-up-linear" width="11"></iconify-icon>+0.8 pts</span>
+      </div>
+      <div class="flex items-baseline gap-2 mb-1">
+        <span class="stat-mono text-[36px] font-semibold text-white leading-none">94.2<span class="text-[20px] text-text-tertiary">%</span></span>
+      </div>
+      <p class="text-[12px] text-text-tertiary">Objetivo 95% · 0.8 pts por cerrar</p>
+    </div>
+  </div>
+</section>
+
+<!-- =================================================================== -->
+<!-- MAIN GRID · Cockpit operativo denso                                  -->
+<!-- =================================================================== -->
+<main class="px-6 py-5 grid grid-cols-12 gap-4">
+
+  <!-- ================== ROW 1 ================== -->
+
+  <!-- Ball-in-court · 5 cols -->
+  <section class="col-span-5 bg-surface border border-border-subtle rounded-lg">
+    <header class="px-5 py-3.5 border-b border-border-subtle flex items-center justify-between">
+      <div>
+        <h2 class="font-display text-[14px] font-semibold text-text-primary">Ball-in-court</h2>
+        <p class="text-[11px] text-text-tertiary">Quién está bloqueando el flujo · tiempo medio stuck</p>
+      </div>
+      <button class="text-[12px] text-accent hover:text-accent-hover font-medium">Detalle</button>
+    </header>
+    <div class="p-5 grid grid-cols-2 gap-4">
+      <!-- Donut SVG -->
+      <div class="flex items-center justify-center">
+        <svg width="160" height="160" viewBox="0 0 160 160">
+          <!-- Segments: Cliente 5 (45.4%), Tech 3 (27.3%), SRS 2 (18.2%), Parts 1 (9.1%) -->
+          <!-- circumference = 2*PI*60 = 376.99 -->
+          <g transform="translate(80,80) rotate(-90)">
+            <circle r="60" fill="none" stroke="#F3F4F6" stroke-width="22"/>
+            <!-- Cliente 45.4% = 171.15 -->
+            <circle r="60" fill="none" stroke="#DC2626" stroke-width="22" stroke-dasharray="171.15 376.99" stroke-dashoffset="0"/>
+            <!-- Tech 27.3% = 102.92, offset -171.15 -->
+            <circle r="60" fill="none" stroke="#F59E0B" stroke-width="22" stroke-dasharray="102.92 376.99" stroke-dashoffset="-171.15"/>
+            <!-- SRS 18.2% = 68.61, offset -274.07 -->
+            <circle r="60" fill="none" stroke="#0EA5E9" stroke-width="22" stroke-dasharray="68.61 376.99" stroke-dashoffset="-274.07"/>
+            <!-- Parts 9.1% = 34.31, offset -342.68 -->
+            <circle r="60" fill="none" stroke="#8B5CF6" stroke-width="22" stroke-dasharray="34.31 376.99" stroke-dashoffset="-342.68"/>
+          </g>
+          <text x="80" y="78" text-anchor="middle" class="stat-mono" font-size="28" font-weight="600" fill="#0F172A">11</text>
+          <text x="80" y="96" text-anchor="middle" font-size="10" fill="#94A3B8" letter-spacing="1">ACTIVAS</text>
+        </svg>
+      </div>
+      <!-- Breakdown -->
+      <div class="flex flex-col justify-center gap-2.5">
+        <div class="accent-bar pl-3 py-1" style="--bar-color: #DC2626;">
+          <div class="flex items-center justify-between">
+            <span class="text-[13px] text-text-primary font-medium">Cliente</span>
+            <span class="stat-mono text-[13px] text-text-primary">5</span>
+          </div>
+          <p class="text-[11px] text-text-tertiary">Firma o aprobación · stuck medio 2d 4h</p>
+        </div>
+        <div class="accent-bar pl-3 py-1" style="--bar-color: #F59E0B;">
+          <div class="flex items-center justify-between">
+            <span class="text-[13px] text-text-primary font-medium">Técnico</span>
+            <span class="stat-mono text-[13px] text-text-primary">3</span>
+          </div>
+          <p class="text-[11px] text-text-tertiary">Ejecución o confirmación · stuck medio 1h 50min</p>
+        </div>
+        <div class="accent-bar pl-3 py-1" style="--bar-color: #0EA5E9;">
+          <div class="flex items-center justify-between">
+            <span class="text-[13px] text-text-primary font-medium">SRS</span>
+            <span class="stat-mono text-[13px] text-text-primary">2</span>
+          </div>
+          <p class="text-[11px] text-text-tertiary">Triaje o asignación · stuck medio 45min</p>
+        </div>
+        <div class="accent-bar pl-3 py-1" style="--bar-color: #8B5CF6;">
+          <div class="flex items-center justify-between">
+            <span class="text-[13px] text-text-primary font-medium">Repuestos / vendor</span>
+            <span class="stat-mono text-[13px] text-text-primary">1</span>
+          </div>
+          <p class="text-[11px] text-text-tertiary">UPS en aduana Bilbao · stuck 2d 12h</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLA heatmap · 4 cols -->
+  <section class="col-span-4 bg-surface border border-border-subtle rounded-lg">
+    <header class="px-5 py-3.5 border-b border-border-subtle flex items-center justify-between">
+      <div>
+        <h2 class="font-display text-[14px] font-semibold text-text-primary">SLA por cliente · 30 días</h2>
+        <p class="text-[11px] text-text-tertiary">Hit rate y desviación vs. objetivo contractual</p>
+      </div>
+      <span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-brand/10 text-brand-dark">94.2% global</span>
+    </header>
+    <div class="p-5 space-y-3">
+      <!-- Row 1: Fractalia -->
+      <div>
+        <div class="flex items-center justify-between mb-1">
+          <div class="flex items-center gap-2">
+            <span class="text-[13px] text-text-primary font-medium">Fractalia</span>
+            <span class="text-[11px] text-text-tertiary">· 142 intervenciones</span>
+          </div>
+          <span class="stat-mono text-[13px] font-semibold text-brand-dark">96.4%</span>
+        </div>
+        <div class="h-2 bg-surface-subtle rounded-full overflow-hidden">
+          <div class="h-full bg-brand rounded-full" style="width: 96.4%;"></div>
+        </div>
+        <p class="text-[11px] text-text-tertiary mt-1">Objetivo 95% · +1.4 pts · sin breach crítico</p>
+      </div>
+      <!-- Row 2: Claro US -->
+      <div>
+        <div class="flex items-center justify-between mb-1">
+          <div class="flex items-center gap-2">
+            <span class="text-[13px] text-text-primary font-medium">Claro US</span>
+            <span class="text-[11px] text-text-tertiary">· 38 intervenciones</span>
+          </div>
+          <span class="stat-mono text-[13px] font-semibold text-stage-enroute">91.8%</span>
+        </div>
+        <div class="h-2 bg-surface-subtle rounded-full overflow-hidden relative">
+          <div class="h-full bg-stage-enroute rounded-full" style="width: 91.8%;"></div>
+          <div class="absolute top-0 bottom-0 w-0.5 bg-text-primary" style="left: 92%;"></div>
+        </div>
+        <p class="text-[11px] text-text-tertiary mt-1">Objetivo 92% · −0.2 pts · 3 breaches mes pasado</p>
+      </div>
+      <!-- Row 3: Grupo Arcos -->
+      <div>
+        <div class="flex items-center justify-between mb-1">
+          <div class="flex items-center gap-2">
+            <span class="text-[13px] text-text-primary font-medium">Grupo Arcos</span>
+            <span class="text-[11px] text-text-tertiary">· 24 intervenciones (rollout)</span>
+          </div>
+          <span class="stat-mono text-[13px] font-semibold text-brand-dark">100%</span>
+        </div>
+        <div class="h-2 bg-surface-subtle rounded-full overflow-hidden">
+          <div class="h-full bg-brand rounded-full" style="width: 100%;"></div>
+        </div>
+        <p class="text-[11px] text-text-tertiary mt-1">Proyecto cerrado ejemplar · referencia comercial</p>
+      </div>
+      <!-- Row 4: Otros -->
+      <div>
+        <div class="flex items-center justify-between mb-1">
+          <div class="flex items-center gap-2">
+            <span class="text-[13px] text-text-primary font-medium">Otros clientes</span>
+            <span class="text-[11px] text-text-tertiary">· 11 intervenciones</span>
+          </div>
+          <span class="stat-mono text-[13px] font-semibold text-text-secondary">88.9%</span>
+        </div>
+        <div class="h-2 bg-surface-subtle rounded-full overflow-hidden">
+          <div class="h-full bg-text-secondary rounded-full" style="width: 88.9%;"></div>
+        </div>
+        <p class="text-[11px] text-text-tertiary mt-1">Mix sin contrato Shield · atención oportunística</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Live feed · 3 cols -->
+  <section class="col-span-3 bg-surface border border-border-subtle rounded-lg flex flex-col" style="max-height: 480px;">
+    <header class="px-5 py-3.5 border-b border-border-subtle flex items-center justify-between">
+      <div>
+        <h2 class="font-display text-[14px] font-semibold text-text-primary flex items-center gap-2">
+          Actividad en vivo
+          <span class="w-1.5 h-1.5 rounded-full bg-brand pulse-dot"></span>
+        </h2>
+        <p class="text-[11px] text-text-tertiary">Últimas mutaciones del sistema</p>
+      </div>
+    </header>
+    <div class="flex-1 overflow-y-auto card-scroll p-3 space-y-0.5">
+      <!-- Feed item -->
+      <div class="flex items-start gap-2.5 p-2 rounded hover:bg-surface-subtle/60 transition">
+        <span class="w-1.5 h-1.5 rounded-full bg-stage-onsite mt-1.5 flex-shrink-0"></span>
+        <div class="flex-1 min-w-0">
+          <p class="text-[12px] text-text-primary leading-snug"><span class="font-mono text-[11px]">WO-2026-009</span> pasó a <span class="font-medium" style="color: #EA580C;">En sitio</span></p>
+          <p class="text-[10px] text-text-tertiary">Agustín C. · Málaga · hace 8 min</p>
+        </div>
+      </div>
+      <div class="flex items-start gap-2.5 p-2 rounded hover:bg-surface-subtle/60 transition">
+        <span class="w-1.5 h-1.5 rounded-full bg-brand mt-1.5 flex-shrink-0"></span>
+        <div class="flex-1 min-w-0">
+          <p class="text-[12px] text-text-primary leading-snug">Informe emitido <span class="font-mono text-[11px]">WO-2026-008</span></p>
+          <p class="text-[10px] text-text-tertiary">5 canales · Fractalia Sevilla Este · hace 22 min</p>
+        </div>
+      </div>
+      <div class="flex items-start gap-2.5 p-2 rounded hover:bg-surface-subtle/60 transition">
+        <span class="w-1.5 h-1.5 rounded-full bg-prio-urgent mt-1.5 flex-shrink-0 pulse-dot"></span>
+        <div class="flex-1 min-w-0">
+          <p class="text-[12px] text-text-primary leading-snug">Alerta SLA abierta en <span class="font-mono text-[11px]">WO-2026-001</span></p>
+          <p class="text-[10px] text-text-tertiary">Madrid Sur · breach en 42 min · hace 18 min</p>
+        </div>
+      </div>
+      <div class="flex items-start gap-2.5 p-2 rounded hover:bg-surface-subtle/60 transition">
+        <span class="w-1.5 h-1.5 rounded-full bg-stage-preflight mt-1.5 flex-shrink-0"></span>
+        <div class="flex-1 min-w-0">
+          <p class="text-[12px] text-text-primary leading-snug">Briefing firmado <span class="font-mono text-[11px]">WO-2026-010</span></p>
+          <p class="text-[10px] text-text-tertiary">Arlindo O. · hace 35 min</p>
+        </div>
+      </div>
+      <div class="flex items-start gap-2.5 p-2 rounded hover:bg-surface-subtle/60 transition">
+        <span class="w-1.5 h-1.5 rounded-full bg-accent mt-1.5 flex-shrink-0"></span>
+        <div class="flex-1 min-w-0">
+          <p class="text-[12px] text-text-primary leading-snug">Nuevo Shield Gold firmado</p>
+          <p class="text-[10px] text-text-tertiary">Grupo Arcos · 24 meses · hace 1h 5min</p>
+        </div>
+      </div>
+      <div class="flex items-start gap-2.5 p-2 rounded hover:bg-surface-subtle/60 transition">
+        <span class="w-1.5 h-1.5 rounded-full bg-stage-dispatched mt-1.5 flex-shrink-0"></span>
+        <div class="flex-1 min-w-0">
+          <p class="text-[12px] text-text-primary leading-snug"><span class="font-mono text-[11px]">WO-2026-005</span> despachada</p>
+          <p class="text-[10px] text-text-tertiary">Agustín C. · Arcos Sevilla-07 · hace 1h 48min</p>
+        </div>
+      </div>
+      <div class="flex items-start gap-2.5 p-2 rounded hover:bg-surface-subtle/60 transition">
+        <span class="w-1.5 h-1.5 rounded-full bg-text-tertiary mt-1.5 flex-shrink-0"></span>
+        <div class="flex-1 min-w-0">
+          <p class="text-[12px] text-text-primary leading-snug">Factura AI-2026-042 emitida · € 3.840</p>
+          <p class="text-[10px] text-text-tertiary">Fractalia · vencimiento 30 días · hace 2h</p>
+        </div>
+      </div>
+      <div class="flex items-start gap-2.5 p-2 rounded hover:bg-surface-subtle/60 transition">
+        <span class="w-1.5 h-1.5 rounded-full bg-stage-resolved mt-1.5 flex-shrink-0"></span>
+        <div class="flex-1 min-w-0">
+          <p class="text-[12px] text-text-primary leading-snug">Resolución firmada <span class="font-mono text-[11px]">WO-2026-007</span></p>
+          <p class="text-[10px] text-text-tertiary">Hugo Q. · Claro Orlando · hace 2h 40min</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================== ROW 2 ================== -->
+
+  <!-- Techs en pista · 5 cols -->
+  <section class="col-span-5 bg-surface border border-border-subtle rounded-lg">
+    <header class="px-5 py-3.5 border-b border-border-subtle flex items-center justify-between">
+      <div>
+        <h2 class="font-display text-[14px] font-semibold text-text-primary">Técnicos en pista</h2>
+        <p class="text-[11px] text-text-tertiary">5 de 7 asignables · capacidad, carga y ubicación</p>
+      </div>
+      <button class="text-[12px] text-accent hover:text-accent-hover font-medium">Ver todos</button>
+    </header>
+    <div class="divide-y divide-border-subtle">
+      <!-- Tech row: Agustín -->
+      <div class="px-5 py-3 flex items-center gap-4">
+        <div class="w-9 h-9 rounded-full bg-stage-onsite/15 text-stage-onsite flex items-center justify-center font-semibold text-[13px] flex-shrink-0">AC</div>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 mb-0.5">
+            <span class="text-[13px] font-medium text-text-primary">Agustín C.</span>
+            <span class="label-caps" style="color: #CA8A04;">Plantilla · L4</span>
+          </div>
+          <p class="text-[11px] text-text-tertiary">En sitio · Fractalia Málaga · <span class="font-mono">WO-2026-009</span></p>
+        </div>
+        <div class="flex items-center gap-4">
+          <div class="text-right">
+            <p class="stat-mono text-[13px] font-semibold text-text-primary">2</p>
+            <p class="text-[10px] text-text-tertiary">activas</p>
+          </div>
+          <div class="text-right">
+            <p class="stat-mono text-[13px] font-semibold text-brand-dark">4.9</p>
+            <p class="text-[10px] text-text-tertiary">rating</p>
+          </div>
+          <span class="inline-flex items-center gap-1 px-2 py-1 rounded bg-stage-onsite/10 text-stage-onsite text-[11px] font-semibold">
+            <span class="w-1.5 h-1.5 rounded-full bg-stage-onsite pulse-dot"></span>
+            En sitio
+          </span>
+        </div>
+      </div>
+      <!-- Hugo -->
+      <div class="px-5 py-3 flex items-center gap-4">
+        <div class="w-9 h-9 rounded-full bg-stage-enroute/15 text-stage-enroute flex items-center justify-center font-semibold text-[13px] flex-shrink-0">HQ</div>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 mb-0.5">
+            <span class="text-[13px] font-medium text-text-primary">Hugo Q.</span>
+            <span class="label-caps text-text-tertiary">Plantilla · L3</span>
+          </div>
+          <p class="text-[11px] text-text-tertiary">En ruta · Fractalia Barcelona Centro · ETA 12:40</p>
+        </div>
+        <div class="flex items-center gap-4">
+          <div class="text-right">
+            <p class="stat-mono text-[13px] font-semibold text-text-primary">1</p>
+            <p class="text-[10px] text-text-tertiary">activa</p>
+          </div>
+          <div class="text-right">
+            <p class="stat-mono text-[13px] font-semibold text-brand-dark">4.7</p>
+            <p class="text-[10px] text-text-tertiary">rating</p>
+          </div>
+          <span class="inline-flex items-center gap-1 px-2 py-1 rounded bg-stage-enroute/10 text-stage-enroute text-[11px] font-semibold">
+            <iconify-icon icon="solar:map-arrow-right-linear" width="11"></iconify-icon>
+            En ruta
+          </span>
+        </div>
+      </div>
+      <!-- Arlindo -->
+      <div class="px-5 py-3 flex items-center gap-4">
+        <div class="w-9 h-9 rounded-full bg-stage-preflight/15 text-stage-preflight flex items-center justify-center font-semibold text-[13px] flex-shrink-0">AO</div>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 mb-0.5">
+            <span class="text-[13px] font-medium text-text-primary">Arlindo O.</span>
+            <span class="label-caps text-text-tertiary">External sub · L2</span>
+          </div>
+          <p class="text-[11px] text-text-tertiary">Preparando · 2 rollouts Arcos · siguiente despacho 14:00</p>
+        </div>
+        <div class="flex items-center gap-4">
+          <div class="text-right">
+            <p class="stat-mono text-[13px] font-semibold text-text-primary">2</p>
+            <p class="text-[10px] text-text-tertiary">activas</p>
+          </div>
+          <div class="text-right">
+            <p class="stat-mono text-[13px] font-semibold text-brand-dark">4.4</p>
+            <p class="text-[10px] text-text-tertiary">rating</p>
+          </div>
+          <span class="inline-flex items-center gap-1 px-2 py-1 rounded bg-stage-preflight/10 text-stage-preflight text-[11px] font-semibold">
+            <iconify-icon icon="solar:document-text-linear" width="11"></iconify-icon>
+            Preparando
+          </span>
+        </div>
+      </div>
+      <!-- Luis -->
+      <div class="px-5 py-3 flex items-center gap-4">
+        <div class="w-9 h-9 rounded-full bg-text-tertiary/20 text-text-secondary flex items-center justify-center font-semibold text-[13px] flex-shrink-0">LS</div>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 mb-0.5">
+            <span class="text-[13px] font-medium text-text-primary">Luis S.</span>
+            <span class="label-caps text-text-tertiary">Consultor · Lima (CET cover)</span>
+          </div>
+          <p class="text-[11px] text-text-tertiary">Disponible · última intervención hace 1d</p>
+        </div>
+        <div class="flex items-center gap-4">
+          <div class="text-right">
+            <p class="stat-mono text-[13px] font-semibold text-text-primary">0</p>
+            <p class="text-[10px] text-text-tertiary">activas</p>
+          </div>
+          <div class="text-right">
+            <p class="stat-mono text-[13px] font-semibold text-brand-dark">4.8</p>
+            <p class="text-[10px] text-text-tertiary">rating</p>
+          </div>
+          <span class="inline-flex items-center gap-1 px-2 py-1 rounded bg-surface-subtle text-text-secondary text-[11px] font-semibold">
+            <span class="w-1.5 h-1.5 rounded-full bg-brand"></span>
+            Libre
+          </span>
+        </div>
+      </div>
+      <!-- Yunus -->
+      <div class="px-5 py-3 flex items-center gap-4">
+        <div class="w-9 h-9 rounded-full bg-text-tertiary/20 text-text-secondary flex items-center justify-center font-semibold text-[13px] flex-shrink-0">YH</div>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 mb-0.5">
+            <span class="text-[13px] font-medium text-text-primary">Yunus H.</span>
+            <span class="label-caps text-text-tertiary">Account lead · Londres</span>
+          </div>
+          <p class="text-[11px] text-text-tertiary">Disponible · coordinación clientes UK</p>
+        </div>
+        <div class="flex items-center gap-4">
+          <div class="text-right">
+            <p class="stat-mono text-[13px] font-semibold text-text-primary">0</p>
+            <p class="text-[10px] text-text-tertiary">activas</p>
+          </div>
+          <div class="text-right">
+            <p class="stat-mono text-[13px] font-semibold text-text-tertiary">—</p>
+            <p class="text-[10px] text-text-tertiary">rating</p>
+          </div>
+          <span class="inline-flex items-center gap-1 px-2 py-1 rounded bg-surface-subtle text-text-secondary text-[11px] font-semibold">
+            <span class="w-1.5 h-1.5 rounded-full bg-brand"></span>
+            Libre
+          </span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Financial pulse · 4 cols -->
+  <section class="col-span-4 bg-surface border border-border-subtle rounded-lg">
+    <header class="px-5 py-3.5 border-b border-border-subtle flex items-center justify-between">
+      <div>
+        <h2 class="font-display text-[14px] font-semibold text-text-primary">Pulso financiero</h2>
+        <p class="text-[11px] text-text-tertiary">Mes en curso · abr 2026</p>
+      </div>
+      <button class="text-[12px] text-accent hover:text-accent-hover font-medium">Finanzas</button>
+    </header>
+    <div class="p-5 space-y-4">
+      <!-- MTD Invoicing -->
+      <div class="flex items-baseline justify-between">
+        <div>
+          <p class="label-caps text-text-tertiary mb-1">Facturado MTD</p>
+          <p class="stat-mono text-[28px] font-semibold text-text-primary leading-none">€ 124.180</p>
+          <p class="text-[11px] text-text-tertiary mt-1">Objetivo mes € 180.000 · 69% al día 24</p>
+        </div>
+        <span class="tick tick-up"><iconify-icon icon="solar:alt-arrow-up-linear" width="11"></iconify-icon>+18.4% vs. abr 25</span>
+      </div>
+
+      <!-- Progress bar -->
+      <div class="h-2 bg-surface-subtle rounded-full overflow-hidden">
+        <div class="h-full bg-brand rounded-full" style="width: 69%;"></div>
+      </div>
+
+      <div class="grid grid-cols-3 gap-3 pt-2">
+        <!-- Invoice-ready hoy -->
+        <div class="accent-bar pl-3" style="--bar-color: #10B981;">
+          <p class="label-caps text-text-tertiary mb-1">Listo emitir hoy</p>
+          <p class="stat-mono text-[16px] font-semibold text-text-primary">€ 8.420</p>
+          <p class="text-[10px] text-text-tertiary">3 facturas</p>
+        </div>
+        <!-- AR aging >30d -->
+        <div class="accent-bar pl-3" style="--bar-color: #F59E0B;">
+          <p class="label-caps text-text-tertiary mb-1">AR &gt; 30d</p>
+          <p class="stat-mono text-[16px] font-semibold text-text-primary">€ 14.600</p>
+          <p class="text-[10px] text-text-tertiary">2 clientes · ver cobro</p>
+        </div>
+        <!-- Ap vendor pending -->
+        <div class="accent-bar pl-3" style="--bar-color: #8B5CF6;">
+          <p class="label-caps text-text-tertiary mb-1">Por pagar vendors</p>
+          <p class="stat-mono text-[16px] font-semibold text-text-primary">€ 6.240</p>
+          <p class="text-[10px] text-text-tertiary">3 facturas · vence 30</p>
+        </div>
+      </div>
+
+      <!-- Divider -->
+      <div class="border-t border-border-subtle pt-4">
+        <div class="flex items-center justify-between mb-2">
+          <p class="label-caps text-text-tertiary">Margen bruto por línea</p>
+        </div>
+        <div class="space-y-2">
+          <div class="flex items-center gap-3 text-[12px]">
+            <span class="w-20 text-text-secondary">Correctivo</span>
+            <div class="flex-1 h-1.5 bg-surface-subtle rounded-full overflow-hidden">
+              <div class="h-full bg-brand rounded-full" style="width: 42%;"></div>
+            </div>
+            <span class="stat-mono w-12 text-right text-text-primary font-medium">42%</span>
+          </div>
+          <div class="flex items-center gap-3 text-[12px]">
+            <span class="w-20 text-text-secondary">Preventivo</span>
+            <div class="flex-1 h-1.5 bg-surface-subtle rounded-full overflow-hidden">
+              <div class="h-full bg-brand rounded-full" style="width: 58%;"></div>
+            </div>
+            <span class="stat-mono w-12 text-right text-text-primary font-medium">58%</span>
+          </div>
+          <div class="flex items-center gap-3 text-[12px]">
+            <span class="w-20 text-text-secondary">Rollout</span>
+            <div class="flex-1 h-1.5 bg-surface-subtle rounded-full overflow-hidden">
+              <div class="h-full bg-stage-enroute rounded-full" style="width: 28%;"></div>
+            </div>
+            <span class="stat-mono w-12 text-right text-text-primary font-medium">28%</span>
+          </div>
+          <div class="flex items-center gap-3 text-[12px]">
+            <span class="w-20 text-text-secondary">Auditoría</span>
+            <div class="flex-1 h-1.5 bg-surface-subtle rounded-full overflow-hidden">
+              <div class="h-full bg-brand rounded-full" style="width: 66%;"></div>
+            </div>
+            <span class="stat-mono w-12 text-right text-text-primary font-medium">66%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Sitios que queman · 3 cols -->
+  <section class="col-span-3 bg-surface border border-border-subtle rounded-lg">
+    <header class="px-5 py-3.5 border-b border-border-subtle">
+      <h2 class="font-display text-[14px] font-semibold text-text-primary">Sitios que queman</h2>
+      <p class="text-[11px] text-text-tertiary">Top 5 · intervenciones repetidas últimos 30d</p>
+    </header>
+    <div class="divide-y divide-border-subtle">
+      <div class="px-4 py-3">
+        <div class="flex items-center justify-between mb-1">
+          <span class="text-[13px] font-medium text-text-primary">Fractalia Madrid Sur</span>
+          <span class="stat-mono text-[13px] font-semibold text-prio-urgent">8</span>
+        </div>
+        <p class="text-[11px] text-text-tertiary">NOC principal · 3 SLA breach · investigar infra</p>
+      </div>
+      <div class="px-4 py-3">
+        <div class="flex items-center justify-between mb-1">
+          <span class="text-[13px] font-medium text-text-primary">Fractalia Málaga</span>
+          <span class="stat-mono text-[13px] font-semibold text-stage-enroute">6</span>
+        </div>
+        <p class="text-[11px] text-text-tertiary">Switch core crítico · proponer upgrade</p>
+      </div>
+      <div class="px-4 py-3">
+        <div class="flex items-center justify-between mb-1">
+          <span class="text-[13px] font-medium text-text-primary">Claro US Orlando</span>
+          <span class="stat-mono text-[13px] font-semibold text-text-secondary">4</span>
+        </div>
+        <p class="text-[11px] text-text-tertiary">Rollout en curso · baseline esperado</p>
+      </div>
+      <div class="px-4 py-3">
+        <div class="flex items-center justify-between mb-1">
+          <span class="text-[13px] font-medium text-text-primary">Fractalia Bilbao</span>
+          <span class="stat-mono text-[13px] font-semibold text-text-secondary">3</span>
+        </div>
+        <p class="text-[11px] text-text-tertiary">UPS recurrente · falta renovar HW</p>
+      </div>
+      <div class="px-4 py-3">
+        <div class="flex items-center justify-between mb-1">
+          <span class="text-[13px] font-medium text-text-primary">Claro US NYC</span>
+          <span class="stat-mono text-[13px] font-semibold text-text-secondary">3</span>
+        </div>
+        <p class="text-[11px] text-text-tertiary">Migración activa · pico transitorio</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================== ROW 3 ================== -->
+
+  <!-- Tendencias clave · 8 cols -->
+  <section class="col-span-8 bg-surface border border-border-subtle rounded-lg">
+    <header class="px-5 py-3.5 border-b border-border-subtle flex items-center justify-between">
+      <div>
+        <h2 class="font-display text-[14px] font-semibold text-text-primary">Tendencias · últimos 12 meses</h2>
+        <p class="text-[11px] text-text-tertiary">Las métricas que te dicen si la operación está sana</p>
+      </div>
+      <div class="flex items-center gap-2 text-[11px] text-text-tertiary font-mono">
+        <span>may 25</span>
+        <span>→</span>
+        <span>abr 26</span>
+      </div>
+    </header>
+    <div class="grid grid-cols-4 divide-x divide-border-subtle">
+      <!-- Intervenciones/mes -->
+      <div class="p-4">
+        <div class="flex items-start justify-between mb-2">
+          <div>
+            <p class="label-caps text-text-tertiary mb-0.5">Intervenciones / mes</p>
+            <p class="stat-mono text-[20px] font-semibold text-text-primary leading-none">215</p>
+          </div>
+          <span class="tick tick-up"><iconify-icon icon="solar:alt-arrow-up-linear" width="11"></iconify-icon>+12%</span>
+        </div>
+        <svg width="100%" height="44" viewBox="0 0 200 44" preserveAspectRatio="none" class="mt-2">
+          <path d="M0,32 L18,30 L36,28 L54,25 L72,27 L90,22 L108,20 L126,18 L144,16 L162,14 L180,12 L200,10" stroke="#0EA5E9" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M0,32 L18,30 L36,28 L54,25 L72,27 L90,22 L108,20 L126,18 L144,16 L162,14 L180,12 L200,10 L200,44 L0,44 Z" fill="#0EA5E918"/>
+          <circle cx="200" cy="10" r="3" fill="#0EA5E9" stroke="#FFFFFF" stroke-width="1.5"/>
+        </svg>
+      </div>
+      <!-- SLA hit -->
+      <div class="p-4">
+        <div class="flex items-start justify-between mb-2">
+          <div>
+            <p class="label-caps text-text-tertiary mb-0.5">SLA hit rate</p>
+            <p class="stat-mono text-[20px] font-semibold text-text-primary leading-none">94.2%</p>
+          </div>
+          <span class="tick tick-up"><iconify-icon icon="solar:alt-arrow-up-linear" width="11"></iconify-icon>+3.1pts</span>
+        </div>
+        <svg width="100%" height="44" viewBox="0 0 200 44" preserveAspectRatio="none" class="mt-2">
+          <path d="M0,20 L18,22 L36,18 L54,24 L72,20 L90,16 L108,14 L126,18 L144,12 L162,14 L180,10 L200,8" stroke="#10B981" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M0,20 L18,22 L36,18 L54,24 L72,20 L90,16 L108,14 L126,18 L144,12 L162,14 L180,10 L200,8 L200,44 L0,44 Z" fill="#10B98118"/>
+          <circle cx="200" cy="8" r="3" fill="#10B981" stroke="#FFFFFF" stroke-width="1.5"/>
+        </svg>
+      </div>
+      <!-- Margen bruto -->
+      <div class="p-4">
+        <div class="flex items-start justify-between mb-2">
+          <div>
+            <p class="label-caps text-text-tertiary mb-0.5">Margen bruto</p>
+            <p class="stat-mono text-[20px] font-semibold text-text-primary leading-none">38.1%</p>
+          </div>
+          <span class="tick tick-up"><iconify-icon icon="solar:alt-arrow-up-linear" width="11"></iconify-icon>+4.8pts</span>
+        </div>
+        <svg width="100%" height="44" viewBox="0 0 200 44" preserveAspectRatio="none" class="mt-2">
+          <path d="M0,30 L18,28 L36,26 L54,30 L72,22 L90,24 L108,18 L126,20 L144,16 L162,14 L180,12 L200,10" stroke="#CA8A04" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M0,30 L18,28 L36,26 L54,30 L72,22 L90,24 L108,18 L126,20 L144,16 L162,14 L180,12 L200,10 L200,44 L0,44 Z" fill="#CA8A0418"/>
+          <circle cx="200" cy="10" r="3" fill="#CA8A04" stroke="#FFFFFF" stroke-width="1.5"/>
+        </svg>
+      </div>
+      <!-- Tech utilization -->
+      <div class="p-4">
+        <div class="flex items-start justify-between mb-2">
+          <div>
+            <p class="label-caps text-text-tertiary mb-0.5">Uso capacidad tech</p>
+            <p class="stat-mono text-[20px] font-semibold text-text-primary leading-none">71.4%</p>
+          </div>
+          <span class="tick tick-down"><iconify-icon icon="solar:alt-arrow-down-linear" width="11"></iconify-icon>−2.3pts</span>
+        </div>
+        <svg width="100%" height="44" viewBox="0 0 200 44" preserveAspectRatio="none" class="mt-2">
+          <path d="M0,18 L18,20 L36,16 L54,14 L72,12 L90,10 L108,14 L126,16 L144,14 L162,18 L180,20 L200,22" stroke="#7C3AED" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M0,18 L18,20 L36,16 L54,14 L72,12 L90,10 L108,14 L126,16 L144,14 L162,18 L180,20 L200,22 L200,44 L0,44 Z" fill="#7C3AED18"/>
+          <circle cx="200" cy="22" r="3" fill="#7C3AED" stroke="#FFFFFF" stroke-width="1.5"/>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- Shields por vencer · 4 cols -->
+  <section class="col-span-4 bg-surface border border-border-subtle rounded-lg">
+    <header class="px-5 py-3.5 border-b border-border-subtle flex items-center justify-between">
+      <div>
+        <h2 class="font-display text-[14px] font-semibold text-text-primary">Shields por vencer</h2>
+        <p class="text-[11px] text-text-tertiary">Próximos 90 días · oportunidad de upsell</p>
+      </div>
+      <span class="px-2 py-0.5 rounded bg-shield-gold/10 text-shield-gold text-[11px] font-semibold">4 contratos</span>
+    </header>
+    <div class="divide-y divide-border-subtle">
+      <div class="px-5 py-3 flex items-center gap-3">
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 mb-0.5">
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium" style="background: #CA8A0415; color: #CA8A04;">
+              <iconify-icon icon="solar:shield-linear" width="10"></iconify-icon>
+              Gold
+            </span>
+            <span class="text-[13px] font-medium text-text-primary">Fractalia España</span>
+          </div>
+          <p class="text-[11px] text-text-tertiary">€ 48.000/año · Rackel Rocha · firma desde 2022</p>
+        </div>
+        <div class="text-right">
+          <p class="stat-mono text-[13px] font-semibold text-prio-urgent">18d</p>
+          <p class="text-[10px] text-text-tertiary">12 may 26</p>
+        </div>
+      </div>
+      <div class="px-5 py-3 flex items-center gap-3">
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 mb-0.5">
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium" style="background: #64748B15; color: #64748B;">
+              <iconify-icon icon="solar:shield-linear" width="10"></iconify-icon>
+              Silver
+            </span>
+            <span class="text-[13px] font-medium text-text-primary">Claro US</span>
+          </div>
+          <p class="text-[11px] text-text-tertiary">$ 22.000/año · negociar upgrade a Gold</p>
+        </div>
+        <div class="text-right">
+          <p class="stat-mono text-[13px] font-semibold text-stage-enroute">42d</p>
+          <p class="text-[10px] text-text-tertiary">5 jun 26</p>
+        </div>
+      </div>
+      <div class="px-5 py-3 flex items-center gap-3">
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 mb-0.5">
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium" style="background: #D9770615; color: #D97706;">
+              <iconify-icon icon="solar:shield-linear" width="10"></iconify-icon>
+              Bronze+
+            </span>
+            <span class="text-[13px] font-medium text-text-primary">Grupo Arcos</span>
+          </div>
+          <p class="text-[11px] text-text-tertiary">€ 14.800/año · rollout cerrado con excelencia</p>
+        </div>
+        <div class="text-right">
+          <p class="stat-mono text-[13px] font-semibold text-text-secondary">68d</p>
+          <p class="text-[10px] text-text-tertiary">1 jul 26</p>
+        </div>
+      </div>
+      <div class="px-5 py-3 flex items-center gap-3">
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 mb-0.5">
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium" style="background: #B4530915; color: #B45309;">
+              <iconify-icon icon="solar:shield-linear" width="10"></iconify-icon>
+              Bronze
+            </span>
+            <span class="text-[13px] font-medium text-text-primary">Piloto Mabe MX</span>
+          </div>
+          <p class="text-[11px] text-text-tertiary">$ 9.000/año · evaluar migración Bronze+</p>
+        </div>
+        <div class="text-right">
+          <p class="stat-mono text-[13px] font-semibold text-text-secondary">88d</p>
+          <p class="text-[10px] text-text-tertiary">21 jul 26</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- Footer con contexto sistema -->
+<footer class="px-6 py-3 border-t border-border-subtle bg-surface flex items-center justify-between text-[11px] text-text-tertiary">
+  <div class="flex items-center gap-4">
+    <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-brand"></span>API saludable</span>
+    <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-brand"></span>Sincronización en tiempo real</span>
+    <span>Audit log · 47 mutaciones hoy</span>
+  </div>
+  <div class="flex items-center gap-3 font-mono">
+    <span>InsiteIQ v2 · foundation 1cc3cd6</span>
+    <span>·</span>
+    <span>Region EU-West</span>
+  </div>
+</footer>
+
+</body>
+</html>
