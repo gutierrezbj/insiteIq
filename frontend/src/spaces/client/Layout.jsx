@@ -38,7 +38,12 @@ export default function ClientLayout() {
   // v2 toggle (mismo patrón que SrsLayout)
   const envV2 = import.meta.env.VITE_V2_SHELL === "1";
   const queryV2 = new URLSearchParams(location.search).get("v2") === "1";
-  const useV2Shell = envV2 || queryV2;
+  // Las rutas /client/espacio-ops y /client/intervenciones son v2-only.
+  // Si el viewer está ahí, fuerza v2 shell aunque no haya ?v2=1.
+  const isV2OnlyRoute =
+    location.pathname.startsWith("/client/espacio-ops") ||
+    location.pathname.startsWith("/client/intervenciones");
+  const useV2Shell = envV2 || queryV2 || isV2OnlyRoute;
 
   if (useV2Shell) {
     // El nombre de la organización del client coordinator. Si no podemos

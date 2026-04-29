@@ -106,15 +106,15 @@ function buildQuickPopupHtml({ wo, site, tech, client, warning }) {
         </p>
       </div>
 
-      <!-- Metadata 2x2 -->
+      <!-- Metadata 2x2 (todos los fields con fallback "—" para no salir vacíos) -->
       <div style="padding:4px 14px 12px;display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;">
         <div>
           <p style="margin:0 0 2px;font-size:9px;color:#6B7280;letter-spacing:0.14em;text-transform:uppercase;">CLI</p>
-          <p style="margin:0;font-size:12px;color:#E5E5E5;">${client?.name || "—"}</p>
+          <p style="margin:0;font-size:12px;color:${client?.name ? "#E5E5E5" : "#6B7280"};">${client?.name || "—"}</p>
         </div>
         <div>
           <p style="margin:0 0 2px;font-size:9px;color:#6B7280;letter-spacing:0.14em;text-transform:uppercase;">BALL</p>
-          <p style="margin:0;font-size:12px;color:${ballColor};font-weight:500;">${ballParty}</p>
+          <p style="margin:0;font-size:12px;color:${ballParty === "—" ? "#6B7280" : ballColor};font-weight:500;">${ballParty}</p>
         </div>
         <div>
           <p style="margin:0 0 2px;font-size:9px;color:#6B7280;letter-spacing:0.14em;text-transform:uppercase;">TECH</p>
@@ -122,7 +122,7 @@ function buildQuickPopupHtml({ wo, site, tech, client, warning }) {
         </div>
         <div>
           <p style="margin:0 0 2px;font-size:9px;color:#6B7280;letter-spacing:0.14em;text-transform:uppercase;">TAG</p>
-          <p style="margin:0;font-size:12px;color:#E5E5E5;">${wo?.intervention_type || wo?.tag || "—"}</p>
+          <p style="margin:0;font-size:12px;color:${(wo?.intervention_type || wo?.tag || wo?.kind) ? "#E5E5E5" : "#6B7280"};">${wo?.intervention_type || wo?.tag || wo?.kind || "—"}</p>
         </div>
       </div>
 

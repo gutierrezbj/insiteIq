@@ -41,10 +41,15 @@ export default function SrsLayout() {
     navigate("/login", { replace: true });
   }
 
-  // v2 toggle: env var OR ?v2=1 en la URL
+  // v2 toggle: env var OR ?v2=1 en la URL OR ruta v2-only
   const envV2 = import.meta.env.VITE_V2_SHELL === "1";
   const queryV2 = new URLSearchParams(location.search).get("v2") === "1";
-  const useV2Shell = envV2 || queryV2;
+  // Rutas v2-only: /srs/espacio-ops y /srs/intervenciones existen solo en v2,
+  // así que si el viewer está ahí forzamos v2 shell sin requerir ?v2=1.
+  const isV2OnlyRoute =
+    location.pathname.startsWith("/srs/espacio-ops") ||
+    location.pathname.startsWith("/srs/intervenciones");
+  const useV2Shell = envV2 || queryV2 || isV2OnlyRoute;
 
   if (useV2Shell) {
     return <V2Shell headerProps={{ liveCount: 11, liveLabel: "activas" }} />;
