@@ -1,5 +1,13 @@
 # InsiteIQ — Claude Code Project Context
 
+> **⛔ AGENTE NUEVO — LEE PRIMERO:** [`memory/donde_la_cagamos.md`](memory/donde_la_cagamos.md)
+>
+> Documento READ-FIRST obligatorio. Registra los antipatrones reales acumulados
+> en sesiones Cowork + Code sobre la capa visual del cockpit. Pedido explícito
+> por el owner JuanCho. **NO proponer nada visual antes de leerlo entero.**
+>
+> ---
+>
 > **🚀 SPRINT v2 DEPLOYED EN PROD · 2026-04-29 · MIGRACIÓN A CODE**
 >
 > 7 fases del sprint de reanudación completadas y desplegadas en VPS 1
