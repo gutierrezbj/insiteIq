@@ -16,9 +16,11 @@
  */
 
 import { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { VIEWER_TZ, VIEWER_TZ_LABEL } from "../../lib/tz";
 import { useRefresh, formatAgo } from "../../contexts/RefreshContext";
+import { useAuth } from "../../contexts/AuthContext";
+import { Icon, ICONS } from "../../lib/icons";
 
 function formatDateTime() {
   const now = new Date();
@@ -60,17 +62,27 @@ export default function V2TopHeader({
   liveLabel = "activas",
 }) {
   const location = useLocation();
+  const navigate = useNavigate();
   const auto = getTitleForPath(location.pathname);
   // Props explícitas tienen prioridad. Si no, deriva de la ruta.
   const finalTitle = title ?? auto.title;
   const finalHighlight = highlight ?? auto.highlight;
   const [dateTime, setDateTime] = useState(formatDateTime());
   const { isRefreshing, lastRefreshAt } = useRefresh();
+  const { user, logout } = useAuth();
 
   useEffect(() => {
     const interval = setInterval(() => setDateTime(formatDateTime()), 30000);
     return () => clearInterval(interval);
   }, []);
+
+  function handleLogout() {
+    logout();
+    navigate("/login", { replace: true });
+  }
+
+  // Display name: prefer full_name, fallback al local-part del email.
+  const displayName = user?.full_name || user?.email?.split("@")[0] || "—";
 
   return (
     <header className="px-6 py-4 border-b border-wr-border flex items-center justify-between flex-shrink-0 bg-wr-bg">
@@ -116,6 +128,25 @@ export default function V2TopHeader({
             {liveCount} {liveLabel}
           </span>
         </span>
+
+        {/* User identity + logout · destrabar "logines que no son" */}
+        <div className="flex items-center gap-2 pl-3 border-l border-wr-border">
+          <span
+            className="font-mono text-[11px] text-wr-text-mid"
+            title={user?.email || ""}
+            style={{ letterSpacing: "0.04em" }}
+          >
+            {displayName}
+          </span>
+          <button
+            type="button"
+            onClick={handleLogout}
+            title="Cerrar sesión"
+            className="inline-flex items-center justify-center w-7 h-7 rounded-sm border border-wr-border text-wr-text-mid hover:text-wr-amber hover:border-wr-amber transition"
+          >
+            <Icon icon={ICONS.logout} size={14} />
+          </button>
+        </div>
       </div>
     </header>
   );
