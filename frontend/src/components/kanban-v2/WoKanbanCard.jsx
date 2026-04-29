@@ -28,6 +28,7 @@ import { Icon, ICONS } from "../../lib/icons";
 import { formatWoCode } from "../../lib/woCode";
 import { getStatusInfo } from "../cockpit-v2/InterventionCardFull";
 import { getSeverityInfo } from "../cockpit-v2/InterventionCardMini";
+import { computeSlaInfo, getTag } from "../../lib/woFields";
 
 const SHIELD_META = {
   bronze:      { hex: "#B45309", label: "Bronze" },
@@ -83,9 +84,10 @@ export default function WoKanbanCard({
   const status = getStatusInfo(wo?.status);
   const severity = getSeverityInfo(wo?.severity);
   const shield = SHIELD_META[site?.shield_level || wo?.shield_level] || null;
-  const hasSlaAlert = wo?.sla_status === "breach" || wo?.sla_status === "at_risk";
+  const slaStatus = computeSlaInfo(wo).status;
+  const hasSlaAlert = slaStatus === "BREACH" || slaStatus === "AT_RISK";
 
-  const tag = wo?.intervention_type || wo?.tag || wo?.kind;
+  const tag = getTag(wo);
 
   return (
     <article

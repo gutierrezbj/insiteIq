@@ -41,6 +41,7 @@ import { Icon, ICONS } from "../../lib/icons";
 import { formatWoCode } from "../../lib/woCode";
 import { getStatusInfo } from "../cockpit-v2/InterventionCardFull";
 import { getSeverityInfo } from "../cockpit-v2/InterventionCardMini";
+import { computeSlaInfo, getTag, buildTimeline } from "../../lib/woFields";
 
 const STAGE_CTA = {
   intake:      { label: "Triagear",                      target: "triage",     bg: "#0EA5E9", note: "Mover a evaluación interna." },
@@ -90,11 +91,16 @@ export default function WoStageModal({
   const severity = getSeverityInfo(wo.severity);
   const cta = STAGE_CTA[wo.status] || STAGE_CTA.intake;
   const shield = SHIELD_META[site?.shield_level || wo?.shield_level];
-  const tag = wo?.intervention_type || wo?.tag || wo?.kind;
+  const tag = getTag(wo);
   const showResult = ["resolved", "in_closeout", "closed", "completed"].includes(wo.status);
   const showRisk = wo.status === "closed" || wo.status === "completed";
   const showReason = wo.status === "cancelled";
-  const hasSlaAlert = wo?.sla_status === "breach" || wo?.sla_status === "at_risk";
+  const slaStatus = computeSlaInfo(wo).status;
+  const hasSlaAlert = slaStatus === "BREACH" || slaStatus === "AT_RISK";
+  // Timeline construido si el WO no trae uno explícito.
+  const timelineItems = Array.isArray(wo?.timeline_items) && wo.timeline_items.length > 0
+    ? wo.timeline_items
+    : buildTimeline(wo, tech?.full_name || tech?.name);
 
   const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget) onClose?.();
@@ -275,14 +281,14 @@ export default function WoStageModal({
             </section>
           )}
 
-          {/* Timeline */}
-          {Array.isArray(wo?.timeline_items) && wo.timeline_items.length > 0 && (
+          {/* Timeline · construido desde handshakes/status si el WO no trae uno */}
+          {timelineItems.length > 0 && (
             <section>
               <div className="label-caps-v2 mb-1.5" style={{ color: "#94A3B8", letterSpacing: "0.14em" }}>
                 Timeline
               </div>
               <div>
-                {wo.timeline_items.map((item, idx) => {
+                {timelineItems.map((item, idx) => {
                   const kindClass = item.kind === "done" ? "is-done"
                     : item.kind === "active" ? "is-active"
                     : item.kind === "error" ? "is-error"

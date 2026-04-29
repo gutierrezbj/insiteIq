@@ -83,10 +83,10 @@ export function alertMatchesClientScope(alert, clientOrgId, sites) {
  * En Client muestra "En revisión interna" sin tiempo stuck (Principio #1).
  */
 export function ballLabelForScope(wo, clientOrgId) {
-  const party = wo?.ball_in_court?.party?.toUpperCase();
-  if (!party) return "—";
-  if (clientOrgId && party === "SRS") {
+  const side = wo?.ball_in_court?.side?.toUpperCase();
+  if (!side) return "—";
+  if (clientOrgId && side === "SRS") {
     return "EN REVISIÓN INTERNA";
   }
-  return party;
+  return side;
 }

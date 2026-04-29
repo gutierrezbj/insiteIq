@@ -31,6 +31,10 @@ import { getTechTimeInfo, VIEWER_TZ_LABEL } from "../../lib/tz";
 import { formatWoCode } from "../../lib/woCode";
 import { getStatusInfo } from "../cockpit-v2/InterventionCardFull";
 import { getSeverityInfo } from "../cockpit-v2/InterventionCardMini";
+import {
+  getBallSide, getBallLabel, getBallColor,
+  getTag, computeSlaInfo,
+} from "../../lib/woFields";
 
 const SLA_BADGE = {
   BREACH:  { label: "BREACH",  bg: "#DC262622", color: "#DC2626", border: "#DC2626" },
@@ -271,6 +275,7 @@ export default function SideDetailPanel({
   report,
   auditCount,
   auditRecent,
+  loading = false,
   open,
   onClose,
   onEscalate,
@@ -295,8 +300,9 @@ export default function SideDetailPanel({
 
   const status = getStatusInfo(wo?.status);
   const severity = getSeverityInfo(wo?.severity);
-  const sla = getSlaBadge(wo?.sla_status || wo?.sla?.status);
-  const slaTime = wo?.sla?.time_to_breach || wo?.sla_time || "—";
+  const slaInfo = computeSlaInfo(wo);
+  const sla = getSlaBadge(slaInfo.status);
+  const slaTime = slaInfo.timeText;
 
   return (
     <>
@@ -418,17 +424,9 @@ export default function SideDetailPanel({
                     <p className="text-[9px] text-wr-text-dim uppercase mb-0.5" style={{ letterSpacing: "0.14em" }}>BALL</p>
                     <p
                       className="text-[13px] m-0"
-                      style={{
-                        color: wo?.ball_in_court?.party === "srs" ? "#F59E0B"
-                          : wo?.ball_in_court?.party === "client" ? "#DC2626"
-                          : "#E5E5E5",
-                        fontWeight: 500,
-                      }}
+                      style={{ color: getBallColor(wo), fontWeight: 500 }}
                     >
-                      {wo?.ball_in_court?.party?.toUpperCase() || "—"}
-                      {wo?.ball_in_court?.since && (
-                        <span className="text-wr-text-dim font-normal"> · stuck</span>
-                      )}
+                      {getBallLabel(wo)}
                     </p>
                   </div>
                   <div>
@@ -439,8 +437,8 @@ export default function SideDetailPanel({
                   </div>
                   <div>
                     <p className="text-[9px] text-wr-text-dim uppercase mb-0.5" style={{ letterSpacing: "0.14em" }}>TAG</p>
-                    <p className="text-[13px] text-wr-text m-0">
-                      {wo?.intervention_type || wo?.tag || wo?.kind || "—"}
+                    <p className="text-[13px] m-0" style={{ color: getTag(wo) ? "#E5E5E5" : "#6B7280" }}>
+                      {getTag(wo) || "—"}
                     </p>
                   </div>
                   <div>

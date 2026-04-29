@@ -33,6 +33,7 @@ import WoKanbanCard from "../../../components/kanban-v2/WoKanbanCard";
 import KanbanColumn from "../../../components/kanban-v2/KanbanColumn";
 import WoStageModal from "../../../components/kanban-v2/WoStageModal";
 import MultiSelectDropdown from "../../../components/kanban-v2/MultiSelectDropdown";
+import { getTechId, getTag } from "../../../lib/woFields";
 import { SkeletonKanbanCard } from "../../../components/v2-shared/Skeleton";
 
 const STAGE_TO_COL = {
@@ -166,7 +167,7 @@ export default function InterventionsKanbanPage({ scope = "srs" }) {
     const seen = new Map();
     seen.set("__unassigned__", { value: "__unassigned__", label: "Sin asignar" });
     wos.forEach((w) => {
-      const tid = w.assigned_tech_user_id || w.assignment?.tech_user_id;
+      const tid = getTechId(w);
       if (!tid) return;
       const u = userMap[tid];
       if (u && !seen.has(tid)) seen.set(tid, { value: tid, label: u.full_name || u.email });
@@ -180,7 +181,7 @@ export default function InterventionsKanbanPage({ scope = "srs" }) {
     return wos.filter((wo) => {
       const site = siteMap[wo.site_id];
       const client = orgMap[wo.organization_id];
-      const techId = wo.assigned_tech_user_id || wo.assignment?.tech_user_id;
+      const techId = getTechId(wo);
       const tech = techId ? userMap[techId] : null;
 
       // Prioridad
@@ -205,9 +206,10 @@ export default function InterventionsKanbanPage({ scope = "srs" }) {
       if (q) {
         const haystack = [
           wo.id,
-          wo.code,
+          wo.reference,
+          wo.title,
           wo.description,
-          wo.intervention_type,
+          getTag(wo),
           site?.name,
           site?.city,
           client?.name,
@@ -292,7 +294,7 @@ export default function InterventionsKanbanPage({ scope = "srs" }) {
   const modalSite = modalWo ? siteMap[modalWo.site_id] : null;
   const modalClient = modalWo ? orgMap[modalWo.organization_id] : null;
   const modalTech = modalWo
-    ? userMap[modalWo.assigned_tech_user_id || modalWo.assignment?.tech_user_id]
+    ? userMap[getTechId(modalWo)]
     : null;
 
   const handleAdvance = useCallback(
@@ -430,7 +432,7 @@ export default function InterventionsKanbanPage({ scope = "srs" }) {
                   wosByColumn[col.id]?.map((wo) => {
                     const site = siteMap[wo.site_id];
                     const client = orgMap[wo.organization_id];
-                    const techId = wo.assigned_tech_user_id || wo.assignment?.tech_user_id;
+                    const techId = getTechId(wo);
                     const tech = techId ? userMap[techId] : null;
                     return (
                       <WoKanbanCard

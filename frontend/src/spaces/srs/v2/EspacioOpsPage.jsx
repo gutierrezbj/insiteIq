@@ -31,6 +31,11 @@ import {
 import { Icon, ICONS } from "../../../lib/icons";
 import { getTechTimeInfo, VIEWER_TZ_LABEL } from "../../../lib/tz";
 import { formatWoCode } from "../../../lib/woCode";
+import {
+  getBallSide, getBallLabel, getBallColor, ballAgeHours,
+  getTechId, getTag, computeSlaInfo,
+  ACTIVE_STATUSES, TERMINAL_STATUSES,
+} from "../../../lib/woFields";
 import KpiStripV2 from "../../../components/cockpit-v2/KpiStripV2";
 import InterventionCardMini from "../../../components/cockpit-v2/InterventionCardMini";
 import SideDetailPanel from "../../../components/warroom-v2/SideDetailPanel";
@@ -39,20 +44,8 @@ import EmptyState from "../../../components/v2-shared/EmptyState";
 import { getStatusInfo } from "../../../components/cockpit-v2/InterventionCardFull";
 import { getSeverityInfo } from "../../../components/cockpit-v2/InterventionCardMini";
 
-const ACTIVE_STATUSES = [
-  "intake", "triage", "pre_flight", "assigned", "dispatched",
-  "in_progress", "in_closeout", "en_route", "on_site",
-];
-const TERMINAL_STATUSES = ["completed", "closed", "cancelled", "resolved"];
-
 function severityRank(s) {
-  return { critical: 0, high: 1, medium: 2, low: 3 }[s] ?? 9;
-}
-
-function ballAgeHours(wo) {
-  const since = wo?.ball_in_court?.since;
-  if (!since) return 0;
-  return (Date.now() - new Date(since).getTime()) / 36e5;
+  return { critical: 0, high: 1, medium: 2, normal: 3, low: 4 }[s] ?? 9;
 }
 
 const SLA_BADGE = {
@@ -74,12 +67,14 @@ function getSlaBadge(slaStatus) {
 function buildQuickPopupHtml({ wo, site, tech, client, warning }) {
   const status = getStatusInfo(wo?.status);
   const severity = getSeverityInfo(wo?.severity);
-  const sla = getSlaBadge(wo?.sla_status || wo?.sla?.status);
-  const slaTime = wo?.sla?.time_to_breach || wo?.sla_time || "—";
+  const slaInfo = computeSlaInfo(wo);
+  const sla = getSlaBadge(slaInfo.status);
+  const slaTime = slaInfo.timeText;
   const techName = tech?.full_name || tech?.name;
   const tzInfo = techName ? getTechTimeInfo(techName) : null;
-  const ballParty = wo?.ball_in_court?.party?.toUpperCase() || "—";
-  const ballColor = ballParty === "SRS" ? "#F59E0B" : ballParty === "CLIENT" ? "#DC2626" : "#E5E5E5";
+  const ballParty = getBallLabel(wo);
+  const ballColor = getBallColor(wo);
+  const tag = getTag(wo);
 
   return `
     <div style="background:#0A0A0A;color:#E5E5E5;font-family:'JetBrains Mono',monospace;">
@@ -122,7 +117,7 @@ function buildQuickPopupHtml({ wo, site, tech, client, warning }) {
         </div>
         <div>
           <p style="margin:0 0 2px;font-size:9px;color:#6B7280;letter-spacing:0.14em;text-transform:uppercase;">TAG</p>
-          <p style="margin:0;font-size:12px;color:${(wo?.intervention_type || wo?.tag || wo?.kind) ? "#E5E5E5" : "#6B7280"};">${wo?.intervention_type || wo?.tag || wo?.kind || "—"}</p>
+          <p style="margin:0;font-size:12px;color:${tag ? "#E5E5E5" : "#6B7280"};">${tag || "—"}</p>
         </div>
       </div>
 
@@ -228,13 +223,13 @@ export default function EspacioOpsPage({ scope = "srs" }) {
   /* ─────────────────────── Stats KPI ─────────────────────── */
   const stats = useMemo(() => {
     const active = wos.filter((w) => !TERMINAL_STATUSES.includes(w.status));
-    const critical = active.filter((w) => w.severity === "critical").length;
+    const critical = active.filter((w) => w.severity === "critical" || w.severity === "high").length;
     const slaRisk = active.filter((w) => {
-      const s = w.sla_status || w.sla?.status;
-      return s === "breach" || s === "at_risk";
+      const s = computeSlaInfo(w).status;
+      return s === "BREACH" || s === "AT_RISK";
     }).length;
-    const ballSrs = active.filter((w) => w.ball_in_court?.party === "srs" && ballAgeHours(w) >= 6).length;
-    const unassigned = active.filter((w) => !(w.assigned_tech_user_id || w.assignment?.tech_user_id)).length;
+    const ballSrs = active.filter((w) => getBallSide(w) === "srs" && ballAgeHours(w) >= 6).length;
+    const unassigned = active.filter((w) => !getTechId(w)).length;
     const activeToday = active.filter((w) => ["en_route", "on_site", "in_progress"].includes(w.status)).length;
     return { critical, slaRisk, ballSrs, unassigned, activeToday };
   }, [wos]);
@@ -243,13 +238,13 @@ export default function EspacioOpsPage({ scope = "srs" }) {
   const filterPredicate = useCallback((w) => {
     if (!activeFilter) return !TERMINAL_STATUSES.includes(w.status);
     switch (activeFilter) {
-      case "critical":   return w.severity === "critical";
+      case "critical":   return w.severity === "critical" || w.severity === "high";
       case "slaRisk": {
-        const s = w.sla_status || w.sla?.status;
-        return s === "breach" || s === "at_risk";
+        const s = computeSlaInfo(w).status;
+        return s === "BREACH" || s === "AT_RISK";
       }
-      case "ballSrs":    return w.ball_in_court?.party === "srs" && ballAgeHours(w) >= 6;
-      case "unassigned": return !(w.assigned_tech_user_id || w.assignment?.tech_user_id);
+      case "ballSrs":    return getBallSide(w) === "srs" && ballAgeHours(w) >= 6;
+      case "unassigned": return !getTechId(w);
       case "activeToday":return ["en_route", "on_site", "in_progress"].includes(w.status);
       default:           return !TERMINAL_STATUSES.includes(w.status);
     }
@@ -312,7 +307,7 @@ export default function EspacioOpsPage({ scope = "srs" }) {
       if (lat == null || lng == null) return;
 
       const status = getStatusInfo(wo.status);
-      const isUrgent = wo.severity === "critical";
+      const isUrgent = wo.severity === "critical" || wo.severity === "high";
       const shortCode = formatWoCode(wo);
       const markerHtml = `
         <div class="wo-pill${isUrgent ? " is-urgent" : ""}" data-wo-id="${wo.id}">
@@ -328,7 +323,7 @@ export default function EspacioOpsPage({ scope = "srs" }) {
       });
       const marker = L.marker([lat, lng], { icon, riseOnHover: true }).addTo(map);
 
-      const tech = userMap[wo.assigned_tech_user_id || wo.assignment?.tech_user_id];
+      const tech = userMap[getTechId(wo)];
       const client = orgMap[wo.organization_id];
       const warning = wo.warning || (wo.alerts && wo.alerts[0]) || null;
 
@@ -353,7 +348,7 @@ export default function EspacioOpsPage({ scope = "srs" }) {
 
       // Regenerar contenido al abrir → horas timezone live
       marker.on("popupopen", () => {
-        const techNow = userMap[wo.assigned_tech_user_id || wo.assignment?.tech_user_id];
+        const techNow = userMap[getTechId(wo)];
         const html = buildQuickPopupHtml({ wo, site, tech: techNow, client, warning });
         marker.getPopup().setContent(html);
         // wire los botones del popup ahora que están en el DOM
@@ -411,8 +406,66 @@ export default function EspacioOpsPage({ scope = "srs" }) {
   /* ─────────────────────── Detail panel data ─────────────────────── */
   const detailWo = useMemo(() => wos.find((w) => w.id === detailWoId) || null, [wos, detailWoId]);
   const detailSite = detailWo ? siteMap[detailWo.site_id] : null;
-  const detailTech = detailWo ? userMap[detailWo.assigned_tech_user_id || detailWo.assignment?.tech_user_id] : null;
+  const detailTech = detailWo ? userMap[getTechId(detailWo)] : null;
   const detailClient = detailWo ? orgMap[detailWo.organization_id] : null;
+
+  // Lazy fetch al abrir el panel: briefing, capture, report, threads, audit.
+  // El backend NO embebe esto en /work-orders/{id} — son endpoints separados.
+  // Cada uno puede 404 (sin ack/sin submit/sin emit todavía) y eso es válido.
+  const [detailExtras, setDetailExtras] = useState({
+    briefing: null, capture: null, report: null,
+    threadsShared: [], threadsInternal: [],
+    auditRecent: [], auditCount: 0,
+    loading: false,
+  });
+  useEffect(() => {
+    if (!detailWoId || !detailOpen) return;
+    let cancelled = false;
+    setDetailExtras((prev) => ({ ...prev, loading: true }));
+    const swallow = (p) => p.catch(() => null);
+    Promise.all([
+      swallow(api.get(`/work-orders/${detailWoId}/briefing`)),
+      swallow(api.get(`/work-orders/${detailWoId}/capture`)),
+      swallow(api.get(`/work-orders/${detailWoId}/report`)),
+      swallow(api.get(`/work-orders/${detailWoId}/threads/shared/messages`)),
+      swallow(api.get(`/work-orders/${detailWoId}/threads/internal/messages`)),
+      swallow(api.get(`/audit-log?entity_id=${detailWoId}&limit=4`)),
+    ]).then(([briefing, capture, report, sharedMsgs, internalMsgs, auditList]) => {
+      if (cancelled) return;
+      const sharedArr = Array.isArray(sharedMsgs) ? sharedMsgs : sharedMsgs?.items || [];
+      const internalArr = Array.isArray(internalMsgs) ? internalMsgs : internalMsgs?.items || [];
+      const auditArr = Array.isArray(auditList) ? auditList : auditList?.items || [];
+      setDetailExtras({
+        briefing, capture, report,
+        threadsShared: sharedArr.map((m) => ({
+          who: m.from_name || m.from || m.actor || "—",
+          when: m.created_at ? new Date(m.created_at).toLocaleString("es-ES", { dateStyle: "short", timeStyle: "short" }) : "",
+          msg: m.text || m.body || m.message || "",
+          pending: !!m.pending_reply,
+        })),
+        threadsInternal: internalArr.map((m) => ({
+          who: m.from_name || m.from || m.actor || "—",
+          when: m.created_at ? new Date(m.created_at).toLocaleString("es-ES", { dateStyle: "short", timeStyle: "short" }) : "",
+          msg: m.text || m.body || m.message || "",
+          pending: !!m.pending_reply,
+        })),
+        auditRecent: auditArr.map((a) => ({
+          action: a.action || a.event_type || "—",
+          actor: a.actor_email || a.actor_user_id?.slice(0, 8) || "system",
+          when: a.created_at ? new Date(a.created_at).toLocaleString("es-ES", { dateStyle: "short", timeStyle: "short" }) : "",
+        })),
+        auditCount: auditArr.length,
+        loading: false,
+      });
+    });
+    return () => { cancelled = true; };
+  }, [detailWoId, detailOpen]);
+
+  // Timeline construido desde campos disponibles del WO (no del backend embebido).
+  const detailTimeline = useMemo(
+    () => detailWo ? buildTimeline(detailWo, detailTech?.full_name || detailTech?.name) : [],
+    [detailWo, detailTech]
+  );
 
   /* ─────────────────────── Render ─────────────────────── */
   const counters = useMemo(() => ({
@@ -539,19 +592,21 @@ export default function EspacioOpsPage({ scope = "srs" }) {
         site={detailSite}
         tech={detailTech}
         client={detailClient}
-        shieldLevel={null}
+        shieldLevel={detailWo?.shield_level || null}
         warning={detailWo?.warning}
         description={detailWo?.description}
         scope={detailWo?.scope}
-        timeline={detailWo?.timeline_items || []}
-        threadsShared={detailWo?.threads_shared || []}
-        threadsInternal={detailWo?.threads_internal || []}
+        timeline={detailTimeline}
+        threadsShared={detailExtras.threadsShared}
+        threadsInternal={detailExtras.threadsInternal}
         parts={detailWo?.parts || []}
-        briefing={detailWo?.briefing}
-        capture={detailWo?.capture}
-        report={detailWo?.report}
-        auditCount={detailWo?.audit_count || 0}
-        auditRecent={detailWo?.audit_recent || []}
+        briefing={detailExtras.briefing}
+        capture={detailExtras.capture}
+        report={detailExtras.report}
+        auditCount={detailExtras.auditCount}
+        auditRecent={detailExtras.auditRecent}
+        loading={detailExtras.loading}
+        viewerScope={scope}
         open={detailOpen}
         onClose={() => setDetailOpen(false)}
         onEscalate={() => {

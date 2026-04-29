@@ -47,29 +47,17 @@ import {
 } from "../../../components/v2-shared/Skeleton";
 import EmptyState from "../../../components/v2-shared/EmptyState";
 import { formatWoCode } from "../../../lib/woCode";
+import {
+  getBallSide, getTechId, computeSlaInfo, ballAgeHours,
+  ACTIVE_STATUSES as WO_ACTIVE_STATUSES,
+  TERMINAL_STATUSES as WO_TERMINAL_STATUSES,
+} from "../../../lib/woFields";
 
-const ACTIVE_STATUSES = [
-  "intake",
-  "triage",
-  "pre_flight",
-  "assigned",
-  "dispatched",
-  "in_progress",
-  "in_closeout",
-  "en_route",
-  "on_site",
-];
-
-const TERMINAL_STATUSES = ["completed", "closed", "cancelled", "resolved"];
+const ACTIVE_STATUSES = WO_ACTIVE_STATUSES;
+const TERMINAL_STATUSES = WO_TERMINAL_STATUSES;
 
 function severityRank(s) {
-  return { critical: 0, high: 1, medium: 2, low: 3 }[s] ?? 9;
-}
-
-function ballAgeHours(wo) {
-  const since = wo?.ball_in_court?.since;
-  if (!since) return 0;
-  return (Date.now() - new Date(since).getTime()) / 36e5;
+  return { critical: 0, high: 1, medium: 2, normal: 3, low: 4 }[s] ?? 9;
 }
 
 export default function V2CockpitPage({ scope = "srs" }) {
@@ -145,19 +133,15 @@ export default function V2CockpitPage({ scope = "srs" }) {
   // ────────────── Stats de KPI ──────────────
   const stats = useMemo(() => {
     const active = wos.filter((w) => !TERMINAL_STATUSES.includes(w.status));
-    const critical = active.filter((w) => w.severity === "critical");
+    // El backend tiene severity en [low, normal, medium, high, critical]. Para
+    // el cockpit "críticos" mostramos critical+high (high es realmente urgent).
+    const critical = active.filter((w) => w.severity === "critical" || w.severity === "high");
     const slaRisk = active.filter((w) => {
-      const sla = w.sla_status || w.sla?.status;
-      return sla === "breach" || sla === "at_risk";
+      const s = computeSlaInfo(w).status;
+      return s === "BREACH" || s === "AT_RISK";
     });
-    const ballSrs = active.filter((w) => {
-      if (w.ball_in_court?.party !== "srs") return false;
-      return ballAgeHours(w) >= 6;
-    });
-    const unassigned = active.filter((w) => {
-      const techId = w.assigned_tech_user_id || w.assignment?.tech_user_id;
-      return !techId;
-    });
+    const ballSrs = active.filter((w) => getBallSide(w) === "srs" && ballAgeHours(w) >= 6);
+    const unassigned = active.filter((w) => !getTechId(w));
     const enRouteOrOnSite = active.filter((w) =>
       ["en_route", "on_site", "in_progress"].includes(w.status)
     );
@@ -178,15 +162,15 @@ export default function V2CockpitPage({ scope = "srs" }) {
       if (!activeFilter) return true;
       switch (activeFilter) {
         case "critical":
-          return w.severity === "critical";
+          return w.severity === "critical" || w.severity === "high";
         case "slaRisk": {
-          const sla = w.sla_status || w.sla?.status;
-          return sla === "breach" || sla === "at_risk";
+          const s = computeSlaInfo(w).status;
+          return s === "BREACH" || s === "AT_RISK";
         }
         case "ballSrs":
-          return w.ball_in_court?.party === "srs" && ballAgeHours(w) >= 6;
+          return getBallSide(w) === "srs" && ballAgeHours(w) >= 6;
         case "unassigned":
-          return !(w.assigned_tech_user_id || w.assignment?.tech_user_id);
+          return !getTechId(w);
         case "activeToday":
           return ["en_route", "on_site", "in_progress"].includes(w.status);
         default:
@@ -358,7 +342,7 @@ export default function V2CockpitPage({ scope = "srs" }) {
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
                 {inCurseInterventions.map((wo) => {
                   const site = siteMap[wo.site_id];
-                  const techId = wo.assigned_tech_user_id || wo.assignment?.tech_user_id;
+                  const techId = getTechId(wo);
                   const tech = techId ? userMap[techId] : null;
                   return (
                     <InterventionCardFull
