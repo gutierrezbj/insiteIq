@@ -26,6 +26,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { api } from "../../../lib/api";
 import { useRefresh } from "../../../contexts/RefreshContext";
+import { useAuth } from "../../../contexts/AuthContext";
+import { getClientOrgId, woMatchesClientScope, siteMatchesClientScope } from "../../../lib/scope";
 import { Icon, ICONS } from "../../../lib/icons";
 import WoKanbanCard from "../../../components/kanban-v2/WoKanbanCard";
 import KanbanColumn from "../../../components/kanban-v2/KanbanColumn";
@@ -70,10 +72,22 @@ const COLUMNS = [
 
 const COL_LABEL = COLUMNS.reduce((acc, c) => ({ ...acc, [c.id]: c.title }), {});
 
-export default function InterventionsKanbanPage() {
+export default function InterventionsKanbanPage({ scope = "srs" }) {
   const { markRefreshing, markFresh } = useRefresh();
-  const [wos, setWos] = useState([]);
-  const [sites, setSites] = useState([]);
+  const { user } = useAuth();
+  const clientOrgId = scope === "client" ? getClientOrgId(user) : null;
+  const [allWos, setWos] = useState([]);
+  const [allSites, setSites] = useState([]);
+
+  // Scope-filtered data
+  const wos = useMemo(
+    () => allWos.filter((w) => woMatchesClientScope(w, clientOrgId)),
+    [allWos, clientOrgId]
+  );
+  const sites = useMemo(
+    () => allSites.filter((s) => siteMatchesClientScope(s, clientOrgId)),
+    [allSites, clientOrgId]
+  );
   const [orgs, setOrgs] = useState([]);
   const [users, setUsers] = useState([]);
   const [showCancelled, setShowCancelled] = useState(false);

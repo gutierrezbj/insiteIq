@@ -22,6 +22,8 @@ import V2BottomStrip from "./V2BottomStrip";
 import { RefreshProvider } from "../../contexts/RefreshContext";
 
 export default function V2Shell({
+  scope = "srs",
+  organizationName,
   headerProps = {},
   showBottomStrip = true,
   buildSha,
@@ -33,7 +35,12 @@ export default function V2Shell({
         className="h-screen flex bg-wr-bg text-wr-text font-mono"
         style={{ fontVariantNumeric: "tabular-nums" }}
       >
-        <V2SidebarNav buildSha={buildSha} region={region} />
+        <V2SidebarNav
+          scope={scope}
+          organizationName={organizationName}
+          buildSha={buildSha}
+          region={region}
+        />
 
         <div className="flex-1 flex flex-col min-w-0">
           <V2TopHeader {...headerProps} />

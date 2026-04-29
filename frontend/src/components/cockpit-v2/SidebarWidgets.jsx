@@ -379,7 +379,9 @@ export function WeatherWidget({ sites = [], selectedSiteId, onSelectSite }) {
 /* SummaryWidget                                                   */
 /* ─────────────────────────────────────────────────────────────── */
 
-export function SummaryWidget({ stats = {} }) {
+export function SummaryWidget({ stats = {}, viewerScope = "srs" }) {
+  // Principio #1: Facturado MTD es "ropa en casa" — solo visible en SRS scope.
+  const isClientScope = viewerScope === "client";
   const rows = [
     { label: "Completadas hoy",       value: stats.completedToday ?? 0,   color: "#22C55E", size: 18 },
     { label: "Total intervenciones",  value: stats.totalActive ?? 0,      color: "#06B6D4", size: 18 },
@@ -405,7 +407,7 @@ export function SummaryWidget({ stats = {} }) {
             </span>
           </div>
         ))}
-        {stats.invoicedMtd != null && (
+        {stats.invoicedMtd != null && !isClientScope && (
           <div className="flex items-center justify-between py-1 pt-3 border-t border-wr-border">
             <span className="text-[12px] text-wr-text-mid">Facturado MTD</span>
             <span

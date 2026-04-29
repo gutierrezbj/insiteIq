@@ -131,6 +131,23 @@ function SrsInterventionsRouter() {
   );
 }
 
+/** ClientCockpitRouter — v2 con scope="client" si ?v2=1, sino v1 viejo. */
+function ClientCockpitRouter() {
+  const location = useLocation();
+  const envV2 = import.meta.env.VITE_V2_SHELL === "1";
+  const queryV2 = new URLSearchParams(location.search).get("v2") === "1";
+  const useV2 = envV2 || queryV2;
+  return useV2 ? (
+    <V2ErrorBoundary>
+      <Suspense fallback={<V2LoadingFallback />}>
+        <V2CockpitPage scope="client" />
+      </Suspense>
+    </V2ErrorBoundary>
+  ) : (
+    <CockpitPage scope="client" />
+  );
+}
+
 function NoAccessPage() {
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
@@ -210,7 +227,27 @@ export default function App() {
               </RequireSpace>
             }
           >
-            <Route index element={<CockpitPage scope="client" />} />
+            <Route index element={<ClientCockpitRouter />} />
+            <Route
+              path="espacio-ops"
+              element={
+                <V2ErrorBoundary>
+                  <Suspense fallback={<V2LoadingFallback />}>
+                    <V2EspacioOpsPage scope="client" />
+                  </Suspense>
+                </V2ErrorBoundary>
+              }
+            />
+            <Route
+              path="intervenciones"
+              element={
+                <V2ErrorBoundary>
+                  <Suspense fallback={<V2LoadingFallback />}>
+                    <V2InterventionsKanbanPage scope="client" />
+                  </Suspense>
+                </V2ErrorBoundary>
+              }
+            />
             <Route path="status" element={<ClientHome />} />
             <Route path="ops/:wo_id" element={<WorkOrderDetailPage />} />
             <Route path="ops/:wo_id/report" element={<InterventionReportPage />} />

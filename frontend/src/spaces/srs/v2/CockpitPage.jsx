@@ -22,6 +22,14 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../../../lib/api";
 import { useRefresh } from "../../../contexts/RefreshContext";
+import { useAuth } from "../../../contexts/AuthContext";
+import {
+  getClientOrgId,
+  woMatchesClientScope,
+  siteMatchesClientScope,
+  agreementMatchesClientScope,
+  alertMatchesClientScope,
+} from "../../../lib/scope";
 import KpiStripV2 from "../../../components/cockpit-v2/KpiStripV2";
 import InterventionCardFull from "../../../components/cockpit-v2/InterventionCardFull";
 import InterventionCardMini from "../../../components/cockpit-v2/InterventionCardMini";
@@ -67,13 +75,17 @@ function ballAgeHours(wo) {
 export default function V2CockpitPage({ scope = "srs" }) {
   const navigate = useNavigate();
   const { markRefreshing, markFresh } = useRefresh();
+  const { user } = useAuth();
+  // En scope=client filtramos data por organization_id del usuario.
+  // En SRS este valor es null (no filtra nada).
+  const clientOrgId = scope === "client" ? getClientOrgId(user) : null;
 
-  const [wos, setWos] = useState([]);
-  const [sites, setSites] = useState([]);
-  const [alerts, setAlerts] = useState([]);
+  const [allWos, setWos] = useState([]);
+  const [allSites, setSites] = useState([]);
+  const [allAlerts, setAlerts] = useState([]);
   const [orgs, setOrgs] = useState([]);
   const [users, setUsers] = useState([]);
-  const [agreements, setAgreements] = useState([]);
+  const [allAgreements, setAgreements] = useState([]);
   const [activeFilter, setActiveFilter] = useState(null);
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
 
@@ -107,6 +119,24 @@ export default function V2CockpitPage({ scope = "srs" }) {
     const int = setInterval(load, 45000);
     return () => clearInterval(int);
   }, [load]);
+
+  // Aplicar scope filter ANTES de los maps · Principio #1 cliente
+  const wos = useMemo(
+    () => allWos.filter((w) => woMatchesClientScope(w, clientOrgId)),
+    [allWos, clientOrgId]
+  );
+  const sites = useMemo(
+    () => allSites.filter((s) => siteMatchesClientScope(s, clientOrgId)),
+    [allSites, clientOrgId]
+  );
+  const alerts = useMemo(
+    () => allAlerts.filter((a) => alertMatchesClientScope(a, clientOrgId, allSites)),
+    [allAlerts, clientOrgId, allSites]
+  );
+  const agreements = useMemo(
+    () => allAgreements.filter((a) => agreementMatchesClientScope(a, clientOrgId)),
+    [allAgreements, clientOrgId]
+  );
 
   const siteMap = useMemo(() => Object.fromEntries(sites.map((s) => [s.id, s])), [sites]);
   const orgMap = useMemo(() => Object.fromEntries(orgs.map((o) => [o.id, o])), [orgs]);

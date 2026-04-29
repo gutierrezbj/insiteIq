@@ -274,7 +274,13 @@ export default function SideDetailPanel({
   open,
   onClose,
   onEscalate,
+  viewerScope = "srs",
 }) {
+  // Cliente NO ve threads internos ni audit log SRS-internal (Principio #1).
+  const isClientScope = viewerScope === "client";
+  const visibleThreadsInternal = isClientScope ? null : threadsInternal;
+  const visibleAuditRecent = isClientScope ? null : auditRecent;
+  const visibleAuditCount = isClientScope ? 0 : auditCount;
   // ESC para cerrar
   useEffect(() => {
     if (!open) return;
@@ -500,8 +506,8 @@ export default function SideDetailPanel({
                 </section>
               )}
 
-              {/* Threads internal */}
-              {threadsInternal && (
+              {/* Threads internal · OCULTO en client scope (Principio #1) */}
+              {visibleThreadsInternal && (
                 <section>
                   <div
                     className="text-[10px] text-wr-text-dim uppercase mb-2 flex items-center justify-between"
@@ -509,11 +515,11 @@ export default function SideDetailPanel({
                   >
                     <span>Thread interno SRS</span>
                     <span className="text-[10px] normal-case" style={{ letterSpacing: 0, fontWeight: 400, color: "#F59E0B" }}>
-                      {threadsInternal.length} mensajes · opaco cliente
+                      {visibleThreadsInternal.length} mensajes · opaco cliente
                     </span>
                   </div>
                   <div>
-                    <ThreadList messages={threadsInternal} kind="internal" />
+                    <ThreadList messages={visibleThreadsInternal} kind="internal" />
                   </div>
                 </section>
               )}
@@ -542,8 +548,8 @@ export default function SideDetailPanel({
                 <DocCycleGrid briefing={briefing} capture={capture} report={report} />
               </section>
 
-              {/* Audit log */}
-              {auditRecent && auditRecent.length > 0 && (
+              {/* Audit log · OCULTO en client scope (Principio #1) */}
+              {visibleAuditRecent && visibleAuditRecent.length > 0 && (
                 <section>
                   <div
                     className="text-[10px] text-wr-text-dim uppercase mb-2 flex items-center justify-between"
@@ -555,11 +561,11 @@ export default function SideDetailPanel({
                       className="text-[10px] uppercase no-underline"
                       style={{ color: "#F59E0B", letterSpacing: "0.1em", fontWeight: 500 }}
                     >
-                      Ver {auditCount} →
+                      Ver {visibleAuditCount} →
                     </a>
                   </div>
                   <div className="border border-wr-border rounded-sm text-[11px]">
-                    {auditRecent.map((a, idx) => (
+                    {visibleAuditRecent.map((a, idx) => (
                       <div
                         key={idx}
                         className="px-2.5 py-2 flex justify-between gap-2.5"

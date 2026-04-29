@@ -21,6 +21,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../../../lib/api";
 import { useRefresh } from "../../../contexts/RefreshContext";
+import { useAuth } from "../../../contexts/AuthContext";
+import {
+  getClientOrgId,
+  woMatchesClientScope,
+  siteMatchesClientScope,
+  alertMatchesClientScope,
+} from "../../../lib/scope";
 import { Icon, ICONS } from "../../../lib/icons";
 import { getTechTimeInfo, VIEWER_TZ_LABEL } from "../../../lib/tz";
 import { formatWoCode } from "../../../lib/woCode";
@@ -152,17 +159,33 @@ function buildQuickPopupHtml({ wo, site, tech, client, warning }) {
   `;
 }
 
-export default function EspacioOpsPage() {
+export default function EspacioOpsPage({ scope = "srs" }) {
   const { markRefreshing, markFresh } = useRefresh();
+  const { user } = useAuth();
+  const clientOrgId = scope === "client" ? getClientOrgId(user) : null;
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markersRef = useRef({});
 
-  const [wos, setWos] = useState([]);
-  const [sites, setSites] = useState([]);
-  const [alerts, setAlerts] = useState([]);
+  const [allWos, setWos] = useState([]);
+  const [allSites, setSites] = useState([]);
+  const [allAlerts, setAlerts] = useState([]);
   const [orgs, setOrgs] = useState([]);
   const [users, setUsers] = useState([]);
+
+  // Scope-filtered data (Principio #1 cliente)
+  const wos = useMemo(
+    () => allWos.filter((w) => woMatchesClientScope(w, clientOrgId)),
+    [allWos, clientOrgId]
+  );
+  const sites = useMemo(
+    () => allSites.filter((s) => siteMatchesClientScope(s, clientOrgId)),
+    [allSites, clientOrgId]
+  );
+  const alerts = useMemo(
+    () => allAlerts.filter((a) => alertMatchesClientScope(a, clientOrgId, allSites)),
+    [allAlerts, clientOrgId, allSites]
+  );
   const [activeFilter, setActiveFilter] = useState(null);
   const [detailWoId, setDetailWoId] = useState(null);
   const [detailOpen, setDetailOpen] = useState(false);
