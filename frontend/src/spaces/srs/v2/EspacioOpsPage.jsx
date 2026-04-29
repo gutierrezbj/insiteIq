@@ -333,12 +333,22 @@ export default function EspacioOpsPage({ scope = "srs" }) {
       const warning = wo.warning || (wo.alerts && wo.alerts[0]) || null;
 
       marker.bindPopup(buildQuickPopupHtml({ wo, site, tech, client, warning }), {
-        closeButton: true,
+        // closeButton:false → el X de Leaflet se montaba encima del badge SLA
+        // del header (mismo top-right corner). Cierra igual con click-fuera,
+        // Esc, o autoClose al abrir otro popup.
+        closeButton: false,
         autoClose: true,
         closeOnEscapeKey: true,
         maxWidth: 340,
         minWidth: 320,
         offset: [0, -6],
+        // KPI strip vive encima del map container (sibling flex). Leaflet por
+        // default solo respeta el bound del map div; con autoPanPaddingTopLeft
+        // forzamos pan extra para que la cabeza del popup nunca quede tapada.
+        autoPan: true,
+        autoPanPaddingTopLeft: [20, 160],
+        autoPanPaddingBottomRight: [20, 40],
+        keepInView: true,
       });
 
       // Regenerar contenido al abrir → horas timezone live
