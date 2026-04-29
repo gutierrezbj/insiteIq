@@ -1,11 +1,25 @@
 # InsiteIQ — Claude Code Project Context
 
-> **🚀 SPRINT v2 DEPLOYED EN PROD · 2026-04-29**
+> **🚀 SPRINT v2 DEPLOYED EN PROD · 2026-04-29 · MIGRACIÓN A CODE**
 >
 > 7 fases del sprint de reanudación completadas y desplegadas en VPS 1
-> (Alpha + Beta + Gamma + Delta + Epsilon + Zeta + Eta). Ver
-> `PROJECT_STATUS.md` para el resumen ejecutivo y `memory/sprint_reanudacion_v2.md`
-> para el log detallado de cada fase.
+> (Alpha + Beta + Gamma + Delta + Epsilon + Zeta + Eta) más pulidos A
+> (Open-Meteo + Shields breakdown + Fleet placeholder + Code splitting) y
+> trabajo B (Client space scope-aware + hidden fields + Layouts auto-v2 en
+> rutas v2-only). Ver `PROJECT_STATUS.md` para resumen ejecutivo y
+> `memory/sprint_reanudacion_v2.md` para log detallado.
+>
+> **Migración a Claude Code (2026-04-29):** el sprint continuará en Code
+> porque las fricciones del Cowork sandbox sobre OneDrive (no puede ejecutar
+> git/npm/ssh nativo) hacen ineficiente cada cambio. Documento de handoff
+> completo en `memory/handoff_to_code.md` — leer ese primero al arrancar Code.
+>
+> **Pendiente al cierre Cowork:** trabajo de B + hotfix routes v2-only NO
+> está commiteado ni deployed. Working tree del Mac local del owner tiene
+> ~9 archivos modificados que cubren: `lib/scope.js`, `V2SidebarNav` scope-aware,
+> `SideDetailPanel viewerScope` prop, 3 páginas v2 con scope filter, Layouts
+> con detección de rutas v2-only, popup fallbacks. Code arranca con `git status`
+> + `npm run build` + commit + push + deploy.
 >
 > **Acceso v2 en PROD:** `https://insiteiq.systemrapid.io/srs?v2=1`
 > Sin `?v2=1` se ve la v1 legacy. Toggle por query param hasta que el v2

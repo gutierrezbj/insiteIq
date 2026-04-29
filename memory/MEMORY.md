@@ -1,5 +1,8 @@
-- [Glossary](glossary.md) — Acronimos, modulos, capas, fases del protocolo SRS/InsiteIQ
+- **[Handoff a Code](handoff_to_code.md)** — **LEER PRIMERO** si arrancas en Claude Code · estado real, comandos útiles, reglas rectoras, decisiones pendientes
+- [Sprint Reanudación v2](sprint_reanudacion_v2.md) — Log de las 7 fases (Alpha→Eta) que llevaron InsiteIQ del estado pausado al deployed en PROD · Draft 5 · sprint cerrado al 100%
+- [Glossary](glossary.md) — Acronimos, modulos, capas, fases del protocolo SRS/InsiteIQ + términos v2 (Mock 1:1, Anti-plantilla IA, KPI-as-filter, drag handle 6-dots, scope filter, etc.)
 - [Infra Notion](reference_infra_notion.md) — Referencia a docs de infraestructura SRS: servidores, puertos, VPN, backups
 - [Design System SRS](design_system_srs.md) — SRS Nucleus v2.0: metodologia, Identity Sprint, tokens, blacklist
-- [Design System InsiteIQ v2](design_system_insiteiq_v2.md) — Merge OverWatch + SKYPRO360 · supersede Identity Sprint v1 (war-room/amber fracasó) · Kanban + modales context-aware + shell light-first con header dark band · cyan + verde brand
+- [Design System InsiteIQ v2](design_system_insiteiq_v2.md) — v1.8 deployed · arquitectura SRS dark unificada (Cockpit + Espacio OPS + Kanban) referenciada 1:1 contra SKYPRO360 · Solar Linear · §3.6a timezone-aware obligatorio · Principio #1 ropa-en-casa
+- [Tokens Extraction Checklist](tokens_extraction_checklist.md) — Plan original para extraer hex reales de OverWatch + SKYPRO360 PROD via DevTools (sigue válido si se quiere afinar paleta)
 - [Company Context](context/company.md) — SRS overview, servidores, puertos, deploy, proyectos activos

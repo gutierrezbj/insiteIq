@@ -1,9 +1,11 @@
 # Company Context — System Rapid Solutions (SRS)
 
-> **Nota 2026-04-23:** InsiteIQ pausado por owner. Backend + data model quedan vivos
-> en PROD. La capa UX del cockpit operativo no cerró tras 3 iteraciones. Ver
-> `PROJECT_STATUS.md` en la raíz del repo InsiteIQ para contexto completo y
-> recomendaciones de retoma.
+> **Nota 2026-04-29:** InsiteIQ v2 **deployed en PROD** tras sprint de
+> reanudación de 7 fases (Alpha → Eta) en sesiones consecutivas con Claude
+> Cowork. Capa visual del cockpit operativo, espacio OPS y kanban de
+> intervenciones funcionales con data real del backend. Acceso vía `?v2=1` en
+> URL durante semana de validación con Andros + JuanCho antes de switch a
+> default. Ver `PROJECT_STATUS.md` y `memory/sprint_reanudacion_v2.md`.
 
 ## Overview
 System Rapid Solutions (SRS), Madrid, Espana. 25 anos de experiencia en soporte IT internacional. Opera red de tecnicos en Centroamerica, Sudamerica, Europa y KSA.
@@ -68,7 +70,7 @@ Todo proyecto desplegado debe:
 | SA99 | Produccion | sa99.systemrapid.io |
 | SKYPRO360 | Produccion | skypro360.systemrapid.io |
 | MOEVE-T | Produccion | moevet.systemrapid.io |
-| InsiteIQ | **Pausado 2026-04-23 · PROD activo con 22+ pasitos live** (ver `PROJECT_STATUS.md`) | insiteiq.systemrapid.io |
+| InsiteIQ | **v2 deployed 2026-04-29 · acceso `?v2=1`** (ver `PROJECT_STATUS.md`) | insiteiq.systemrapid.io |
 
 ## Mercados Objetivo InsiteIQ
 
@@ -111,4 +113,4 @@ SRS Nucleus v2.0 — metodologia de identidad visual propia. NO es un kit de UI 
 - Cada producto SRS pasa por un Identity Sprint (6 pasos)
 - Foundation tokens compartidos + Vertical Theme por producto
 - Blacklist estricta: fuentes genericas (Inter, Poppins), colores default Tailwind, layouts clone
-- InsiteIQ theme: "War room meets luxury ops center" — stone/amber/warm
+- InsiteIQ theme v1.8: arquitectura SRS dark unificada (Cockpit + Espacio OPS + Kanban) referenciada 1:1 contra SKYPRO360 OpsManager. Solar Icon Set Linear. JetBrains Mono dominante. Mapa Leaflet light Positron sobre shell dark. Reglas obligatorias: §3.6a timezone-aware personas, §3.6b drag handle 6-dots, §3.5 anti-plantilla IA, Principio #1 ropa-en-casa SRS opaco / operativo transparente cliente.

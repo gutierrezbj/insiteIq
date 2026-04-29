@@ -2,9 +2,9 @@
 
 Shorthand, acronimos y lenguaje interno de SRS y del proyecto InsiteIQ.
 
-> **Nota 2026-04-23:** InsiteIQ pausado. Ver `PROJECT_STATUS.md` en la raíz.
-> El glosario se mantiene como registro histórico del vocabulario operativo
-> acuñado durante el diseño. Si se retoma, sigue siendo la fuente canónica.
+> **Nota 2026-04-29:** InsiteIQ v2 deployed en PROD. Glosario actualizado con
+> términos del sprint de reanudación (KPI-as-filter, drag handle 6-dots,
+> Solar Linear, scope filter, etc.). Fuente canónica viva.
 
 ## Acronimos SRS
 
@@ -186,5 +186,30 @@ Shorthand, acronimos y lenguaje interno de SRS y del proyecto InsiteIQ.
 | Nickname | Person |
 |----------|--------|
 | JuanCho | Juan Gutierrez, lead del proyecto |
+| Navegante | Forma de tratamiento mutua entre JuanCho y el agente IA en sesiones cowork |
 | Andros | Operaciones SRS |
 | Adriana | Operaciones SRS |
+
+## Términos v2 (sprint reanudación 2026-04-24/29)
+
+| Term | Meaning |
+|------|---------|
+| Sprint v2 | Reanudación del proyecto con 7 fases (Alpha→Eta) que llevaron InsiteIQ del estado pausado al deployed en PROD |
+| Cowork mode | Sesión interactiva con Claude (no Code) donde se construyó la mayor parte del v2 · friction documentada por OneDrive sandbox |
+| Mock 1:1 | Regla rectora del sprint v2: el agente NO inventa visual, copia mocks pre-firmados. Mocks canónicos en `mocks/insiteiq_*_v2_static.html` |
+| Anti-plantilla IA | Regla Dura #0 del DS v1.7 §1: cero defaults Shadcn/Lucide, cero gradientes blue-to-purple, cero "vibe SaaS genérico". Test: si parece generado por V0/Lovable en 5min, no se firma |
+| Solar Linear | Único icon set oficial v2. Catálogo cerrado en `lib/icons.jsx`. Blacklist: Lucide, Heroicons, Phosphor, Material, FA, Feather, Tabler |
+| KPI-as-filter | Patrón en Cockpit y Espacio OPS donde cada KPI card es un button accionable que filtra el resto del contenido. Mata clicks redundantes |
+| Drag handle 6-dots | SVG inline 2×3 circles arriba-izquierda de WoKanbanCard · afordancia universal "esto se arrastra" · estados idle/hover/dragging |
+| Modal context-aware | Modal del Kanban donde el CTA primary cambia según stage del WO (Triagear→Despachar→Llegar al sitio→Marcar resuelta→Cerrar). Tabla §5.3 DS v1.7 |
+| Pin pill | Marcador del mapa War Room: pill horizontal blanca con dot stage color + WO code corto. Pattern SKYPRO360 1:1 |
+| Quick popup | Popup 320px que aparece al click en pin · referencias rápidas concretas (CLI/BALL/TECH/TAG + bloque timezone live + warning si aplica) |
+| Side detail panel | Panel lateral derecho 520px slide-in con detalle completo del WO (timeline + threads shared/internal + parts + briefing/capture/report + audit log + CTA escalar ball) |
+| Scope filter | Mecanismo del frontend para mostrar/ocultar data según viewer es SRS o Client. Implementado en `lib/scope.js` · helper `getClientOrgId(user)` + 4 predicates |
+| Ropa-en-casa hidden fields | Campos OPACOS al cliente (Principio #1): threads_internal, audit log SRS, números cross-cliente, GPS exacto, finanzas internas, ball "SRS" se renombra a "EN REVISIÓN INTERNA" |
+| Polling indicator | Pill verde del header v2 que pulsa amber durante refresh de data · tooltip "Última sincronización hace Xs" via `RefreshContext` |
+| Auto-v2 routes | Las rutas `/srs/espacio-ops`, `/srs/intervenciones`, `/client/espacio-ops`, `/client/intervenciones` solo existen en v2 · Layout detecta y fuerza V2Shell sin requerir `?v2=1` |
+| WO code legible | Display layer sobre ObjectId de Mongo: `formatWoCode(wo)` devuelve `WO-XXXXXXXX` (últimos 8 chars uppercase) si no hay `wo.code` formal |
+| Skeleton states | Componentes shimmer en `v2-shared/Skeleton.jsx` (KpiCard / InterventionFull / Mini / KanbanCard / Widget) usados durante primer load · matchea dimensions reales para evitar layout shift |
+| Empty state v2 | Componente `v2-shared/EmptyState.jsx` con Solar glyph (inbox/bellOff/magniferBug) + title + sublabel + acción opcional. Tonos: neutral/success/warning/danger |
+| Open-Meteo | API meteo público gratuito sin token usado en `WeatherWidget`. Cache 30min en `lib/weather.js`. WMO weather codes mapeados a labels español + decisión Apto/No apto vuelo |
