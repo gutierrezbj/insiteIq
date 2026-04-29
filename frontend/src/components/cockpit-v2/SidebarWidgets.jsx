@@ -14,7 +14,9 @@
  *   - Border-bottom srs-border separa widgets
  */
 
+import { useEffect, useMemo, useState } from "react";
 import { Icon, ICONS } from "../../lib/icons";
+import { fetchWeatherFor, formatTemp } from "../../lib/weather";
 
 /* ─────────────────────────────────────────────────────────────── */
 /* AlertsWidget                                                    */
@@ -90,14 +92,49 @@ const SHIELD_DOT_COLOR = {
   gold:        "#CA8A04",
 };
 
+const SHIELD_NAME = {
+  bronze:      "Bronze",
+  bronze_plus: "Bronze+",
+  silver:      "Silver",
+  gold:        "Gold",
+};
+
 export function ShieldsWidget({ agreements = [] }) {
-  // Filtramos los próximos a vencer (30-90 días)
+  const total = agreements.length;
+
+  // Próximos a vencer (si data lo permite)
   const upcoming = agreements
     .filter((a) => a.days_to_expire != null && a.days_to_expire <= 90)
     .sort((x, y) => x.days_to_expire - y.days_to_expire)
     .slice(0, 3);
-  const total = agreements.length;
-  const allOk = upcoming.length === 0;
+
+  // Breakdown por nivel (siempre disponible mientras haya agreements)
+  const byLevel = agreements.reduce((acc, a) => {
+    const level = a.shield_level || "unknown";
+    acc[level] = (acc[level] || 0) + 1;
+    return acc;
+  }, {});
+
+  const orderedLevels = ["gold", "silver", "bronze_plus", "bronze"].filter(
+    (l) => byLevel[l] > 0
+  );
+
+  // Si no hay agreements en absoluto
+  if (total === 0) {
+    return (
+      <section className="border-b border-wr-border">
+        <header className="px-5 py-3 flex items-center justify-between">
+          <p className="label-caps-v2">Shields</p>
+          <span className="text-[10px] font-mono text-wr-text-dim">0 activos</span>
+        </header>
+        <div className="px-5 pb-4">
+          <p className="text-[11px] text-wr-text-dim italic py-2">
+            Sin contratos Shield activos.
+          </p>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="border-b border-wr-border">
@@ -108,31 +145,24 @@ export function ShieldsWidget({ agreements = [] }) {
         </span>
       </header>
       <div className="px-5 pb-4">
-        {allOk ? (
-          <div className="flex items-center gap-3 p-3 mb-2" style={{ background: "rgba(34, 197, 94, 0.05)", borderLeft: "2px solid #22C55E" }}>
-            <Icon icon={ICONS.checkCircle} size={16} color="#22C55E" />
-            <div>
-              <p className="text-[12px]" style={{ color: "#22C55E", fontWeight: 500 }}>
-                Todo en regla
-              </p>
-              <p className="text-[10px] text-wr-text-dim">
-                Sin vencimientos próximos 90 días
-              </p>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-1.5">
+        {/* Si tenemos data de vencimiento próximo, lo mostramos primero */}
+        {upcoming.length > 0 && (
+          <div className="space-y-1.5 mb-3">
+            <p className="text-[9px] text-wr-text-dim uppercase mb-1.5" style={{ letterSpacing: "0.14em" }}>
+              Próximos a vencer
+            </p>
             {upcoming.map((a) => {
               const dot = SHIELD_DOT_COLOR[a.shield_level] || "#9CA3AF";
-              const shieldName = a.shield_level
-                ? a.shield_level.replace("_plus", "+").replace(/^./, (c) => c.toUpperCase())
-                : "—";
+              const name = SHIELD_NAME[a.shield_level] || "—";
               return (
-                <div key={a.id} className="flex items-center justify-between text-[11px] py-1.5 border-b border-wr-border last:border-0">
+                <div
+                  key={a.id}
+                  className="flex items-center justify-between text-[11px] py-1.5 border-b border-wr-border last:border-0"
+                >
                   <div className="flex items-center gap-2">
                     <span className="w-1.5 h-1.5 rounded-full" style={{ background: dot }} />
                     <span className="text-wr-text-mid">
-                      {a.client_name} · {shieldName}
+                      {a.client_name} · {name}
                     </span>
                   </div>
                   <span className="font-mono text-wr-text-dim">{a.days_to_expire}d</span>
@@ -140,6 +170,37 @@ export function ShieldsWidget({ agreements = [] }) {
               );
             })}
           </div>
+        )}
+
+        {/* Breakdown por nivel (siempre visible) */}
+        <p className="text-[9px] text-wr-text-dim uppercase mb-1.5" style={{ letterSpacing: "0.14em" }}>
+          Por nivel
+        </p>
+        <div className="space-y-1">
+          {orderedLevels.map((level) => {
+            const count = byLevel[level];
+            const dot = SHIELD_DOT_COLOR[level] || "#9CA3AF";
+            const name = SHIELD_NAME[level] || level;
+            return (
+              <div
+                key={level}
+                className="flex items-center justify-between text-[11px] py-1"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full" style={{ background: dot }} />
+                  <span className="text-wr-text-mid">{name}</span>
+                </div>
+                <span className="font-mono text-wr-text">{count}</span>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Si no hay data de vencimiento, mensaje neutro */}
+        {upcoming.length === 0 && agreements.every((a) => a.days_to_expire == null) && (
+          <p className="text-[10px] text-wr-text-dim mt-3 leading-snug">
+            Sin datos de vencimiento en estos contratos.
+          </p>
         )}
       </div>
     </section>
@@ -150,40 +211,95 @@ export function ShieldsWidget({ agreements = [] }) {
 /* WeatherWidget                                                   */
 /* ─────────────────────────────────────────────────────────────── */
 
-export function WeatherWidget({
-  activeWoCodes = [],
-  cities = [],
-  current,
-  selectedWo,
-  onSelectWo,
-}) {
+/**
+ * WeatherWidget · Open-Meteo (sin token).
+ *
+ * Acepta lista de sites con coords. El user pickea uno (chip) y el widget
+ * fetchea Open-Meteo para esas coords. Cache 30min en weather.js.
+ *
+ * Props:
+ *  - sites: array [{ id, name, city, lat, lng }]
+ *  - selectedSiteId
+ *  - onSelectSite(id)
+ */
+export function WeatherWidget({ sites = [], selectedSiteId, onSelectSite }) {
+  // Auto-select primer site con coords si no hay seleccionado
+  const defaultSiteId = useMemo(() => {
+    if (selectedSiteId) return selectedSiteId;
+    const firstWithCoords = sites.find(
+      (s) => (s.lat ?? s.latitude) != null && (s.lng ?? s.longitude) != null
+    );
+    return firstWithCoords?.id || null;
+  }, [selectedSiteId, sites]);
+
+  const selectedSite = useMemo(
+    () => sites.find((s) => s.id === defaultSiteId) || null,
+    [sites, defaultSiteId]
+  );
+
+  const [weather, setWeather] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!selectedSite) {
+      setWeather(null);
+      return;
+    }
+    const lat = selectedSite.lat ?? selectedSite.latitude ?? selectedSite.location?.lat;
+    const lng = selectedSite.lng ?? selectedSite.longitude ?? selectedSite.location?.lng;
+    if (lat == null || lng == null) {
+      setWeather(null);
+      return;
+    }
+    setLoading(true);
+    fetchWeatherFor(lat, lng).then((data) => {
+      setWeather(data);
+      setLoading(false);
+    });
+  }, [selectedSite]);
+
+  // Sites con coords (válidos para mostrar como chips)
+  const sitesWithCoords = useMemo(
+    () =>
+      sites.filter(
+        (s) => (s.lat ?? s.latitude) != null && (s.lng ?? s.longitude) != null
+      ),
+    [sites]
+  );
+
   return (
     <section className="border-b border-wr-border">
       <header className="px-5 py-3 flex items-center justify-between">
         <p className="label-caps-v2">Meteorología</p>
-        <span className="text-[10px] text-wr-text-dim">Sites activos</span>
+        <span className="text-[10px] text-wr-text-dim">
+          {selectedSite?.city || "Sites activos"}
+        </span>
       </header>
       <div className="px-5 pb-4">
-        {/* Filtro pills por WO */}
-        {activeWoCodes.length > 0 && (
+        {/* Pills de sites con coord */}
+        {sitesWithCoords.length > 0 && (
           <div className="mb-3">
-            <p className="text-[9px] text-wr-text-dim mb-1.5 uppercase" style={{ letterSpacing: "0.14em" }}>
-              Intervenciones activas
+            <p
+              className="text-[9px] text-wr-text-dim mb-1.5 uppercase"
+              style={{ letterSpacing: "0.14em" }}
+            >
+              Sites con coordenadas
             </p>
             <div className="flex flex-wrap gap-1.5">
-              {activeWoCodes.slice(0, 4).map((code) => {
-                const isSelected = code === selectedWo;
+              {sitesWithCoords.slice(0, 6).map((site) => {
+                const isSelected = site.id === defaultSiteId;
                 return (
                   <button
-                    key={code}
-                    onClick={() => onSelectWo?.(code)}
-                    className={`px-2 py-1 rounded-sm border text-[10px] font-mono ${
+                    key={site.id}
+                    onClick={() => onSelectSite?.(site.id)}
+                    className={`inline-flex items-center gap-1 px-2 py-1 rounded-sm border text-[10px] transition ${
                       isSelected
                         ? "border-wr-amber/40 bg-wr-amber/10 text-wr-amber"
-                        : "border-wr-border text-wr-text-mid"
+                        : "border-wr-border text-wr-text-mid hover:border-wr-border-strong"
                     }`}
                   >
-                    {code}
+                    <Icon icon={ICONS.mapPoint} size={9} />
+                    {site.city || site.name}
                   </button>
                 );
               })}
@@ -191,67 +307,68 @@ export function WeatherWidget({
           </div>
         )}
 
-        {/* Filtro pills por ciudad */}
-        {cities.length > 0 && (
-          <div className="mb-3">
-            <p className="text-[9px] text-wr-text-dim mb-1.5 uppercase" style={{ letterSpacing: "0.14em" }}>
-              Ciudades
-            </p>
-            <div className="flex flex-wrap gap-1.5">
-              {cities.slice(0, 6).map((city) => (
-                <button
-                  key={city}
-                  className="inline-flex items-center gap-1 px-2 py-1 rounded-sm border border-wr-border text-[10px] text-wr-text-mid"
-                >
-                  <Icon icon={ICONS.mapPoint} size={9} />
-                  {city}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Weather card actual */}
-        {current ? (
+        {/* Weather card */}
+        {loading ? (
+          <p className="text-[11px] text-wr-text-dim italic py-2">
+            Cargando datos meteorológicos…
+          </p>
+        ) : weather && selectedSite ? (
           <div className="bg-wr-surface border border-wr-border rounded-sm p-3">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <Icon icon={ICONS.cloud} size={20} color="#9CA3AF" />
                 <div>
-                  <p className="text-[13px] text-wr-text font-medium">{current.condition}</p>
+                  <p className="text-[13px] text-wr-text font-medium">
+                    {weather.condition}
+                  </p>
                   <p className="text-[10px] text-wr-text-dim">
-                    {current.city} {current.wo_code && `· ${current.wo_code} activo`}
+                    {selectedSite.city || selectedSite.name}
                   </p>
                 </div>
               </div>
               <span
                 className="inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-semibold"
                 style={{
-                  background: current.flightOk === false ? "#DC262622" : "#22C55E22",
-                  color: current.flightOk === false ? "#DC2626" : "#22C55E",
+                  background: weather.flightOk ? "#22C55E22" : "#DC262622",
+                  color: weather.flightOk ? "#22C55E" : "#DC2626",
                 }}
               >
-                <Icon icon={current.flightOk === false ? ICONS.dangerCircle : ICONS.checkCircle} size={10} />
-                {current.flightOk === false ? "No apto" : "Apto"}
+                <Icon
+                  icon={weather.flightOk ? ICONS.checkCircle : ICONS.dangerCircle}
+                  size={10}
+                />
+                {weather.flightOk ? "Apto" : "No apto"}
               </span>
             </div>
             <div className="grid grid-cols-3 gap-2 pt-2 border-t border-wr-border">
               <div>
                 <p className="text-[9px] text-wr-text-dim uppercase">Temp</p>
-                <p className="text-[12px] font-mono text-wr-text">{current.temp || "—"}</p>
+                <p className="text-[12px] font-mono text-wr-text">
+                  {formatTemp(weather)}
+                </p>
               </div>
               <div>
                 <p className="text-[9px] text-wr-text-dim uppercase">Viento</p>
-                <p className="text-[12px] font-mono text-wr-text">{current.wind || "—"}</p>
+                <p className="text-[12px] font-mono text-wr-text">
+                  {weather.wind != null ? `${weather.wind} km/h` : "—"}
+                </p>
               </div>
               <div>
                 <p className="text-[9px] text-wr-text-dim uppercase">Precip</p>
-                <p className="text-[12px] font-mono text-wr-text">{current.precip || "—"}</p>
+                <p className="text-[12px] font-mono text-wr-text">
+                  {weather.precip != null ? `${weather.precip}%` : "—"}
+                </p>
               </div>
             </div>
           </div>
+        ) : sitesWithCoords.length === 0 ? (
+          <p className="text-[11px] text-wr-text-dim italic py-2">
+            Sin sites con coordenadas registradas.
+          </p>
         ) : (
-          <p className="text-[11px] text-wr-text-dim italic py-2">Sin datos meteorológicos</p>
+          <p className="text-[11px] text-wr-text-dim italic py-2">
+            No se pudo cargar la meteorología.
+          </p>
         )}
       </div>
     </section>

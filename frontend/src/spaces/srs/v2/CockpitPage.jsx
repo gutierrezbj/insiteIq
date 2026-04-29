@@ -389,9 +389,11 @@ export default function V2CockpitPage({ scope = "srs" }) {
           <AlertsWidget alerts={alertsForSidebar} />
           <ShieldsWidget agreements={agreementsForSidebar} />
           <WeatherWidget
-            activeWoCodes={inCurseInterventions.map((w) => w.code).filter(Boolean)}
-            cities={[...new Set(sites.map((s) => s.city).filter(Boolean))].slice(0, 6)}
-            current={null}
+            sites={sites.filter((s) => {
+              const lat = s.lat ?? s.latitude ?? s.location?.lat;
+              const lng = s.lng ?? s.longitude ?? s.location?.lng;
+              return lat != null && lng != null;
+            })}
           />
           <SummaryWidget stats={summaryStats} />
         </aside>

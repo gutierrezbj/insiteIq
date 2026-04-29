@@ -19,36 +19,11 @@ import { useEffect, useState } from "react";
 import { Icon, ICONS } from "../../lib/icons";
 import { getTechTimeInfo } from "../../lib/tz";
 
-// Hardcoded fleet mock · mover a /api/fleet cuando exista
-const FLEET = [
-  { id: "SRS-01", label: "Furgoneta SRS-01", operator: "Agustín C.", location: "Madrid", status: "active" },
-  { id: "SRS-02", label: "Furgoneta SRS-02", operator: "Hugo Q.",    location: "Barcelona", status: "en_route" },
-];
-
 // Techs a mostrar en el strip · ampliar/filtrar cuando conectemos /api/users
 const TECHS_IN_STRIP = ["Agustín C.", "Hugo Q.", "Arlindo O.", "Luis S.", "Yunus H."];
 
-function VehicleCard({ vehicle }) {
-  const dotColor = vehicle.status === "active" ? "#22C55E"
-    : vehicle.status === "en_route" ? "#F59E0B"
-    : "#6B7280";
-
-  return (
-    <div className="flex items-center gap-2 px-3 py-2 bg-wr-surface border border-wr-border rounded-sm flex-shrink-0">
-      <Icon icon={ICONS.bus} size={16} color="#F59E0B" />
-      <div className="leading-tight">
-        <p className="text-[10px] text-wr-text-mid uppercase tracking-wider">{vehicle.label}</p>
-        <p className="text-[11px] font-mono text-wr-text">
-          {vehicle.location} · {vehicle.operator}
-        </p>
-      </div>
-      <span
-        className="w-1.5 h-1.5 rounded-full ml-1"
-        style={{ background: dotColor }}
-      />
-    </div>
-  );
-}
+// Fleet: hardcoded eliminado · pendiente endpoint /api/fleet en backend.
+// Cuando exista, importar fetchFleet y renderizar VehicleCard aquí.
 
 function TechCard({ techName }) {
   const info = getTechTimeInfo(techName);
@@ -86,16 +61,9 @@ export default function V2BottomStrip() {
 
   return (
     <footer className="h-[84px] border-t border-wr-border bg-wr-bg flex items-center px-6 gap-4 flex-shrink-0">
-      <span className="label-caps-v2 mr-2">Equipo activo</span>
+      <span className="label-caps-v2 mr-2">Técnicos en pista</span>
 
-      {/* Vehículos */}
-      <div className="flex items-center gap-2 flex-shrink-0">
-        {FLEET.map((v) => <VehicleCard key={v.id} vehicle={v} />)}
-      </div>
-
-      <div className="w-px h-12 bg-wr-border" />
-
-      {/* Técnicos */}
+      {/* Técnicos con timezone live */}
       <div className="flex items-center gap-2 overflow-x-auto wr-scroll flex-1 pb-1">
         {TECHS_IN_STRIP.map((t) => <TechCard key={t} techName={t} />)}
       </div>

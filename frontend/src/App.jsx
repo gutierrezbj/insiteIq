@@ -3,6 +3,7 @@
  * Router for the 3 spaces + auth guards.
  * Design WOW (Track B) fills these routes with real UX per space.
  */
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
@@ -13,10 +14,31 @@ import ChangePasswordPage from "./pages/auth/ChangePasswordPage";
 import SrsLayout from "./spaces/srs/Layout";
 import SrsHome from "./spaces/srs/HomePage";
 import CockpitPage from "./components/cockpit/CockpitPage";
-import V2CockpitPage from "./spaces/srs/v2/CockpitPage";
-import V2EspacioOpsPage from "./spaces/srs/v2/EspacioOpsPage";
-import V2InterventionsKanbanPage from "./spaces/srs/v2/InterventionsKanbanPage";
 import V2ErrorBoundary from "./components/v2-shared/ErrorBoundary";
+
+// Code splitting · páginas v2 cargan solo cuando se accede a su ruta.
+// Evita pre-cargar Leaflet (Espacio OPS) y todo el Kanban en el bundle del Cockpit.
+const V2CockpitPage = lazy(() => import("./spaces/srs/v2/CockpitPage"));
+const V2EspacioOpsPage = lazy(() => import("./spaces/srs/v2/EspacioOpsPage"));
+const V2InterventionsKanbanPage = lazy(() => import("./spaces/srs/v2/InterventionsKanbanPage"));
+
+/** Fallback minimal mientras carga el chunk de la página v2 */
+function V2LoadingFallback() {
+  return (
+    <div
+      className="flex items-center justify-center"
+      style={{
+        minHeight: "calc(100vh - 200px)",
+        color: "#6B7280",
+        fontSize: 12,
+        fontFamily: "JetBrains Mono, monospace",
+        letterSpacing: "0.08em",
+      }}
+    >
+      Cargando vista…
+    </div>
+  );
+}
 import WorkOrdersListPage from "./spaces/srs/ops/WorkOrdersListPage";
 import WorkOrderDetailPage from "./spaces/srs/ops/WorkOrderDetailPage";
 import InterventionReportPage from "./spaces/srs/ops/InterventionReportPage";
@@ -83,7 +105,9 @@ function SrsCockpitRouter() {
   const useV2 = envV2 || queryV2;
   return useV2 ? (
     <V2ErrorBoundary>
-      <V2CockpitPage scope="srs" />
+      <Suspense fallback={<V2LoadingFallback />}>
+        <V2CockpitPage scope="srs" />
+      </Suspense>
     </V2ErrorBoundary>
   ) : (
     <CockpitPage scope="srs" />
@@ -98,7 +122,9 @@ function SrsInterventionsRouter() {
   const useV2 = envV2 || queryV2;
   return useV2 ? (
     <V2ErrorBoundary>
-      <V2InterventionsKanbanPage />
+      <Suspense fallback={<V2LoadingFallback />}>
+        <V2InterventionsKanbanPage />
+      </Suspense>
     </V2ErrorBoundary>
   ) : (
     <WorkOrdersListPage />
@@ -149,7 +175,9 @@ export default function App() {
               path="espacio-ops"
               element={
                 <V2ErrorBoundary>
-                  <V2EspacioOpsPage />
+                  <Suspense fallback={<V2LoadingFallback />}>
+                    <V2EspacioOpsPage />
+                  </Suspense>
                 </V2ErrorBoundary>
               }
             />
