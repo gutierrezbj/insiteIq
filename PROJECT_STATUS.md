@@ -1,10 +1,47 @@
 # InsiteIQ — Project Status
 
-**Estado:** Reanudado · 2026-04-24
+**Estado:** v2 deployed · 2026-04-29
 **Decisión:** Owner (JuanCho)
-**Último commit live en PROD:** `1cc3cd6` en rama `v1-foundation`
-**Dominio:** https://insiteiq.systemrapid.io
+**Último commit live en PROD:** branch `v1-foundation` · sprint v2 (Alpha→Eta) deployed 2026-04-29 13:19 CET
+**Dominio:** https://insiteiq.systemrapid.io · acceso v2 vía `?v2=1` query param
 **Repo:** https://github.com/gutierrezbj/insiteIq
+
+---
+
+## DEPLOY v2 · 2026-04-29
+
+Sprint de reanudación completado y desplegado en PROD VPS 1. Las 7 fases del plan cerradas en sesiones consecutivas:
+
+| Fase | Entregable | Status |
+|---|---|---|
+| Alpha   | Foundation: tokens DS v1.7, lib/icons + lib/tz + lib/woCode | ✓ |
+| Beta    | Shell v2: V2TopHeader (dinámico por ruta) + V2SidebarNav + V2BottomStrip | ✓ |
+| Gamma   | Cockpit Operaciones: KpiStripV2 con KPI-as-filter + InterventionCard Full/Mini + 4 widgets sidebar | ✓ |
+| Delta   | Espacio OPS: mapa Leaflet light Positron + WoMapMarker pill + QuickPopup timezone-aware + SideDetailPanel slide-in 520px | ✓ |
+| Epsilon | Kanban Intervenciones: drag&drop nativo HTML5 + drag handle 6-dots + WoStageModal context-aware + filter dropdowns multi-select | ✓ |
+| Zeta    | Polish: Skeleton states, EmptyState, ErrorBoundary, polling indicator pulsante, RefreshContext compartido | ✓ |
+| Eta     | Deploy PROD: build local validado (1675 módulos · 3.35s), git push, docker compose build frontend, force-recreate, smoke test OK | ✓ |
+
+**Smoke test PROD validado:**
+- Login + auth OK
+- Cockpit (`/srs?v2=1`): KPI strip + intervenciones en curso + historial + sidebar widgets + bottom strip con timezone live
+- Espacio OPS (`/srs/espacio-ops?v2=1`): mapa con pines pill + popup + panel detail
+- Kanban (`/srs/intervenciones?v2=1`): drag&drop + modal context-aware + filter dropdowns funcionales
+- Polling indicator: pill verde pulsa amber durante refresh + tooltip "última sincronización"
+- ErrorBoundary protege cada vista v2 ante runtime crashes
+
+**Toggle de activación:**
+- Por default `/srs` muestra v1 viejo. Acceso a v2 con `?v2=1` en URL.
+- Activación global v2: setear `VITE_V2_SHELL=1` en build env y redeploy.
+
+**Backend intacto.** Cero cambios a endpoints, schemas, rutas FastAPI. Todo el sprint fue refactor de capa visual + nuevas vistas v2 + helpers compartidos. Los 22+ pasitos previos (F-T + X-a..X-g + Y-a..Y-c + Z-a..Z-e) siguen funcionando sin modificaciones.
+
+**Próximos pasos pendientes (no del sprint v2):**
+- Cambio default de v1 → v2 una vez Andros + Juan validen v2 con datos reales una semana.
+- Client space (Rackel Fractalia, Adrian Arcos) con misma shell dark + data filtrada por organization scope. Sprint separado.
+- Tech PWA mobile reducida — mantiene la actual hasta sprint específico.
+- Code splitting (lazy load de páginas v2) si bundle > 500KB se vuelve problema en cliente real.
+- Dropdown filters Kanban: persistir selección en localStorage entre sesiones.
 
 ---
 

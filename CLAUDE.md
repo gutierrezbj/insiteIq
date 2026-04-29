@@ -1,26 +1,36 @@
 # InsiteIQ — Claude Code Project Context
 
-> **🟢 PROYECTO REANUDADO · 2026-04-24**
+> **🚀 SPRINT v2 DEPLOYED EN PROD · 2026-04-29**
 >
-> Owner firma reanudación tras cerrar Design System v1.7 + 3 mocks canónicos
-> validados. Ver `PROJECT_STATUS.md` para el registro completo de reanudación
-> y `memory/sprint_reanudacion_v2.md` para el plan de fases Alpha → Eta.
+> 7 fases del sprint de reanudación completadas y desplegadas en VPS 1
+> (Alpha + Beta + Gamma + Delta + Epsilon + Zeta + Eta). Ver
+> `PROJECT_STATUS.md` para el resumen ejecutivo y `memory/sprint_reanudacion_v2.md`
+> para el log detallado de cada fase.
 >
-> **Regla rectora del sprint v2:** el agente ejecuta mocks 1:1, no inventa.
-> Fuente canónica visual: `memory/design_system_insiteiq_v2.md` (v1.7) y
-> `mocks/insiteiq_*_v2_static.html`. Si una pantalla no se puede construir
+> **Acceso v2 en PROD:** `https://insiteiq.systemrapid.io/srs?v2=1`
+> Sin `?v2=1` se ve la v1 legacy. Toggle por query param hasta que el v2
+> sea validado por Andros + Juan en una semana, después switch a default v2.
+>
+> **Vistas v2 en producción:**
+> - `/srs?v2=1` — Cockpit de Operaciones (KPI filter + cards + sidebar widgets)
+> - `/srs/espacio-ops?v2=1` — Espacio OPS (mapa Leaflet + popup + panel detail)
+> - `/srs/intervenciones?v2=1` — Kanban Intervenciones (drag&drop + modal stage)
+>
+> **Regla rectora del sprint v2 (mantener):** el agente ejecuta mocks 1:1,
+> no inventa. Fuente canónica visual: `memory/design_system_insiteiq_v2.md`
+> y `mocks/insiteiq_*_v2_static.html`. Si una pantalla no se puede construir
 > con referencia 1:1 al mock, se para y se vuelve al doc antes de inventar.
 >
-> Backend en PROD (FastAPI + MongoDB + pasitos F-T..Z-e) **no se toca** en
-> este sprint. Reanudación es capa visual exclusivamente.
+> Backend (FastAPI + MongoDB + pasitos F-T..Z-e) **no se tocó** en el sprint v2.
+> Sprint fue capa visual + helpers + componentes React exclusivamente.
 
 ## What is this
 Sistema operativo **interno SRS** para field services IT internacional. Construido por y para SRS, basado en 25 anos de dolor real operando soporte IT. **No es producto comercial.** Fractalia/Claro/clientes ven OUTPUT (reportes), nunca el software.
 
 > *"InsiteIQ sirve para arreglar las cagadas de cualquier compania que nos hace sufrir."* — JuanCho, 2026-04-15
 
-## Estado actual (2026-04-24 · reanudado)
-- **Status:** 🟢 REANUDADO en sprint v2 (capa visual). Ver `PROJECT_STATUS.md` y `memory/sprint_reanudacion_v2.md`.
+## Estado actual (2026-04-29 · v2 deployed en PROD)
+- **Status:** 🚀 v2 DEPLOYED · 7 fases completadas en sprint reanudación. Ver `PROJECT_STATUS.md` y `memory/sprint_reanudacion_v2.md`.
 - **Último commit live en PROD:** `1cc3cd6` en rama `v1-foundation`. Después vino `830df05` (docs de cierre).
 - **Fase alcanzada:** Fase 2 UI plumbing + Horizonte 2 Admin/Finance + Horizonte 3 AI Learning Engine · 22+ pasitos deployed (F-T + X-a..X-g + Y-a..Y-c + Z-a..Z-e)
 - **Branch activo:** `v1-foundation`
