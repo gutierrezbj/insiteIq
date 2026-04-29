@@ -18,7 +18,7 @@
  *   - onDragOver, onDragLeave, onDrop
  */
 
-import { Icon, ICONS } from "../../lib/icons";
+import EmptyState from "../v2-shared/EmptyState";
 
 export default function KanbanColumn({
   id,
@@ -71,10 +71,7 @@ export default function KanbanColumn({
       {/* Body */}
       <div className="col-scroll wr-scroll flex-1 overflow-y-auto p-3 flex flex-col gap-3">
         {count === 0 ? (
-          <div className="text-center py-8 text-wr-text-dim">
-            <Icon icon={ICONS.inbox} size={24} color="#6B7280" />
-            <p className="text-[12px] mt-2">Sin intervenciones</p>
-          </div>
+          <EmptyState icon="inbox" title="Sin intervenciones" compact />
         ) : (
           children
         )}

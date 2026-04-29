@@ -19,6 +19,7 @@ import { Outlet } from "react-router-dom";
 import V2SidebarNav from "./V2SidebarNav";
 import V2TopHeader from "./V2TopHeader";
 import V2BottomStrip from "./V2BottomStrip";
+import { RefreshProvider } from "../../contexts/RefreshContext";
 
 export default function V2Shell({
   headerProps = {},
@@ -27,18 +28,23 @@ export default function V2Shell({
   region,
 }) {
   return (
-    <div className="h-screen flex bg-wr-bg text-wr-text font-mono" style={{ fontVariantNumeric: "tabular-nums" }}>
-      <V2SidebarNav buildSha={buildSha} region={region} />
+    <RefreshProvider>
+      <div
+        className="h-screen flex bg-wr-bg text-wr-text font-mono"
+        style={{ fontVariantNumeric: "tabular-nums" }}
+      >
+        <V2SidebarNav buildSha={buildSha} region={region} />
 
-      <div className="flex-1 flex flex-col min-w-0">
-        <V2TopHeader {...headerProps} />
+        <div className="flex-1 flex flex-col min-w-0">
+          <V2TopHeader {...headerProps} />
 
-        <main className="flex-1 overflow-auto wr-scroll">
-          <Outlet />
-        </main>
+          <main className="flex-1 overflow-auto wr-scroll">
+            <Outlet />
+          </main>
 
-        {showBottomStrip && <V2BottomStrip />}
+          {showBottomStrip && <V2BottomStrip />}
+        </div>
       </div>
-    </div>
+    </RefreshProvider>
   );
 }

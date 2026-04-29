@@ -25,10 +25,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { api } from "../../../lib/api";
+import { useRefresh } from "../../../contexts/RefreshContext";
 import { Icon, ICONS } from "../../../lib/icons";
 import WoKanbanCard from "../../../components/kanban-v2/WoKanbanCard";
 import KanbanColumn from "../../../components/kanban-v2/KanbanColumn";
 import WoStageModal from "../../../components/kanban-v2/WoStageModal";
+import MultiSelectDropdown from "../../../components/kanban-v2/MultiSelectDropdown";
+import { SkeletonKanbanCard } from "../../../components/v2-shared/Skeleton";
 
 const STAGE_TO_COL = {
   intake:       "solicitadas",
@@ -68,17 +71,24 @@ const COLUMNS = [
 const COL_LABEL = COLUMNS.reduce((acc, c) => ({ ...acc, [c.id]: c.title }), {});
 
 export default function InterventionsKanbanPage() {
+  const { markRefreshing, markFresh } = useRefresh();
   const [wos, setWos] = useState([]);
   const [sites, setSites] = useState([]);
   const [orgs, setOrgs] = useState([]);
   const [users, setUsers] = useState([]);
   const [showCancelled, setShowCancelled] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [filterPrio, setFilterPrio] = useState(new Set());
+  const [filterClient, setFilterClient] = useState(new Set());
+  const [filterShield, setFilterShield] = useState(new Set());
+  const [filterTech, setFilterTech] = useState(new Set());
   const [modalWoId, setModalWoId] = useState(null);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const draggedRef = useRef(null);
 
   /* ─────────────────────── Data fetch ─────────────────────── */
   const load = useCallback(async () => {
+    markRefreshing();
     try {
       const [woList, siteList, orgList, userList] = await Promise.all([
         api.get("/work-orders?limit=500"),
@@ -92,8 +102,11 @@ export default function InterventionsKanbanPage() {
       setUsers(Array.isArray(userList) ? userList : userList?.items || []);
     } catch (e) {
       // silent — keep previous data
+    } finally {
+      setHasLoadedOnce(true);
+      markFresh();
     }
-  }, []);
+  }, [markRefreshing, markFresh]);
 
   useEffect(() => {
     load();
@@ -105,31 +118,96 @@ export default function InterventionsKanbanPage() {
   const orgMap = useMemo(() => Object.fromEntries(orgs.map((o) => [o.id, o])), [orgs]);
   const userMap = useMemo(() => Object.fromEntries(users.map((u) => [u.id, u])), [users]);
 
-  /* ─────────────────────── Search filter ─────────────────────── */
+  /* ─────────────────────── Filter dropdown options ─────────────────────── */
+  const prioOptions = useMemo(
+    () => [
+      { value: "critical", label: "Urgente" },
+      { value: "high", label: "Alta" },
+      { value: "medium", label: "Normal" },
+      { value: "low", label: "Baja" },
+    ],
+    []
+  );
+
+  const clientOptions = useMemo(() => {
+    const seen = new Map();
+    wos.forEach((w) => {
+      const o = orgMap[w.organization_id];
+      if (o && !seen.has(o.id)) seen.set(o.id, { value: o.id, label: o.name || o.id });
+    });
+    return Array.from(seen.values()).sort((a, b) => a.label.localeCompare(b.label));
+  }, [wos, orgMap]);
+
+  const shieldOptions = useMemo(
+    () => [
+      { value: "gold", label: "Gold" },
+      { value: "silver", label: "Silver" },
+      { value: "bronze_plus", label: "Bronze+" },
+      { value: "bronze", label: "Bronze" },
+    ],
+    []
+  );
+
+  const techOptions = useMemo(() => {
+    const seen = new Map();
+    seen.set("__unassigned__", { value: "__unassigned__", label: "Sin asignar" });
+    wos.forEach((w) => {
+      const tid = w.assigned_tech_user_id || w.assignment?.tech_user_id;
+      if (!tid) return;
+      const u = userMap[tid];
+      if (u && !seen.has(tid)) seen.set(tid, { value: tid, label: u.full_name || u.email });
+    });
+    return Array.from(seen.values()).sort((a, b) => a.label.localeCompare(b.label));
+  }, [wos, userMap]);
+
+  /* ─────────────────────── Combined filters (search + prio + client + shield + tech) ─────────────────────── */
   const filteredWos = useMemo(() => {
-    if (!searchTerm.trim()) return wos;
-    const q = searchTerm.toLowerCase();
+    const q = searchTerm.trim().toLowerCase();
     return wos.filter((wo) => {
       const site = siteMap[wo.site_id];
       const client = orgMap[wo.organization_id];
       const techId = wo.assigned_tech_user_id || wo.assignment?.tech_user_id;
       const tech = techId ? userMap[techId] : null;
-      const haystack = [
-        wo.id,
-        wo.code,
-        wo.description,
-        wo.intervention_type,
-        site?.name,
-        site?.city,
-        client?.name,
-        tech?.full_name || tech?.name,
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
-      return haystack.includes(q);
+
+      // Prioridad
+      if (filterPrio.size > 0 && !filterPrio.has(wo.severity)) return false;
+
+      // Cliente (organization_id)
+      if (filterClient.size > 0 && !filterClient.has(wo.organization_id)) return false;
+
+      // Shield (level del agreement asociado al site/wo)
+      if (filterShield.size > 0) {
+        const shield = site?.shield_level || wo.shield_level;
+        if (!shield || !filterShield.has(shield)) return false;
+      }
+
+      // Técnico
+      if (filterTech.size > 0) {
+        const tid = techId || "__unassigned__";
+        if (!filterTech.has(tid)) return false;
+      }
+
+      // Search libre
+      if (q) {
+        const haystack = [
+          wo.id,
+          wo.code,
+          wo.description,
+          wo.intervention_type,
+          site?.name,
+          site?.city,
+          client?.name,
+          tech?.full_name || tech?.name,
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        if (!haystack.includes(q)) return false;
+      }
+
+      return true;
     });
-  }, [wos, searchTerm, siteMap, orgMap, userMap]);
+  }, [wos, searchTerm, siteMap, orgMap, userMap, filterPrio, filterClient, filterShield, filterTech]);
 
   /* ─────────────────────── Distribución por columna ─────────────────────── */
   const wosByColumn = useMemo(() => {
@@ -259,27 +337,31 @@ export default function InterventionsKanbanPage() {
           />
         </div>
 
-        {/* Filter dropdowns (UI placeholder · funcionalidad en Zeta) */}
-        <button
-          className="h-9 px-3 flex items-center gap-1.5 text-[13px] text-wr-text-mid border border-wr-border rounded-full hover:border-wr-border-strong transition"
-        >
-          Prioridad <Icon icon={ICONS.chevronDown} size={14} />
-        </button>
-        <button
-          className="h-9 px-3 flex items-center gap-1.5 text-[13px] text-wr-text-mid border border-wr-border rounded-full hover:border-wr-border-strong transition"
-        >
-          Cliente <Icon icon={ICONS.chevronDown} size={14} />
-        </button>
-        <button
-          className="h-9 px-3 flex items-center gap-1.5 text-[13px] text-wr-text-mid border border-wr-border rounded-full hover:border-wr-border-strong transition"
-        >
-          Shield <Icon icon={ICONS.chevronDown} size={14} />
-        </button>
-        <button
-          className="h-9 px-3 flex items-center gap-1.5 text-[13px] text-wr-text-mid border border-wr-border rounded-full hover:border-wr-border-strong transition"
-        >
-          Técnico <Icon icon={ICONS.chevronDown} size={14} />
-        </button>
+        {/* Filter dropdowns funcionales · multi-select con popover */}
+        <MultiSelectDropdown
+          label="Prioridad"
+          options={prioOptions}
+          selected={filterPrio}
+          onChange={setFilterPrio}
+        />
+        <MultiSelectDropdown
+          label="Cliente"
+          options={clientOptions}
+          selected={filterClient}
+          onChange={setFilterClient}
+        />
+        <MultiSelectDropdown
+          label="Shield"
+          options={shieldOptions}
+          selected={filterShield}
+          onChange={setFilterShield}
+        />
+        <MultiSelectDropdown
+          label="Técnico"
+          options={techOptions}
+          selected={filterTech}
+          onChange={setFilterTech}
+        />
 
         <div className="flex-1" />
 
@@ -321,27 +403,35 @@ export default function InterventionsKanbanPage() {
                 key={col.id}
                 id={col.id}
                 title={col.title}
-                count={wosByColumn[col.id]?.length || 0}
+                count={hasLoadedOnce ? (wosByColumn[col.id]?.length || 0) : 0}
                 onDrop={handleDrop}
               >
-                {wosByColumn[col.id]?.map((wo) => {
-                  const site = siteMap[wo.site_id];
-                  const client = orgMap[wo.organization_id];
-                  const techId = wo.assigned_tech_user_id || wo.assignment?.tech_user_id;
-                  const tech = techId ? userMap[techId] : null;
-                  return (
-                    <WoKanbanCard
-                      key={wo.id}
-                      wo={wo}
-                      site={site}
-                      tech={tech}
-                      client={client}
-                      onClick={() => setModalWoId(wo.id)}
-                      onDragStart={handleDragStart}
-                      onDragEnd={handleDragEnd}
-                    />
-                  );
-                })}
+                {!hasLoadedOnce ? (
+                  // Skeleton state durante primer load · 2 cards por columna
+                  <>
+                    <SkeletonKanbanCard />
+                    <SkeletonKanbanCard />
+                  </>
+                ) : (
+                  wosByColumn[col.id]?.map((wo) => {
+                    const site = siteMap[wo.site_id];
+                    const client = orgMap[wo.organization_id];
+                    const techId = wo.assigned_tech_user_id || wo.assignment?.tech_user_id;
+                    const tech = techId ? userMap[techId] : null;
+                    return (
+                      <WoKanbanCard
+                        key={wo.id}
+                        wo={wo}
+                        site={site}
+                        tech={tech}
+                        client={client}
+                        onClick={() => setModalWoId(wo.id)}
+                        onDragStart={handleDragStart}
+                        onDragEnd={handleDragEnd}
+                      />
+                    );
+                  })
+                )}
               </KanbanColumn>
             )
           )}

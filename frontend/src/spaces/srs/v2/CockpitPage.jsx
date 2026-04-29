@@ -21,6 +21,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../../../lib/api";
+import { useRefresh } from "../../../contexts/RefreshContext";
 import KpiStripV2 from "../../../components/cockpit-v2/KpiStripV2";
 import InterventionCardFull from "../../../components/cockpit-v2/InterventionCardFull";
 import InterventionCardMini from "../../../components/cockpit-v2/InterventionCardMini";
@@ -30,6 +31,13 @@ import {
   WeatherWidget,
   SummaryWidget,
 } from "../../../components/cockpit-v2/SidebarWidgets";
+import {
+  SkeletonKpiCard,
+  SkeletonInterventionCardFull,
+  SkeletonInterventionCardMini,
+  SkeletonWidget,
+} from "../../../components/v2-shared/Skeleton";
+import EmptyState from "../../../components/v2-shared/EmptyState";
 import { formatWoCode } from "../../../lib/woCode";
 
 const ACTIVE_STATUSES = [
@@ -58,6 +66,7 @@ function ballAgeHours(wo) {
 
 export default function V2CockpitPage({ scope = "srs" }) {
   const navigate = useNavigate();
+  const { markRefreshing, markFresh } = useRefresh();
 
   const [wos, setWos] = useState([]);
   const [sites, setSites] = useState([]);
@@ -66,8 +75,10 @@ export default function V2CockpitPage({ scope = "srs" }) {
   const [users, setUsers] = useState([]);
   const [agreements, setAgreements] = useState([]);
   const [activeFilter, setActiveFilter] = useState(null);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
 
   const load = useCallback(async () => {
+    markRefreshing();
     try {
       const [woList, siteList, alertRes, orgList, userList, agrList] = await Promise.all([
         api.get("/work-orders?limit=500"),
@@ -85,8 +96,11 @@ export default function V2CockpitPage({ scope = "srs" }) {
       setAgreements(Array.isArray(agrList) ? agrList : agrList?.items || []);
     } catch (e) {
       // mantener data previa
+    } finally {
+      setHasLoadedOnce(true);
+      markFresh();
     }
-  }, []);
+  }, [markRefreshing, markFresh]);
 
   useEffect(() => {
     load();
@@ -237,6 +251,44 @@ export default function V2CockpitPage({ scope = "srs" }) {
   const handleDetail = (wo) => navigate(`/srs/ops/${wo.id}`);
   const handleCompliance = (wo) => navigate(`/srs/ops/${wo.id}/report`);
 
+  /* ─────────────────────── Skeleton state ─────────────────────── */
+  if (!hasLoadedOnce) {
+    return (
+      <div className="px-6 py-5 space-y-5">
+        {/* KPI strip skeleton · 5 cards */}
+        <section className="grid grid-cols-5 gap-px bg-wr-border">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <SkeletonKpiCard key={i} />
+          ))}
+        </section>
+        <div className="grid grid-cols-12 gap-5 items-start">
+          <div className="col-span-12 lg:col-span-8 space-y-6">
+            <section>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <SkeletonInterventionCardFull key={i} />
+                ))}
+              </div>
+            </section>
+            <section>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <SkeletonInterventionCardMini key={i} />
+                ))}
+              </div>
+            </section>
+          </div>
+          <aside className="col-span-12 lg:col-span-4 bg-wr-bg border border-wr-border rounded-sm overflow-hidden">
+            <SkeletonWidget rows={3} />
+            <SkeletonWidget rows={3} />
+            <SkeletonWidget rows={2} />
+            <SkeletonWidget rows={4} />
+          </aside>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="px-6 py-5 space-y-5">
       {/* KPI strip accionable */}
@@ -267,9 +319,11 @@ export default function V2CockpitPage({ scope = "srs" }) {
               </button>
             </div>
             {inCurseInterventions.length === 0 ? (
-              <div className="py-8 text-center text-[12px] text-wr-text-dim">
-                Sin intervenciones en curso para el filtro actual.
-              </div>
+              <EmptyState
+                icon={activeFilter ? "magniferBug" : "inbox"}
+                title={activeFilter ? "Sin intervenciones para el filtro actual" : "Sin intervenciones en curso"}
+                action={activeFilter ? { label: "Quitar filtro", onClick: () => setActiveFilter(null) } : null}
+              />
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
                 {inCurseInterventions.map((wo) => {
@@ -308,9 +362,10 @@ export default function V2CockpitPage({ scope = "srs" }) {
               </button>
             </div>
             {recentHistory.length === 0 ? (
-              <div className="py-8 text-center text-[12px] text-wr-text-dim">
-                Sin intervenciones recientes.
-              </div>
+              <EmptyState
+                icon={activeFilter ? "magniferBug" : "inbox"}
+                title={activeFilter ? "Sin coincidencias para el filtro" : "Sin intervenciones recientes"}
+              />
             ) : (
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 {recentHistory.map((wo) => {

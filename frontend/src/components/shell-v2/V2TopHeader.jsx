@@ -18,6 +18,7 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { VIEWER_TZ, VIEWER_TZ_LABEL } from "../../lib/tz";
+import { useRefresh, formatAgo } from "../../contexts/RefreshContext";
 
 function formatDateTime() {
   const now = new Date();
@@ -64,6 +65,7 @@ export default function V2TopHeader({
   const finalTitle = title ?? auto.title;
   const finalHighlight = highlight ?? auto.highlight;
   const [dateTime, setDateTime] = useState(formatDateTime());
+  const { isRefreshing, lastRefreshAt } = useRefresh();
 
   useEffect(() => {
     const interval = setInterval(() => setDateTime(formatDateTime()), 30000);
@@ -84,9 +86,33 @@ export default function V2TopHeader({
 
       <div className="flex items-center gap-4 text-[12px] text-wr-text-mid">
         <span className="font-mono">{dateTime}</span>
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-wr-green/40 bg-wr-green/10">
-          <span className="w-1.5 h-1.5 rounded-full bg-wr-green animate-pulse-dot" />
-          <span className="text-wr-green font-mono font-semibold">
+        <span
+          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border"
+          style={{
+            borderColor: isRefreshing ? "rgba(245, 158, 11, 0.4)" : "rgba(34, 197, 94, 0.4)",
+            background: isRefreshing ? "rgba(245, 158, 11, 0.10)" : "rgba(34, 197, 94, 0.10)",
+            transition: "border-color 280ms ease, background 280ms ease",
+          }}
+          title={
+            isRefreshing
+              ? "Sincronizando con servidor…"
+              : `Última sincronización: ${formatAgo(lastRefreshAt)}`
+          }
+        >
+          <span
+            className="w-1.5 h-1.5 rounded-full animate-pulse-dot"
+            style={{
+              background: isRefreshing ? "#F59E0B" : "#22C55E",
+              transition: "background 280ms ease",
+            }}
+          />
+          <span
+            className="font-mono font-semibold"
+            style={{
+              color: isRefreshing ? "#F59E0B" : "#22C55E",
+              transition: "color 280ms ease",
+            }}
+          >
             {liveCount} {liveLabel}
           </span>
         </span>

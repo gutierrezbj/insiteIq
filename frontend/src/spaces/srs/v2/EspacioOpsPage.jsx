@@ -20,12 +20,15 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../../../lib/api";
+import { useRefresh } from "../../../contexts/RefreshContext";
 import { Icon, ICONS } from "../../../lib/icons";
 import { getTechTimeInfo, VIEWER_TZ_LABEL } from "../../../lib/tz";
 import { formatWoCode } from "../../../lib/woCode";
 import KpiStripV2 from "../../../components/cockpit-v2/KpiStripV2";
 import InterventionCardMini from "../../../components/cockpit-v2/InterventionCardMini";
 import SideDetailPanel from "../../../components/warroom-v2/SideDetailPanel";
+import { SkeletonInterventionCardMini } from "../../../components/v2-shared/Skeleton";
+import EmptyState from "../../../components/v2-shared/EmptyState";
 import { getStatusInfo } from "../../../components/cockpit-v2/InterventionCardFull";
 import { getSeverityInfo } from "../../../components/cockpit-v2/InterventionCardMini";
 
@@ -150,6 +153,7 @@ function buildQuickPopupHtml({ wo, site, tech, client, warning }) {
 }
 
 export default function EspacioOpsPage() {
+  const { markRefreshing, markFresh } = useRefresh();
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markersRef = useRef({});
@@ -162,9 +166,11 @@ export default function EspacioOpsPage() {
   const [activeFilter, setActiveFilter] = useState(null);
   const [detailWoId, setDetailWoId] = useState(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
 
   /* ─────────────────────── Data fetch ─────────────────────── */
   const load = useCallback(async () => {
+    markRefreshing();
     try {
       const [woList, siteList, alertRes, orgList, userList] = await Promise.all([
         api.get("/work-orders?limit=500"),
@@ -180,8 +186,11 @@ export default function EspacioOpsPage() {
       setUsers(Array.isArray(userList) ? userList : userList?.items || []);
     } catch (e) {
       // silent — keep previous data
+    } finally {
+      setHasLoadedOnce(true);
+      markFresh();
     }
-  }, []);
+  }, [markRefreshing, markFresh]);
 
   useEffect(() => {
     load();
@@ -461,19 +470,19 @@ export default function EspacioOpsPage() {
           className="flex-1 overflow-y-auto wr-scroll px-6 py-3"
           style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 8, alignContent: "start" }}
         >
-          {filteredWos.length === 0 ? (
-            <div className="text-center py-8 text-wr-text-dim col-span-full">
-              <Icon icon={ICONS.inbox} size={28} color="#6B7280" />
-              <p className="text-[12px] mt-2">Sin intervenciones para el filtro actual.</p>
-              {activeFilter && (
-                <button
-                  onClick={() => setActiveFilter(null)}
-                  className="mt-3 px-3 py-1.5 bg-transparent border border-wr-border-strong rounded-sm cursor-pointer text-[11px] uppercase"
-                  style={{ color: "#F59E0B", letterSpacing: "0.08em", fontFamily: "JetBrains Mono, monospace" }}
-                >
-                  Quitar filtro
-                </button>
-              )}
+          {!hasLoadedOnce ? (
+            // Skeleton state durante primer load
+            Array.from({ length: 8 }).map((_, i) => (
+              <SkeletonInterventionCardMini key={i} />
+            ))
+          ) : filteredWos.length === 0 ? (
+            <div className="col-span-full">
+              <EmptyState
+                icon={activeFilter ? "magniferBug" : "inbox"}
+                title={activeFilter ? "Sin intervenciones para el filtro actual" : "Sin intervenciones activas"}
+                sublabel={activeFilter ? "Ajusta los criterios o quita el filtro." : null}
+                action={activeFilter ? { label: "Quitar filtro", onClick: () => setActiveFilter(null) } : null}
+              />
             </div>
           ) : (
             filteredWos.slice(0, 18).map((wo) => {
