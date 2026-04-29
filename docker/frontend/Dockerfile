@@ -5,8 +5,10 @@ WORKDIR /app
 # Necesarias para que el bundle JS las tenga inlined (Vite las lee en build, no runtime).
 ARG VITE_MAPBOX_TOKEN
 ARG VITE_MAPBOX_STYLE
+ARG VITE_V2_SHELL=1
 ENV VITE_MAPBOX_TOKEN=$VITE_MAPBOX_TOKEN
 ENV VITE_MAPBOX_STYLE=$VITE_MAPBOX_STYLE
+ENV VITE_V2_SHELL=$VITE_V2_SHELL
 
 COPY frontend/package.json frontend/package-lock.json* ./
 RUN npm install
