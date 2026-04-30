@@ -422,3 +422,49 @@ ssh root@72.62.41.234 'cd /opt/apps/insiteiq && git pull origin v1-foundation &&
 ## Resumen de una línea
 
 **Backend + data + memory: sólidos. UI cockpit operativo: rota tras 2 sesiones. Loop estructural: agente propone → owner rechaza. Próximo agente: NO proponer composición visual sin haber transcrito instrucciones literales del owner sobre dónde va cada cosa, en lenguaje operativo del campo, no UX-speak.**
+
+---
+
+## Sesión nocturna 30-abr-2026 (autonomía con scope acotado)
+
+Owner se fue a dormir tras señalar con humor: *"no falta cablear todo esto hahaha"* (screenshot del sidebar v2 con 10 items). Autorizó: *"adelante, yo me voy a dormir, tu sigue hasta donde puedas, ya refinaremos vistas, agregaremos y quitaremos lo que haga falta"*.
+
+### Lo que SÍ hice (lectura + documentación, cero commits de código)
+
+1. **Auditoría no destructiva de las 10 rutas del sidebar v2 SRS.** Mapeo completo ruta → componente → endpoint backend → estado visual.
+2. **Sanity check de 10 endpoints PROD** con login real `juang@systemrapid.io`. 9 devuelven 200, el único 404 (`/api/techs`) NO es bug porque `TechsListPage` consume `/users` y filtra localmente.
+3. **Notion creado:** [`Inventario rutas sidebar v2 — 30-abr-2026`](https://app.notion.com/p/3527981f08ef81b79deffc36aefb3e7c) bajo Diseño/. Tabla maestra + desglose de cada vista v1 dentro del V2Shell + endpoints validados + 4 opciones del espectro para que el owner elija mañana.
+4. **Update de este cuaderno** con la sesión nocturna.
+5. **Commit + push** del cuaderno actualizado únicamente.
+
+### Lo que NO hice (intencionalmente, respeta cuaderno)
+
+- Cero commits de código frontend.
+- Cero composición propuesta para vistas individuales (Proyectos, Sitios, Técnicos, Contratos, Inteligencia, Finanzas, Admin).
+- Cero re-render forzado de v1 con paleta v2.
+- Cero modificación del V2TopHeader o V2BottomStrip (afectaría las 3 vistas v2 ya firmadas).
+- Cero atención a los 6 cosméticos del SideDetailPanel (decisión del owner si los priorizamos antes o después de la migración de vistas).
+
+### Hallazgo principal
+
+**Las 10 rutas funcionan operativamente. No hay 500 ni rutas rotas. El issue es composición visual:** 3 vistas son v2 nativas (Operaciones, Espacio OPS, Intervenciones) y 7 son v1 legacy renderizadas dentro del V2Shell. Tokens v1 + v2 coexisten en `tailwind.config.js`, ambos sobre stone-950 + amber, así que las páginas v1 no rompen el shell — solo disonan visualmente con paleta y tipografía propias de DS v1 dentro del shell DS v2.
+
+### 2 conflictos de composición conocidos por inspección
+
+1. **Header duplicado** en las 7 v1: V2TopHeader pinta título derivado de la ruta + cada página v1 pinta su propio `<h1>`. Resultado: dos títulos uno encima del otro.
+2. **Bottom strip siempre presente:** V2Shell renderiza V2BottomStrip por default. Relevante en cockpits, estorba en Admin/Finance/Inteligencia.
+
+### Opciones del espectro documentadas en Notion (NO propuestas, owner elige)
+
+- **A · Status quo controlado** — dejar 7 v1 funcionando + badge "v1 — pendiente migración" + dictado por uso real
+- **B · Stubs DS v2** — reemplazar 7 vistas por placeholders con título correcto + "Pendiente dictado" + link a v1 legacy en `/srs/legacy/...`
+- **C · Migración guiada por dictado** — una vista por sprint, empezando por la más vivida (Proyectos por rollout Panamá Wave 2 activo)
+- **D · Suprimir bottom strip + header duplicado en rutas no-cockpit** — fix cosmético quirúrgico sobre V2Shell sin tocar páginas v1 internas
+
+### Próxima acción
+
+Owner regresa con café, decisión binaria primero:
+
+> ¿Atacamos por composición de UNA vista nueva (dictado A) o por fix cosmético del shell para bajar friction de las 7 v1 ya (opción D)?
+
+De ahí emerge el siguiente sprint.
