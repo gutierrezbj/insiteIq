@@ -21,6 +21,7 @@ const NAV_BY_SCOPE = {
     { to: "/srs",                 label: "Operaciones",   end: true, accent: true },
     { to: "/srs/espacio-ops",     label: "Espacio OPS" },
     { to: "/srs/intervenciones",  label: "Intervenciones" },
+    { to: "/srs/rollouts",        label: "Rollouts" },
     { to: "/srs/projects",        label: "Proyectos" },
     { to: "/srs/sites",           label: "Sitios" },
     { to: "/srs/techs",           label: "Técnicos" },

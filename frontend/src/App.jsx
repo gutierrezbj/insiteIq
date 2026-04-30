@@ -21,6 +21,8 @@ import V2ErrorBoundary from "./components/v2-shared/ErrorBoundary";
 const V2CockpitPage = lazy(() => import("./spaces/srs/v2/CockpitPage"));
 const V2EspacioOpsPage = lazy(() => import("./spaces/srs/v2/EspacioOpsPage"));
 const V2InterventionsKanbanPage = lazy(() => import("./spaces/srs/v2/InterventionsKanbanPage"));
+const V2RolloutsListPage = lazy(() => import("./spaces/srs/v2/RolloutsListPage"));
+const V2RolloutDetailPage = lazy(() => import("./spaces/srs/v2/RolloutDetailPage"));
 
 /** Fallback minimal mientras carga el chunk de la página v2 */
 function V2LoadingFallback() {
@@ -205,6 +207,26 @@ export default function App() {
             <Route path="ops/:wo_id/report" element={<InterventionReportPage />} />
             <Route path="projects" element={<ProjectsListPage />} />
             <Route path="projects/:project_id" element={<ProjectDetailPage />} />
+            <Route
+              path="rollouts"
+              element={
+                <V2ErrorBoundary viewName="V2RolloutsListPage">
+                  <Suspense fallback={<V2LoadingFallback />}>
+                    <V2RolloutsListPage />
+                  </Suspense>
+                </V2ErrorBoundary>
+              }
+            />
+            <Route
+              path="rollouts/:project_id"
+              element={
+                <V2ErrorBoundary viewName="V2RolloutDetailPage">
+                  <Suspense fallback={<V2LoadingFallback />}>
+                    <V2RolloutDetailPage />
+                  </Suspense>
+                </V2ErrorBoundary>
+              }
+            />
             <Route path="sites" element={<SitesListPage />} />
             <Route path="sites/:site_id" element={<SiteDetailPage />} />
             <Route path="techs" element={<TechsListPage />} />

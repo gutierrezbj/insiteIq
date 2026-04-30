@@ -125,4 +125,11 @@ export const ICONS = {
 
   // Add / create
   addCircle:      "solar:add-circle-linear",
+
+  // Rollouts (added 2026-04-30 · dictado owner Hueco Andros Panamá)
+  map:            "solar:global-linear",
+  kanban:         "solar:list-arrow-up-linear",
+  gauge:          "solar:speedometer-low-linear",
+  download:       "solar:download-square-linear",
+  flag:           "solar:flag-linear",
 };
