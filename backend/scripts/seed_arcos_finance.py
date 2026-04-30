@@ -67,7 +67,7 @@ PAM_P28_INSTALL = {
         "Ejecutada por Agustin Rivera (Alarmas Solutions vendor)."
     ),
     "severity": "normal",
-    "status": "completed",
+    "status": "closed",
     "ball_side": "client",  # billing-pendiente cliente
     "scheduled_at": datetime(2026, 2, 19, 13, 0, tzinfo=timezone.utc),  # 8 AM Panamá = 13 UTC
     "closed_at": datetime(2026, 2, 19, 22, 0, tzinfo=timezone.utc),  # 5 PM Panamá
@@ -84,7 +84,7 @@ PAM_P08_INSTALL = {
         "Ejecutada por Agustin Rivera (Alarmas Solutions vendor)."
     ),
     "severity": "normal",
-    "status": "completed",
+    "status": "closed",
     "ball_side": "client",
     "scheduled_at": datetime(2026, 2, 20, 13, 0, tzinfo=timezone.utc),
     "closed_at": datetime(2026, 2, 20, 22, 0, tzinfo=timezone.utc),
