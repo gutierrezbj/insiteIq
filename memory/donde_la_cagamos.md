@@ -468,3 +468,58 @@ Owner regresa con café, decisión binaria primero:
 > ¿Atacamos por composición de UNA vista nueva (dictado A) o por fix cosmético del shell para bajar friction de las 7 v1 ya (opción D)?
 
 De ahí emerge el siguiente sprint.
+
+---
+
+## Sesión 30-abr/30-abr-tarde · matiz importante de la dinámica
+
+**Lo que pasó:** owner regresó al día siguiente, leí Notion completo (página principal + 8 SDDs + Manifiesto SDD-SRS + Blueprint v1.1), construimos el Sprint 1 (Rollouts v2 con 4 tabs) end-to-end deployed PROD con dictado del owner + propuestas mías validadas por él.
+
+**Frase del owner que corrige el cuaderno (literal):**
+
+> *"navegante, sabe slo que paso que estamos con el vaso medio lleno o medio vacio, tenemos que terminar lo que estabaos haciendo y alli tomamos desiciones, vamos bien, seguimos nuestro raodmap"*
+
+> *"claro navegante, pero quiero que tambien me ayudes con las ideas, no podemos ser blanco o negro, lo interesante es el punto intermedio, que interactuemos para evolucionar la herramienta, por eso eres mi navegante"*
+
+> *"las desiciones me parecen geniales, esta es la dinamica :)"*
+
+**Corrección al cuaderno:**
+
+La regla "owner dicta, agente transcribe" del bloque #1 anterior se escribió en momento de frustración. **Es regla CORRECTA en lo macro** (composición visual, redesign, decisiones de producto que requieren juicio operativo de 25 años) pero se exageró al extremo "agente solo transcribe, cero propuesta".
+
+**Balance correcto (Manifiesto SDD-SRS Principio 2):**
+
+> *La IA genera, el humano valida.*
+
+NO "la IA solo transcribe". NO "el humano genera y la IA solo ejecuta". Es:
+
+1. **Owner dicta lo macro** en su lenguaje operativo (qué se construye, qué resuelve, qué dolor cubre)
+2. **Agente propone los detalles operativos** (qué color exacto, qué filtro práctico, qué patrón visual reutilizar, qué orden de campos) marcándolos como propuestas
+3. **Owner valida, ajusta o rechaza** las propuestas en bloque o pieza por pieza
+4. **Iteran**
+
+Ejemplo aplicado al Sprint 1 Rollouts (deployed exitoso):
+- Owner dictó: *"mapa con banderita verde hecho rojo problema azul calendario · kanban · cuadro de mando · 3 sub pestañas"*
+- Agente propuso: 4ª pestaña Timeline, banderita SVG inline (no ícono Solar), filtro rápido (Todos/Problemas/Programados), autofit bounds, sidebar item nuevo (no reemplaza Proyectos)
+- Owner respondió: *"las decisiones me parecen geniales, esta es la dinámica"*
+
+**Por qué esta dinámica funciona:**
+- Owner mantiene criterio macro (sin perder el norte)
+- Agente aporta valor operativo donde tiene buen contexto (patrones de UI reusables, código limpio, composición visual derivada)
+- No hay loop estructural (owner no rechaza todo, porque las propuestas están alineadas a su dictado macro)
+- Velocidad iterativa real (1 sprint completo = horas, no semanas)
+
+**Reglas duras que SIGUEN VIGENTES (sin matiz):**
+- NO copiar mocks de otros productos SRS (SKYPRO360, etc.)
+- NO inventar composición visual sin haber transcrito el dictado macro del owner primero
+- NO hacer de diseñador cuando el owner pide gerente operativo (la entrevista en lenguaje campo sigue siendo el método para extraer dictado)
+- NO firmar fases por screenshot sin validar integración data live
+- Backend intocable sin firma del owner (sigue 100%)
+- Anti-plantilla IA (sigue 100%)
+- 14 reglas duras del bloque anterior siguen vigentes
+
+**Regla nueva derivada de esta sesión:**
+
+> Cuando el agente propone detalles operativos (color, filtro, patrón), debe marcarlos explícitamente como "decisiones mías para validar" para que el owner pueda corregir en bloque sin tener que rechazar todo. Ejemplo: al final de un deploy, listar 3-5 decisiones de detalle tomadas por el agente para que el owner las valide.
+
+**Para el siguiente agente:** lee este cuaderno entero. La regla #1 dirección invertida sigue vigente para lo macro. Pero NO te quedes paralizado en "yo solo transcribo, espero dictado para todo". Aporta ideas dentro del dictado macro del owner. El owner dictó "rollout con mapa kanban cuadro". Tú proponer "banderita SVG verde/rojo/azul + filtro + autofit + leyenda" es OK (esos son detalles operativos derivados del dictado, no invención visual desde cero).
