@@ -84,6 +84,11 @@ class AdvanceBody(BaseModel):
     lng: float | None = None
     # Emergency override: allows dispatched without pre_flight all_green
     emergency: bool = False
+    # Schedule fields — used by Rollout v2 "Programar desde Mapa" modal.
+    # When advancing intake→triage, owner can pre-assign tech + date in one
+    # action. Optional · backwards-compatible (existing callers ignore these).
+    assigned_tech_user_id: str | None = None
+    scheduled_at: datetime | None = None
 
 
 class CancelBody(BaseModel):
@@ -395,6 +400,14 @@ async def advance_work_order(
     }
     if target == "closed":
         update["closed_at"] = now
+
+    # Optional schedule fields (Rollout v2 "Programar desde Mapa") — solo si
+    # vienen explícitos en el body. Backwards-compatible: callers viejos no
+    # los pasan y nada cambia.
+    if body.assigned_tech_user_id is not None:
+        update["assigned_tech_user_id"] = body.assigned_tech_user_id
+    if body.scheduled_at is not None:
+        update["scheduled_at"] = body.scheduled_at
 
     push_ops: dict[str, Any] = {}
     if body.handshake:

@@ -151,6 +151,10 @@ class WorkOrder(BaseMongoModel):
     deadline_receive_at: datetime | None = None
     deadline_resolve_at: datetime | None = None
 
+    # Programmed visit date (set when WO advances from intake/triage with
+    # tech + fecha agendada vía "Programar desde Mapa" del Rollout v2).
+    scheduled_at: datetime | None = None
+
     # Handshakes
     handshakes: list[Handshake] = Field(default_factory=list)
 

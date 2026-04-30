@@ -260,7 +260,7 @@ export default function RolloutDetailPage() {
       {/* Tab content */}
       <div className="flex-1 overflow-auto wr-scroll">
         {activeTab === "mapa" && (
-          <MapTab wos={filteredWos} sites={siteMap} users={userMap} />
+          <MapTab wos={filteredWos} sites={siteMap} users={userMap} onScheduled={load} />
         )}
         {activeTab === "kanban" && (
           <KanbanTab wos={filteredWos} sites={siteMap} users={userMap} reload={load} />
@@ -276,11 +276,137 @@ export default function RolloutDetailPage() {
   );
 }
 
+/* ─────────────────────── Modal "Programar desde Mapa" ─────────────────────── */
+function ScheduleSiteModal({ wo, site, users, onClose, onScheduled }) {
+  const [techId, setTechId] = useState("");
+  const [scheduledAt, setScheduledAt] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const techCandidates = useMemo(() => {
+    return Object.values(users).filter((u) =>
+      u.email?.endsWith("@systemrapid.com") || u.email?.endsWith("@systemrapid.io")
+    );
+  }, [users]);
+
+  async function handleSubmit() {
+    if (!techId || !scheduledAt) {
+      toast.error("Tech y fecha son obligatorios");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      // Avanza intake → triage con tech + fecha. SRS coordinator authority.
+      await api.post(`/work-orders/${wo.id}/advance`, {
+        target_status: "triage",
+        notes: `Programado vía Mapa Rollout · tech: ${users[techId]?.full_name || techId}`,
+        assigned_tech_user_id: techId,
+        scheduled_at: new Date(scheduledAt).toISOString(),
+      });
+      toast.success(`${site?.code || wo.reference} programado`);
+      onScheduled?.();
+      onClose();
+    } catch (err) {
+      toast.error(`Error: ${err.message || err}`);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-[5000] flex items-center justify-center"
+      style={{ background: "rgba(10, 10, 10, 0.65)" }}
+      onClick={onClose}
+    >
+      <div
+        className="bg-wr-bg border border-wr-border rounded-sm w-[460px] max-w-[95vw]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <header className="px-5 py-4 border-b border-wr-border">
+          <p className="label-caps-v2 mb-1">Programar instalación</p>
+          <h2 className="font-display text-[18px] font-semibold text-white leading-tight">
+            {site?.name || "Site sin nombre"}
+          </h2>
+          <p className="text-[11px] text-wr-text-mid font-mono mt-0.5">
+            {site?.code} · {site?.city || site?.country}
+          </p>
+        </header>
+
+        {/* Body */}
+        <div className="px-5 py-4 space-y-4">
+          <div>
+            <label className="block text-[10px] text-wr-text-dim uppercase mb-1.5" style={{ letterSpacing: "0.14em" }}>
+              Técnico asignado
+            </label>
+            <select
+              value={techId}
+              onChange={(e) => setTechId(e.target.value)}
+              className="w-full bg-wr-surface/40 border border-wr-border rounded-sm px-3 py-2 text-[13px] text-wr-text font-mono"
+            >
+              <option value="">— Selecciona técnico —</option>
+              {techCandidates.map((u) => (
+                <option key={u.id} value={u.id}>
+                  {u.full_name || u.email} · {u.email}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-[10px] text-wr-text-dim uppercase mb-1.5" style={{ letterSpacing: "0.14em" }}>
+              Fecha y hora programada (local)
+            </label>
+            <input
+              type="datetime-local"
+              value={scheduledAt}
+              onChange={(e) => setScheduledAt(e.target.value)}
+              className="w-full bg-wr-surface/40 border border-wr-border rounded-sm px-3 py-2 text-[13px] text-wr-text font-mono"
+            />
+          </div>
+
+          <p className="text-[11px] text-wr-text-mid leading-relaxed">
+            Avanza este site de <span className="text-wr-text-dim">intake</span> a{" "}
+            <span style={{ color: "#F59E0B" }}>triage</span> con tech asignado y fecha
+            agendada. La banderita pasa de azul (programado) a verde (en marcha).
+          </p>
+        </div>
+
+        {/* Footer */}
+        <footer className="px-5 py-3 border-t border-wr-border flex items-center justify-end gap-2">
+          <button
+            onClick={onClose}
+            disabled={submitting}
+            className="text-[11px] text-wr-text-mid hover:text-wr-text uppercase px-3 py-2 transition"
+            style={{ letterSpacing: "0.08em" }}
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={submitting || !techId || !scheduledAt}
+            className="text-[11px] uppercase font-medium px-4 py-2 rounded-sm transition"
+            style={{
+              background: submitting || !techId || !scheduledAt ? "#1F1F1F" : "#F59E0B",
+              color: submitting || !techId || !scheduledAt ? "#6B7280" : "#0A0A0A",
+              cursor: submitting || !techId || !scheduledAt ? "not-allowed" : "pointer",
+              letterSpacing: "0.08em",
+            }}
+          >
+            {submitting ? "Programando…" : "Programar"}
+          </button>
+        </footer>
+      </div>
+    </div>
+  );
+}
+
 /* ─────────────────────── Tab MAPA ─────────────────────── */
-function MapTab({ wos, sites, users }) {
+function MapTab({ wos, sites, users, onScheduled }) {
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markersRef = useRef({});
+  const [modalWo, setModalWo] = useState(null);
 
   // Init map
   useEffect(() => {
@@ -340,10 +466,14 @@ function MapTab({ wos, sites, users }) {
       });
 
       const marker = L.marker([lat, lng], { icon }).addTo(map);
+      const isScheduled = flag === "scheduled";
+      const ctaButton = isScheduled
+        ? `<button data-action="schedule" data-wo-id="${wo.id}" style="margin-top:6px;width:100%;background:#F59E0B;color:#0A0A0A;border:0;border-radius:3px;padding:6px 10px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;">Programar instalación →</button>`
+        : "";
       const popupHtml = `
         <div style="background:#0A0A0A;color:#E5E5E5;font-family:'JetBrains Mono',monospace;min-width:220px;">
           <div style="padding:9px 12px;border-bottom:1px solid #1F1F1F;">
-            <div style="font-size:10px;color:${color};font-weight:600;letter-spacing:0.1em;text-transform:uppercase;">${flag === "done" ? "Hecho/Marcha" : flag === "problem" ? "Problema" : flag === "scheduled" ? "Programado" : "Pendiente"}</div>
+            <div style="font-size:10px;color:${color};font-weight:600;letter-spacing:0.1em;text-transform:uppercase;">${flag === "done" ? "Hecho/Marcha" : flag === "problem" ? "Problema" : flag === "scheduled" ? "Programado · sin agendar" : "Pendiente"}</div>
             <div style="font-size:13px;color:#FFFFFF;font-weight:600;margin-top:2px;">${site.name || "Sin nombre"}</div>
             <div style="font-size:10px;color:#9CA3AF;">${site.code || ""}</div>
           </div>
@@ -351,6 +481,7 @@ function MapTab({ wos, sites, users }) {
             <div><span style="color:#6B7280;">WO:</span> ${formatWoCode(wo)}</div>
             <div><span style="color:#6B7280;">Status:</span> ${wo.status}</div>
             <div><span style="color:#6B7280;">Tech:</span> ${techName}</div>
+            ${ctaButton}
           </div>
         </div>
       `;
@@ -362,6 +493,23 @@ function MapTab({ wos, sites, users }) {
         autoPanPaddingTopLeft: [20, 100],
         autoPanPaddingBottomRight: [20, 20],
       });
+
+      // Wire CTA button cuando popup abre
+      if (isScheduled) {
+        marker.on("popupopen", () => {
+          setTimeout(() => {
+            const popupNode = marker.getPopup().getElement();
+            if (!popupNode) return;
+            popupNode.querySelectorAll('[data-action="schedule"]').forEach((btn) => {
+              btn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                marker.closePopup();
+                setModalWo(wo);
+              });
+            });
+          }, 0);
+        });
+      }
 
       markersRef.current[wo.id] = marker;
       bounds = bounds ? bounds.extend([lat, lng]) : L.latLngBounds([[lat, lng]]);
@@ -389,6 +537,20 @@ function MapTab({ wos, sites, users }) {
         <div className="absolute inset-0 flex items-center justify-center text-wr-text-dim text-[12px] font-mono">
           Cargando mapa…
         </div>
+      )}
+
+      {/* Modal "Programar desde Mapa" */}
+      {modalWo && (
+        <ScheduleSiteModal
+          wo={modalWo}
+          site={sites[modalWo.site_id]}
+          users={users}
+          onClose={() => setModalWo(null)}
+          onScheduled={() => {
+            setModalWo(null);
+            onScheduled?.();
+          }}
+        />
       )}
     </div>
   );
