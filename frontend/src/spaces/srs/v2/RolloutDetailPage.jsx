@@ -139,6 +139,8 @@ export default function RolloutDetailPage() {
   const [filter, setFilter] = useLocalStorageState(`rollout-${project_id}-filter`, "all"); // all · problems · scheduled
   // Iter 2.7: notes panel slide-in derecha
   const [notesOpen, setNotesOpen] = useState(false);
+  // Iter 2.9: bulk re-schedule modal (Pain log #006-6)
+  const [bulkOpen, setBulkOpen] = useState(false);
 
   // Carga
   const load = useCallback(async () => {
@@ -254,8 +256,11 @@ export default function RolloutDetailPage() {
             </div>
           </div>
 
-          {/* Botones de acción del header · Notas + Exportar */}
+          {/* Botones de acción del header · Bulk + Notas + Exportar */}
           <div className="flex items-center gap-2 flex-shrink-0">
+            {wos.length > 0 && (
+              <BulkRescheduleButton count={counts.scheduled} onClick={() => setBulkOpen(true)} />
+            )}
             <NotesButton onClick={() => setNotesOpen(true)} />
             <ExportReportButton
               project={project}
@@ -341,6 +346,276 @@ export default function RolloutDetailPage() {
           onClose={() => setNotesOpen(false)}
         />
       )}
+
+      {/* Iter 2.9 · Bulk Re-schedule modal */}
+      {bulkOpen && (
+        <BulkRescheduleModal
+          wos={wos.filter((w) => classifyWoForFlag(w) === "scheduled")}
+          sites={siteMap}
+          users={userMap}
+          onClose={() => setBulkOpen(false)}
+          onDone={() => { setBulkOpen(false); load(); }}
+        />
+      )}
+    </div>
+  );
+}
+
+/* ─────────────────────── Botón Bulk Re-schedule (Iter 2.9) ─────────────────────── */
+function BulkRescheduleButton({ count, onClick }) {
+  const hasPending = count > 0;
+  return (
+    <button
+      onClick={onClick}
+      className="inline-flex items-center gap-2 px-3 py-2 rounded-sm border text-[11px] uppercase font-medium transition"
+      style={{
+        color: hasPending ? "#3B82F6" : "#6B7280",
+        borderColor: hasPending ? "#3B82F6" : "#1F1F1F",
+        background: hasPending ? "rgba(59, 130, 246, 0.08)" : "transparent",
+        letterSpacing: "0.08em",
+      }}
+      title={hasPending ? `Programar ${count} sites pending en bulk` : "Sin sites pending"}
+    >
+      <Icon icon={ICONS.calendar} size={14} />
+      Bulk{hasPending ? ` · ${count}` : ""}
+    </button>
+  );
+}
+
+/* ─────────────────────── Modal Bulk Re-schedule (Iter 2.9 · Pain #006-6) ───────────────────────
+ * Cierra Pain Evidence Log #006 dolor #6: re-scheduling de pending = email-tennis.
+ * Approach v1 simple: lista checkboxes + select tech + datetime + loop secuencial
+ * de POSTs a /work-orders/{id}/advance (target=triage). Cero backend nuevo.
+ * Tracking de progreso visible: "Programando 5 de 17…". */
+function BulkRescheduleModal({ wos, sites, users, onClose, onDone }) {
+  // Default: todos los pending seleccionados
+  const [selected, setSelected] = useState(() => new Set(wos.map((w) => w.id)));
+  const [techId, setTechId] = useState("");
+  const [scheduledAt, setScheduledAt] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [progress, setProgress] = useState({ done: 0, total: 0, errors: [] });
+
+  const techCandidates = useMemo(() =>
+    Object.values(users).filter((u) =>
+      u.email?.endsWith("@systemrapid.com") || u.email?.endsWith("@systemrapid.io")
+    ),
+  [users]);
+
+  function toggle(id) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleAll() {
+    setSelected((prev) => prev.size === wos.length ? new Set() : new Set(wos.map((w) => w.id)));
+  }
+
+  async function execute() {
+    const ids = Array.from(selected);
+    if (ids.length === 0) {
+      toast.error("Seleccioná al menos 1 site");
+      return;
+    }
+    if (!techId || !scheduledAt) {
+      toast.error("Tech y fecha son obligatorios");
+      return;
+    }
+    setSubmitting(true);
+    setProgress({ done: 0, total: ids.length, errors: [] });
+    const errors = [];
+    const techName = users[techId]?.full_name || users[techId]?.email || techId;
+    const isoDate = new Date(scheduledAt).toISOString();
+
+    for (let i = 0; i < ids.length; i++) {
+      const id = ids[i];
+      const wo = wos.find((w) => w.id === id);
+      try {
+        await api.post(`/work-orders/${id}/advance`, {
+          target_status: "triage",
+          notes: `Programado vía Bulk (${i + 1}/${ids.length}) · tech: ${techName}`,
+          assigned_tech_user_id: techId,
+          scheduled_at: isoDate,
+        });
+      } catch (err) {
+        errors.push({ id, code: formatWoCode(wo), msg: err.message || String(err) });
+      }
+      setProgress({ done: i + 1, total: ids.length, errors });
+    }
+
+    setSubmitting(false);
+    const successes = ids.length - errors.length;
+    if (errors.length === 0) {
+      toast.success(`${successes} sites programados correctamente`);
+      onDone?.();
+    } else if (successes > 0) {
+      toast.warning(`${successes} OK · ${errors.length} con error · revisá lista`);
+    } else {
+      toast.error(`Falló todo · ${errors.length} errores`);
+    }
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-[5000] flex items-center justify-center"
+      style={{ background: "rgba(10, 10, 10, 0.65)" }}
+      onClick={submitting ? undefined : onClose}
+    >
+      <div
+        className="bg-wr-bg border border-wr-border rounded-sm w-[640px] max-w-[95vw] max-h-[90vh] flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <header className="px-5 py-4 border-b border-wr-border flex-shrink-0">
+          <p className="label-caps-v2 mb-1">Programar bulk</p>
+          <h2 className="font-display text-[18px] font-semibold text-white leading-tight">
+            {selected.size} de {wos.length} sites pending seleccionados
+          </h2>
+          <p className="text-[11px] text-wr-text-mid font-mono mt-0.5">
+            Avanza intake → triage con tech + fecha. Operación secuencial (1 POST por site).
+          </p>
+        </header>
+
+        {/* Body */}
+        <div className="flex-1 overflow-hidden flex flex-col">
+          {/* Tech + Date pickers */}
+          <div className="px-5 py-3 border-b border-wr-border grid grid-cols-2 gap-3 flex-shrink-0">
+            <div>
+              <label className="block text-[10px] text-wr-text-dim uppercase mb-1.5" style={{ letterSpacing: "0.14em" }}>
+                Técnico asignado
+              </label>
+              <select
+                value={techId}
+                onChange={(e) => setTechId(e.target.value)}
+                disabled={submitting}
+                className="w-full bg-wr-surface/40 border border-wr-border rounded-sm px-3 py-2 text-[12px] text-wr-text font-mono"
+              >
+                <option value="">— Selecciona técnico —</option>
+                {techCandidates.map((u) => (
+                  <option key={u.id} value={u.id}>{u.full_name || u.email}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-[10px] text-wr-text-dim uppercase mb-1.5" style={{ letterSpacing: "0.14em" }}>
+                Fecha programada (mismo día para todos)
+              </label>
+              <input
+                type="datetime-local"
+                value={scheduledAt}
+                onChange={(e) => setScheduledAt(e.target.value)}
+                disabled={submitting}
+                className="w-full bg-wr-surface/40 border border-wr-border rounded-sm px-3 py-2 text-[12px] text-wr-text font-mono"
+              />
+            </div>
+          </div>
+
+          {/* Lista checkboxes */}
+          <div className="px-5 py-2 border-b border-wr-border flex items-center justify-between flex-shrink-0">
+            <button
+              onClick={toggleAll}
+              disabled={submitting}
+              className="text-[11px] text-wr-amber hover:underline uppercase"
+              style={{ letterSpacing: "0.08em" }}
+            >
+              {selected.size === wos.length ? "Deseleccionar todos" : "Seleccionar todos"}
+            </button>
+            <span className="text-[10px] text-wr-text-dim font-mono">{selected.size} / {wos.length}</span>
+          </div>
+          {wos.length === 0 && (
+            <div className="flex-1 flex items-center justify-center px-5 py-12 text-center">
+              <div>
+                <p className="text-[12px] text-wr-text-mid mb-1">Sin sites pending para programar</p>
+                <p className="text-[10px] text-wr-text-dim font-mono">Solo aparecen aquí los sites en estado <span className="text-wr-amber">intake</span> (no asignados todavía)</p>
+              </div>
+            </div>
+          )}
+          {wos.length > 0 && (
+          <ul className="flex-1 overflow-y-auto wr-scroll divide-y divide-wr-border">
+            {wos.map((w) => {
+              const s = sites[w.site_id] || {};
+              const isSelected = selected.has(w.id);
+              return (
+                <li
+                  key={w.id}
+                  onClick={() => !submitting && toggle(w.id)}
+                  className="px-5 py-2 flex items-center gap-3 cursor-pointer hover:bg-wr-surface/30 transition"
+                >
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={() => toggle(w.id)}
+                    disabled={submitting}
+                    className="accent-wr-amber"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[12px] text-wr-text truncate">{s.name || "Site sin nombre"}</div>
+                    <div className="text-[10px] text-wr-text-dim font-mono truncate">
+                      {s.code || "—"} · {formatWoCode(w)} · {s.country || ""}
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+          )}
+
+          {/* Progress bar / errors */}
+          {submitting && (
+            <div className="px-5 py-2 border-t border-wr-border flex-shrink-0">
+              <div className="flex items-center justify-between text-[11px] text-wr-text mb-1">
+                <span>Programando…</span>
+                <span className="font-mono">{progress.done} / {progress.total}</span>
+              </div>
+              <div className="w-full bg-wr-bg rounded-full h-1 overflow-hidden">
+                <div
+                  className="h-1 transition-all"
+                  style={{
+                    width: progress.total ? `${(progress.done / progress.total) * 100}%` : "0%",
+                    background: "#F59E0B",
+                  }}
+                />
+              </div>
+            </div>
+          )}
+          {!submitting && progress.errors.length > 0 && (
+            <div className="px-5 py-2 border-t border-wr-border flex-shrink-0 max-h-[100px] overflow-y-auto">
+              <p className="text-[10px] text-red-400 font-mono mb-1">{progress.errors.length} errores:</p>
+              {progress.errors.map((e, i) => (
+                <p key={i} className="text-[10px] text-wr-text-mid font-mono">{e.code}: {e.msg}</p>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <footer className="px-5 py-3 border-t border-wr-border flex items-center justify-end gap-2 flex-shrink-0">
+          <button
+            onClick={onClose}
+            disabled={submitting}
+            className="text-[11px] text-wr-text-mid hover:text-wr-text uppercase px-3 py-2 transition"
+            style={{ letterSpacing: "0.08em" }}
+          >
+            {submitting ? "Esperá…" : "Cancelar"}
+          </button>
+          <button
+            onClick={execute}
+            disabled={submitting || selected.size === 0 || !techId || !scheduledAt}
+            className="text-[11px] uppercase font-medium px-4 py-2 rounded-sm transition"
+            style={{
+              background: submitting || selected.size === 0 || !techId || !scheduledAt ? "#1F1F1F" : "#F59E0B",
+              color: submitting || selected.size === 0 || !techId || !scheduledAt ? "#6B7280" : "#0A0A0A",
+              cursor: submitting || selected.size === 0 || !techId || !scheduledAt ? "not-allowed" : "pointer",
+              letterSpacing: "0.08em",
+            }}
+          >
+            {submitting ? `Programando ${progress.done}/${progress.total}…` : `Programar ${selected.size} sites`}
+          </button>
+        </footer>
+      </div>
     </div>
   );
 }
