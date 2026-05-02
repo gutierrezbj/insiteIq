@@ -132,4 +132,7 @@ export const ICONS = {
   gauge:          "solar:speedometer-low-linear",
   download:       "solar:download-square-linear",
   flag:           "solar:flag-linear",
+
+  // Export Report (added 2026-05-02 · Iter 2.3 ExportReportButton dropdown)
+  printer:        "solar:printer-linear",
 };

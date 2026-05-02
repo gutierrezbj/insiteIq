@@ -226,8 +226,16 @@ export default function RolloutDetailPage() {
             </div>
           </div>
 
-          {/* Botón Exportar (stub) */}
-          <ExportReportButton project={project} />
+          {/* Botón Exportar · dropdown CSV/XLSX + Print PDF (Iter 2.3) */}
+          <ExportReportButton
+            project={project}
+            wos={wos}
+            sites={siteMap}
+            users={userMap}
+            counts={counts}
+            totalSites={totalSites}
+            progressPct={progressPct}
+          />
         </div>
 
         {/* Tabs nav */}
@@ -911,25 +919,197 @@ function TimelineTab({ wos, sites }) {
   );
 }
 
-/* ─────────────────────── Stub Botón Exportar ─────────────────────── */
-function ExportReportButton({ project }) {
-  function onClick() {
-    toast.info("Reporte exportable · próxima iteración (PDF + XLSX, endpoint backend pendiente firma)");
+/* ─────────────────────── Botón Exportar · CSV + Print PDF (Iter 2.3) ───────────────────────
+ * Implementación 100% client-side. NO toca backend (regla #5 del cuaderno):
+ *   - CSV: Blob UTF-8 con BOM, Excel-ready, descarga directa.
+ *   - PDF: window.print() sobre vista print-only inyectada al DOM,
+ *          usuario elige "Guardar como PDF" en el diálogo nativo del browser.
+ * Dictado original owner: "poder sacar un reporte con 3 clicks".
+ * Aquí: 2 clicks (Exportar → CSV/PDF). Cumple. */
+function ExportReportButton({ project, wos, sites, users, counts, totalSites, progressPct }) {
+  const [open, setOpen] = useState(false);
+
+  function exportCsv() {
+    setOpen(false);
+    try {
+      const headers = [
+        "Site Code", "Site Name", "Pais", "Ciudad",
+        "WO Code", "Status", "Banderita", "Tech",
+        "Creado", "Cerrado", "Lat", "Lng",
+      ];
+      const rows = wos.map((w) => {
+        const s = sites[w.site_id] || {};
+        const tech = users[getTechId(w)];
+        const flag = classifyWoForFlag(w);
+        const flagLabel = flag === "done" ? "Hecho/Marcha"
+          : flag === "problem" ? "Con problema"
+          : flag === "scheduled" ? "Programado" : "Pendiente";
+        return [
+          s.code || "",
+          s.name || "",
+          s.country || "",
+          s.city || "",
+          formatWoCode(w),
+          w.status,
+          flagLabel,
+          tech?.full_name || tech?.name || "Sin asignar",
+          w.created_at || "",
+          w.closed_at || "",
+          s.lat ?? s.latitude ?? "",
+          s.lng ?? s.longitude ?? "",
+        ];
+      });
+      const esc = (v) => {
+        const str = String(v ?? "");
+        if (str.includes(",") || str.includes('"') || str.includes("\n")) {
+          return `"${str.replace(/"/g, '""')}"`;
+        }
+        return str;
+      };
+      const csv = [headers.map(esc).join(","), ...rows.map((r) => r.map(esc).join(","))].join("\n");
+      const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const date = new Date().toISOString().slice(0, 10);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${project.code}-rollout-${date}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success(`CSV exportado · ${rows.length} sites`);
+    } catch (err) {
+      toast.error(`Error CSV: ${err.message || err}`);
+    }
   }
+
+  function exportPdf() {
+    setOpen(false);
+    try {
+      const reportId = "rollout-print-report";
+      document.getElementById(reportId)?.remove();
+      const date = new Date().toLocaleString("es-ES", { dateStyle: "long", timeStyle: "short" });
+
+      const rowsHtml = wos.map((w) => {
+        const s = sites[w.site_id] || {};
+        const tech = users[getTechId(w)];
+        const flag = classifyWoForFlag(w);
+        const flagLabel = flag === "done" ? "Hecho/Marcha"
+          : flag === "problem" ? "Problema"
+          : flag === "scheduled" ? "Programado" : "Pendiente";
+        const flagColor = FLAG_COLORS[flag];
+        return `<tr>
+          <td style="padding:4px 6px;border-bottom:1px solid #ddd;font-family:monospace;font-size:9px;">${s.code || "—"}</td>
+          <td style="padding:4px 6px;border-bottom:1px solid #ddd;font-size:10px;">${s.name || "—"}</td>
+          <td style="padding:4px 6px;border-bottom:1px solid #ddd;font-size:9px;color:#555;">${s.country || ""}</td>
+          <td style="padding:4px 6px;border-bottom:1px solid #ddd;font-family:monospace;font-size:9px;">${formatWoCode(w)}</td>
+          <td style="padding:4px 6px;border-bottom:1px solid #ddd;font-size:9px;">${w.status}</td>
+          <td style="padding:4px 6px;border-bottom:1px solid #ddd;font-size:9px;color:${flagColor};font-weight:600;">${flagLabel}</td>
+          <td style="padding:4px 6px;border-bottom:1px solid #ddd;font-size:9px;">${tech?.full_name || tech?.name || "Sin asignar"}</td>
+        </tr>`;
+      }).join("");
+
+      const wrapper = document.createElement("div");
+      wrapper.id = reportId;
+      wrapper.innerHTML = `
+        <style>
+          @media print {
+            body * { visibility: hidden; }
+            #${reportId}, #${reportId} * { visibility: visible; }
+            #${reportId} { position: absolute; top: 0; left: 0; width: 100%; padding: 16px 18px; background: white; color: #111; font-family: 'Helvetica Neue', Arial, sans-serif; }
+            @page { size: A4 landscape; margin: 10mm; }
+          }
+          @media screen { #${reportId} { display: none; } }
+        </style>
+        <header style="border-bottom:2px solid #111;padding-bottom:10px;margin-bottom:14px;">
+          <div style="font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:#666;">InsiteIQ · SRS · Reporte de Rollout</div>
+          <h1 style="font-size:18px;margin:5px 0 2px 0;font-weight:700;">${project.title}</h1>
+          <div style="font-size:10px;color:#555;font-family:monospace;">${project.code} · Status: ${project.status}</div>
+          <div style="font-size:9px;color:#888;margin-top:3px;">Generado ${date}</div>
+        </header>
+        <section style="margin-bottom:12px;display:flex;gap:18px;font-size:11px;align-items:baseline;">
+          <div><strong style="font-size:18px;">${counts.done}</strong> / ${totalSites} sites · <span style="color:#16A34A;font-weight:600;">${progressPct}%</span></div>
+          <div style="color:#DC2626;">● ${counts.problem} con problemas</div>
+          <div style="color:#3B82F6;">● ${counts.scheduled} en calendario</div>
+          <div style="color:#16A34A;">● ${counts.done} hecho/marcha</div>
+          ${counts.pending ? `<div style="color:#6B7280;">● ${counts.pending} pendientes</div>` : ""}
+        </section>
+        <table style="width:100%;border-collapse:collapse;font-size:10px;">
+          <thead><tr style="background:#f5f5f5;">
+            <th style="text-align:left;padding:6px;border-bottom:2px solid #111;font-size:9px;text-transform:uppercase;letter-spacing:0.08em;">Site Code</th>
+            <th style="text-align:left;padding:6px;border-bottom:2px solid #111;font-size:9px;text-transform:uppercase;letter-spacing:0.08em;">Site Name</th>
+            <th style="text-align:left;padding:6px;border-bottom:2px solid #111;font-size:9px;text-transform:uppercase;letter-spacing:0.08em;">País</th>
+            <th style="text-align:left;padding:6px;border-bottom:2px solid #111;font-size:9px;text-transform:uppercase;letter-spacing:0.08em;">WO</th>
+            <th style="text-align:left;padding:6px;border-bottom:2px solid #111;font-size:9px;text-transform:uppercase;letter-spacing:0.08em;">Status</th>
+            <th style="text-align:left;padding:6px;border-bottom:2px solid #111;font-size:9px;text-transform:uppercase;letter-spacing:0.08em;">Banderita</th>
+            <th style="text-align:left;padding:6px;border-bottom:2px solid #111;font-size:9px;text-transform:uppercase;letter-spacing:0.08em;">Tech</th>
+          </tr></thead>
+          <tbody>${rowsHtml}</tbody>
+        </table>
+        <footer style="margin-top:14px;border-top:1px solid #ccc;padding-top:6px;font-size:8px;color:#888;">
+          InsiteIQ · System Rapid Solutions · Documento confidencial · ${wos.length} WOs · ${date}
+        </footer>
+      `;
+      document.body.appendChild(wrapper);
+
+      setTimeout(() => {
+        window.print();
+        setTimeout(() => document.getElementById(reportId)?.remove(), 1500);
+      }, 60);
+
+      toast.success("Reporte listo · usá 'Guardar como PDF' en el diálogo");
+    } catch (err) {
+      toast.error(`Error PDF: ${err.message || err}`);
+    }
+  }
+
   return (
-    <button
-      onClick={onClick}
-      className="flex-shrink-0 inline-flex items-center gap-2 px-3 py-2 rounded-sm border text-[11px] uppercase font-medium transition"
-      style={{
-        color: "#F59E0B",
-        borderColor: "#F59E0B",
-        background: "rgba(245, 158, 11, 0.08)",
-        letterSpacing: "0.08em",
-      }}
-      title="Exportar reporte (próxima iteración)"
-    >
-      <Icon icon={ICONS.download} size={14} />
-      Exportar
-    </button>
+    <div className="relative flex-shrink-0">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="inline-flex items-center gap-2 px-3 py-2 rounded-sm border text-[11px] uppercase font-medium transition"
+        style={{
+          color: "#F59E0B",
+          borderColor: "#F59E0B",
+          background: open ? "rgba(245, 158, 11, 0.18)" : "rgba(245, 158, 11, 0.08)",
+          letterSpacing: "0.08em",
+        }}
+        title="Exportar reporte"
+      >
+        <Icon icon={ICONS.download} size={14} />
+        Exportar
+        <Icon icon={open ? ICONS.chevronUp : ICONS.chevronDown} size={12} />
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-[3000]" onClick={() => setOpen(false)} />
+          <div
+            className="absolute right-0 mt-1 z-[3001] bg-wr-bg border border-wr-border rounded-sm overflow-hidden"
+            style={{ minWidth: 220, boxShadow: "0 8px 24px rgba(0, 0, 0, 0.6)" }}
+          >
+            <button
+              onClick={exportCsv}
+              className="w-full flex items-center gap-3 px-3 py-2.5 text-[11px] text-wr-text hover:bg-wr-surface/50 transition text-left"
+            >
+              <Icon icon={ICONS.document} size={16} color="#F59E0B" />
+              <div className="flex-1">
+                <div className="font-medium">Exportar CSV / XLSX</div>
+                <div className="text-[9px] text-wr-text-dim font-mono mt-0.5">{wos.length} sites · Excel-ready</div>
+              </div>
+            </button>
+            <button
+              onClick={exportPdf}
+              className="w-full flex items-center gap-3 px-3 py-2.5 text-[11px] text-wr-text hover:bg-wr-surface/50 transition text-left border-t border-wr-border"
+            >
+              <Icon icon={ICONS.printer} size={16} color="#F59E0B" />
+              <div className="flex-1">
+                <div className="font-medium">Imprimir PDF</div>
+                <div className="text-[9px] text-wr-text-dim font-mono mt-0.5">A4 landscape · "Guardar como PDF"</div>
+              </div>
+            </button>
+          </div>
+        </>
+      )}
+    </div>
   );
 }
