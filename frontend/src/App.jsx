@@ -1,10 +1,20 @@
 /**
- * InsiteIQ v1 Foundation — App shell
- * Router for the 3 spaces + auth guards.
- * Design WOW (Track B) fills these routes with real UX per space.
+ * InsiteIQ v1 Foundation — App shell (Iter 2.8 · v2 default · v1 deprecated)
+ *
+ * Iter 2.8 (2026-05-02 firma owner): el toggle VITE_V2_SHELL / ?v2=1 se
+ * removió. v2 es siempre la única vista. Las páginas v1 que tenían
+ * reemplazo v2 directo (CockpitPage, WorkOrdersListPage como Kanban,
+ * SrsHome) quedaron deprecadas y removidas. Las páginas v1 que aún NO
+ * tienen reemplazo v2 (Projects, Sites, Techs, Agreements, Finance,
+ * Insights, Admin, WorkOrderDetailPage, InterventionReportPage) siguen
+ * funcionando dentro del V2Shell hasta que sean migradas a v2 nativa.
+ *
+ * Mapbox GL removido del bundle (era ~2MB) — solo lo usaba el Cockpit v1
+ * deprecado. Mapas activos ahora son Leaflet vía CDN (Espacio OPS,
+ * Rollouts).
  */
 import { lazy, Suspense } from "react";
-import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import RequireSpace from "./components/RequireSpace";
@@ -12,12 +22,9 @@ import LoginPage from "./pages/auth/LoginPage";
 import ChangePasswordPage from "./pages/auth/ChangePasswordPage";
 
 import SrsLayout from "./spaces/srs/Layout";
-import SrsHome from "./spaces/srs/HomePage";
-import CockpitPage from "./components/cockpit/CockpitPage";
 import V2ErrorBoundary from "./components/v2-shared/ErrorBoundary";
 
 // Code splitting · páginas v2 cargan solo cuando se accede a su ruta.
-// Evita pre-cargar Leaflet (Espacio OPS) y todo el Kanban en el bundle del Cockpit.
 const V2CockpitPage = lazy(() => import("./spaces/srs/v2/CockpitPage"));
 const V2EspacioOpsPage = lazy(() => import("./spaces/srs/v2/EspacioOpsPage"));
 const V2InterventionsKanbanPage = lazy(() => import("./spaces/srs/v2/InterventionsKanbanPage"));
@@ -41,7 +48,16 @@ function V2LoadingFallback() {
     </div>
   );
 }
-import WorkOrdersListPage from "./spaces/srs/ops/WorkOrdersListPage";
+
+// Helper para no repetir <V2ErrorBoundary><Suspense>...</Suspense></V2ErrorBoundary>
+function V2View({ name, children }) {
+  return (
+    <V2ErrorBoundary viewName={name}>
+      <Suspense fallback={<V2LoadingFallback />}>{children}</Suspense>
+    </V2ErrorBoundary>
+  );
+}
+
 import WorkOrderDetailPage from "./spaces/srs/ops/WorkOrderDetailPage";
 import InterventionReportPage from "./spaces/srs/ops/InterventionReportPage";
 import ProjectsListPage from "./spaces/srs/projects/ProjectsListPage";
@@ -90,66 +106,6 @@ function RequireUser({ children }) {
   return children;
 }
 
-/**
- * SrsCockpitRouter — decide entre el CockpitPage v1 (legacy) o el V2CockpitPage
- * (Design System v1.7) según el flag de toggle.
- *
- * Toggle:
- *   - env var `VITE_V2_SHELL=1` (siempre v2)
- *   - query param `?v2=1` (v2 solo en esa sesión)
- *
- * Sin toggle → cockpit v1 actual.
- */
-function SrsCockpitRouter() {
-  const location = useLocation();
-  const envV2 = import.meta.env.VITE_V2_SHELL === "1";
-  const queryV2 = new URLSearchParams(location.search).get("v2") === "1";
-  const useV2 = envV2 || queryV2;
-  return useV2 ? (
-    <V2ErrorBoundary>
-      <Suspense fallback={<V2LoadingFallback />}>
-        <V2CockpitPage scope="srs" />
-      </Suspense>
-    </V2ErrorBoundary>
-  ) : (
-    <CockpitPage scope="srs" />
-  );
-}
-
-/** SrsInterventionsRouter — Kanban v2 si ?v2=1, lista clásica v1 si no. */
-function SrsInterventionsRouter() {
-  const location = useLocation();
-  const envV2 = import.meta.env.VITE_V2_SHELL === "1";
-  const queryV2 = new URLSearchParams(location.search).get("v2") === "1";
-  const useV2 = envV2 || queryV2;
-  return useV2 ? (
-    <V2ErrorBoundary>
-      <Suspense fallback={<V2LoadingFallback />}>
-        <V2InterventionsKanbanPage />
-      </Suspense>
-    </V2ErrorBoundary>
-  ) : (
-    <WorkOrdersListPage />
-  );
-}
-
-/** ClientCockpitRouter — v2 con scope="client" si ?v2=1, sino v1 viejo. */
-function ClientCockpitRouter() {
-  const location = useLocation();
-  const envV2 = import.meta.env.VITE_V2_SHELL === "1";
-  const queryV2 = new URLSearchParams(location.search).get("v2") === "1";
-  const useV2 = envV2 || queryV2;
-  return useV2 ? (
-    <V2ErrorBoundary>
-      <Suspense fallback={<V2LoadingFallback />}>
-        <V2CockpitPage scope="client" />
-      </Suspense>
-    </V2ErrorBoundary>
-  ) : (
-    <CockpitPage scope="client" />
-  );
-}
-
 function NoAccessPage() {
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
@@ -180,7 +136,7 @@ export default function App() {
             }
           />
 
-          {/* SRS Coordinators */}
+          {/* SRS Coordinators · v2 default desde Iter 2.8 */}
           <Route
             path="/srs"
             element={
@@ -189,44 +145,16 @@ export default function App() {
               </RequireSpace>
             }
           >
-            <Route index element={<SrsCockpitRouter />} />
-            <Route
-              path="espacio-ops"
-              element={
-                <V2ErrorBoundary>
-                  <Suspense fallback={<V2LoadingFallback />}>
-                    <V2EspacioOpsPage />
-                  </Suspense>
-                </V2ErrorBoundary>
-              }
-            />
-            <Route path="intervenciones" element={<SrsInterventionsRouter />} />
-            <Route path="overview" element={<SrsHome />} />
-            <Route path="ops" element={<WorkOrdersListPage />} />
+            <Route index element={<V2View name="V2CockpitPage"><V2CockpitPage scope="srs" /></V2View>} />
+            <Route path="espacio-ops" element={<V2View name="V2EspacioOpsPage"><V2EspacioOpsPage /></V2View>} />
+            <Route path="intervenciones" element={<V2View name="V2InterventionsKanbanPage"><V2InterventionsKanbanPage /></V2View>} />
+            {/* Páginas v1 sin reemplazo v2 todavía · funcionan dentro del V2Shell */}
             <Route path="ops/:wo_id" element={<WorkOrderDetailPage />} />
             <Route path="ops/:wo_id/report" element={<InterventionReportPage />} />
             <Route path="projects" element={<ProjectsListPage />} />
             <Route path="projects/:project_id" element={<ProjectDetailPage />} />
-            <Route
-              path="rollouts"
-              element={
-                <V2ErrorBoundary viewName="V2RolloutsListPage">
-                  <Suspense fallback={<V2LoadingFallback />}>
-                    <V2RolloutsListPage />
-                  </Suspense>
-                </V2ErrorBoundary>
-              }
-            />
-            <Route
-              path="rollouts/:project_id"
-              element={
-                <V2ErrorBoundary viewName="V2RolloutDetailPage">
-                  <Suspense fallback={<V2LoadingFallback />}>
-                    <V2RolloutDetailPage />
-                  </Suspense>
-                </V2ErrorBoundary>
-              }
-            />
+            <Route path="rollouts" element={<V2View name="V2RolloutsListPage"><V2RolloutsListPage /></V2View>} />
+            <Route path="rollouts/:project_id" element={<V2View name="V2RolloutDetailPage"><V2RolloutDetailPage /></V2View>} />
             <Route path="sites" element={<SitesListPage />} />
             <Route path="sites/:site_id" element={<SiteDetailPage />} />
             <Route path="techs" element={<TechsListPage />} />
@@ -240,7 +168,7 @@ export default function App() {
             <Route path="admin" element={<AdminPage />} />
           </Route>
 
-          {/* Client Coordinator */}
+          {/* Client Coordinator · v2 default desde Iter 2.8 */}
           <Route
             path="/client"
             element={
@@ -249,27 +177,9 @@ export default function App() {
               </RequireSpace>
             }
           >
-            <Route index element={<ClientCockpitRouter />} />
-            <Route
-              path="espacio-ops"
-              element={
-                <V2ErrorBoundary>
-                  <Suspense fallback={<V2LoadingFallback />}>
-                    <V2EspacioOpsPage scope="client" />
-                  </Suspense>
-                </V2ErrorBoundary>
-              }
-            />
-            <Route
-              path="intervenciones"
-              element={
-                <V2ErrorBoundary>
-                  <Suspense fallback={<V2LoadingFallback />}>
-                    <V2InterventionsKanbanPage scope="client" />
-                  </Suspense>
-                </V2ErrorBoundary>
-              }
-            />
+            <Route index element={<V2View name="V2CockpitPage(client)"><V2CockpitPage scope="client" /></V2View>} />
+            <Route path="espacio-ops" element={<V2View name="V2EspacioOpsPage(client)"><V2EspacioOpsPage scope="client" /></V2View>} />
+            <Route path="intervenciones" element={<V2View name="V2InterventionsKanbanPage(client)"><V2InterventionsKanbanPage scope="client" /></V2View>} />
             <Route path="status" element={<ClientHome />} />
             <Route path="ops/:wo_id" element={<WorkOrderDetailPage />} />
             <Route path="ops/:wo_id/report" element={<InterventionReportPage />} />
