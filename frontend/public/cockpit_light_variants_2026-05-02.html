@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>InsiteIQ · Cockpit Light · 4 variantes (2026-05-02)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    font-family: 'Instrument Sans', -apple-system, sans-serif;
+    background: #1A1A1A;
+    color: #E5E5E5;
+    line-height: 1.5;
+    font-feature-settings: "tnum";
+  }
+  /* Top nav fixed para saltar entre variantes */
+  .toc {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: #0A0A0A; border-bottom: 1px solid #2A2A2A;
+    padding: 12px 24px; display: flex; align-items: center; gap: 18px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  }
+  .toc-title { color: #F59E0B; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; margin-right: 18px; }
+  .toc a { color: #9CA3AF; text-decoration: none; padding: 4px 10px; border-radius: 3px; border: 1px solid transparent; transition: all .15s; }
+  .toc a:hover { color: #F1F5F9; border-color: #2A2A2A; }
+  .toc-meta { margin-left: auto; color: #6B7280; font-size: 10px; }
+
+  /* Container variantes */
+  .variant {
+    margin-top: 60px;
+    border-bottom: 4px solid #2A2A2A;
+  }
+  .variant-banner {
+    padding: 24px 36px;
+    background: #0F0F0F;
+    border-bottom: 1px solid #2A2A2A;
+  }
+  .variant-banner h2 {
+    font-family: 'Instrument Sans', sans-serif;
+    font-size: 24px; font-weight: 600; color: #FFFFFF;
+    margin-bottom: 4px;
+  }
+  .variant-banner .subtitle {
+    color: #9CA3AF; font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    margin-bottom: 12px;
+  }
+  .variant-banner .rationale {
+    color: #E5E5E5; font-size: 13px; max-width: 900px;
+  }
+  .swatches {
+    display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap;
+  }
+  .swatch {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 10px; background: #1A1A1A; border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+  }
+  .swatch-color {
+    width: 16px; height: 16px; border-radius: 3px;
+    border: 1px solid rgba(255,255,255,0.2);
+  }
+  .swatch-name { color: #9CA3AF; }
+  .swatch-hex { color: #E5E5E5; }
+
+  /* Mock viewport: simula la pantalla del Cockpit */
+  .cockpit-viewport {
+    width: 100%;
+    min-height: 720px;
+  }
+
+  /* ─────────────────────── COCKPIT MOCK BASE ─────────────────────── */
+  .cockpit {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    grid-template-rows: 64px 1fr;
+    grid-template-areas:
+      "side header"
+      "side main";
+    min-height: 720px;
+  }
+  .cockpit-header { grid-area: header; display: flex; align-items: center; padding: 0 28px; }
+  .cockpit-side { grid-area: side; padding: 16px 12px; }
+  .cockpit-main { grid-area: main; display: grid; grid-template-columns: 1fr 280px; gap: 24px; padding: 24px 28px; overflow: hidden; }
+
+  .nav-item {
+    display: block; padding: 8px 12px; border-radius: 4px;
+    font-size: 13px; margin-bottom: 2px; cursor: default;
+  }
+  .nav-active { font-weight: 600; }
+
+  .header-title {
+    font-family: 'Instrument Sans', sans-serif;
+    font-size: 14px; font-weight: 700; letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .header-title-accent { font-weight: 700; }
+  .header-meta {
+    margin-left: auto; display: flex; align-items: center; gap: 18px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  }
+  .live-pill {
+    padding: 4px 10px; border-radius: 9999px; font-weight: 600;
+    font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
+  }
+
+  /* KPI strip */
+  .kpi-strip { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 24px; }
+  .kpi-card {
+    padding: 16px 18px; border-radius: 6px;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .kpi-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase;
+    font-weight: 600;
+  }
+  .kpi-number {
+    font-family: 'Instrument Sans', sans-serif;
+    font-size: 32px; font-weight: 700; line-height: 1;
+  }
+  .kpi-foot { font-family: 'JetBrains Mono', monospace; font-size: 10px; }
+
+  /* Cards intervenciones */
+  .section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase;
+    font-weight: 600; margin-bottom: 12px; display: flex; align-items: baseline; gap: 8px;
+  }
+  .section-count {
+    font-family: 'Instrument Sans', sans-serif; font-size: 14px; font-weight: 600;
+  }
+  .cards-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
+  .int-card {
+    padding: 14px 16px; border-radius: 6px;
+    display: flex; flex-direction: column; gap: 8px;
+    border-top-width: 3px; border-top-style: solid;
+  }
+  .int-code { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 600; letter-spacing: 0.08em; }
+  .int-title { font-family: 'Instrument Sans', sans-serif; font-size: 14px; font-weight: 600; line-height: 1.3; }
+  .int-meta { font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+  .int-actions { display: flex; gap: 6px; margin-top: 4px; }
+  .btn-pill {
+    padding: 5px 10px; font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600;
+    border-radius: 4px; border: 1px solid; cursor: default;
+  }
+  .stage-pill {
+    padding: 2px 8px; font-family: 'JetBrains Mono', monospace; font-size: 9px;
+    text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700;
+    border-radius: 3px;
+  }
+
+  /* Sidebar widget derecho */
+  .widget {
+    padding: 16px; border-radius: 6px; display: flex; flex-direction: column; gap: 10px;
+  }
+  .widget-title {
+    font-family: 'JetBrains Mono', monospace; font-size: 9px;
+    letter-spacing: 0.16em; text-transform: uppercase; font-weight: 600;
+  }
+  .alert-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 10px; border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  }
+  .alert-dot { width: 8px; height: 8px; border-radius: 9999px; flex-shrink: 0; }
+
+  /* ═════════════ OPCIÓN A: Pure Cockpit (DS §3.1 textual) ═════════════ */
+  .opt-a {
+    --bg: #F9FAFB;
+    --surface: #FFFFFF;
+    --surface-2: #F3F4F6;
+    --border: #E5E7EB;
+    --border-strong: #D1D5DB;
+    --text: #0F172A;
+    --text-mid: #475569;
+    --text-dim: #94A3B8;
+    --header-band: #0A0A0A;
+    --text-on-dark: #F1F5F9;
+    --accent: #0EA5E9;
+    --accent-soft: #E0F2FE;
+    --brand: #10B981;
+    --critical: #DC2626;
+    --warn: #F59E0B;
+    --ok: #10B981;
+    --info: #0EA5E9;
+  }
+
+  /* ═════════════ OPCIÓN B: Graphite Operations (menos cliché SaaS) ═════════════ */
+  .opt-b {
+    --bg: #F4F5F7;
+    --surface: #FFFFFF;
+    --surface-2: #ECEEF1;
+    --border: #DDE0E5;
+    --border-strong: #C5CAD2;
+    --text: #1E2230;
+    --text-mid: #565C6D;
+    --text-dim: #8A93A4;
+    --header-band: #1A1A1F;
+    --text-on-dark: #E8EAEE;
+    --accent: #0066CC;
+    --accent-soft: #DBEAFE;
+    --brand: #00875A;
+    --critical: #C73E3E;
+    --warn: #D97706;
+    --ok: #00875A;
+    --info: #0066CC;
+  }
+
+  /* ═════════════ OPCIÓN C: Linear / Mission Control (limpio ultra-moderno) ═════════════ */
+  .opt-c {
+    --bg: #FAFBFC;
+    --surface: #FFFFFF;
+    --surface-2: #F4F5F8;
+    --border: #E5E6EB;
+    --border-strong: #C9CCD4;
+    --text: #1A1B23;
+    --text-mid: #5A5D6E;
+    --text-dim: #8B8FA3;
+    --header-band: #0F1318;
+    --text-on-dark: #E8EBF0;
+    --accent: #5E6AD2;
+    --accent-soft: #EAEBFA;
+    --brand: #3D9970;
+    --critical: #E5484D;
+    --warn: #FFB224;
+    --ok: #3D9970;
+    --info: #5E6AD2;
+  }
+
+  /* ═════════════ OPCIÓN D: Hybrid SR (preserva amber brand) ═════════════ */
+  .opt-d {
+    --bg: #FAFAF9;
+    --surface: #FFFFFF;
+    --surface-2: #F4F4F0;
+    --border: #E7E5E0;
+    --border-strong: #D2CFC8;
+    --text: #1C1917;
+    --text-mid: #57534E;
+    --text-dim: #A8A29E;
+    --header-band: #0C0A09;
+    --text-on-dark: #F5F5F4;
+    --accent: #D97706;
+    --accent-soft: #FEF3C7;
+    --brand: #10B981;
+    --critical: #DC2626;
+    --warn: #D97706;
+    --ok: #10B981;
+    --info: #0284C7;
+  }
+
+  /* Aplicación de tokens al mockup */
+  .cockpit { background: var(--bg); }
+  .cockpit-header { background: var(--header-band); color: var(--text-on-dark); }
+  .cockpit-side { background: var(--surface); border-right: 1px solid var(--border); }
+  .nav-item { color: var(--text-mid); }
+  .nav-active { background: var(--accent-soft); color: var(--accent); }
+  .header-title { color: var(--text-on-dark); }
+  .header-title-accent { color: var(--accent); }
+  .header-meta { color: var(--text-dim); }
+  .live-pill { background: rgba(16, 185, 129, 0.15); color: var(--brand); border: 1px solid var(--brand); }
+  .kpi-card { background: var(--surface); border: 1px solid var(--border); border-left-width: 3px; }
+  .kpi-card.critical { border-left-color: var(--critical); }
+  .kpi-card.warn { border-left-color: var(--warn); }
+  .kpi-card.info { border-left-color: var(--info); }
+  .kpi-card.ok { border-left-color: var(--ok); }
+  .kpi-card.brand { border-left-color: var(--brand); }
+  .kpi-label { color: var(--text-dim); }
+  .kpi-number { color: var(--text); }
+  .kpi-foot { color: var(--text-mid); }
+  .section-label { color: var(--text-dim); }
+  .section-count { color: var(--text); }
+  .int-card { background: var(--surface); border: 1px solid var(--border); }
+  .int-card.stage-route { border-top-color: var(--warn); }
+  .int-card.stage-onsite { border-top-color: var(--critical); }
+  .int-card.stage-intake { border-top-color: var(--info); }
+  .int-code { color: var(--text-dim); }
+  .int-title { color: var(--text); }
+  .int-meta { color: var(--text-mid); }
+  .stage-pill.route { background: rgba(245, 158, 11, 0.15); color: var(--warn); }
+  .stage-pill.onsite { background: rgba(220, 38, 38, 0.15); color: var(--critical); }
+  .stage-pill.intake { background: var(--accent-soft); color: var(--info); }
+  .btn-pill.primary { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+  .btn-pill.secondary { background: var(--surface); color: var(--text-mid); border-color: var(--border-strong); }
+  .widget { background: var(--surface); border: 1px solid var(--border); }
+  .widget-title { color: var(--text-dim); }
+  .alert-row { background: var(--surface-2); color: var(--text); }
+  .alert-row.crit { background: rgba(220, 38, 38, 0.08); }
+  .alert-row.crit .alert-dot { background: var(--critical); }
+  .alert-row.warn { background: rgba(245, 158, 11, 0.08); }
+  .alert-row.warn .alert-dot { background: var(--warn); }
+
+  /* Footer comparison */
+  .compare {
+    margin-top: 80px; padding: 40px; background: #0A0A0A;
+    color: #E5E5E5; max-width: 1200px; margin-left: auto; margin-right: auto;
+    border-radius: 8px;
+  }
+  .compare h3 {
+    font-family: 'Instrument Sans', sans-serif;
+    color: #F59E0B; font-size: 18px; margin-bottom: 16px;
+    letter-spacing: 0.04em; text-transform: uppercase;
+  }
+  .compare-table {
+    width: 100%; border-collapse: collapse;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  }
+  .compare-table th, .compare-table td {
+    text-align: left; padding: 10px 12px; border-bottom: 1px solid #2A2A2A;
+  }
+  .compare-table th { color: #F59E0B; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; }
+  .compare-table td { color: #C0C0C0; }
+  .compare-table td:first-child { color: #FFFFFF; font-weight: 600; }
+
+  .footer-note {
+    padding: 40px; text-align: center; color: #6B7280; font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+</style>
+</head>
+<body>
+
+<!-- TOC fixed top -->
+<div class="toc">
+  <span class="toc-title">Cockpit Light · 4 variantes</span>
+  <a href="#opt-a">A · Pure Cockpit (DS §3.1)</a>
+  <a href="#opt-b">B · Graphite Operations</a>
+  <a href="#opt-c">C · Linear / Mission Control</a>
+  <a href="#opt-d">D · Hybrid SR (amber brand)</a>
+  <a href="#compare">Tabla comparativa</a>
+  <span class="toc-meta">2026-05-02 · iter 2.11 propuesta · cero código deployed tocado</span>
+</div>
+
+<!-- ═════════════════════════════════════════════════════════════ -->
+<!-- OPCIÓN A: Pure Cockpit (DS §3.1 textual) -->
+<!-- ═════════════════════════════════════════════════════════════ -->
+<section class="variant" id="opt-a">
+  <div class="variant-banner">
+    <h2>A · Pure Cockpit · DS §3.1 textual</h2>
+    <p class="subtitle">Cyan tech accent + verde brand SRS + canvas blanco gris-50 + header dark</p>
+    <p class="rationale">
+      Lo que el DS firmado v1.8 dice al pie de la letra (sección 3.1). Cero invención.
+      Cyan #0EA5E9 como accent primary (CTAs, links, focus), verde #10B981 como brand
+      (logo, success). Es el camino más conservador y alineado con doc — pero hereda los
+      colores Tailwind defaults (vibe SaaS genérico que la regla #6 critica). Si te enamora,
+      es la implementación más rápida porque ya está documentada.
+    </p>
+    <div class="swatches">
+      <div class="swatch"><span class="swatch-color" style="background:#F9FAFB"></span><span class="swatch-name">canvas</span><span class="swatch-hex">#F9FAFB</span></div>
+      <div class="swatch"><span class="swatch-color" style="background:#FFFFFF;border-color:#ccc"></span><span class="swatch-name">surface</span><span class="swatch-hex">#FFFFFF</span></div>
+      <div class="swatch"><span class="swatch-color" style="background:#0A0A0A"></span><span class="swatch-name">header</span><span class="swatch-hex">#0A0A0A</span></div>
+      <div class="swatch"><span class="swatch-color" style="background:#0EA5E9"></span><span class="swatch-name">accent</span><span class="swatch-hex">#0EA5E9 cyan</span></div>
+      <div class="swatch"><span class="swatch-color" style="background:#10B981"></span><span class="swatch-name">brand</span><span class="swatch-hex">#10B981 verde</span></div>
+      <div class="swatch"><span class="swatch-color" style="background:#DC2626"></span><span class="swatch-name">critical</span><span class="swatch-hex">#DC2626</span></div>
+    </div>
+  </div>
+  <div class="cockpit-viewport opt-a">
+    <div class="cockpit">
+      <header class="cockpit-header">
+        <span class="header-title">COCKPIT DE <span class="header-title-accent">OPERACIONES</span></span>
+        <div class="header-meta">
+          <span>sáb, 02 may · 21:30</span>
+          <span class="live-pill">11 activas</span>
+          <span>Juan Gutierrez</span>
+        </div>
+      </header>
+      <aside class="cockpit-side">
+        <div class="nav-item nav-active">Operaciones</div>
+        <div class="nav-item">Espacio OPS</div>
+        <div class="nav-item">Intervenciones</div>
+        <div class="nav-item">Rollouts</div>
+        <div class="nav-item">Proyectos</div>
+        <div class="nav-item">Sitios</div>
+        <div class="nav-item">Técnicos</div>
+        <div class="nav-item">Contratos</div>
+        <div class="nav-item">Inteligencia</div>
+        <div class="nav-item">Finanzas</div>
+        <div class="nav-item">Admin</div>
+      </aside>
+      <main class="cockpit-main">
+        <div>
+          <div class="kpi-strip">
+            <div class="kpi-card critical"><div class="kpi-label">Críticos abiertos</div><div class="kpi-number">9</div><div class="kpi-foot">SLA breach activo</div></div>
+            <div class="kpi-card warn"><div class="kpi-label">SLA en riesgo</div><div class="kpi-number">10</div><div class="kpi-foot">Próximo breach &lt; 2h</div></div>
+            <div class="kpi-card brand"><div class="kpi-label">Ball SRS &gt;6h</div><div class="kpi-number">100</div><div class="kpi-foot">Acción nuestra pendiente</div></div>
+            <div class="kpi-card info"><div class="kpi-label">Sin asignar</div><div class="kpi-number">109</div><div class="kpi-foot">Activas sin tech</div></div>
+            <div class="kpi-card ok"><div class="kpi-label">Activas hoy</div><div class="kpi-number">13</div><div class="kpi-foot">En ruta + on-site</div></div>
+          </div>
+          <p class="section-label">Intervenciones en curso <span class="section-count">3</span></p>
+          <div class="cards-grid">
+            <article class="int-card stage-route">
+              <div style="display:flex;justify-content:space-between;align-items:center"><span class="int-code">WO-D75AEAE5</span><span class="stage-pill route">EN RUTA</span></div>
+              <h3 class="int-title">Carolina Herrera Madison Avenue</h3>
+              <p class="int-meta">SITE CH-US-NY01 · New York</p>
+              <p class="int-meta">Agustín Rivera</p>
+              <div class="int-actions"><button class="btn-pill primary">Detalle</button><button class="btn-pill secondary">Compliance</button></div>
+            </article>
+            <article class="int-card stage-route">
+              <div style="display:flex;justify-content:space-between;align-items:center"><span class="int-code">WO-D75AEACB</span><span class="stage-pill route">EN RUTA</span></div>
+              <h3 class="int-title">Claro US Warehouse Miramar</h3>
+              <p class="int-meta">SITE CLARO-US-MIRAMAR · Miramar</p>
+              <p class="int-meta">Arlindo Ochoa</p>
+              <div class="int-actions"><button class="btn-pill primary">Detalle</button><button class="btn-pill secondary">Compliance</button></div>
+            </article>
+            <article class="int-card stage-onsite">
+              <div style="display:flex;justify-content:space-between;align-items:center"><span class="int-code">WO-E5519062</span><span class="stage-pill onsite">ON-SITE</span></div>
+              <h3 class="int-title">Carolina Herrera Flagship Serrano</h3>
+              <p class="int-meta">SITE CH-ES-SER01 · Madrid</p>
+              <p class="int-meta">Sin asignar</p>
+              <div class="int-actions"><button class="btn-pill primary">Detalle</button><button class="btn-pill secondary">Compliance</button></div>
+            </article>
+          </div>
+        </div>
+        <aside>
+          <div class="widget">
+            <p class="widget-title">Alertas operativas · 3 activas</p>
+            <div class="alert-row crit"><span class="alert-dot"></span>NO SHOW · WO-D75AEAE5</div>
+            <div class="alert-row crit"><span class="alert-dot"></span>ACCESS DENIED · WO-D75AEACB</div>
+            <div class="alert-row warn"><span class="alert-dot"></span>ACCIDENT · WO-E5519062</div>
+          </div>
+        </aside>
+      </main>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════════ -->
+<!-- OPCIÓN B: Graphite Operations -->
+<!-- ═════════════════════════════════════════════════════════════ -->
+<section class="variant" id="opt-b">
+  <div class="variant-banner">
+    <h2>B · Graphite Operations · menos cliché SaaS</h2>
+    <p class="subtitle">Blue corporate #0066CC + verde profesional + canvas gris cálido + header graphite cool</p>
+    <p class="rationale">
+      Mismo split light + dark band, pero baja la saturación del cyan típico SaaS y usa
+      blue corporate #0066CC (más serio, menos vibe Heroku/Vercel). Verde brand más
+      oscuro #00875A (Atlassian-style profesional). Background gris cálido neutro
+      en vez de Tailwind gray-50 puro. Crítico #C73E3E menos rojo "SaaS error" más
+      "alarma operativa". Trade-off: pierde un poco la "frescura tech" y gana seriedad
+      corporate.
+    </p>
+    <div class="swatches">
+      <div class="swatch"><span class="swatch-color" style="background:#F4F5F7"></span><span class="swatch-name">canvas</span><span class="swatch-hex">#F4F5F7</span></div>
+      <div class="swatch"><span class="swatch-color" style="background:#FFFFFF;border-color:#ccc"></span><span class="swatch-name">surface</span><span class="swatch-hex">#FFFFFF</span></div>
+      <div class="swatch"><span class="swatch-color" style="background:#1A1A1F"></span><span class="swatch-name">header</span><span class="swatch-hex">#1A1A1F</span></div>
+      <div class="swatch"><span class="swatch-color" style="background:#0066CC"></span><span class="swatch-name">accent</span><span class="swatch-hex">#0066CC blue</span></div>
+      <div class="swatch"><span class="swatch-color" style="background:#00875A"></span><span class="swatch-name">brand</span><span class="swatch-hex">#00875A verde</span></div>
+      <div class="swatch"><span class="swatch-color" style="background:#C73E3E"></span><span class="swatch-name">critical</span><span class="swatch-hex">#C73E3E</span></div>
+    </div>
+  </div>
+  <div class="cockpit-viewport opt-b">
+    <div class="cockpit">
+      <header class="cockpit-header">
+        <span class="header-title">COCKPIT DE <span class="header-title-accent">OPERACIONES</span></span>
+        <div class="header-meta">
+          <span>sáb, 02 may · 21:30</span>
+          <span class="live-pill">11 activas</span>
+          <span>Juan Gutierrez</span>
+        </div>
+      </header>
+      <aside class="cockpit-side">
+        <div class="nav-item nav-active">Operaciones</div>
+        <div class="nav-item">Espacio OPS</div>
+        <div class="nav-item">Intervenciones</div>
+        <div class="nav-item">Rollouts</div>
+        <div class="nav-item">Proyectos</div>
+        <div class="nav-item">Sitios</div>
+        <div class="nav-item">Técnicos</div>
+        <div class="nav-item">Contratos</div>
+        <div class="nav-item">Inteligencia</div>
+        <div class="nav-item">Finanzas</div>
+        <div class="nav-item">Admin</div>
+      </aside>
+      <main class="cockpit-main">
+        <div>
+          <div class="kpi-strip">
+            <div class="kpi-card critical"><div class="kpi-label">Críticos abiertos</div><div class="kpi-number">9</div><div class="kpi-foot">SLA breach activo</div></div>
+            <div class="kpi-card warn"><div class="kpi-label">SLA en riesgo</div><div class="kpi-number">10</div><div class="kpi-foot">Próximo breach &lt; 2h</div></div>
+            <div class="kpi-card brand"><div class="kpi-label">Ball SRS &gt;6h</div><div class="kpi-number">100</div><div class="kpi-foot">Acción nuestra pendiente</div></div>
+            <div class="kpi-card info"><div class="kpi-label">Sin asignar</div><div class="kpi-number">109</div><div class="kpi-foot">Activas sin tech</div></div>
+            <div class="kpi-card ok"><div class="kpi-label">Activas hoy</div><div class="kpi-number">13</div><div class="kpi-foot">En ruta + on-site</div></div>
+          </div>
+          <p class="section-label">Intervenciones en curso <span class="section-count">3</span></p>
+          <div class="cards-grid">
+            <article class="int-card stage-route">
+              <div style="display:flex;justify-content:space-between;align-items:center"><span class="int-code">WO-D75AEAE5</span><span class="stage-pill route">EN RUTA</span></div>
+              <h3 class="int-title">Carolina Herrera Madison Avenue</h3>
+              <p class="int-meta">SITE CH-US-NY01 · New York</p>
+              <p class="int-meta">Agustín Rivera</p>
+              <div class="int-actions"><button class="btn-pill primary">Detalle</button><button class="btn-pill secondary">Compliance</button></div>
+            </article>
+            <article class="int-card stage-route">
+              <div style="display:flex;justify-content:space-between;align-items:center"><span class="int-code">WO-D75AEACB</span><span class="stage-pill route">EN RUTA</span></div>
+              <h3 class="int-title">Claro US Warehouse Miramar</h3>
+              <p class="int-meta">SITE CLARO-US-MIRAMAR · Miramar</p>
+              <p class="int-meta">Arlindo Ochoa</p>
+              <div class="int-actions"><button class="btn-pill primary">Detalle</button><button class="btn-pill secondary">Compliance</button></div>
+            </article>
+            <article class="int-card stage-onsite">
+              <div style="display:flex;justify-content:space-between;align-items:center"><span class="int-code">WO-E5519062</span><span class="stage-pill onsite">ON-SITE</span></div>
+              <h3 class="int-title">Carolina Herrera Flagship Serrano</h3>
+              <p class="int-meta">SITE CH-ES-SER01 · Madrid</p>
+              <p class="int-meta">Sin asignar</p>
+              <div class="int-actions"><button class="btn-pill primary">Detalle</button><button class="btn-pill secondary">Compliance</button></div>
+            </article>
+          </div>
+        </div>
+        <aside>
+          <div class="widget">
+            <p class="widget-title">Alertas operativas · 3 activas</p>
+            <div class="alert-row crit"><span class="alert-dot"></span>NO SHOW · WO-D75AEAE5</div>
+            <div class="alert-row crit"><span class="alert-dot"></span>ACCESS DENIED · WO-D75AEACB</div>
+            <div class="alert-row warn"><span class="alert-dot"></span>ACCIDENT · WO-E5519062</div>
+          </div>
+        </aside>
+      </main>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════════ -->
+<!-- OPCIÓN C: Linear / Mission Control -->
+<!-- ═════════════════════════════════════════════════════════════ -->
+<section class="variant" id="opt-c">
+  <div class="variant-banner">
+    <h2>C · Linear / Mission Control · limpio ultra-moderno</h2>
+    <p class="subtitle">Violet/indigo accent #5E6AD2 + verde profundo + canvas casi blanco con tinte azul + header graphite cool</p>
+    <p class="rationale">
+      Estética Linear/Notion/Plaid. Accent violet/indigo #5E6AD2 (no se confunde con
+      cyan ni con blue corporate, es el move "premium tech 2024+"). Critical más rojo
+      Radix-style. Background ligerísimamente azulado (#FAFBFC) que da sensación
+      "atmosphere clean". Trade-off: violet puede sentirse "consumer-facing" para una
+      app interna ops (Linear es código, Plaid es fintech, ninguno field services).
+      Pero es la opción más distinta del 90% de los SaaS de operaciones que existen.
+    </p>
+    <div class="swatches">
+      <div class="swatch"><span class="swatch-color" style="background:#FAFBFC"></span><span class="swatch-name">canvas</span><span class="swatch-hex">#FAFBFC</span></div>
+      <div class="swatch"><span class="swatch-color" style="background:#FFFFFF;border-color:#ccc"></span><span class="swatch-name">surface</span><span class="swatch-hex">#FFFFFF</span></div>
+      <div class="swatch"><span class="swatch-color" style="background:#0F1318"></span><span class="swatch-name">header</span><span class="swatch-hex">#0F1318</span></div>
+      <div class="swatch"><span class="swatch-color" style="background:#5E6AD2"></span><span class="swatch-name">accent</span><span class="swatch-hex">#5E6AD2 violet</span></div>
+      <div class="swatch"><span class="swatch-color" style="background:#3D9970"></span><span class="swatch-name">brand</span><span class="swatch-hex">#3D9970 verde</span></div>
+      <div class="swatch"><span class="swatch-color" style="background:#E5484D"></span><span class="swatch-name">critical</span><span class="swatch-hex">#E5484D</span></div>
+    </div>
+  </div>
+  <div class="cockpit-viewport opt-c">
+    <div class="cockpit">
+      <header class="cockpit-header">
+        <span class="header-title">COCKPIT DE <span class="header-title-accent">OPERACIONES</span></span>
+        <div class="header-meta">
+          <span>sáb, 02 may · 21:30</span>
+          <span class="live-pill">11 activas</span>
+          <span>Juan Gutierrez</span>
+        </div>
+      </header>
+      <aside class="cockpit-side">
+        <div class="nav-item nav-active">Operaciones</div>
+        <div class="nav-item">Espacio OPS</div>
+        <div class="nav-item">Intervenciones</div>
+        <div class="nav-item">Rollouts</div>
+        <div class="nav-item">Proyectos</div>
+        <div class="nav-item">Sitios</div>
+        <div class="nav-item">Técnicos</div>
+        <div class="nav-item">Contratos</div>
+        <div class="nav-item">Inteligencia</div>
+        <div class="nav-item">Finanzas</div>
+        <div class="nav-item">Admin</div>
+      </aside>
+      <main class="cockpit-main">
+        <div>
+          <div class="kpi-strip">
+            <div class="kpi-card critical"><div class="kpi-label">Críticos abiertos</div><div class="kpi-number">9</div><div class="kpi-foot">SLA breach activo</div></div>
+            <div class="kpi-card warn"><div class="kpi-label">SLA en riesgo</div><div class="kpi-number">10</div><div class="kpi-foot">Próximo breach &lt; 2h</div></div>
+            <div class="kpi-card brand"><div class="kpi-label">Ball SRS &gt;6h</div><div class="kpi-number">100</div><div class="kpi-foot">Acción nuestra pendiente</div></div>
+            <div class="kpi-card info"><div class="kpi-label">Sin asignar</div><div class="kpi-number">109</div><div class="kpi-foot">Activas sin tech</div></div>
+            <div class="kpi-card ok"><div class="kpi-label">Activas hoy</div><div class="kpi-number">13</div><div class="kpi-foot">En ruta + on-site</div></div>
+          </div>
+          <p class="section-label">Intervenciones en curso <span class="section-count">3</span></p>
+          <div class="cards-grid">
+            <article class="int-card stage-route">
+              <div style="display:flex;justify-content:space-between;align-items:center"><span class="int-code">WO-D75AEAE5</span><span class="stage-pill route">EN RUTA</span></div>
+              <h3 class="int-title">Carolina Herrera Madison Avenue</h3>
+              <p class="int-meta">SITE CH-US-NY01 · New York</p>
+              <p class="int-meta">Agustín Rivera</p>
+              <div class="int-actions"><button class="btn-pill primary">Detalle</button><button class="btn-pill secondary">Compliance</button></div>
+            </article>
+            <article class="int-card stage-route">
+              <div style="display:flex;justify-content:space-between;align-items:center"><span class="int-code">WO-D75AEACB</span><span class="stage-pill route">EN RUTA</span></div>
+              <h3 class="int-title">Claro US Warehouse Miramar</h3>
+              <p class="int-meta">SITE CLARO-US-MIRAMAR · Miramar</p>
+              <p class="int-meta">Arlindo Ochoa</p>
+              <div class="int-actions"><button class="btn-pill primary">Detalle</button><button class="btn-pill secondary">Compliance</button></div>
+            </article>
+            <article class="int-card stage-onsite">
+              <div style="display:flex;justify-content:space-between;align-items:center"><span class="int-code">WO-E5519062</span><span class="stage-pill onsite">ON-SITE</span></div>
+              <h3 class="int-title">Carolina Herrera Flagship Serrano</h3>
+              <p class="int-meta">SITE CH-ES-SER01 · Madrid</p>
+              <p class="int-meta">Sin asignar</p>
+              <div class="int-actions"><button class="btn-pill primary">Detalle</button><button class="btn-pill secondary">Compliance</button></div>
+            </article>
+          </div>
+        </div>
+        <aside>
+          <div class="widget">
+            <p class="widget-title">Alertas operativas · 3 activas</p>
+            <div class="alert-row crit"><span class="alert-dot"></span>NO SHOW · WO-D75AEAE5</div>
+            <div class="alert-row crit"><span class="alert-dot"></span>ACCESS DENIED · WO-D75AEACB</div>
+            <div class="alert-row warn"><span class="alert-dot"></span>ACCIDENT · WO-E5519062</div>
+          </div>
+        </aside>
+      </main>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════════ -->
+<!-- OPCIÓN D: Hybrid SR (preserva amber brand) -->
+<!-- ═════════════════════════════════════════════════════════════ -->
+<section class="variant" id="opt-d">
+  <div class="variant-banner">
+    <h2>D · Hybrid SR · preserva amber brand</h2>
+    <p class="subtitle">Amber #D97706 + verde brand + canvas warm off-white stone-50 + header stone-950 (continuidad SR)</p>
+    <p class="rationale">
+      Mantiene el amber #D97706 como accent primario (continuidad con la identidad SR
+      que ya existe en otros productos) pero pasa a contexto LIGHT. Background warm
+      stone-50 #FAFAF9 (no gris frío) — coherente con el header stone-950 actual.
+      Verde brand SRS preservado. Usa blue #0284C7 solo como info accent muy
+      restringido. Trade-off: el amber sobre fondo claro pierde algo de "punch"
+      vs sobre dark, pero gana coherencia de marca cross-app SRS. Es la opción de
+      "evolucionar sin romper" la identidad visual.
+    </p>
+    <div class="swatches">
+      <div class="swatch"><span class="swatch-color" style="background:#FAFAF9"></span><span class="swatch-name">canvas</span><span class="swatch-hex">#FAFAF9</span></div>
+      <div class="swatch"><span class="swatch-color" style="background:#FFFFFF;border-color:#ccc"></span><span class="swatch-name">surface</span><span class="swatch-hex">#FFFFFF</span></div>
+      <div class="swatch"><span class="swatch-color" style="background:#0C0A09"></span><span class="swatch-name">header</span><span class="swatch-hex">#0C0A09 stone-950</span></div>
+      <div class="swatch"><span class="swatch-color" style="background:#D97706"></span><span class="swatch-name">accent</span><span class="swatch-hex">#D97706 amber</span></div>
+      <div class="swatch"><span class="swatch-color" style="background:#10B981"></span><span class="swatch-name">brand</span><span class="swatch-hex">#10B981 verde</span></div>
+      <div class="swatch"><span class="swatch-color" style="background:#DC2626"></span><span class="swatch-name">critical</span><span class="swatch-hex">#DC2626</span></div>
+    </div>
+  </div>
+  <div class="cockpit-viewport opt-d">
+    <div class="cockpit">
+      <header class="cockpit-header">
+        <span class="header-title">COCKPIT DE <span class="header-title-accent">OPERACIONES</span></span>
+        <div class="header-meta">
+          <span>sáb, 02 may · 21:30</span>
+          <span class="live-pill">11 activas</span>
+          <span>Juan Gutierrez</span>
+        </div>
+      </header>
+      <aside class="cockpit-side">
+        <div class="nav-item nav-active">Operaciones</div>
+        <div class="nav-item">Espacio OPS</div>
+        <div class="nav-item">Intervenciones</div>
+        <div class="nav-item">Rollouts</div>
+        <div class="nav-item">Proyectos</div>
+        <div class="nav-item">Sitios</div>
+        <div class="nav-item">Técnicos</div>
+        <div class="nav-item">Contratos</div>
+        <div class="nav-item">Inteligencia</div>
+        <div class="nav-item">Finanzas</div>
+        <div class="nav-item">Admin</div>
+      </aside>
+      <main class="cockpit-main">
+        <div>
+          <div class="kpi-strip">
+            <div class="kpi-card critical"><div class="kpi-label">Críticos abiertos</div><div class="kpi-number">9</div><div class="kpi-foot">SLA breach activo</div></div>
+            <div class="kpi-card warn"><div class="kpi-label">SLA en riesgo</div><div class="kpi-number">10</div><div class="kpi-foot">Próximo breach &lt; 2h</div></div>
+            <div class="kpi-card brand"><div class="kpi-label">Ball SRS &gt;6h</div><div class="kpi-number">100</div><div class="kpi-foot">Acción nuestra pendiente</div></div>
+            <div class="kpi-card info"><div class="kpi-label">Sin asignar</div><div class="kpi-number">109</div><div class="kpi-foot">Activas sin tech</div></div>
+            <div class="kpi-card ok"><div class="kpi-label">Activas hoy</div><div class="kpi-number">13</div><div class="kpi-foot">En ruta + on-site</div></div>
+          </div>
+          <p class="section-label">Intervenciones en curso <span class="section-count">3</span></p>
+          <div class="cards-grid">
+            <article class="int-card stage-route">
+              <div style="display:flex;justify-content:space-between;align-items:center"><span class="int-code">WO-D75AEAE5</span><span class="stage-pill route">EN RUTA</span></div>
+              <h3 class="int-title">Carolina Herrera Madison Avenue</h3>
+              <p class="int-meta">SITE CH-US-NY01 · New York</p>
+              <p class="int-meta">Agustín Rivera</p>
+              <div class="int-actions"><button class="btn-pill primary">Detalle</button><button class="btn-pill secondary">Compliance</button></div>
+            </article>
+            <article class="int-card stage-route">
+              <div style="display:flex;justify-content:space-between;align-items:center"><span class="int-code">WO-D75AEACB</span><span class="stage-pill route">EN RUTA</span></div>
+              <h3 class="int-title">Claro US Warehouse Miramar</h3>
+              <p class="int-meta">SITE CLARO-US-MIRAMAR · Miramar</p>
+              <p class="int-meta">Arlindo Ochoa</p>
+              <div class="int-actions"><button class="btn-pill primary">Detalle</button><button class="btn-pill secondary">Compliance</button></div>
+            </article>
+            <article class="int-card stage-onsite">
+              <div style="display:flex;justify-content:space-between;align-items:center"><span class="int-code">WO-E5519062</span><span class="stage-pill onsite">ON-SITE</span></div>
+              <h3 class="int-title">Carolina Herrera Flagship Serrano</h3>
+              <p class="int-meta">SITE CH-ES-SER01 · Madrid</p>
+              <p class="int-meta">Sin asignar</p>
+              <div class="int-actions"><button class="btn-pill primary">Detalle</button><button class="btn-pill secondary">Compliance</button></div>
+            </article>
+          </div>
+        </div>
+        <aside>
+          <div class="widget">
+            <p class="widget-title">Alertas operativas · 3 activas</p>
+            <div class="alert-row crit"><span class="alert-dot"></span>NO SHOW · WO-D75AEAE5</div>
+            <div class="alert-row crit"><span class="alert-dot"></span>ACCESS DENIED · WO-D75AEACB</div>
+            <div class="alert-row warn"><span class="alert-dot"></span>ACCIDENT · WO-E5519062</div>
+          </div>
+        </aside>
+      </main>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════════ -->
+<!-- TABLA COMPARATIVA -->
+<!-- ═════════════════════════════════════════════════════════════ -->
+<div id="compare" class="compare">
+  <h3>Tabla comparativa · qué te da cada opción</h3>
+  <table class="compare-table">
+    <thead>
+      <tr>
+        <th>Dimensión</th>
+        <th>A · Pure Cockpit</th>
+        <th>B · Graphite Ops</th>
+        <th>C · Linear / Mission</th>
+        <th>D · Hybrid SR</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Personalidad</td><td>Tech fresh</td><td>Corporate serio</td><td>Premium ultra-moderno</td><td>Continuidad SR brand</td></tr>
+      <tr><td>Riesgo "vibe SaaS"</td><td>Alto (cyan default)</td><td>Bajo</td><td>Medio (Linear conocido)</td><td>Bajo (amber distintivo)</td></tr>
+      <tr><td>Coherencia con DS firmado</td><td>1:1 textual</td><td>Spirit-fit</td><td>Spirit-fit</td><td>Mantiene amber tradition</td></tr>
+      <tr><td>Coherencia con dark deployed</td><td>Baja (cambia accent)</td><td>Baja</td><td>Baja</td><td>Alta (mismo amber)</td></tr>
+      <tr><td>Esfuerzo implementación</td><td>Mínimo (DS dice)</td><td>Bajo</td><td>Medio</td><td>Mínimo (mismo amber)</td></tr>
+      <tr><td>Showcase al cliente</td><td>Familiar</td><td>Profesional</td><td>WOW factor</td><td>SR-distintivo</td></tr>
+      <tr><td>Para Agustin / techs (mobile futuro)</td><td>Funcional</td><td>Funcional</td><td>Atractivo</td><td>Familiar</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="footer-note">
+  Mockups estáticos · cero código deployed tocado · cero deps · puro HTML+CSS+Google Fonts<br>
+  Owner decide cuál (o cruce) y entonces armamos sprint Identity Light con tokens definitivos<br>
+  Pendiente diseñar después: War Room (mantiene dark · solo confirmar accent compatible) · Mobile Tech PWA
+</div>
+
+</body>
+</html>
