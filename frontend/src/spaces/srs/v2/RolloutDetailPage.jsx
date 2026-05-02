@@ -29,6 +29,26 @@
  *   - Modal Programar + Botón Exportar: stubs marcados como próxima iteración
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
+/**
+ * useLocalStorageState — hook genérico para persistir state en localStorage.
+ * Iter 2.6: filter / activeTab / rangeKey sobreviven recargas y cierre de pestaña.
+ * Sin TTL (consistencia: si el user dejó "Problemas" activo, vuelve activo).
+ */
+function useLocalStorageState(key, defaultValue) {
+  const [state, setState] = useState(() => {
+    try {
+      const stored = localStorage.getItem(key);
+      if (stored !== null) return JSON.parse(stored);
+    } catch { /* ignore corrupt JSON */ }
+    return defaultValue;
+  });
+  useEffect(() => {
+    try { localStorage.setItem(key, JSON.stringify(state)); }
+    catch { /* ignore quota errors */ }
+  }, [key, state]);
+  return [state, setState];
+}
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { api } from "../../../lib/api";
@@ -113,8 +133,9 @@ export default function RolloutDetailPage() {
   const [sites, setSites] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("mapa");
-  const [filter, setFilter] = useState("all"); // all · problems · scheduled
+  // Iter 2.6: state scoped per project_id, persisted en localStorage
+  const [activeTab, setActiveTab] = useLocalStorageState(`rollout-${project_id}-tab`, "mapa");
+  const [filter, setFilter] = useLocalStorageState(`rollout-${project_id}-filter`, "all"); // all · problems · scheduled
 
   // Carga
   const load = useCallback(async () => {
@@ -202,14 +223,18 @@ export default function RolloutDetailPage() {
       <header className="border-b border-wr-border bg-wr-bg flex-shrink-0">
         <div className="px-6 py-4 flex items-start justify-between gap-4">
           <div className="min-w-0">
-            <div className="flex items-center gap-3 mb-1">
+            <div className="flex items-center gap-2.5 mb-1 flex-wrap">
               <p className="label-caps-v2">Rollout</p>
               <span className="font-mono text-[10px] text-wr-text-dim">{project.code}</span>
               <span
-                className="text-[10px] uppercase font-semibold"
-                style={{ color: project.status === "active" ? "#22C55E" : "#9CA3AF", letterSpacing: "0.1em" }}
+                className="text-[9px] uppercase font-semibold px-1.5 py-0.5 rounded-sm"
+                style={{
+                  color: project.status === "active" ? "#22C55E" : "#9CA3AF",
+                  background: project.status === "active" ? "rgba(34,197,94,0.1)" : "rgba(156,163,175,0.1)",
+                  letterSpacing: "0.1em",
+                }}
               >
-                · {project.status}
+                {project.status}
               </span>
             </div>
             <h1
@@ -823,7 +848,8 @@ const TIMELINE_RANGES = [
 ];
 
 function TimelineTab({ wos, sites }) {
-  const [rangeKey, setRangeKey] = useState("3m");
+  // Iter 2.6: rangeKey persistido global cross-rollouts (preferencia del user)
+  const [rangeKey, setRangeKey] = useLocalStorageState("rollout-timeline-range", "3m");
 
   const allRows = useMemo(() => {
     return wos
