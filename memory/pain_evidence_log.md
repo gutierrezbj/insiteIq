@@ -62,7 +62,7 @@ sin email @systemrapid.com porque TOUS/Fervimax no lo exigen).
 | 1 | **Thread de 5 hops sin estado central.** Solo el que estuvo en el thread sabe leer. Si Yunus se va de vacaciones, Andros tiene que reconstruir. | WO + threads compartidos + `ball_in_court` con timestamp por cada hand-off. Audit log preserva el orden completo. | — |
 | 2 | **Tech sub gmail vs email @systemrapid.com.** Cada cliente exige cosa distinta (Claro US sí, TOUS no). Provisioning ad-hoc por proyecto, sin policy clara. | Skill Passport por tech + flag `email_alias_required` por contrato. | Falta UI explícita de policy de email per-cliente en Service Agreement. |
 | 3 | **Permisos del site exigen pre-envío de datos del tech.** Andrés necesita nombre/DNI/teléfono para mandar a TOUS. SRS reescribe esa info por email cada vez. | Briefing + pre-flight check tienen los datos del tech. | Falta **"tech credentials dispatch packet"** auto-generable como artifact (PDF compacto con foto/nombre/ID/teléfono firmado por SRS) que el coord cliente pueda mandar al site sin reescribir. |
-| 4 | **ETA del tech al site es info que el cliente espera proactivamente.** SRS pregunta a Carlos → Carlos responde → SRS pasa a Andrés → Andrés pasa a TOUS. 3 hops de email para una hora. | `scheduled_at` en WO captura la fecha. | Falta **handshake formal del tech**: "Carlos confirma 9:30am EST" como evento ack-ed visible al cliente sin email-tennis. |
+| 4 | **ETA del tech al site es info que el cliente espera proactivamente.** SRS pregunta a Carlos → Carlos responde → SRS pasa a Andrés → Andrés pasa a TOUS. 3 hops de email para una hora. | `scheduled_at` en WO captura la fecha. **Iter 2.10 (commit `eeb5af7`) cerró este gap principal**: nuevo `eta_ack` en WO + endpoint POST `/api/work-orders/{id}/eta-ack` + sección ETA en SideDetailPanel con pill de estado y modal "Registrar ETA". | **Sub-gap timezone-discipline** (firmado por owner 2026-05-02): el feature técnicamente acepta cualquier datetime, pero la disciplina operativa de *cuándo* responder al cliente intermedio sigue siendo humana. *"A veces no pasa"* — el equipo a veces compromete ETA al cliente antes de validar disponibilidad real del tech en su horario hábil, generando ping-pong de "te confirmo cuando despierte el tech". Próxima iter candidato: alerta blocking "ETA pending — esperar horario hábil tech ({TZ}) antes de registrar by_coord", o badge "validar con tech antes de exponer al cliente" sobre el botón Registrar cuando current_time está fuera del horario laboral del assigned_tech. |
 
 ### Por qué este caso vale para el showcase comercial
 
@@ -155,11 +155,12 @@ Aplica al menos a:
 
 ## Gaps acumulados desde este log (candidatos roadmap)
 
-| Origen | Gap | Prioridad sugerida |
-|---|---|---|
-| #005 dolor 3 | Tech credentials dispatch packet auto-PDF | Media · alto valor demo |
-| #005 dolor 4 | Tech ETA acknowledgment como handshake formal | Media · cierra loop común |
-| #006 dolor 3 | Detección automática outliers de duración | Baja · feature insights avanzado |
-| #006 dolor 6 | Bulk re-schedule de N pending en un flow | Alta · valor inmediato Arcos Wave 2 |
+| Origen | Gap | Prioridad sugerida | Estado |
+|---|---|---|---|
+| #005 dolor 3 | Tech credentials dispatch packet auto-PDF | Media · alto valor demo | Pendiente |
+| #005 dolor 4 | Tech ETA acknowledgment como handshake formal | Media · cierra loop común | **Cerrado Iter 2.10 (`eeb5af7`)** |
+| #005 dolor 4-bis | Timezone-discipline alert: bloquear/badge cuando ETA se quiere registrar fuera del horario hábil del tech | Media · evita ping-pong "te confirmo cuando despierte el tech" | Pendiente · firmado owner 2026-05-02 |
+| #006 dolor 3 | Detección automática outliers de duración | Baja · feature insights avanzado | Pendiente |
+| #006 dolor 6 | Bulk re-schedule de N pending en un flow | Alta · valor inmediato Arcos Wave 2 | **Cerrado Iter 2.9 (`5adb17e`)** |
 
 Owner decide cuándo y cuáles entran al sprint roadmap.
