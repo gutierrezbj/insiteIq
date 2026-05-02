@@ -811,11 +811,21 @@ function DataPanel({ title, value, unit, color }) {
   );
 }
 
-/* ─────────────────────── Tab TIMELINE ─────────────────────── */
+/* ─────────────────────── Tab TIMELINE (Iter 2.4 polish) ───────────────────────
+ * Gantt: filas = sites con WO, eje X = mes.
+ * Iter 2.4 añade: selector de rango (1m/3m/6m/Todo), línea HOY amber,
+ * tooltip detallado al hover, sin límite de 100 rows. */
+const TIMELINE_RANGES = [
+  { key: "1m",  label: "Últ. mes", days: 30 },
+  { key: "3m",  label: "3M",       days: 90 },
+  { key: "6m",  label: "6M",       days: 180 },
+  { key: "all", label: "Todo",     days: null },
+];
+
 function TimelineTab({ wos, sites }) {
-  // Gantt simple: filas = sites con WO, eje X = mes
-  // Para iter 1: muestra WOs cerradas como barras + intake como puntos pendientes
-  const rows = useMemo(() => {
+  const [rangeKey, setRangeKey] = useState("3m");
+
+  const allRows = useMemo(() => {
     return wos
       .filter((w) => sites[w.site_id])
       .map((w) => ({
@@ -825,27 +835,36 @@ function TimelineTab({ wos, sites }) {
         startDate: w.created_at ? new Date(w.created_at) : null,
         endDate: w.closed_at ? new Date(w.closed_at) : null,
       }))
-      .sort((a, b) => {
-        // sort by site.code asc
-        return (a.site.code || "").localeCompare(b.site.code || "");
-      });
+      .sort((a, b) => (a.site.code || "").localeCompare(b.site.code || ""));
   }, [wos, sites]);
 
-  // Time range
+  // Filter por rango temporal
+  const rows = useMemo(() => {
+    const range = TIMELINE_RANGES.find((r) => r.key === rangeKey);
+    if (!range || !range.days) return allRows;
+    const cutoff = new Date(Date.now() - range.days * 24 * 60 * 60 * 1000);
+    return allRows.filter((r) => {
+      if (r.startDate && r.startDate >= cutoff) return true;
+      if (r.endDate && r.endDate >= cutoff) return true;
+      // WOs en marcha que arrancaron antes del cutoff pero siguen abiertas
+      if (r.startDate && !r.endDate && r.startDate <= cutoff) return true;
+      return false;
+    });
+  }, [allRows, rangeKey]);
+
+  // Time range derivado del filtered rows
   const allDates = rows.flatMap((r) => [r.startDate, r.endDate].filter(Boolean));
   const minDate = allDates.length ? new Date(Math.min(...allDates.map((d) => d.getTime()))) : new Date();
   const maxDate = allDates.length ? new Date(Math.max(...allDates.map((d) => d.getTime()), Date.now())) : new Date();
-  // Padding
   const startMonth = new Date(minDate.getFullYear(), minDate.getMonth(), 1);
   const endMonth = new Date(maxDate.getFullYear(), maxDate.getMonth() + 1, 0);
-  const totalMs = endMonth.getTime() - startMonth.getTime();
+  const totalMs = Math.max(1, endMonth.getTime() - startMonth.getTime());
 
   function pctOf(date) {
     if (!date) return null;
     return ((date.getTime() - startMonth.getTime()) / totalMs) * 100;
   }
 
-  // Generate month markers
   const months = [];
   let cursor = new Date(startMonth);
   while (cursor <= endMonth) {
@@ -853,17 +872,48 @@ function TimelineTab({ wos, sites }) {
     cursor.setMonth(cursor.getMonth() + 1);
   }
 
+  const todayPct = pctOf(new Date());
+  const todayInRange = todayPct != null && todayPct >= 0 && todayPct <= 100;
+  const todayLabel = new Date().toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "numeric" });
+
   return (
     <div className="px-6 py-6 h-full overflow-auto wr-scroll">
-      <div className="mb-4">
-        <p className="label-caps-v2 mb-1">Timeline del rollout</p>
-        <p className="text-[11px] text-wr-text-dim">Sites × tiempo · barras coloreadas por status. Iteración 1.</p>
+      {/* Header con selector de rango */}
+      <div className="mb-4 flex items-end justify-between gap-3 flex-wrap">
+        <div>
+          <p className="label-caps-v2 mb-1">Timeline del rollout</p>
+          <p className="text-[11px] text-wr-text-dim">
+            Sites × tiempo · barras por status · línea amber = HOY ({todayLabel}) · {rows.length} sites en rango
+          </p>
+        </div>
+        <div className="flex items-center gap-1">
+          <span className="text-[10px] text-wr-text-dim uppercase mr-1.5" style={{ letterSpacing: "0.1em" }}>Rango:</span>
+          {TIMELINE_RANGES.map((b) => (
+            <button
+              key={b.key}
+              onClick={() => setRangeKey(b.key)}
+              className="text-[11px] px-2.5 py-1 rounded-sm border transition"
+              style={{
+                color: rangeKey === b.key ? "#F59E0B" : "#9CA3AF",
+                borderColor: rangeKey === b.key ? "#F59E0B" : "#1F1F1F",
+                background: rangeKey === b.key ? "rgba(245, 158, 11, 0.08)" : "transparent",
+                letterSpacing: "0.04em",
+              }}
+            >
+              {b.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {rows.length === 0 ? (
-        <EmptyState icon="inbox" title="Sin WOs con fechas" />
+        <EmptyState
+          icon="inbox"
+          title="Sin WOs en este rango"
+          sublabel="Ampliá el rango o seleccioná 'Todo' para ver el histórico completo"
+        />
       ) : (
-        <div className="border border-wr-border rounded-sm">
+        <div className="border border-wr-border rounded-sm overflow-hidden">
           {/* Header months */}
           <div className="grid border-b border-wr-border bg-wr-surface/40" style={{ gridTemplateColumns: `200px repeat(${months.length}, 1fr)` }}>
             <div className="px-3 py-2 label-caps-v2">Site</div>
@@ -874,13 +924,40 @@ function TimelineTab({ wos, sites }) {
             ))}
           </div>
 
-          {/* Rows */}
-          <div className="max-h-[60vh] overflow-y-auto wr-scroll">
-            {rows.slice(0, 100).map((r) => {
+          {/* Rows + línea HOY · contenedor relative */}
+          <div className="relative max-h-[60vh] overflow-y-auto wr-scroll">
+            {/* Línea vertical HOY · cubre toda el área de barras (después del label 200px) */}
+            {todayInRange && (
+              <div
+                className="absolute top-0 bottom-0 z-10 pointer-events-none"
+                style={{
+                  left: `calc(200px + (100% - 200px) * ${todayPct / 100})`,
+                  width: 2,
+                  background: "#F59E0B",
+                  opacity: 0.7,
+                  boxShadow: "0 0 6px rgba(245, 158, 11, 0.55)",
+                }}
+                title={`HOY · ${todayLabel}`}
+              />
+            )}
+            {rows.map((r) => {
               const startPct = r.startDate ? pctOf(r.startDate) : null;
               const endPct = r.endDate ? pctOf(r.endDate) : (r.startDate ? pctOf(new Date()) : null);
               const widthPct = startPct != null && endPct != null ? Math.max(1, endPct - startPct) : null;
               const color = FLAG_COLORS[r.flag];
+              const flagLabel = r.flag === "done" ? "Hecho/Marcha"
+                : r.flag === "problem" ? "Con problema"
+                : r.flag === "scheduled" ? "Programado" : "Pendiente";
+              const durationDays = r.startDate
+                ? Math.max(1, Math.ceil(((r.endDate || new Date()).getTime() - r.startDate.getTime()) / (1000 * 60 * 60 * 24)))
+                : null;
+              const tooltip = [
+                r.site.name || "—",
+                r.site.code || "",
+                `${formatWoCode(r.wo)} · ${r.wo.status}`,
+                flagLabel,
+                durationDays ? `${durationDays} día${durationDays !== 1 ? "s" : ""}${r.endDate ? "" : " (en marcha)"}` : "sin duración",
+              ].filter(Boolean).join(" · ");
 
               return (
                 <div
@@ -888,21 +965,21 @@ function TimelineTab({ wos, sites }) {
                   className="grid border-b border-wr-border hover:bg-wr-surface/20 transition relative"
                   style={{ gridTemplateColumns: `200px 1fr`, minHeight: 28 }}
                 >
-                  <div className="px-3 py-2 text-[11px] text-wr-text font-mono truncate border-r border-wr-border">
+                  <div className="px-3 py-2 text-[11px] text-wr-text font-mono truncate border-r border-wr-border" title={r.site.name || ""}>
                     {r.site.code || r.site.name?.slice(0, 20)}
                   </div>
                   <div className="relative h-full">
                     {startPct != null && widthPct != null && (
                       <div
-                        className="absolute top-1 bottom-1 rounded-sm"
+                        className="absolute top-1 bottom-1 rounded-sm cursor-pointer hover:opacity-100 transition"
                         style={{
                           left: `${startPct}%`,
                           width: `${widthPct}%`,
                           background: color,
-                          opacity: 0.7,
+                          opacity: 0.78,
                           minWidth: 4,
                         }}
-                        title={`${r.site.name} · ${r.wo.status}`}
+                        title={tooltip}
                       />
                     )}
                   </div>
@@ -910,9 +987,6 @@ function TimelineTab({ wos, sites }) {
               );
             })}
           </div>
-          {rows.length > 100 && (
-            <p className="px-3 py-2 text-[10px] text-wr-text-dim italic">+{rows.length - 100} más (paginar en próxima iter)</p>
-          )}
         </div>
       )}
     </div>
