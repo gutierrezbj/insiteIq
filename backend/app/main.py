@@ -22,6 +22,7 @@ from app.routes import intervention_reports as intervention_reports_routes
 from app.routes import invoices as invoices_routes
 from app.routes import operational_alerts as operational_alerts_routes
 from app.routes import organizations as organizations_routes
+from app.routes import project_notes as project_notes_routes
 from app.routes import projects as projects_routes
 from app.routes import recurring_billing as recurring_billing_routes
 from app.routes import service_agreements as service_agreements_routes
@@ -78,6 +79,7 @@ app.include_router(intervention_reports_routes.router, prefix="/api")
 app.include_router(budget_approvals_routes.router, prefix="/api")
 app.include_router(skill_passports_routes.router, prefix="/api")
 app.include_router(projects_routes.router, prefix="/api")
+app.include_router(project_notes_routes.router, prefix="/api")
 app.include_router(equipment_routes.router, prefix="/api")
 app.include_router(uploads_routes.router, prefix="/api")
 app.include_router(invoices_routes.router, prefix="/api")

@@ -63,6 +63,7 @@ import {
 } from "../../../lib/woFields";
 import EmptyState from "../../../components/v2-shared/EmptyState";
 import { SkeletonKpiCard } from "../../../components/v2-shared/Skeleton";
+import RolloutNotesPanel from "../../../components/rollout-v2/RolloutNotesPanel";
 
 const TABS = [
   { key: "mapa",     label: "Mapa",            icon: ICONS.map },
@@ -136,6 +137,8 @@ export default function RolloutDetailPage() {
   // Iter 2.6: state scoped per project_id, persisted en localStorage
   const [activeTab, setActiveTab] = useLocalStorageState(`rollout-${project_id}-tab`, "mapa");
   const [filter, setFilter] = useLocalStorageState(`rollout-${project_id}-filter`, "all"); // all · problems · scheduled
+  // Iter 2.7: notes panel slide-in derecha
+  const [notesOpen, setNotesOpen] = useState(false);
 
   // Carga
   const load = useCallback(async () => {
@@ -251,16 +254,19 @@ export default function RolloutDetailPage() {
             </div>
           </div>
 
-          {/* Botón Exportar · dropdown CSV/XLSX + Print PDF (Iter 2.3) */}
-          <ExportReportButton
-            project={project}
-            wos={wos}
-            sites={siteMap}
-            users={userMap}
-            counts={counts}
-            totalSites={totalSites}
-            progressPct={progressPct}
-          />
+          {/* Botones de acción del header · Notas + Exportar */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <NotesButton onClick={() => setNotesOpen(true)} />
+            <ExportReportButton
+              project={project}
+              wos={wos}
+              sites={siteMap}
+              users={userMap}
+              counts={counts}
+              totalSites={totalSites}
+              progressPct={progressPct}
+            />
+          </div>
         </div>
 
         {/* Tabs nav */}
@@ -326,7 +332,36 @@ export default function RolloutDetailPage() {
           <TimelineTab wos={wos} sites={siteMap} />
         )}
       </div>
+
+      {/* Iter 2.7 · Panel de notas internas slide-in */}
+      {notesOpen && (
+        <RolloutNotesPanel
+          projectId={project_id}
+          currentUser={user}
+          onClose={() => setNotesOpen(false)}
+        />
+      )}
     </div>
+  );
+}
+
+/* ─────────────────────── Botón Notas (Iter 2.7) ─────────────────────── */
+function NotesButton({ onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      className="inline-flex items-center gap-2 px-3 py-2 rounded-sm border text-[11px] uppercase font-medium transition"
+      style={{
+        color: "#9CA3AF",
+        borderColor: "#1F1F1F",
+        background: "transparent",
+        letterSpacing: "0.08em",
+      }}
+      title="Notas internas del rollout"
+    >
+      <Icon icon={ICONS.document} size={14} />
+      Notas
+    </button>
   );
 }
 
