@@ -523,6 +523,101 @@ async def cancel_work_order(
     return _serialize(refreshed)
 
 
+class EtaAckBody(BaseModel):
+    """Body para POST /work-orders/{id}/eta-ack (Iter 2.10 · Pain #005-4)."""
+    model_config = ConfigDict(extra="ignore")
+    proposed_eta: datetime  # hora confirmada por el tech (puede diferir de scheduled_at)
+    ack_source: str = "self"  # "self" tech via PWA · "by_coord" SRS desde info externa
+    acknowledged_by_user_id: str | None = None  # tech ack-er; default = caller
+    notes: str | None = None
+
+
+@router.post("/{wo_id}/eta-ack")
+async def acknowledge_eta(
+    wo_id: str,
+    body: EtaAckBody,
+    user: CurrentUser = Depends(get_current_user),
+):
+    """
+    Tech confirma ETA real al site. Cierra Pain Log #005-4 (TOUS pattern):
+    elimina email-tennis para cada confirmación de hora.
+
+    RBAC v1:
+      - SRS coord: puede registrar ack para cualquier WO de su tenant
+        (ack_source = "by_coord" recomendado, pero permite "self" también).
+      - Tech: solo puede registrar ack para WOs donde es assigned_tech_user_id.
+        Forzamos ack_source = "self" en este caso.
+      - Client: 403.
+    """
+    db = get_db()
+    doc = await _fetch_wo_or_404(db, wo_id, user)
+
+    is_srs = user.has_space("srs_coordinators")
+    is_assigned_tech = (
+        user.has_space("tech_field")
+        and doc.get("assigned_tech_user_id") == user.user_id
+    )
+
+    if not (is_srs or is_assigned_tech):
+        raise HTTPException(
+            status.HTTP_403_FORBIDDEN,
+            "Only SRS coord or the assigned tech can acknowledge ETA",
+        )
+
+    # Tech siempre se acreedita a sí mismo · SRS puede registrar para otro tech
+    if is_assigned_tech and not is_srs:
+        ack_source = "self"
+        acknowledged_by_user_id = user.user_id
+    else:
+        ack_source = body.ack_source if body.ack_source in ("self", "by_coord") else "by_coord"
+        acknowledged_by_user_id = body.acknowledged_by_user_id or doc.get("assigned_tech_user_id") or user.user_id
+
+    now = _now()
+    eta_ack = {
+        "proposed_eta": body.proposed_eta,
+        "acknowledged_at": now,
+        "acknowledged_by_user_id": acknowledged_by_user_id,
+        "ack_source": ack_source,
+        "notes": body.notes,
+    }
+
+    await db.work_orders.update_one(
+        {"_id": doc["_id"]},
+        {
+            "$set": {
+                "eta_ack": eta_ack,
+                "updated_at": now,
+                "updated_by": user.user_id,
+            }
+        },
+    )
+
+    await write_audit_event(
+        db,
+        tenant_id=user.tenant_id,
+        actor_user_id=user.user_id,
+        action="work_order.eta_ack",
+        entity_refs=[{"collection": "work_orders", "id": wo_id, "label": doc.get("reference")}],
+        context_snapshot={
+            "proposed_eta": body.proposed_eta.isoformat(),
+            "ack_source": ack_source,
+            "acknowledged_by_user_id": acknowledged_by_user_id,
+            "scheduled_at_was": doc.get("scheduled_at").isoformat() if isinstance(doc.get("scheduled_at"), datetime) else doc.get("scheduled_at"),
+        },
+    )
+
+    await append_system_event(
+        db,
+        doc,
+        actor_user_id=user.user_id,
+        text=f"ETA acknowledged ({ack_source}): {body.proposed_eta.isoformat()}",
+        payload={"proposed_eta": body.proposed_eta.isoformat(), "ack_source": ack_source},
+    )
+
+    refreshed = await db.work_orders.find_one({"_id": doc["_id"]})
+    return _serialize(refreshed)
+
+
 @router.post("/{wo_id}/preflight")
 async def set_preflight(
     wo_id: str, body: PreflightBody, user: CurrentUser = Depends(get_current_user)

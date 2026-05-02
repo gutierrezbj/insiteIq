@@ -118,6 +118,17 @@ class CostSnapshot(BaseModel):
     updated_by: str | None = None
 
 
+class EtaAck(BaseModel):
+    """ETA confirmation by the tech (Iter 2.10 · cierra Pain #005-4)."""
+    model_config = ConfigDict(extra="ignore")
+
+    proposed_eta: datetime  # hora confirmada (puede diferir de scheduled_at si tech ajustó)
+    acknowledged_at: datetime
+    acknowledged_by_user_id: str  # tech que confirmó (no necesariamente el caller del endpoint)
+    ack_source: Literal["self", "by_coord"] = "self"  # self=tech via PWA · by_coord=SRS registró desde info externa
+    notes: str | None = None  # contexto opcional (ej. "tech ajustó +30min por traffic")
+
+
 class WorkOrder(BaseMongoModel):
     # Client / scope
     organization_id: str = Field(..., description="Client org")
@@ -154,6 +165,14 @@ class WorkOrder(BaseMongoModel):
     # Programmed visit date (set when WO advances from intake/triage with
     # tech + fecha agendada vía "Programar desde Mapa" del Rollout v2).
     scheduled_at: datetime | None = None
+
+    # ETA acknowledgment (Iter 2.10 · Pain Log #005-4 · cierra TOUS-pattern).
+    # Confirmación del tech sobre la hora que va a llegar al site. v1 simple:
+    # SRS coord puede registrar ack desde info externa (WhatsApp/llamada) con
+    # ack_source="by_coord", o el propio tech via PWA con ack_source="self"
+    # (PWA self-service en iter futura). proposed_eta puede ser igual o
+    # distinto a scheduled_at (si el tech ajusta).
+    eta_ack: EtaAck | None = None
 
     # Handshakes
     handshakes: list[Handshake] = Field(default_factory=list)

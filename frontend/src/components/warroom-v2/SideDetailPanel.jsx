@@ -25,7 +25,10 @@
  *   wo, site, tech, client, agreement, alerts, threads, parts, briefing, capture, report, audit, open, onClose, onEscalate
  */
 
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
+import { api } from "../../lib/api";
+import { useAuth } from "../../contexts/AuthContext";
 import { Icon, ICONS } from "../../lib/icons";
 import { getTechTimeInfo, VIEWER_TZ_LABEL } from "../../lib/tz";
 import { formatWoCode } from "../../lib/woCode";
@@ -448,6 +451,9 @@ export default function SideDetailPanel({
                 </div>
               </section>
 
+              {/* ETA acknowledgment (Iter 2.10 · Pain #005-4) */}
+              <EtaSection wo={wo} onUpdated={onClose ? () => onClose({ refresh: true }) : null} />
+
               {/* Description */}
               {description && (
                 <section>
@@ -632,5 +638,258 @@ export default function SideDetailPanel({
         )}
       </aside>
     </>
+  );
+}
+
+/* ─────────────────────── EtaSection (Iter 2.10 · Pain #005-4) ───────────────────────
+ * Pill ETA con tres estados:
+ *   - Sin scheduled_at: oculta (no aplica · WO sin agendar)
+ *   - scheduled_at + sin eta_ack: pill amber "ETA pendiente confirmación tech" + botón "Registrar"
+ *   - eta_ack presente: pill verde "ETA confirmada · {hora} · por {source}" + botón "Re-registrar"
+ * Solo SRS coord ve el botón. Tech PWA self-service queda para iter futura. */
+function EtaSection({ wo, onUpdated }) {
+  const { user } = useAuth();
+  const [modalOpen, setModalOpen] = useState(false);
+  const isSrsCoord = user?.memberships?.some((m) => m.space === "srs_coordinators");
+
+  const scheduledAt = wo?.scheduled_at;
+  const etaAck = wo?.eta_ack;
+
+  if (!scheduledAt && !etaAck) return null;  // WO sin agendar
+
+  const fmtDate = (iso) => {
+    if (!iso) return "—";
+    try {
+      return new Date(iso).toLocaleString("es-ES", { dateStyle: "medium", timeStyle: "short" });
+    } catch { return iso; }
+  };
+
+  const hasAck = !!etaAck;
+  const ackedAt = etaAck?.proposed_eta;
+  const ackSource = etaAck?.ack_source === "self" ? "tech (self)" : "SRS coord";
+
+  return (
+    <>
+      <section>
+        <div className="flex items-center justify-between mb-2">
+          <div className="text-[10px] text-wr-text-dim uppercase" style={{ letterSpacing: "0.14em", fontWeight: 600 }}>
+            ETA del tech
+          </div>
+          {isSrsCoord && (
+            <button
+              onClick={() => setModalOpen(true)}
+              className="text-[10px] uppercase font-medium px-2 py-0.5 rounded-sm border transition"
+              style={{
+                color: "#F59E0B",
+                borderColor: "#F59E0B",
+                background: "rgba(245,158,11,0.08)",
+                letterSpacing: "0.08em",
+              }}
+            >
+              {hasAck ? "Re-registrar" : "Registrar"}
+            </button>
+          )}
+        </div>
+
+        <div
+          className="rounded-sm px-3 py-2 flex items-start gap-2"
+          style={{
+            border: `1px solid ${hasAck ? "#22C55E55" : "#F59E0B55"}`,
+            background: hasAck ? "rgba(34,197,94,0.06)" : "rgba(245,158,11,0.06)",
+          }}
+        >
+          <Icon
+            icon={hasAck ? ICONS.checkCircle : ICONS.clock}
+            size={16}
+            color={hasAck ? "#22C55E" : "#F59E0B"}
+            style={{ marginTop: 2 }}
+          />
+          <div className="min-w-0 flex-1">
+            {hasAck ? (
+              <>
+                <p className="text-[12px] text-wr-text m-0" style={{ fontWeight: 500 }}>
+                  Confirmada {fmtDate(ackedAt)}
+                </p>
+                <p className="text-[10px] text-wr-text-mid font-mono mt-0.5">
+                  por {ackSource} · {fmtDate(etaAck.acknowledged_at)}
+                </p>
+                {etaAck.notes && (
+                  <p className="text-[11px] text-wr-text-mid mt-1 leading-snug">{etaAck.notes}</p>
+                )}
+                {scheduledAt && new Date(scheduledAt).getTime() !== new Date(ackedAt).getTime() && (
+                  <p className="text-[10px] text-wr-text-dim font-mono mt-1">
+                    (programado original: {fmtDate(scheduledAt)})
+                  </p>
+                )}
+              </>
+            ) : (
+              <>
+                <p className="text-[12px] text-wr-text m-0" style={{ fontWeight: 500 }}>
+                  Pendiente confirmación tech
+                </p>
+                <p className="text-[10px] text-wr-text-mid font-mono mt-0.5">
+                  Programado para {fmtDate(scheduledAt)}
+                </p>
+              </>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {modalOpen && (
+        <RegisterEtaModal
+          wo={wo}
+          onClose={() => setModalOpen(false)}
+          onSaved={() => {
+            setModalOpen(false);
+            onUpdated?.();
+          }}
+        />
+      )}
+    </>
+  );
+}
+
+function RegisterEtaModal({ wo, onClose, onSaved }) {
+  const initial = wo?.eta_ack?.proposed_eta
+    ? new Date(wo.eta_ack.proposed_eta).toISOString().slice(0, 16)
+    : (wo?.scheduled_at ? new Date(wo.scheduled_at).toISOString().slice(0, 16) : "");
+  const [proposedEta, setProposedEta] = useState(initial);
+  const [ackSource, setAckSource] = useState("by_coord");
+  const [notes, setNotes] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  async function handleSubmit() {
+    if (!proposedEta) {
+      toast.error("Fecha y hora obligatorias");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await api.post(`/work-orders/${wo.id}/eta-ack`, {
+        proposed_eta: new Date(proposedEta).toISOString(),
+        ack_source: ackSource,
+        notes: notes.trim() || null,
+      });
+      toast.success("ETA registrada");
+      onSaved?.();
+    } catch (err) {
+      toast.error(`Error: ${err.message || err}`);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-[6000] flex items-center justify-center"
+      style={{ background: "rgba(10, 10, 10, 0.7)" }}
+      onClick={submitting ? undefined : onClose}
+    >
+      <div
+        className="bg-wr-bg border border-wr-border rounded-sm w-[460px] max-w-[95vw]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <header className="px-5 py-4 border-b border-wr-border">
+          <p className="label-caps-v2 mb-1">Registrar ETA del tech</p>
+          <h2 className="font-display text-[16px] font-semibold text-white leading-tight">
+            {wo?.title || "Work Order"}
+          </h2>
+          <p className="text-[10px] text-wr-text-mid font-mono mt-0.5">{formatWoCode(wo)}</p>
+        </header>
+
+        <div className="px-5 py-4 space-y-4">
+          <div>
+            <label className="block text-[10px] text-wr-text-dim uppercase mb-1.5" style={{ letterSpacing: "0.14em" }}>
+              Hora confirmada por el tech
+            </label>
+            <input
+              type="datetime-local"
+              value={proposedEta}
+              onChange={(e) => setProposedEta(e.target.value)}
+              disabled={submitting}
+              className="w-full bg-wr-surface/40 border border-wr-border rounded-sm px-3 py-2 text-[13px] text-wr-text font-mono"
+            />
+            {wo?.scheduled_at && (
+              <p className="text-[10px] text-wr-text-dim mt-1 font-mono">
+                Programado original: {new Date(wo.scheduled_at).toLocaleString("es-ES", { dateStyle: "medium", timeStyle: "short" })}
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-[10px] text-wr-text-dim uppercase mb-1.5" style={{ letterSpacing: "0.14em" }}>
+              Fuente del ack
+            </label>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setAckSource("by_coord")}
+                disabled={submitting}
+                className="text-[11px] px-3 py-1.5 rounded-sm border transition"
+                style={{
+                  color: ackSource === "by_coord" ? "#F59E0B" : "#9CA3AF",
+                  borderColor: ackSource === "by_coord" ? "#F59E0B" : "#1F1F1F",
+                  background: ackSource === "by_coord" ? "rgba(245,158,11,0.08)" : "transparent",
+                }}
+                title="SRS registró info externa (WhatsApp/llamada)"
+              >
+                SRS coord (info externa)
+              </button>
+              <button
+                onClick={() => setAckSource("self")}
+                disabled={submitting}
+                className="text-[11px] px-3 py-1.5 rounded-sm border transition"
+                style={{
+                  color: ackSource === "self" ? "#F59E0B" : "#9CA3AF",
+                  borderColor: ackSource === "self" ? "#F59E0B" : "#1F1F1F",
+                  background: ackSource === "self" ? "rgba(245,158,11,0.08)" : "transparent",
+                }}
+                title="Tech confirmó directamente"
+              >
+                Tech (self)
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-[10px] text-wr-text-dim uppercase mb-1.5" style={{ letterSpacing: "0.14em" }}>
+              Notas (opcional)
+            </label>
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              disabled={submitting}
+              rows={2}
+              placeholder='Ej. "Tech ajustó +30min por traffic" / "Confirmado vía WhatsApp"'
+              className="w-full bg-wr-surface/40 border border-wr-border rounded-sm px-3 py-2 text-[12px] text-wr-text font-mono resize-none"
+            />
+          </div>
+        </div>
+
+        <footer className="px-5 py-3 border-t border-wr-border flex items-center justify-end gap-2">
+          <button
+            onClick={onClose}
+            disabled={submitting}
+            className="text-[11px] text-wr-text-mid hover:text-wr-text uppercase px-3 py-2 transition"
+            style={{ letterSpacing: "0.08em" }}
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={submitting || !proposedEta}
+            className="text-[11px] uppercase font-medium px-4 py-2 rounded-sm transition"
+            style={{
+              background: submitting || !proposedEta ? "#1F1F1F" : "#F59E0B",
+              color: submitting || !proposedEta ? "#6B7280" : "#0A0A0A",
+              cursor: submitting || !proposedEta ? "not-allowed" : "pointer",
+              letterSpacing: "0.08em",
+            }}
+          >
+            {submitting ? "Registrando…" : "Registrar ETA"}
+          </button>
+        </footer>
+      </div>
+    </div>
   );
 }
