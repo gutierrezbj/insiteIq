@@ -71,12 +71,33 @@ function classifyWoForFlag(wo) {
   return "done";  // en marcha
 }
 
-function flagSvg(color) {
+/**
+ * Marker visual: pin con halo + iconify Solar flag dentro.
+ * Consistente con DS v2 (Solar Linear único set, ICONS.flag).
+ *
+ * Estructura visual:
+ *   - Pin shape (gota) con borde del color del status + relleno oscuro
+ *   - Solar flag-bold en el color del status dentro del pin
+ *   - Drop shadow profesional
+ *   - Anchor: punta inferior del pin (donde toca el sitio en el mapa)
+ */
+function flagMarkerHtml(color, flagKind) {
+  // Tooltip text para accesibilidad
+  const label = flagKind === "done" ? "Hecho/Marcha"
+    : flagKind === "problem" ? "Con problema"
+    : flagKind === "scheduled" ? "Programado"
+    : "Pendiente";
   return `
-    <svg viewBox="0 0 24 32" width="22" height="28" xmlns="http://www.w3.org/2000/svg">
-      <path d="M3 1 v30" stroke="#0A0A0A" stroke-width="2" />
-      <path d="M3 2 L19 6 L19 14 L3 18 Z" fill="${color}" stroke="#0A0A0A" stroke-width="1" />
-    </svg>
+    <div class="rollout-pin" title="${label}" style="position:relative;width:32px;height:38px;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.45));">
+      <svg viewBox="0 0 32 38" width="32" height="38" xmlns="http://www.w3.org/2000/svg" style="position:absolute;top:0;left:0;">
+        <path d="M16 0 C7.16 0 0 7.16 0 16 C0 27.5 16 38 16 38 C16 38 32 27.5 32 16 C32 7.16 24.84 0 16 0 Z"
+              fill="#0A0A0A" stroke="${color}" stroke-width="2.2"/>
+      </svg>
+      <iconify-icon
+        icon="solar:flag-bold"
+        style="position:absolute;top:5px;left:6px;font-size:20px;color:${color};"
+      ></iconify-icon>
+    </div>
   `;
 }
 
@@ -276,6 +297,28 @@ export default function RolloutDetailPage() {
   );
 }
 
+/**
+ * LegendPin — pin pequeño para leyenda del mapa, mismo SVG que markers.
+ * Para coherencia visual: lo que ves en el mapa es lo que ves en la leyenda.
+ */
+function LegendPin({ color, label }) {
+  return (
+    <span className="flex items-center gap-1.5">
+      <span style={{ display: "inline-block", position: "relative", width: 14, height: 18, flexShrink: 0 }}>
+        <svg viewBox="0 0 32 38" width="14" height="18" xmlns="http://www.w3.org/2000/svg">
+          <path
+            d="M16 0 C7.16 0 0 7.16 0 16 C0 27.5 16 38 16 38 C16 38 32 27.5 32 16 C32 7.16 24.84 0 16 0 Z"
+            fill="#0A0A0A"
+            stroke={color}
+            strokeWidth={2.5}
+          />
+        </svg>
+      </span>
+      <span className="text-wr-text-mid">{label}</span>
+    </span>
+  );
+}
+
 /* ─────────────────────── Modal "Programar desde Mapa" ─────────────────────── */
 function ScheduleSiteModal({ wo, site, users, onClose, onScheduled }) {
   const [techId, setTechId] = useState("");
@@ -460,9 +503,9 @@ function MapTab({ wos, sites, users, onScheduled }) {
 
       const icon = L.divIcon({
         className: "rollout-flag-marker",
-        html: flagSvg(color),
-        iconSize: [22, 28],
-        iconAnchor: [3, 28],
+        html: flagMarkerHtml(color, flag),
+        iconSize: [32, 38],
+        iconAnchor: [16, 38],  // punta inferior del pin = posición exacta del site
       });
 
       const marker = L.marker([lat, lng], { icon }).addTo(map);
@@ -526,12 +569,12 @@ function MapTab({ wos, sites, users, onScheduled }) {
   return (
     <div className="h-full relative">
       <div ref={mapRef} className="absolute inset-0" />
-      {/* Leyenda */}
-      <div className="absolute bottom-3 left-5 z-[400] bg-wr-surface/95 border border-wr-border rounded-sm px-3 py-2 flex items-center gap-3 text-[10px] backdrop-blur-sm">
+      {/* Leyenda · pins con la misma visual del marker (consistencia) */}
+      <div className="absolute bottom-3 left-5 z-[400] bg-wr-surface/95 border border-wr-border rounded-sm px-3 py-2 flex items-center gap-4 text-[10px] backdrop-blur-sm">
         <p className="label-caps-v2">Leyenda</p>
-        <span className="flex items-center gap-1.5"><span style={{display:"inline-block",width:10,height:14,background:FLAG_COLORS.done,clipPath:"polygon(0 0,100% 25%,100% 75%,0 100%)"}}/><span className="text-wr-text-mid">Hecho/Marcha</span></span>
-        <span className="flex items-center gap-1.5"><span style={{display:"inline-block",width:10,height:14,background:FLAG_COLORS.problem,clipPath:"polygon(0 0,100% 25%,100% 75%,0 100%)"}}/><span className="text-wr-text-mid">Problema</span></span>
-        <span className="flex items-center gap-1.5"><span style={{display:"inline-block",width:10,height:14,background:FLAG_COLORS.scheduled,clipPath:"polygon(0 0,100% 25%,100% 75%,0 100%)"}}/><span className="text-wr-text-mid">Programado</span></span>
+        <LegendPin color={FLAG_COLORS.done} label="Hecho/Marcha" />
+        <LegendPin color={FLAG_COLORS.problem} label="Problema" />
+        <LegendPin color={FLAG_COLORS.scheduled} label="Programado" />
       </div>
       {!window.L && (
         <div className="absolute inset-0 flex items-center justify-center text-wr-text-dim text-[12px] font-mono">
