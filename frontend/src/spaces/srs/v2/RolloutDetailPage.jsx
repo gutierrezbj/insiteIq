@@ -822,6 +822,7 @@ function MapTab({ wos, sites, users, onScheduled }) {
   }, []);
 
   const clusterGroupRef = useRef(null);
+  const originalBoundsRef = useRef(null);  // Iter 2.15: para botón "Vista general"
 
   // Marker rendering — banderitas SVG según classification + clustering (Iter 2.13)
   useEffect(() => {
@@ -962,17 +963,49 @@ function MapTab({ wos, sites, users, onScheduled }) {
       clusterGroupRef.current = cluster;
     }
 
-    // Fit bounds
+    // Fit bounds + guardar para botón "Vista general" (Iter 2.15)
     if (bounds && wos.length > 0) {
       try {
         map.fitBounds(bounds, { padding: [40, 40], maxZoom: 12 });
+        originalBoundsRef.current = bounds;
       } catch (e) { /* ignore */ }
     }
   }, [wos, sites, users]);
 
+  // Iter 2.15: reset al overview general (botón flotante + Esc shortcut)
+  const resetToOverview = useCallback(() => {
+    if (!mapInstanceRef.current || !originalBoundsRef.current) return;
+    try {
+      mapInstanceRef.current.fitBounds(originalBoundsRef.current, {
+        padding: [40, 40],
+        maxZoom: 12,
+        animate: true,
+        duration: 0.4,
+      });
+    } catch (e) { /* ignore */ }
+  }, []);
+
+  useEffect(() => {
+    function onKey(e) { if (e.key === "Escape") resetToOverview(); }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [resetToOverview]);
+
   return (
     <div className="h-full relative">
       <div ref={mapRef} className="absolute inset-0" />
+
+      {/* Iter 2.15: botón "Vista general" top-right · resetea zoom + bounds originales */}
+      <button
+        onClick={resetToOverview}
+        className="absolute top-3 right-3 z-[400] bg-wr-surface/95 border border-wr-border rounded-sm px-3 py-2 flex items-center gap-2 text-[11px] uppercase font-medium text-wr-text hover:text-wr-amber hover:border-wr-amber/60 transition backdrop-blur-sm"
+        style={{ letterSpacing: "0.06em" }}
+        title="Reset zoom (atajo: Esc)"
+      >
+        <Icon icon="map" size={14} />
+        Vista general
+      </button>
+
       {/* Leyenda · pins con la misma visual del marker (consistencia) */}
       <div className="absolute bottom-3 left-5 z-[400] bg-wr-surface/95 border border-wr-border rounded-sm px-3 py-2 flex items-center gap-4 text-[10px] backdrop-blur-sm">
         <p className="label-caps-v2">Leyenda</p>
