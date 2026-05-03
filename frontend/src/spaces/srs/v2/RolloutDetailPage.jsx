@@ -822,14 +822,64 @@ function MapTab({ wos, sites, users, onScheduled }) {
     };
   }, []);
 
-  // Marker rendering — banderitas SVG según classification
+  const clusterGroupRef = useRef(null);
+
+  // Marker rendering — banderitas SVG según classification + clustering (Iter 2.13)
   useEffect(() => {
     if (!mapInstanceRef.current || !window.L) return;
     const L = window.L;
     const map = mapInstanceRef.current;
 
-    Object.values(markersRef.current).forEach((m) => m.remove());
+    // Cleanup previous cluster group + markers
+    if (clusterGroupRef.current) {
+      map.removeLayer(clusterGroupRef.current);
+      clusterGroupRef.current = null;
+    }
     markersRef.current = {};
+
+    // Crear cluster group con styling DS v2 (color dominante por status del grupo)
+    if (!L.markerClusterGroup) {
+      console.warn("[Rollout] Leaflet.markercluster no cargado; fallback sin clustering");
+    }
+    const cluster = L.markerClusterGroup ? L.markerClusterGroup({
+      maxClusterRadius: 50,
+      spiderfyOnMaxZoom: true,
+      showCoverageOnHover: false,
+      zoomToBoundsOnClick: true,
+      iconCreateFunction: (c) => {
+        // Contar status de los markers del cluster · color cluster = peor status presente
+        const childCount = c.getChildCount();
+        const childMarkers = c.getAllChildMarkers();
+        let dominant = "done";
+        for (const m of childMarkers) {
+          const f = m.options._flagKind;
+          if (f === "problem") { dominant = "problem"; break; }
+          if (f === "scheduled" && dominant !== "problem") dominant = "scheduled";
+          if (f === "pending" && dominant === "done") dominant = "pending";
+        }
+        const color = FLAG_COLORS[dominant];
+        const size = childCount < 10 ? 36 : childCount < 100 ? 44 : 52;
+        const fontSize = childCount < 10 ? 13 : childCount < 100 ? 14 : 15;
+        return L.divIcon({
+          className: "rollout-cluster",
+          html: `
+            <div style="
+              width:${size}px;height:${size}px;
+              background:${color};
+              border:2px solid #FFFFFF;
+              border-radius:50%;
+              display:flex;align-items:center;justify-content:center;
+              color:#FFFFFF;
+              font-family:'JetBrains Mono',monospace;
+              font-size:${fontSize}px;font-weight:700;
+              box-shadow:0 2px 6px rgba(0,0,0,0.4), 0 0 0 4px ${color}33;
+            ">${childCount}</div>
+          `,
+          iconSize: [size, size],
+          iconAnchor: [size / 2, size / 2],
+        });
+      },
+    }) : null;
 
     let bounds = null;
     wos.forEach((wo) => {
@@ -851,7 +901,13 @@ function MapTab({ wos, sites, users, onScheduled }) {
         iconAnchor: [16, 38],  // punta inferior del pin = posición exacta del site
       });
 
-      const marker = L.marker([lat, lng], { icon }).addTo(map);
+      // Iter 2.13: NO addTo(map) directo · vamos via cluster group si existe
+      const marker = L.marker([lat, lng], { icon, _flagKind: flag });
+      if (cluster) {
+        cluster.addLayer(marker);
+      } else {
+        marker.addTo(map);  // fallback si plugin no cargó
+      }
       const isScheduled = flag === "scheduled";
       const ctaButton = isScheduled
         ? `<button data-action="schedule" data-wo-id="${wo.id}" style="margin-top:6px;width:100%;background:#F59E0B;color:#0A0A0A;border:0;border-radius:3px;padding:6px 10px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;">Programar instalación →</button>`
@@ -900,6 +956,12 @@ function MapTab({ wos, sites, users, onScheduled }) {
       markersRef.current[wo.id] = marker;
       bounds = bounds ? bounds.extend([lat, lng]) : L.latLngBounds([[lat, lng]]);
     });
+
+    // Iter 2.13: añadir cluster group al map ahora que tiene markers
+    if (cluster) {
+      map.addLayer(cluster);
+      clusterGroupRef.current = cluster;
+    }
 
     // Fit bounds
     if (bounds && wos.length > 0) {
