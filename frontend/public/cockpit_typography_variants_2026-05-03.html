@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>InsiteIQ · Cockpit Typography · 3 variantes (2026-05-03)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: #1A1A1A; color: #E5E5E5;
+    font-family: 'Instrument Sans', -apple-system, sans-serif;
+  }
+
+  .toc {
+    position: sticky; top: 0; z-index: 100;
+    background: #0A0A0A; border-bottom: 1px solid #2A2A2A;
+    padding: 12px 24px; display: flex; align-items: center; gap: 18px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  }
+  .toc-title { color: #F59E0B; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; margin-right: 18px; }
+  .toc a { color: #9CA3AF; text-decoration: none; padding: 4px 10px; border-radius: 3px; border: 1px solid transparent; }
+  .toc a:hover { color: #F1F5F9; border-color: #2A2A2A; }
+  .toc-meta { margin-left: auto; color: #6B7280; font-size: 10px; }
+
+  .variant-banner {
+    padding: 24px 36px;
+    background: #0F0F0F;
+    border-bottom: 1px solid #2A2A2A;
+  }
+  .variant-banner h2 {
+    font-family: 'Instrument Sans', sans-serif;
+    font-size: 22px; font-weight: 600; color: #FFFFFF;
+    margin-bottom: 4px;
+  }
+  .variant-banner .subtitle {
+    color: #9CA3AF; font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    margin-bottom: 10px;
+  }
+  .variant-banner .rationale {
+    color: #E5E5E5; font-size: 13px; max-width: 900px; line-height: 1.55;
+  }
+  .swatches {
+    display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap;
+  }
+  .swatch {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 10px; background: #1A1A1A; border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+  }
+  .swatch-label { color: #9CA3AF; }
+  .swatch-val { color: #E5E5E5; }
+
+  /* ─────────────── PALETA D HYBRID SR (compartida en las 3 vistas) ─────────────── */
+  .cockpit {
+    --bg: #FAFAF9;
+    --surface: #FFFFFF;
+    --surface-2: #F4F4F0;
+    --border: #E7E5E0;
+    --border-strong: #D2CFC8;
+    --text: #1C1917;
+    --text-mid: #57534E;        /* ← propuesta A bump a #44403C */
+    --text-dim: #A8A29E;        /* ← propuesta A bump a #78716C */
+    --header-band: #0C0A09;
+    --text-on-dark: #F5F5F4;
+    --amber: #D97706;
+    --amber-soft: #FEF3C7;
+    --brand: #10B981;
+    --critical: #DC2626;
+    --warn: #F59E0B;
+    --info: #0284C7;
+  }
+
+  /* ─────────────── Variant overrides por contraste ─────────────── */
+  .opt-a {
+    --text-mid: #44403C;  /* stone-700 · más contraste */
+    --text-dim: #78716C;  /* stone-500 · más contraste */
+  }
+  .opt-b {
+    --text-mid: #44403C;
+    --text-dim: #78716C;
+  }
+
+  /* ─────────────── Cockpit base layout ─────────────── */
+  .cockpit {
+    background: var(--bg);
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    grid-template-rows: 56px 1fr;
+    grid-template-areas:
+      "side header"
+      "side main";
+    min-height: 600px;
+  }
+  .cockpit-header {
+    grid-area: header;
+    background: var(--header-band);
+    color: var(--text-on-dark);
+    display: flex; align-items: center; padding: 0 24px;
+  }
+  .cockpit-side {
+    grid-area: side;
+    background: var(--header-band);
+    padding: 16px 12px;
+    color: var(--text-on-dark);
+  }
+  .cockpit-side .nav {
+    color: rgba(255,255,255,0.7);
+    padding: 8px 12px; border-radius: 4px;
+    margin-bottom: 2px;
+  }
+  .cockpit-side .nav.active {
+    background: rgba(217, 119, 6, 0.15);
+    color: var(--amber);
+    font-weight: 500;
+  }
+  .cockpit-main {
+    grid-area: main;
+    display: grid; grid-template-columns: 1fr 280px; gap: 24px;
+    padding: 24px 28px;
+  }
+
+  /* ─────────────── ANTES (font-actual) — Mono pequeño everywhere ─────────────── */
+  .now .label-caps     { font-family: 'JetBrains Mono', monospace; font-size: 9px;  letter-spacing: 0.16em; text-transform: uppercase; color: var(--text-dim); font-weight: 600; }
+  .now .kpi-num        { font-family: 'Instrument Sans', sans-serif; font-size: 32px; font-weight: 700; line-height: 1; }
+  .now .kpi-foot       { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-mid); }
+  .now .body           { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-mid); line-height: 1.5; }
+  .now .title          { font-family: 'Instrument Sans', sans-serif; font-size: 14px; font-weight: 600; color: var(--text); }
+  .now .meta           { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-dim); }
+  .now .btn-pill       { font-family: 'JetBrains Mono', monospace; font-size: 10px; padding: 5px 10px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; }
+
+  /* ─────────────── PROPUESTA A · DM Sans body + mono solo data ─────────────── */
+  .opt-a .label-caps   { font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-dim); font-weight: 600; }
+  .opt-a .kpi-num      { font-family: 'Instrument Sans', sans-serif; font-size: 36px; font-weight: 700; line-height: 1; }
+  .opt-a .kpi-foot     { font-family: 'DM Sans', sans-serif; font-size: 12px; color: var(--text-mid); }
+  .opt-a .body         { font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--text-mid); line-height: 1.55; }
+  .opt-a .title        { font-family: 'Instrument Sans', sans-serif; font-size: 15px; font-weight: 600; color: var(--text); }
+  .opt-a .meta         { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-dim); }  /* mono solo en codes/IDs */
+  .opt-a .btn-pill     { font-family: 'DM Sans', sans-serif; font-size: 12px; padding: 6px 12px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
+
+  /* ─────────────── PROPUESTA B · Sigue todo Mono pero MÁS GRANDE ─────────────── */
+  .opt-b .label-caps   { font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-dim); font-weight: 600; }
+  .opt-b .kpi-num      { font-family: 'Instrument Sans', sans-serif; font-size: 36px; font-weight: 700; line-height: 1; }
+  .opt-b .kpi-foot     { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text-mid); }
+  .opt-b .body         { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--text-mid); line-height: 1.55; }
+  .opt-b .title        { font-family: 'Instrument Sans', sans-serif; font-size: 15px; font-weight: 600; color: var(--text); }
+  .opt-b .meta         { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-dim); }
+  .opt-b .btn-pill     { font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 6px 12px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; }
+
+  /* ─────────────── Componentes (pintados con tokens · consistentes en las 3) ─────────────── */
+  .kpi-strip { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 24px; }
+  .kpi-card  {
+    padding: 16px 18px; border-radius: 6px;
+    background: var(--surface); border: 1px solid var(--border); border-left-width: 3px;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .kpi-card.crit  { border-left-color: var(--critical); }
+  .kpi-card.warn  { border-left-color: var(--warn); }
+  .kpi-card.brand { border-left-color: var(--brand); }
+  .kpi-card.info  { border-left-color: var(--info); }
+
+  .section-label { display: flex; align-items: baseline; gap: 8px; margin-bottom: 12px; }
+  .section-count { font-family: 'Instrument Sans', sans-serif; font-size: 14px; font-weight: 600; color: var(--text); }
+
+  .cards-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
+  .int-card {
+    background: var(--surface); border: 1px solid var(--border); border-top: 3px solid var(--warn);
+    padding: 14px 16px; border-radius: 6px;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .int-card.crit { border-top-color: var(--critical); }
+
+  .stage-pill {
+    padding: 2px 8px; font-family: 'JetBrains Mono', monospace; font-size: 9px;
+    text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700;
+    border-radius: 3px;
+  }
+  .stage-pill.route { background: rgba(245,158,11,0.15); color: var(--warn); }
+  .stage-pill.crit  { background: rgba(220,38,38,0.15); color: var(--critical); }
+
+  .btn-pill.primary   { background: var(--amber); color: #FFFFFF; border: 1px solid var(--amber); cursor: default; }
+  .btn-pill.secondary { background: var(--surface); color: var(--text-mid); border: 1px solid var(--border-strong); cursor: default; }
+
+  .widget {
+    background: var(--surface); border: 1px solid var(--border);
+    padding: 16px; border-radius: 6px;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .alert-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 10px; border-radius: 4px;
+    background: var(--surface-2);
+  }
+  .alert-row.crit { background: rgba(220,38,38,0.08); }
+  .alert-row.crit .dot { background: var(--critical); }
+  .alert-row.warn { background: rgba(245,158,11,0.08); }
+  .alert-row.warn .dot { background: var(--warn); }
+  .alert-row .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+  .footer-note {
+    padding: 32px; text-align: center;
+    color: #6B7280; font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  }
+</style>
+</head>
+<body>
+
+<div class="toc">
+  <span class="toc-title">Cockpit Typography · 3 variantes</span>
+  <a href="#now">ANTES (deployed)</a>
+  <a href="#opt-a">A · DM Sans + bump</a>
+  <a href="#opt-b">B · Mono pero más grande</a>
+  <span class="toc-meta">2026-05-03 · iter 2.17 propuesta · cero código deployed tocado</span>
+</div>
+
+<!-- ═════════════════════════════════════════════════════════════ -->
+<!-- ANTES: Mono pequeño · text-mid stone-600 -->
+<!-- ═════════════════════════════════════════════════════════════ -->
+<section id="now">
+  <div class="variant-banner">
+    <h2>ANTES · lo que está hoy en PROD</h2>
+    <p class="subtitle">JetBrains Mono 10-13px en todo body · text-mid #57534E (stone-600) · text-dim #A8A29E (stone-400)</p>
+    <p class="rationale">
+      Lo que el owner ve hoy: mono compacto en labels y body sobre canvas claro. Mono está bien
+      para WO codes y números tabulares pero CANSA cuando se usa para todo (descripciones,
+      labels, footers, metadatos). En monitor 27" oficina, 10-11px mono es chico y el ojo
+      tiene que trabajar más. Texto secundario stone-400 se pierde sobre fondo casi blanco.
+    </p>
+    <div class="swatches">
+      <div class="swatch"><span class="swatch-label">label</span><span class="swatch-val">Mono 9px / 0.16em</span></div>
+      <div class="swatch"><span class="swatch-label">body</span><span class="swatch-val">Mono 11px</span></div>
+      <div class="swatch"><span class="swatch-label">meta</span><span class="swatch-val">Mono 10px</span></div>
+      <div class="swatch"><span class="swatch-label">text-mid</span><span class="swatch-val">#57534E</span></div>
+      <div class="swatch"><span class="swatch-label">text-dim</span><span class="swatch-val">#A8A29E</span></div>
+    </div>
+  </div>
+
+  <div class="cockpit now">
+    <header class="cockpit-header"><span class="meta" style="color:var(--text-on-dark);font-weight:700;letter-spacing:0.04em;">COCKPIT DE OPERACIONES</span></header>
+    <aside class="cockpit-side"><div class="nav active">Operaciones</div><div class="nav">Espacio OPS</div><div class="nav">Intervenciones</div><div class="nav">Rollouts</div><div class="nav">Proyectos</div></aside>
+    <main class="cockpit-main">
+      <div>
+        <div class="kpi-strip">
+          <div class="kpi-card crit"><div class="label-caps">Críticos abiertos</div><div class="kpi-num" style="color:var(--critical)">9</div><div class="kpi-foot">SLA breach activo</div></div>
+          <div class="kpi-card warn"><div class="label-caps">SLA en riesgo</div><div class="kpi-num" style="color:var(--warn)">10</div><div class="kpi-foot">Próximo breach &lt; 2h</div></div>
+          <div class="kpi-card brand"><div class="label-caps">Ball SRS &gt;6h</div><div class="kpi-num" style="color:var(--brand)">100</div><div class="kpi-foot">Acción nuestra pendiente</div></div>
+          <div class="kpi-card info"><div class="label-caps">Sin asignar</div><div class="kpi-num" style="color:var(--info)">109</div><div class="kpi-foot">Activas sin tech</div></div>
+          <div class="kpi-card brand"><div class="label-caps">Activas hoy</div><div class="kpi-num" style="color:var(--brand)">13</div><div class="kpi-foot">En ruta + on-site</div></div>
+        </div>
+        <div class="section-label"><div class="label-caps">Intervenciones en curso</div><span class="section-count">3</span></div>
+        <div class="cards-grid">
+          <article class="int-card">
+            <div style="display:flex;justify-content:space-between;align-items:center"><span class="meta">WO-D75AEAE5</span><span class="stage-pill route">EN RUTA</span></div>
+            <h3 class="title">Carolina Herrera Madison Avenue</h3>
+            <p class="body">SITE CH-US-NY01 · New York · Agustín Rivera está en camino con ETA 09:30 EST</p>
+            <div style="display:flex;gap:6px"><button class="btn-pill primary">Detalle</button><button class="btn-pill secondary">Compliance</button></div>
+          </article>
+          <article class="int-card crit">
+            <div style="display:flex;justify-content:space-between;align-items:center"><span class="meta">WO-E5519062</span><span class="stage-pill crit">ON-SITE</span></div>
+            <h3 class="title">Carolina Herrera Flagship Serrano</h3>
+            <p class="body">SITE CH-ES-SER01 · Madrid · Sin tech asignado todavía</p>
+            <div style="display:flex;gap:6px"><button class="btn-pill primary">Detalle</button><button class="btn-pill secondary">Compliance</button></div>
+          </article>
+          <article class="int-card">
+            <div style="display:flex;justify-content:space-between;align-items:center"><span class="meta">WO-D75AEACB</span><span class="stage-pill route">EN RUTA</span></div>
+            <h3 class="title">Claro US Warehouse Miramar</h3>
+            <p class="body">SITE CLARO-US-MIRAMAR · Miramar · Arlindo Ochoa</p>
+            <div style="display:flex;gap:6px"><button class="btn-pill primary">Detalle</button><button class="btn-pill secondary">Compliance</button></div>
+          </article>
+        </div>
+      </div>
+      <aside>
+        <div class="widget">
+          <div class="label-caps">Alertas operativas · 3 activas</div>
+          <div class="alert-row crit"><span class="dot"></span><span class="meta">NO SHOW · WO-D75AEAE5</span></div>
+          <div class="alert-row crit"><span class="dot"></span><span class="meta">ACCESS DENIED · WO-D75AEACB</span></div>
+          <div class="alert-row warn"><span class="dot"></span><span class="meta">ACCIDENT · WO-E5519062</span></div>
+        </div>
+      </aside>
+    </main>
+  </div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════════ -->
+<!-- OPCIÓN A: DM Sans body + Mono solo data -->
+<!-- ═════════════════════════════════════════════════════════════ -->
+<section id="opt-a">
+  <div class="variant-banner">
+    <h2>A · DM Sans body + Mono solo en data tabular · contraste +1</h2>
+    <p class="subtitle">Body 14px DM Sans · meta/codes 11px JetBrains Mono · text-mid #44403C (stone-700) · text-dim #78716C (stone-500)</p>
+    <p class="rationale">
+      Body y descripciones pasan a <strong>DM Sans 14px</strong> (sans humanist · ya en el DS).
+      Mono se reserva para WO codes, site IDs, timestamps y números tabulares (donde alinear
+      columnas SÍ ayuda). Bump de contraste: text-mid stone-700 + text-dim stone-500 = más
+      legibles sobre canvas claro. Padding y line-height más generosos. Mi recomendación firme.
+    </p>
+    <div class="swatches">
+      <div class="swatch"><span class="swatch-label">label</span><span class="swatch-val">Mono 11px / 0.14em</span></div>
+      <div class="swatch"><span class="swatch-label">body</span><span class="swatch-val">DM Sans 14px / 1.55</span></div>
+      <div class="swatch"><span class="swatch-label">meta</span><span class="swatch-val">Mono 11px (codes/IDs only)</span></div>
+      <div class="swatch"><span class="swatch-label">text-mid</span><span class="swatch-val">#44403C</span></div>
+      <div class="swatch"><span class="swatch-label">text-dim</span><span class="swatch-val">#78716C</span></div>
+    </div>
+  </div>
+
+  <div class="cockpit opt-a">
+    <header class="cockpit-header"><span class="meta" style="color:var(--text-on-dark);font-weight:700;letter-spacing:0.04em;">COCKPIT DE OPERACIONES</span></header>
+    <aside class="cockpit-side"><div class="nav active">Operaciones</div><div class="nav">Espacio OPS</div><div class="nav">Intervenciones</div><div class="nav">Rollouts</div><div class="nav">Proyectos</div></aside>
+    <main class="cockpit-main">
+      <div>
+        <div class="kpi-strip">
+          <div class="kpi-card crit"><div class="label-caps">Críticos abiertos</div><div class="kpi-num" style="color:var(--critical)">9</div><div class="kpi-foot">SLA breach activo</div></div>
+          <div class="kpi-card warn"><div class="label-caps">SLA en riesgo</div><div class="kpi-num" style="color:var(--warn)">10</div><div class="kpi-foot">Próximo breach &lt; 2h</div></div>
+          <div class="kpi-card brand"><div class="label-caps">Ball SRS &gt;6h</div><div class="kpi-num" style="color:var(--brand)">100</div><div class="kpi-foot">Acción nuestra pendiente</div></div>
+          <div class="kpi-card info"><div class="label-caps">Sin asignar</div><div class="kpi-num" style="color:var(--info)">109</div><div class="kpi-foot">Activas sin tech</div></div>
+          <div class="kpi-card brand"><div class="label-caps">Activas hoy</div><div class="kpi-num" style="color:var(--brand)">13</div><div class="kpi-foot">En ruta + on-site</div></div>
+        </div>
+        <div class="section-label"><div class="label-caps">Intervenciones en curso</div><span class="section-count">3</span></div>
+        <div class="cards-grid">
+          <article class="int-card">
+            <div style="display:flex;justify-content:space-between;align-items:center"><span class="meta">WO-D75AEAE5</span><span class="stage-pill route">EN RUTA</span></div>
+            <h3 class="title">Carolina Herrera Madison Avenue</h3>
+            <p class="body">SITE CH-US-NY01 · New York · Agustín Rivera está en camino con ETA 09:30 EST</p>
+            <div style="display:flex;gap:6px"><button class="btn-pill primary">Detalle</button><button class="btn-pill secondary">Compliance</button></div>
+          </article>
+          <article class="int-card crit">
+            <div style="display:flex;justify-content:space-between;align-items:center"><span class="meta">WO-E5519062</span><span class="stage-pill crit">ON-SITE</span></div>
+            <h3 class="title">Carolina Herrera Flagship Serrano</h3>
+            <p class="body">SITE CH-ES-SER01 · Madrid · Sin tech asignado todavía</p>
+            <div style="display:flex;gap:6px"><button class="btn-pill primary">Detalle</button><button class="btn-pill secondary">Compliance</button></div>
+          </article>
+          <article class="int-card">
+            <div style="display:flex;justify-content:space-between;align-items:center"><span class="meta">WO-D75AEACB</span><span class="stage-pill route">EN RUTA</span></div>
+            <h3 class="title">Claro US Warehouse Miramar</h3>
+            <p class="body">SITE CLARO-US-MIRAMAR · Miramar · Arlindo Ochoa</p>
+            <div style="display:flex;gap:6px"><button class="btn-pill primary">Detalle</button><button class="btn-pill secondary">Compliance</button></div>
+          </article>
+        </div>
+      </div>
+      <aside>
+        <div class="widget">
+          <div class="label-caps">Alertas operativas · 3 activas</div>
+          <div class="alert-row crit"><span class="dot"></span><span class="meta">NO SHOW · WO-D75AEAE5</span></div>
+          <div class="alert-row crit"><span class="dot"></span><span class="meta">ACCESS DENIED · WO-D75AEACB</span></div>
+          <div class="alert-row warn"><span class="dot"></span><span class="meta">ACCIDENT · WO-E5519062</span></div>
+        </div>
+      </aside>
+    </main>
+  </div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════════ -->
+<!-- OPCIÓN B: Sigue Mono pero MÁS GRANDE -->
+<!-- ═════════════════════════════════════════════════════════════ -->
+<section id="opt-b">
+  <div class="variant-banner">
+    <h2>B · Sigue todo JetBrains Mono pero MÁS GRANDE</h2>
+    <p class="subtitle">Body 13px Mono · contraste +1 · solo bump tipográfico sin cambiar familia</p>
+    <p class="rationale">
+      Mantiene <strong>JetBrains Mono en todo</strong> (estética "ops terminal-style"
+      consistente) pero sube tamaño a 13-14px y usa mismo contrast bump que A. Más
+      conservador, mantiene la firma técnica visual pero más legible. Trade-off: sigue
+      cansando más que sans para lectura larga, y los párrafos se ven más densos.
+    </p>
+    <div class="swatches">
+      <div class="swatch"><span class="swatch-label">label</span><span class="swatch-val">Mono 11px / 0.14em</span></div>
+      <div class="swatch"><span class="swatch-label">body</span><span class="swatch-val">Mono 13px / 1.55</span></div>
+      <div class="swatch"><span class="swatch-label">meta</span><span class="swatch-val">Mono 11px</span></div>
+      <div class="swatch"><span class="swatch-label">text-mid</span><span class="swatch-val">#44403C</span></div>
+      <div class="swatch"><span class="swatch-label">text-dim</span><span class="swatch-val">#78716C</span></div>
+    </div>
+  </div>
+
+  <div class="cockpit opt-b">
+    <header class="cockpit-header"><span class="meta" style="color:var(--text-on-dark);font-weight:700;letter-spacing:0.04em;">COCKPIT DE OPERACIONES</span></header>
+    <aside class="cockpit-side"><div class="nav active">Operaciones</div><div class="nav">Espacio OPS</div><div class="nav">Intervenciones</div><div class="nav">Rollouts</div><div class="nav">Proyectos</div></aside>
+    <main class="cockpit-main">
+      <div>
+        <div class="kpi-strip">
+          <div class="kpi-card crit"><div class="label-caps">Críticos abiertos</div><div class="kpi-num" style="color:var(--critical)">9</div><div class="kpi-foot">SLA breach activo</div></div>
+          <div class="kpi-card warn"><div class="label-caps">SLA en riesgo</div><div class="kpi-num" style="color:var(--warn)">10</div><div class="kpi-foot">Próximo breach &lt; 2h</div></div>
+          <div class="kpi-card brand"><div class="label-caps">Ball SRS &gt;6h</div><div class="kpi-num" style="color:var(--brand)">100</div><div class="kpi-foot">Acción nuestra pendiente</div></div>
+          <div class="kpi-card info"><div class="label-caps">Sin asignar</div><div class="kpi-num" style="color:var(--info)">109</div><div class="kpi-foot">Activas sin tech</div></div>
+          <div class="kpi-card brand"><div class="label-caps">Activas hoy</div><div class="kpi-num" style="color:var(--brand)">13</div><div class="kpi-foot">En ruta + on-site</div></div>
+        </div>
+        <div class="section-label"><div class="label-caps">Intervenciones en curso</div><span class="section-count">3</span></div>
+        <div class="cards-grid">
+          <article class="int-card">
+            <div style="display:flex;justify-content:space-between;align-items:center"><span class="meta">WO-D75AEAE5</span><span class="stage-pill route">EN RUTA</span></div>
+            <h3 class="title">Carolina Herrera Madison Avenue</h3>
+            <p class="body">SITE CH-US-NY01 · New York · Agustín Rivera está en camino con ETA 09:30 EST</p>
+            <div style="display:flex;gap:6px"><button class="btn-pill primary">Detalle</button><button class="btn-pill secondary">Compliance</button></div>
+          </article>
+          <article class="int-card crit">
+            <div style="display:flex;justify-content:space-between;align-items:center"><span class="meta">WO-E5519062</span><span class="stage-pill crit">ON-SITE</span></div>
+            <h3 class="title">Carolina Herrera Flagship Serrano</h3>
+            <p class="body">SITE CH-ES-SER01 · Madrid · Sin tech asignado todavía</p>
+            <div style="display:flex;gap:6px"><button class="btn-pill primary">Detalle</button><button class="btn-pill secondary">Compliance</button></div>
+          </article>
+          <article class="int-card">
+            <div style="display:flex;justify-content:space-between;align-items:center"><span class="meta">WO-D75AEACB</span><span class="stage-pill route">EN RUTA</span></div>
+            <h3 class="title">Claro US Warehouse Miramar</h3>
+            <p class="body">SITE CLARO-US-MIRAMAR · Miramar · Arlindo Ochoa</p>
+            <div style="display:flex;gap:6px"><button class="btn-pill primary">Detalle</button><button class="btn-pill secondary">Compliance</button></div>
+          </article>
+        </div>
+      </div>
+      <aside>
+        <div class="widget">
+          <div class="label-caps">Alertas operativas · 3 activas</div>
+          <div class="alert-row crit"><span class="dot"></span><span class="meta">NO SHOW · WO-D75AEAE5</span></div>
+          <div class="alert-row crit"><span class="dot"></span><span class="meta">ACCESS DENIED · WO-D75AEACB</span></div>
+          <div class="alert-row warn"><span class="dot"></span><span class="meta">ACCIDENT · WO-E5519062</span></div>
+        </div>
+      </aside>
+    </main>
+  </div>
+</section>
+
+<div class="footer-note">
+  Mocks autocontained · cero código deployed tocado · cero deps · puro HTML+CSS+Google Fonts<br>
+  Decisión owner: ANTES (mantener) · A · DM Sans body + Mono data · B · Mono pero más grande<br>
+  Una vez firmado: edit puntual de index.css + tailwind config (Iter 2.17 · ~1.5h)
+</div>
+
+</body>
+</html>
