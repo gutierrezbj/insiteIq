@@ -81,6 +81,24 @@
     --text-mid: #44403C;
     --text-dim: #78716C;
   }
+  /* C · TODO LIGHT · shell también light · mata el negro pleno */
+  .opt-c {
+    --text-mid: #44403C;
+    --text-dim: #78716C;
+    --header-band: #FFFFFF;     /* shell era #0C0A09, ahora blanco puro */
+    --text-on-dark: #1C1917;    /* texto era claro, ahora oscuro */
+  }
+  .opt-c .cockpit-header { border-bottom: 1px solid var(--border); }
+  .opt-c .cockpit-side {
+    background: #F4F4F0;        /* sidebar era stone-950, ahora stone-100 */
+    border-right: 1px solid var(--border);
+    color: var(--text);
+  }
+  .opt-c .cockpit-side .nav { color: var(--text-mid); }
+  .opt-c .cockpit-side .nav.active {
+    background: #FEF3C7;        /* amber-soft */
+    color: var(--amber);
+  }
 
   /* ─────────────── Cockpit base layout ─────────────── */
   .cockpit {
@@ -148,6 +166,15 @@
   .opt-b .meta         { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-dim); }
   .opt-b .btn-pill     { font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 6px 12px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; }
 
+  /* ─────────────── PROPUESTA C · todo light shell incluido ─────────────── */
+  .opt-c .label-caps   { font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-dim); font-weight: 600; }
+  .opt-c .kpi-num      { font-family: 'Instrument Sans', sans-serif; font-size: 36px; font-weight: 700; line-height: 1; }
+  .opt-c .kpi-foot     { font-family: 'DM Sans', sans-serif; font-size: 12px; color: var(--text-mid); }
+  .opt-c .body         { font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--text-mid); line-height: 1.55; }
+  .opt-c .title        { font-family: 'Instrument Sans', sans-serif; font-size: 15px; font-weight: 600; color: var(--text); }
+  .opt-c .meta         { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-dim); }
+  .opt-c .btn-pill     { font-family: 'DM Sans', sans-serif; font-size: 12px; padding: 6px 12px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
+
   /* ─────────────── Componentes (pintados con tokens · consistentes en las 3) ─────────────── */
   .kpi-strip { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 24px; }
   .kpi-card  {
@@ -211,6 +238,7 @@
   <a href="#now">ANTES (deployed)</a>
   <a href="#opt-a">A · DM Sans + bump</a>
   <a href="#opt-b">B · Mono pero más grande</a>
+  <a href="#opt-c">C · TODO LIGHT (sin negro shell)</a>
   <span class="toc-meta">2026-05-03 · iter 2.17 propuesta · cero código deployed tocado</span>
 </div>
 
@@ -418,10 +446,79 @@
   </div>
 </section>
 
+<!-- ═════════════════════════════════════════════════════════════ -->
+<!-- OPCIÓN C: TODO LIGHT (sin negro shell) -->
+<!-- ═════════════════════════════════════════════════════════════ -->
+<section id="opt-c">
+  <div class="variant-banner">
+    <h2>C · TODO LIGHT · sin negro shell · DM Sans body + Mono data</h2>
+    <p class="subtitle">Header band blanco + sidebar stone-100 (no negro) + content claro · contraste suave coherente</p>
+    <p class="rationale">
+      Owner roast 2026-05-03: <em>"ese negro de fondo navegante no lo veo"</em>. Approach B
+      (shell dark + content light) generaba contraste fragmented. Aquí TODO va light:
+      header band blanco con borde sutil, sidebar stone-100 con texto stone-700, content
+      stone-50. Tipografía igual que A (DM Sans body 14px + Mono solo para WO codes/IDs +
+      contrast bump). Sin contraste duro, "claro/exacto/rápido" cumplido. Mi voto firme nuevo.
+    </p>
+    <div class="swatches">
+      <div class="swatch"><span class="swatch-label">header</span><span class="swatch-val">#FFFFFF · era #0C0A09</span></div>
+      <div class="swatch"><span class="swatch-label">sidebar</span><span class="swatch-val">#F4F4F0 · era #0C0A09</span></div>
+      <div class="swatch"><span class="swatch-label">canvas</span><span class="swatch-val">#FAFAF9</span></div>
+      <div class="swatch"><span class="swatch-label">text</span><span class="swatch-val">#1C1917</span></div>
+      <div class="swatch"><span class="swatch-label">amber brand</span><span class="swatch-val">#D97706</span></div>
+    </div>
+  </div>
+
+  <div class="cockpit opt-c">
+    <header class="cockpit-header"><span class="meta" style="color:var(--text-on-dark);font-weight:700;letter-spacing:0.04em;">COCKPIT DE OPERACIONES</span></header>
+    <aside class="cockpit-side"><div class="nav active">Operaciones</div><div class="nav">Espacio OPS</div><div class="nav">Intervenciones</div><div class="nav">Rollouts</div><div class="nav">Proyectos</div></aside>
+    <main class="cockpit-main">
+      <div>
+        <div class="kpi-strip">
+          <div class="kpi-card crit"><div class="label-caps">Críticos abiertos</div><div class="kpi-num" style="color:var(--critical)">9</div><div class="kpi-foot">SLA breach activo</div></div>
+          <div class="kpi-card warn"><div class="label-caps">SLA en riesgo</div><div class="kpi-num" style="color:var(--warn)">10</div><div class="kpi-foot">Próximo breach &lt; 2h</div></div>
+          <div class="kpi-card brand"><div class="label-caps">Ball SRS &gt;6h</div><div class="kpi-num" style="color:var(--brand)">100</div><div class="kpi-foot">Acción nuestra pendiente</div></div>
+          <div class="kpi-card info"><div class="label-caps">Sin asignar</div><div class="kpi-num" style="color:var(--info)">109</div><div class="kpi-foot">Activas sin tech</div></div>
+          <div class="kpi-card brand"><div class="label-caps">Activas hoy</div><div class="kpi-num" style="color:var(--brand)">13</div><div class="kpi-foot">En ruta + on-site</div></div>
+        </div>
+        <div class="section-label"><div class="label-caps">Intervenciones en curso</div><span class="section-count">3</span></div>
+        <div class="cards-grid">
+          <article class="int-card">
+            <div style="display:flex;justify-content:space-between;align-items:center"><span class="meta">WO-D75AEAE5</span><span class="stage-pill route">EN RUTA</span></div>
+            <h3 class="title">Carolina Herrera Madison Avenue</h3>
+            <p class="body">SITE CH-US-NY01 · New York · Agustín Rivera está en camino con ETA 09:30 EST</p>
+            <div style="display:flex;gap:6px"><button class="btn-pill primary">Detalle</button><button class="btn-pill secondary">Compliance</button></div>
+          </article>
+          <article class="int-card crit">
+            <div style="display:flex;justify-content:space-between;align-items:center"><span class="meta">WO-E5519062</span><span class="stage-pill crit">ON-SITE</span></div>
+            <h3 class="title">Carolina Herrera Flagship Serrano</h3>
+            <p class="body">SITE CH-ES-SER01 · Madrid · Sin tech asignado todavía</p>
+            <div style="display:flex;gap:6px"><button class="btn-pill primary">Detalle</button><button class="btn-pill secondary">Compliance</button></div>
+          </article>
+          <article class="int-card">
+            <div style="display:flex;justify-content:space-between;align-items:center"><span class="meta">WO-D75AEACB</span><span class="stage-pill route">EN RUTA</span></div>
+            <h3 class="title">Claro US Warehouse Miramar</h3>
+            <p class="body">SITE CLARO-US-MIRAMAR · Miramar · Arlindo Ochoa</p>
+            <div style="display:flex;gap:6px"><button class="btn-pill primary">Detalle</button><button class="btn-pill secondary">Compliance</button></div>
+          </article>
+        </div>
+      </div>
+      <aside>
+        <div class="widget">
+          <div class="label-caps">Alertas operativas · 3 activas</div>
+          <div class="alert-row crit"><span class="dot"></span><span class="meta">NO SHOW · WO-D75AEAE5</span></div>
+          <div class="alert-row crit"><span class="dot"></span><span class="meta">ACCESS DENIED · WO-D75AEACB</span></div>
+          <div class="alert-row warn"><span class="dot"></span><span class="meta">ACCIDENT · WO-E5519062</span></div>
+        </div>
+      </aside>
+    </main>
+  </div>
+</section>
+
 <div class="footer-note">
   Mocks autocontained · cero código deployed tocado · cero deps · puro HTML+CSS+Google Fonts<br>
-  Decisión owner: ANTES (mantener) · A · DM Sans body + Mono data · B · Mono pero más grande<br>
-  Una vez firmado: edit puntual de index.css + tailwind config (Iter 2.17 · ~1.5h)
+  Decisión owner: ANTES · A (DM Sans + shell dark) · B (Mono+grande + shell dark) · C (TODO LIGHT)<br>
+  Una vez firmado: edit puntual de index.css + tailwind config + V2Shell tokens (Iter 2.17 · ~2.5h)
 </div>
 
 </body>
