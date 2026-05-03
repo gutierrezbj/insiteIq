@@ -119,20 +119,20 @@ export default function RolloutNotesPanel({ projectId, currentUser, onClose }) {
       />
       {/* Panel slide-in derecho */}
       <aside
-        className="fixed top-0 right-0 bottom-0 z-[4001] bg-wr-bg border-l border-wr-border flex flex-col"
+        className="fixed top-0 right-0 bottom-0 z-[4001] bg-cl-bg border-l border-cl-border flex flex-col"
         style={{ width: 460, maxWidth: "100vw", boxShadow: "-12px 0 30px rgba(0,0,0,0.6)" }}
       >
         {/* Header */}
-        <header className="px-5 py-4 border-b border-wr-border flex items-start justify-between gap-3 flex-shrink-0">
+        <header className="px-5 py-4 border-b border-cl-border flex items-start justify-between gap-3 flex-shrink-0">
           <div>
             <p className="label-caps-v2 mb-0.5">Notas internas</p>
-            <p className="text-[11px] text-wr-text-mid font-mono">
+            <p className="text-[11px] text-cl-text-mid font-mono">
               {loading ? "Cargando…" : `${notes.length} ${notes.length === 1 ? "nota" : "notas"}`}
             </p>
           </div>
           <button
             onClick={onClose}
-            className="text-wr-text-dim hover:text-wr-text transition"
+            className="text-cl-text-dim hover:text-cl-text transition"
             title="Cerrar (Esc)"
           >
             <Icon icon={ICONS.close} size={18} />
@@ -140,13 +140,13 @@ export default function RolloutNotesPanel({ projectId, currentUser, onClose }) {
         </header>
 
         {/* Composer */}
-        <div className="px-5 py-3 border-b border-wr-border flex-shrink-0">
+        <div className="px-5 py-3 border-b border-cl-border flex-shrink-0">
           <textarea
             value={composer}
             onChange={(e) => setComposer(e.target.value)}
             placeholder="Anotá contexto del rollout…"
             rows={3}
-            className="w-full bg-wr-surface/40 border border-wr-border rounded-sm px-3 py-2 text-[12px] text-wr-text font-mono placeholder-wr-text-dim focus:outline-none focus:border-wr-amber/60 resize-none"
+            className="w-full bg-cl-surface/40 border border-cl-border rounded-sm px-3 py-2 text-[12px] text-cl-text font-mono placeholder-cl-text-dim focus:outline-none focus:border-cl-amber/60 resize-none"
             disabled={submitting}
           />
           <div className="flex items-center justify-between mt-2 gap-2">
@@ -195,14 +195,14 @@ export default function RolloutNotesPanel({ projectId, currentUser, onClose }) {
         {/* Lista */}
         <div className="flex-1 overflow-y-auto wr-scroll">
           {loading ? (
-            <div className="px-5 py-8 text-[11px] text-wr-text-mid font-mono text-center">Cargando notas…</div>
+            <div className="px-5 py-8 text-[11px] text-cl-text-mid font-mono text-center">Cargando notas…</div>
           ) : notes.length === 0 ? (
             <div className="px-5 py-12 text-center">
-              <p className="text-[11px] text-wr-text-dim font-mono">Sin notas todavía.</p>
-              <p className="text-[10px] text-wr-text-dim mt-1">La primera nota abre el cuaderno del rollout.</p>
+              <p className="text-[11px] text-cl-text-dim font-mono">Sin notas todavía.</p>
+              <p className="text-[10px] text-cl-text-dim mt-1">La primera nota abre el cuaderno del rollout.</p>
             </div>
           ) : (
-            <ul className="divide-y divide-wr-border">
+            <ul className="divide-y divide-cl-border">
               {notes.map((n) => {
                 const isOwn = currentUser?.id && n.author_user_id === currentUser.id;
                 const isEditing = editingId === n.id;
@@ -210,8 +210,8 @@ export default function RolloutNotesPanel({ projectId, currentUser, onClose }) {
                   <li key={n.id} className="px-5 py-3">
                     <div className="flex items-start justify-between gap-2 mb-1">
                       <div className="min-w-0 flex-1">
-                        <p className="text-[11px] text-wr-text font-medium truncate">{n.author_full_name}</p>
-                        <p className="text-[9px] text-wr-text-dim font-mono mt-0.5">
+                        <p className="text-[11px] text-cl-text font-medium truncate">{n.author_full_name}</p>
+                        <p className="text-[9px] text-cl-text-dim font-mono mt-0.5">
                           {n.created_at ? new Date(n.created_at).toLocaleString("es-ES", { dateStyle: "medium", timeStyle: "short" }) : ""}
                           {n.updated_at && n.updated_at !== n.created_at ? " · editada" : ""}
                         </p>
@@ -238,7 +238,7 @@ export default function RolloutNotesPanel({ projectId, currentUser, onClose }) {
                           value={editingBody}
                           onChange={(e) => setEditingBody(e.target.value)}
                           rows={3}
-                          className="w-full bg-wr-surface/40 border border-wr-border rounded-sm px-2 py-1.5 text-[12px] text-wr-text font-mono resize-none"
+                          className="w-full bg-cl-surface/40 border border-cl-border rounded-sm px-2 py-1.5 text-[12px] text-cl-text font-mono resize-none"
                           autoFocus
                         />
                         <div className="flex items-center gap-2 mt-1.5">
@@ -251,7 +251,7 @@ export default function RolloutNotesPanel({ projectId, currentUser, onClose }) {
                           </button>
                           <button
                             onClick={() => { setEditingId(null); setEditingBody(""); }}
-                            className="text-[10px] text-wr-text-dim hover:text-wr-text uppercase px-2 py-1"
+                            className="text-[10px] text-cl-text-dim hover:text-cl-text uppercase px-2 py-1"
                             style={{ letterSpacing: "0.08em" }}
                           >
                             Cancelar
@@ -259,7 +259,7 @@ export default function RolloutNotesPanel({ projectId, currentUser, onClose }) {
                         </div>
                       </div>
                     ) : (
-                      <p className="text-[12px] text-wr-text leading-relaxed whitespace-pre-wrap break-words">
+                      <p className="text-[12px] text-cl-text leading-relaxed whitespace-pre-wrap break-words">
                         {n.body}
                       </p>
                     )}
@@ -268,14 +268,14 @@ export default function RolloutNotesPanel({ projectId, currentUser, onClose }) {
                       <div className="flex items-center gap-3 mt-2">
                         <button
                           onClick={() => startEdit(n)}
-                          className="text-[10px] text-wr-text-dim hover:text-wr-amber transition uppercase"
+                          className="text-[10px] text-cl-text-dim hover:text-cl-amber transition uppercase"
                           style={{ letterSpacing: "0.08em" }}
                         >
                           Editar
                         </button>
                         <button
                           onClick={() => deleteNote(n.id)}
-                          className="text-[10px] text-wr-text-dim hover:text-red-500 transition uppercase"
+                          className="text-[10px] text-cl-text-dim hover:text-red-500 transition uppercase"
                           style={{ letterSpacing: "0.08em" }}
                         >
                           Eliminar

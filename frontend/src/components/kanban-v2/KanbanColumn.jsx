@@ -32,7 +32,7 @@ export default function KanbanColumn({
   return (
     <section
       data-col={id}
-      className="kanban-col flex-shrink-0 bg-wr-surface-2/60 rounded-lg flex flex-col"
+      className="kanban-col flex-shrink-0 bg-cl-surface-2/60 rounded-lg flex flex-col"
       style={{ width: 300, maxHeight: "calc(100vh - 280px)" }}
       onDragOver={(e) => {
         e.preventDefault();
@@ -54,15 +54,15 @@ export default function KanbanColumn({
       }}
     >
       {/* Header */}
-      <header className="px-4 py-3 flex items-center justify-between border-b border-wr-border flex-shrink-0">
+      <header className="px-4 py-3 flex items-center justify-between border-b border-cl-border flex-shrink-0">
         <h2
-          className="font-display text-[13px] font-semibold uppercase text-wr-text"
+          className="font-display text-[13px] font-semibold uppercase text-cl-text"
           style={{ letterSpacing: "0.08em" }}
         >
           {title}
         </h2>
         <span
-          className="px-2 py-0.5 rounded-full bg-wr-bg border border-wr-border font-mono text-[11px] text-wr-text-mid"
+          className="px-2 py-0.5 rounded-full bg-cl-bg border border-cl-border font-mono text-[11px] text-cl-text-mid"
         >
           {count}
         </span>

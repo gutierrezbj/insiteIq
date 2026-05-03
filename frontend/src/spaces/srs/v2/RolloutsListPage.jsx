@@ -129,18 +129,18 @@ export default function RolloutsListPage() {
             >
               {loading ? "Cargando…" : `${visible.length} de ${projects.length} ${projects.length === 1 ? "rollout" : "rollouts"}`}
             </h1>
-            <p className="text-[11px] text-wr-text-mid mt-1 font-mono">
+            <p className="text-[11px] text-cl-text-mid mt-1 font-mono">
               Click en una tarjeta para ver mapa · kanban · cuadro de mando · timeline
             </p>
           </div>
 
           {/* Sort selector */}
           <div className="flex items-center gap-2">
-            <span className="text-[10px] text-wr-text-dim uppercase" style={{ letterSpacing: "0.1em" }}>Ordenar:</span>
+            <span className="text-[10px] text-cl-text-dim uppercase" style={{ letterSpacing: "0.1em" }}>Ordenar:</span>
             <select
               value={sortKey}
               onChange={(e) => setSortKey(e.target.value)}
-              className="bg-wr-surface/40 border border-wr-border rounded-sm px-2 py-1 text-[11px] text-wr-text font-mono"
+              className="bg-cl-surface/40 border border-cl-border rounded-sm px-2 py-1 text-[11px] text-cl-text font-mono"
               style={{ minWidth: 150 }}
             >
               {SORT_OPTIONS.map((s) => (
@@ -163,12 +163,12 @@ export default function RolloutsListPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Buscar por código, título, PO…"
-              className="w-full bg-wr-surface/40 border border-wr-border rounded-sm pl-8 pr-8 py-1.5 text-[12px] text-wr-text font-mono placeholder-wr-text-dim focus:outline-none focus:border-wr-amber/60"
+              className="w-full bg-cl-surface/40 border border-cl-border rounded-sm pl-8 pr-8 py-1.5 text-[12px] text-cl-text font-mono placeholder-cl-text-dim focus:outline-none focus:border-cl-amber/60"
             />
             {search && (
               <button
                 onClick={() => setSearch("")}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-wr-text-dim hover:text-wr-text"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-cl-text-dim hover:text-cl-text"
                 title="Limpiar búsqueda"
               >
                 <Icon icon={ICONS.close} size={12} />
@@ -230,23 +230,23 @@ export default function RolloutsListPage() {
 
 function RolloutCardSkeleton() {
   return (
-    <article className="bg-wr-surface/30 border border-wr-border rounded-sm px-4 py-4 animate-pulse">
+    <article className="bg-cl-surface/30 border border-cl-border rounded-sm px-4 py-4 animate-pulse">
       <div className="flex items-start justify-between gap-2 mb-3">
         <div className="flex-1">
-          <div className="h-2.5 w-24 bg-wr-border rounded-sm mb-2" />
-          <div className="h-3.5 w-3/4 bg-wr-border rounded-sm" />
+          <div className="h-2.5 w-24 bg-cl-border rounded-sm mb-2" />
+          <div className="h-3.5 w-3/4 bg-cl-border rounded-sm" />
         </div>
-        <div className="h-3 w-12 bg-wr-border rounded-sm" />
+        <div className="h-3 w-12 bg-cl-border rounded-sm" />
       </div>
       <div className="space-y-2.5 mt-3">
         <div className="flex justify-between">
-          <div className="h-2.5 w-12 bg-wr-border rounded-sm" />
-          <div className="h-3 w-16 bg-wr-border rounded-sm" />
+          <div className="h-2.5 w-12 bg-cl-border rounded-sm" />
+          <div className="h-3 w-16 bg-cl-border rounded-sm" />
         </div>
-        <div className="h-1.5 w-full bg-wr-border rounded-full" />
+        <div className="h-1.5 w-full bg-cl-border rounded-full" />
         <div className="grid grid-cols-2 gap-2 mt-3">
-          <div className="h-10 bg-wr-border/50 rounded-sm" />
-          <div className="h-10 bg-wr-border/50 rounded-sm" />
+          <div className="h-10 bg-cl-border/50 rounded-sm" />
+          <div className="h-10 bg-cl-border/50 rounded-sm" />
         </div>
       </div>
     </article>
@@ -273,12 +273,12 @@ function RolloutCard({ project, dashboard, orgsMap, onClick }) {
   return (
     <article
       onClick={onClick}
-      className="bg-wr-surface/40 border border-wr-border rounded-sm px-4 py-4 cursor-pointer hover:border-wr-amber/50 transition"
+      className="bg-cl-surface/40 border border-cl-border rounded-sm px-4 py-4 cursor-pointer hover:border-cl-amber/50 transition"
       style={{ borderLeftWidth: 3, borderLeftColor: accentColor }}
     >
       <div className="flex items-start justify-between gap-2 mb-2">
         <div className="min-w-0 flex-1">
-          <p className="font-mono text-[10px] text-wr-text-dim uppercase truncate" style={{ letterSpacing: "0.1em" }}>
+          <p className="font-mono text-[10px] text-cl-text-dim uppercase truncate" style={{ letterSpacing: "0.1em" }}>
             {project.code}
           </p>
           <h3 className="font-display text-[15px] text-white font-semibold leading-tight mt-0.5 truncate" title={project.title}>
@@ -299,20 +299,20 @@ function RolloutCard({ project, dashboard, orgsMap, onClick }) {
 
       {/* Cliente / end-client / PO */}
       {(clientOrg || endClientOrg || project.po_number) && (
-        <div className="text-[10px] text-wr-text-mid space-y-0.5 mb-3 font-mono">
+        <div className="text-[10px] text-cl-text-mid space-y-0.5 mb-3 font-mono">
           {clientOrg && (
             <div className="truncate" title={(clientOrg.display_name || clientOrg.legal_name)}>
-              <span className="text-wr-text-dim">Cliente:</span> <span className="text-wr-text">{(clientOrg.display_name || clientOrg.legal_name)}</span>
+              <span className="text-cl-text-dim">Cliente:</span> <span className="text-cl-text">{(clientOrg.display_name || clientOrg.legal_name)}</span>
             </div>
           )}
           {endClientOrg && endClientOrg.id !== clientOrg?.id && (
             <div className="truncate" title={(endClientOrg.display_name || endClientOrg.legal_name)}>
-              <span className="text-wr-text-dim">End-client:</span> <span className="text-wr-text">{(endClientOrg.display_name || endClientOrg.legal_name)}</span>
+              <span className="text-cl-text-dim">End-client:</span> <span className="text-cl-text">{(endClientOrg.display_name || endClientOrg.legal_name)}</span>
             </div>
           )}
           {project.po_number && (
             <div className="truncate" title={project.po_number}>
-              <span className="text-wr-text-dim">PO:</span> <span className="text-wr-text">{project.po_number}</span>
+              <span className="text-cl-text-dim">PO:</span> <span className="text-cl-text">{project.po_number}</span>
             </div>
           )}
         </div>
@@ -320,13 +320,13 @@ function RolloutCard({ project, dashboard, orgsMap, onClick }) {
 
       <div className="space-y-2.5 mt-3">
         <div className="flex items-baseline justify-between">
-          <span className="text-[11px] text-wr-text-mid">Avance</span>
+          <span className="text-[11px] text-cl-text-mid">Avance</span>
           <span className="font-mono text-[14px] font-semibold text-white">
-            {completed}/{totalSites} <span className="text-[11px] text-wr-text-dim">· {progressPct}%</span>
+            {completed}/{totalSites} <span className="text-[11px] text-cl-text-dim">· {progressPct}%</span>
           </span>
         </div>
 
-        <div className="w-full bg-wr-bg rounded-full h-1.5 overflow-hidden">
+        <div className="w-full bg-cl-bg rounded-full h-1.5 overflow-hidden">
           <div
             className="h-1.5 rounded-full transition-all"
             style={{
@@ -337,12 +337,12 @@ function RolloutCard({ project, dashboard, orgsMap, onClick }) {
         </div>
 
         <div className="grid grid-cols-2 gap-2 text-[11px] mt-3">
-          <div className="bg-wr-bg/40 px-2 py-1.5 rounded-sm">
-            <p className="text-[9px] text-wr-text-dim uppercase" style={{ letterSpacing: "0.1em" }}>Activas</p>
-            <p className="font-mono text-[14px] text-wr-text font-semibold">{active}</p>
+          <div className="bg-cl-bg/40 px-2 py-1.5 rounded-sm">
+            <p className="text-[9px] text-cl-text-dim uppercase" style={{ letterSpacing: "0.1em" }}>Activas</p>
+            <p className="font-mono text-[14px] text-cl-text font-semibold">{active}</p>
           </div>
-          <div className="bg-wr-bg/40 px-2 py-1.5 rounded-sm" style={{ borderLeft: incidents > 0 ? "2px solid #DC2626" : "2px solid #1F1F1F" }}>
-            <p className="text-[9px] text-wr-text-dim uppercase" style={{ letterSpacing: "0.1em" }}>Incidentes</p>
+          <div className="bg-cl-bg/40 px-2 py-1.5 rounded-sm" style={{ borderLeft: incidents > 0 ? "2px solid #DC2626" : "2px solid #1F1F1F" }}>
+            <p className="text-[9px] text-cl-text-dim uppercase" style={{ letterSpacing: "0.1em" }}>Incidentes</p>
             <p
               className="font-mono text-[14px] font-semibold"
               style={{ color: incidents > 0 ? "#DC2626" : "#22C55E" }}
@@ -353,7 +353,7 @@ function RolloutCard({ project, dashboard, orgsMap, onClick }) {
         </div>
       </div>
 
-      <div className="mt-3 pt-2 border-t border-wr-border flex items-center justify-between text-[10px] text-wr-amber">
+      <div className="mt-3 pt-2 border-t border-cl-border flex items-center justify-between text-[10px] text-cl-amber">
         <span className="uppercase font-medium" style={{ letterSpacing: "0.08em" }}>Abrir rollout</span>
         <Icon icon={ICONS.arrowRight} size={12} />
       </div>

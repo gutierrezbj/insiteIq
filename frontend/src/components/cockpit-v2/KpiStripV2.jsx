@@ -62,7 +62,7 @@ const KPI_DEFS = [
 
 export default function KpiStripV2({ stats, activeFilter, onFilterChange }) {
   return (
-    <section className="grid grid-cols-5 gap-px bg-wr-border">
+    <section className="grid grid-cols-5 gap-px bg-cl-border">
       {KPI_DEFS.map((def) => {
         const count = stats?.[def.key] ?? 0;
         const isActive = activeFilter === def.key;

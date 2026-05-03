@@ -99,6 +99,39 @@ export default {
           violet: "#8B5CF6",
         },
 
+        /* ─────────────────────────────────────────────────────────────── */
+        /* v2 · Cockpit Light (Iter 2.16 · paleta D Hybrid SR firmada)     */
+        /* Tokens prefijo `cl-*`. Aplican en CONTENT de páginas SRS de     */
+        /* supervisión (Cockpit, Rollouts, Kanban, Cuadro, Timeline).      */
+        /* Shell v2 (sidebar/topheader/bottomstrip) sigue usando `wr-*`    */
+        /* (compromiso pragmático: content claro + shell oscuro).          */
+        /* Espacio OPS (war room intencional) NO usa `cl-*`.               */
+        /* ─────────────────────────────────────────────────────────────── */
+        cl: {
+          bg: "#FAFAF9",            /* stone-50 warm off-white · canvas */
+          surface: "#FFFFFF",       /* cards, modales, panels */
+          "surface-2": "#F4F4F0",   /* cards sec, hover, filter inactivos */
+          border: "#E7E5E0",        /* border estandar cards/inputs */
+          "border-strong": "#D2CFC8",
+          text: "#1C1917",          /* stone-900 · titulos, numeros KPI */
+          "text-mid": "#57534E",    /* stone-600 · body, labels */
+          "text-dim": "#A8A29E",    /* stone-400 · metadata, timestamps */
+          "header-band": "#0C0A09", /* stone-950 · header dark band */
+          "text-on-dark": "#F5F5F4",/* texto sobre header dark */
+          amber: "#D97706",         /* amber-600 · brand SR mantenido */
+          "amber-soft": "#FEF3C7",  /* amber-50 · backgrounds amber */
+          "amber-strong": "#92400E",/* amber-800 · text sobre amber-soft */
+          brand: "#10B981",         /* verde SRS ecosystem */
+          red: "#DC2626",           /* critical sobre fondo claro */
+          "red-soft": "#FEE2E2",    /* bg para alertas suaves */
+          green: "#10B981",
+          "green-soft": "#D1FAE5",
+          blue: "#0284C7",          /* info accent (mas serio que cyan) */
+          "blue-soft": "#DBEAFE",
+          violet: "#7C3AED",
+          "violet-soft": "#EDE9FE",
+        },
+
         /* Stage colors v2 · state machine 9 stages (DS v1.7 §3.2) */
         stage: {
           intake: "#3B82F6",

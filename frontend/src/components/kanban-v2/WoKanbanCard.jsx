@@ -107,7 +107,7 @@ export default function WoKanbanCard({
         if (e.currentTarget.classList.contains("is-dragging")) return;
         onClick?.(wo);
       }}
-      className="wo-kanban-card stage-border-top bg-wr-surface border border-wr-border hover:border-wr-border-strong transition cursor-grab"
+      className="wo-kanban-card stage-border-top bg-cl-surface border border-cl-border hover:border-cl-border-strong transition cursor-grab"
       style={{
         "--stage-color": status.color,
         padding: 14,
@@ -133,7 +133,7 @@ export default function WoKanbanCard({
           >
             {severity.label?.toUpperCase()}
           </span>
-          <span className="label-caps-v2 text-wr-text-dim">{status.label}</span>
+          <span className="label-caps-v2 text-cl-text-dim">{status.label}</span>
         </div>
         {hasSlaAlert && (
           <Icon icon={ICONS.dangerTriangle} size={14} color="#DC2626" />
@@ -144,13 +144,13 @@ export default function WoKanbanCard({
       <h3 className="font-display text-[15px] font-semibold text-white leading-tight mb-1">
         {site?.name || wo?.site_name || "Sin sitio"}
       </h3>
-      <div className="flex items-center gap-1.5 text-[12px] text-wr-text-mid mb-2 flex-wrap">
-        <span className="font-mono text-[11px] text-wr-text-dim">{formatWoCode(wo)}</span>
-        <span className="text-wr-text-dim">·</span>
+      <div className="flex items-center gap-1.5 text-[12px] text-cl-text-mid mb-2 flex-wrap">
+        <span className="font-mono text-[11px] text-cl-text-dim">{formatWoCode(wo)}</span>
+        <span className="text-cl-text-dim">·</span>
         <span>{client?.name || "—"}</span>
         {site?.city && (
           <>
-            <span className="text-wr-text-dim">·</span>
+            <span className="text-cl-text-dim">·</span>
             <span>{site.city}</span>
           </>
         )}
@@ -159,7 +159,7 @@ export default function WoKanbanCard({
       {/* Tags row */}
       <div className="flex items-center gap-1.5 mb-2 flex-wrap">
         {tag && (
-          <span className="px-2 py-0.5 text-[11px] rounded bg-wr-surface-2 text-wr-text-mid">
+          <span className="px-2 py-0.5 text-[11px] rounded bg-cl-surface-2 text-cl-text-mid">
             {tag}
           </span>
         )}
@@ -177,7 +177,7 @@ export default function WoKanbanCard({
       {/* Description */}
       {wo?.description && (
         <p
-          className="text-[12px] text-wr-text-dim mb-3 leading-snug"
+          className="text-[12px] text-cl-text-dim mb-3 leading-snug"
           style={{
             display: "-webkit-box",
             WebkitLineClamp: 2,
@@ -190,18 +190,18 @@ export default function WoKanbanCard({
       )}
 
       {/* Footer: tech + tiempo relativo */}
-      <div className="flex items-center justify-between pt-2 border-t border-wr-border">
+      <div className="flex items-center justify-between pt-2 border-t border-cl-border">
         <div className="flex items-center gap-1.5 text-[11px]">
           {tech ? (
             <>
               <Icon icon={ICONS.user} size={12} color="#9CA3AF" />
-              <span className="text-wr-text-mid">{tech.full_name || tech.name}</span>
+              <span className="text-cl-text-mid">{tech.full_name || tech.name}</span>
             </>
           ) : (
-            <span className="text-wr-text-dim italic">Sin asignar</span>
+            <span className="text-cl-text-dim italic">Sin asignar</span>
           )}
         </div>
-        <div className="flex items-center gap-1 text-[11px] text-wr-text-dim">
+        <div className="flex items-center gap-1 text-[11px] text-cl-text-dim">
           <Icon icon={ICONS.clock} size={11} />
           <span>{timeAgo(wo?.updated_at || wo?.created_at)}</span>
         </div>

@@ -342,7 +342,7 @@ export default function InterventionsKanbanPage({ scope = "srs" }) {
             placeholder="Buscar WO, site, cliente, técnico..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="bg-wr-surface border border-wr-border focus:border-wr-amber rounded-full text-[13px] text-wr-text"
+            className="bg-cl-surface border border-cl-border focus:border-cl-amber rounded-full text-[13px] text-cl-text"
             style={{
               height: 36,
               width: 320,
@@ -382,12 +382,12 @@ export default function InterventionsKanbanPage({ scope = "srs" }) {
         <div className="flex-1" />
 
         {/* Toggle canceladas */}
-        <label className="flex items-center gap-2 text-[12px] text-wr-text-mid cursor-pointer">
+        <label className="flex items-center gap-2 text-[12px] text-cl-text-mid cursor-pointer">
           <input
             type="checkbox"
             checked={showCancelled}
             onChange={(e) => setShowCancelled(e.target.checked)}
-            className="accent-wr-amber"
+            className="accent-cl-amber"
           />
           Ver canceladas
         </label>
@@ -395,7 +395,7 @@ export default function InterventionsKanbanPage({ scope = "srs" }) {
         {/* Refresh */}
         <button
           onClick={load}
-          className="h-9 w-9 flex items-center justify-center text-wr-text-mid border border-wr-border rounded-full hover:border-wr-border-strong transition"
+          className="h-9 w-9 flex items-center justify-center text-cl-text-mid border border-cl-border rounded-full hover:border-cl-border-strong transition"
           title="Refrescar"
         >
           <Icon icon={ICONS.refresh} size={14} />
@@ -403,7 +403,7 @@ export default function InterventionsKanbanPage({ scope = "srs" }) {
 
         {/* CTA primary */}
         <button
-          className="h-9 px-4 flex items-center gap-2 text-[13px] font-medium text-white bg-wr-amber hover:brightness-110 rounded-full transition"
+          className="h-9 px-4 flex items-center gap-2 text-[13px] font-medium text-white bg-cl-amber hover:brightness-110 rounded-full transition"
           onClick={() => toast.info("Crear nueva solicitud · disponible en próxima fase")}
         >
           + Nueva solicitud

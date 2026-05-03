@@ -200,7 +200,7 @@ export default function RolloutDetailPage() {
 
   if (loading) {
     return (
-      <div className="h-full flex items-center justify-center text-wr-text-mid font-mono text-[12px]">
+      <div className="h-full flex items-center justify-center text-cl-text-mid font-mono text-[12px]">
         Cargando rollout…
       </div>
     );
@@ -226,12 +226,12 @@ export default function RolloutDetailPage() {
   return (
     <div className="h-full flex flex-col">
       {/* Header sticky */}
-      <header className="border-b border-wr-border bg-wr-bg flex-shrink-0">
+      <header className="border-b border-cl-border bg-cl-bg flex-shrink-0">
         <div className="px-6 py-4 flex items-start justify-between gap-4">
           <div className="min-w-0">
             <div className="flex items-center gap-2.5 mb-1 flex-wrap">
               <p className="label-caps-v2">Rollout</p>
-              <span className="font-mono text-[10px] text-wr-text-dim">{project.code}</span>
+              <span className="font-mono text-[10px] text-cl-text-dim">{project.code}</span>
               <span
                 className="text-[9px] uppercase font-semibold px-1.5 py-0.5 rounded-sm"
                 style={{
@@ -249,8 +249,8 @@ export default function RolloutDetailPage() {
             >
               {project.title}
             </h1>
-            <div className="flex items-center gap-4 mt-1 text-[12px] text-wr-text-mid font-mono">
-              <span><strong className="text-wr-text">{completed}</strong> / {totalSites} sites · <span style={{ color: "#22C55E" }}>{progressPct}%</span></span>
+            <div className="flex items-center gap-4 mt-1 text-[12px] text-cl-text-mid font-mono">
+              <span><strong className="text-cl-text">{completed}</strong> / {totalSites} sites · <span style={{ color: "#22C55E" }}>{progressPct}%</span></span>
               <span style={{ color: FLAG_COLORS.problem }}>● {counts.problem} con problemas</span>
               <span style={{ color: FLAG_COLORS.scheduled }}>● {counts.scheduled} en calendario</span>
               <span style={{ color: FLAG_COLORS.done }}>● {counts.done} hecho/marcha</span>
@@ -299,7 +299,7 @@ export default function RolloutDetailPage() {
           {/* Filter rápido (solo en Mapa y Kanban) */}
           {(activeTab === "mapa" || activeTab === "kanban") && (
             <div className="ml-auto flex items-center gap-2 py-2">
-              <span className="text-[10px] text-wr-text-dim uppercase" style={{ letterSpacing: "0.1em" }}>Ver:</span>
+              <span className="text-[10px] text-cl-text-dim uppercase" style={{ letterSpacing: "0.1em" }}>Ver:</span>
               {[
                 { key: "all", label: "Todos" },
                 { key: "problems", label: `Problemas (${counts.problem})`, color: FLAG_COLORS.problem },
@@ -466,16 +466,16 @@ function BulkRescheduleModal({ wos, sites, users, onClose, onDone }) {
       onClick={submitting ? undefined : onClose}
     >
       <div
-        className="bg-wr-bg border border-wr-border rounded-sm w-[640px] max-w-[95vw] max-h-[90vh] flex flex-col"
+        className="bg-cl-bg border border-cl-border rounded-sm w-[640px] max-w-[95vw] max-h-[90vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <header className="px-5 py-4 border-b border-wr-border flex-shrink-0">
+        <header className="px-5 py-4 border-b border-cl-border flex-shrink-0">
           <p className="label-caps-v2 mb-1">Programar bulk</p>
           <h2 className="font-display text-[18px] font-semibold text-white leading-tight">
             {selected.size} de {wos.length} sites pending seleccionados
           </h2>
-          <p className="text-[11px] text-wr-text-mid font-mono mt-0.5">
+          <p className="text-[11px] text-cl-text-mid font-mono mt-0.5">
             Avanza intake → triage con tech + fecha. Operación secuencial (1 POST por site).
           </p>
         </header>
@@ -483,16 +483,16 @@ function BulkRescheduleModal({ wos, sites, users, onClose, onDone }) {
         {/* Body */}
         <div className="flex-1 overflow-hidden flex flex-col">
           {/* Tech + Date pickers */}
-          <div className="px-5 py-3 border-b border-wr-border grid grid-cols-2 gap-3 flex-shrink-0">
+          <div className="px-5 py-3 border-b border-cl-border grid grid-cols-2 gap-3 flex-shrink-0">
             <div>
-              <label className="block text-[10px] text-wr-text-dim uppercase mb-1.5" style={{ letterSpacing: "0.14em" }}>
+              <label className="block text-[10px] text-cl-text-dim uppercase mb-1.5" style={{ letterSpacing: "0.14em" }}>
                 Técnico asignado
               </label>
               <select
                 value={techId}
                 onChange={(e) => setTechId(e.target.value)}
                 disabled={submitting}
-                className="w-full bg-wr-surface/40 border border-wr-border rounded-sm px-3 py-2 text-[12px] text-wr-text font-mono"
+                className="w-full bg-cl-surface/40 border border-cl-border rounded-sm px-3 py-2 text-[12px] text-cl-text font-mono"
               >
                 <option value="">— Selecciona técnico —</option>
                 {techCandidates.map((u) => (
@@ -501,7 +501,7 @@ function BulkRescheduleModal({ wos, sites, users, onClose, onDone }) {
               </select>
             </div>
             <div>
-              <label className="block text-[10px] text-wr-text-dim uppercase mb-1.5" style={{ letterSpacing: "0.14em" }}>
+              <label className="block text-[10px] text-cl-text-dim uppercase mb-1.5" style={{ letterSpacing: "0.14em" }}>
                 Fecha programada (mismo día para todos)
               </label>
               <input
@@ -509,33 +509,33 @@ function BulkRescheduleModal({ wos, sites, users, onClose, onDone }) {
                 value={scheduledAt}
                 onChange={(e) => setScheduledAt(e.target.value)}
                 disabled={submitting}
-                className="w-full bg-wr-surface/40 border border-wr-border rounded-sm px-3 py-2 text-[12px] text-wr-text font-mono"
+                className="w-full bg-cl-surface/40 border border-cl-border rounded-sm px-3 py-2 text-[12px] text-cl-text font-mono"
               />
             </div>
           </div>
 
           {/* Lista checkboxes */}
-          <div className="px-5 py-2 border-b border-wr-border flex items-center justify-between flex-shrink-0">
+          <div className="px-5 py-2 border-b border-cl-border flex items-center justify-between flex-shrink-0">
             <button
               onClick={toggleAll}
               disabled={submitting}
-              className="text-[11px] text-wr-amber hover:underline uppercase"
+              className="text-[11px] text-cl-amber hover:underline uppercase"
               style={{ letterSpacing: "0.08em" }}
             >
               {selected.size === wos.length ? "Deseleccionar todos" : "Seleccionar todos"}
             </button>
-            <span className="text-[10px] text-wr-text-dim font-mono">{selected.size} / {wos.length}</span>
+            <span className="text-[10px] text-cl-text-dim font-mono">{selected.size} / {wos.length}</span>
           </div>
           {wos.length === 0 && (
             <div className="flex-1 flex items-center justify-center px-5 py-12 text-center">
               <div>
-                <p className="text-[12px] text-wr-text-mid mb-1">Sin sites pending para programar</p>
-                <p className="text-[10px] text-wr-text-dim font-mono">Solo aparecen aquí los sites en estado <span className="text-wr-amber">intake</span> (no asignados todavía)</p>
+                <p className="text-[12px] text-cl-text-mid mb-1">Sin sites pending para programar</p>
+                <p className="text-[10px] text-cl-text-dim font-mono">Solo aparecen aquí los sites en estado <span className="text-cl-amber">intake</span> (no asignados todavía)</p>
               </div>
             </div>
           )}
           {wos.length > 0 && (
-          <ul className="flex-1 overflow-y-auto wr-scroll divide-y divide-wr-border">
+          <ul className="flex-1 overflow-y-auto wr-scroll divide-y divide-cl-border">
             {wos.map((w) => {
               const s = sites[w.site_id] || {};
               const isSelected = selected.has(w.id);
@@ -543,18 +543,18 @@ function BulkRescheduleModal({ wos, sites, users, onClose, onDone }) {
                 <li
                   key={w.id}
                   onClick={() => !submitting && toggle(w.id)}
-                  className="px-5 py-2 flex items-center gap-3 cursor-pointer hover:bg-wr-surface/30 transition"
+                  className="px-5 py-2 flex items-center gap-3 cursor-pointer hover:bg-cl-surface/30 transition"
                 >
                   <input
                     type="checkbox"
                     checked={isSelected}
                     onChange={() => toggle(w.id)}
                     disabled={submitting}
-                    className="accent-wr-amber"
+                    className="accent-cl-amber"
                   />
                   <div className="min-w-0 flex-1">
-                    <div className="text-[12px] text-wr-text truncate">{s.name || "Site sin nombre"}</div>
-                    <div className="text-[10px] text-wr-text-dim font-mono truncate">
+                    <div className="text-[12px] text-cl-text truncate">{s.name || "Site sin nombre"}</div>
+                    <div className="text-[10px] text-cl-text-dim font-mono truncate">
                       {s.code || "—"} · {formatWoCode(w)} · {s.country || ""}
                     </div>
                   </div>
@@ -566,12 +566,12 @@ function BulkRescheduleModal({ wos, sites, users, onClose, onDone }) {
 
           {/* Progress bar / errors */}
           {submitting && (
-            <div className="px-5 py-2 border-t border-wr-border flex-shrink-0">
-              <div className="flex items-center justify-between text-[11px] text-wr-text mb-1">
+            <div className="px-5 py-2 border-t border-cl-border flex-shrink-0">
+              <div className="flex items-center justify-between text-[11px] text-cl-text mb-1">
                 <span>Programando…</span>
                 <span className="font-mono">{progress.done} / {progress.total}</span>
               </div>
-              <div className="w-full bg-wr-bg rounded-full h-1 overflow-hidden">
+              <div className="w-full bg-cl-bg rounded-full h-1 overflow-hidden">
                 <div
                   className="h-1 transition-all"
                   style={{
@@ -583,21 +583,21 @@ function BulkRescheduleModal({ wos, sites, users, onClose, onDone }) {
             </div>
           )}
           {!submitting && progress.errors.length > 0 && (
-            <div className="px-5 py-2 border-t border-wr-border flex-shrink-0 max-h-[100px] overflow-y-auto">
+            <div className="px-5 py-2 border-t border-cl-border flex-shrink-0 max-h-[100px] overflow-y-auto">
               <p className="text-[10px] text-red-400 font-mono mb-1">{progress.errors.length} errores:</p>
               {progress.errors.map((e, i) => (
-                <p key={i} className="text-[10px] text-wr-text-mid font-mono">{e.code}: {e.msg}</p>
+                <p key={i} className="text-[10px] text-cl-text-mid font-mono">{e.code}: {e.msg}</p>
               ))}
             </div>
           )}
         </div>
 
         {/* Footer */}
-        <footer className="px-5 py-3 border-t border-wr-border flex items-center justify-end gap-2 flex-shrink-0">
+        <footer className="px-5 py-3 border-t border-cl-border flex items-center justify-end gap-2 flex-shrink-0">
           <button
             onClick={onClose}
             disabled={submitting}
-            className="text-[11px] text-wr-text-mid hover:text-wr-text uppercase px-3 py-2 transition"
+            className="text-[11px] text-cl-text-mid hover:text-cl-text uppercase px-3 py-2 transition"
             style={{ letterSpacing: "0.08em" }}
           >
             {submitting ? "Esperá…" : "Cancelar"}
@@ -656,7 +656,7 @@ function LegendPin({ color, label }) {
           <circle cx="12" cy="10" r="3" fill="#FFFFFF" stroke={color} strokeWidth={2}/>
         </svg>
       </span>
-      <span className="text-wr-text-mid">{label}</span>
+      <span className="text-cl-text-mid">{label}</span>
     </span>
   );
 }
@@ -704,16 +704,16 @@ function ScheduleSiteModal({ wo, site, users, onClose, onScheduled }) {
       onClick={onClose}
     >
       <div
-        className="bg-wr-bg border border-wr-border rounded-sm w-[460px] max-w-[95vw]"
+        className="bg-cl-bg border border-cl-border rounded-sm w-[460px] max-w-[95vw]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <header className="px-5 py-4 border-b border-wr-border">
+        <header className="px-5 py-4 border-b border-cl-border">
           <p className="label-caps-v2 mb-1">Programar instalación</p>
           <h2 className="font-display text-[18px] font-semibold text-white leading-tight">
             {site?.name || "Site sin nombre"}
           </h2>
-          <p className="text-[11px] text-wr-text-mid font-mono mt-0.5">
+          <p className="text-[11px] text-cl-text-mid font-mono mt-0.5">
             {site?.code} · {site?.city || site?.country}
           </p>
         </header>
@@ -721,13 +721,13 @@ function ScheduleSiteModal({ wo, site, users, onClose, onScheduled }) {
         {/* Body */}
         <div className="px-5 py-4 space-y-4">
           <div>
-            <label className="block text-[10px] text-wr-text-dim uppercase mb-1.5" style={{ letterSpacing: "0.14em" }}>
+            <label className="block text-[10px] text-cl-text-dim uppercase mb-1.5" style={{ letterSpacing: "0.14em" }}>
               Técnico asignado
             </label>
             <select
               value={techId}
               onChange={(e) => setTechId(e.target.value)}
-              className="w-full bg-wr-surface/40 border border-wr-border rounded-sm px-3 py-2 text-[13px] text-wr-text font-mono"
+              className="w-full bg-cl-surface/40 border border-cl-border rounded-sm px-3 py-2 text-[13px] text-cl-text font-mono"
             >
               <option value="">— Selecciona técnico —</option>
               {techCandidates.map((u) => (
@@ -739,30 +739,30 @@ function ScheduleSiteModal({ wo, site, users, onClose, onScheduled }) {
           </div>
 
           <div>
-            <label className="block text-[10px] text-wr-text-dim uppercase mb-1.5" style={{ letterSpacing: "0.14em" }}>
+            <label className="block text-[10px] text-cl-text-dim uppercase mb-1.5" style={{ letterSpacing: "0.14em" }}>
               Fecha y hora programada (local)
             </label>
             <input
               type="datetime-local"
               value={scheduledAt}
               onChange={(e) => setScheduledAt(e.target.value)}
-              className="w-full bg-wr-surface/40 border border-wr-border rounded-sm px-3 py-2 text-[13px] text-wr-text font-mono"
+              className="w-full bg-cl-surface/40 border border-cl-border rounded-sm px-3 py-2 text-[13px] text-cl-text font-mono"
             />
           </div>
 
-          <p className="text-[11px] text-wr-text-mid leading-relaxed">
-            Avanza este site de <span className="text-wr-text-dim">intake</span> a{" "}
+          <p className="text-[11px] text-cl-text-mid leading-relaxed">
+            Avanza este site de <span className="text-cl-text-dim">intake</span> a{" "}
             <span style={{ color: "#F59E0B" }}>triage</span> con tech asignado y fecha
             agendada. La banderita pasa de azul (programado) a verde (en marcha).
           </p>
         </div>
 
         {/* Footer */}
-        <footer className="px-5 py-3 border-t border-wr-border flex items-center justify-end gap-2">
+        <footer className="px-5 py-3 border-t border-cl-border flex items-center justify-end gap-2">
           <button
             onClick={onClose}
             disabled={submitting}
-            className="text-[11px] text-wr-text-mid hover:text-wr-text uppercase px-3 py-2 transition"
+            className="text-[11px] text-cl-text-mid hover:text-cl-text uppercase px-3 py-2 transition"
             style={{ letterSpacing: "0.08em" }}
           >
             Cancelar
@@ -998,7 +998,7 @@ function MapTab({ wos, sites, users, onScheduled }) {
       {/* Iter 2.15: botón "Vista general" top-right · resetea zoom + bounds originales */}
       <button
         onClick={resetToOverview}
-        className="absolute top-3 right-3 z-[400] bg-wr-surface/95 border border-wr-border rounded-sm px-3 py-2 flex items-center gap-2 text-[11px] uppercase font-medium text-wr-text hover:text-wr-amber hover:border-wr-amber/60 transition backdrop-blur-sm"
+        className="absolute top-3 right-3 z-[400] bg-cl-surface/95 border border-cl-border rounded-sm px-3 py-2 flex items-center gap-2 text-[11px] uppercase font-medium text-cl-text hover:text-cl-amber hover:border-cl-amber/60 transition backdrop-blur-sm"
         style={{ letterSpacing: "0.06em" }}
         title="Reset zoom (atajo: Esc)"
       >
@@ -1007,14 +1007,14 @@ function MapTab({ wos, sites, users, onScheduled }) {
       </button>
 
       {/* Leyenda · pins con la misma visual del marker (consistencia) */}
-      <div className="absolute bottom-3 left-5 z-[400] bg-wr-surface/95 border border-wr-border rounded-sm px-3 py-2 flex items-center gap-4 text-[10px] backdrop-blur-sm">
+      <div className="absolute bottom-3 left-5 z-[400] bg-cl-surface/95 border border-cl-border rounded-sm px-3 py-2 flex items-center gap-4 text-[10px] backdrop-blur-sm">
         <p className="label-caps-v2">Leyenda</p>
         <LegendPin color={FLAG_COLORS.done} label="Hecho/Marcha" />
         <LegendPin color={FLAG_COLORS.problem} label="Problema" />
         <LegendPin color={FLAG_COLORS.scheduled} label="Programado" />
       </div>
       {!window.L && (
-        <div className="absolute inset-0 flex items-center justify-center text-wr-text-dim text-[12px] font-mono">
+        <div className="absolute inset-0 flex items-center justify-center text-cl-text-dim text-[12px] font-mono">
           Cargando mapa…
         </div>
       )}
@@ -1090,16 +1090,16 @@ function KanbanTab({ wos, sites, users, reload }) {
           key={col.key}
           onDragOver={onDragOver}
           onDrop={(e) => onDrop(e, col)}
-          className="flex-shrink-0 w-[260px] bg-wr-surface/40 border border-wr-border rounded-sm flex flex-col"
+          className="flex-shrink-0 w-[260px] bg-cl-surface/40 border border-cl-border rounded-sm flex flex-col"
           style={{ minHeight: 200 }}
         >
-          <div className="px-3 py-2 border-b border-wr-border flex items-center justify-between">
+          <div className="px-3 py-2 border-b border-cl-border flex items-center justify-between">
             <span className="label-caps-v2">{col.label}</span>
-            <span className="font-mono text-[11px] text-wr-text">{wosByColumn[col.key].length}</span>
+            <span className="font-mono text-[11px] text-cl-text">{wosByColumn[col.key].length}</span>
           </div>
           <div className="p-2 space-y-2 overflow-y-auto flex-1">
             {wosByColumn[col.key].length === 0 && (
-              <p className="text-[10px] text-wr-text-dim italic px-2 py-3">Vacía</p>
+              <p className="text-[10px] text-cl-text-dim italic px-2 py-3">Vacía</p>
             )}
             {wosByColumn[col.key].map((wo) => {
               const site = sites[wo.site_id];
@@ -1110,17 +1110,17 @@ function KanbanTab({ wos, sites, users, reload }) {
                   key={wo.id}
                   draggable
                   onDragStart={(e) => onDragStart(e, wo.id)}
-                  className="bg-wr-bg border border-wr-border rounded-sm p-2.5 cursor-grab"
+                  className="bg-cl-bg border border-cl-border rounded-sm p-2.5 cursor-grab"
                   style={{ borderLeftWidth: 2, borderLeftColor: FLAG_COLORS[flag] }}
                 >
                   <div className="flex items-center justify-between mb-1">
-                    <span className="font-mono text-[10px] text-wr-text-dim">{formatWoCode(wo)}</span>
+                    <span className="font-mono text-[10px] text-cl-text-dim">{formatWoCode(wo)}</span>
                     <span className="text-[9px]" style={{ color: FLAG_COLORS[flag] }}>● {flag}</span>
                   </div>
-                  <div className="text-[12px] text-wr-text font-medium leading-tight mb-1 truncate">
+                  <div className="text-[12px] text-cl-text font-medium leading-tight mb-1 truncate">
                     {site?.name || wo.title || "—"}
                   </div>
-                  <div className="text-[10px] text-wr-text-mid truncate">
+                  <div className="text-[10px] text-cl-text-mid truncate">
                     {site?.code || ""} · {tech?.full_name || tech?.name || "Sin tech"}
                   </div>
                 </article>
@@ -1141,15 +1141,15 @@ function DashboardTab({ dashboard, counts, totalSites, progressPct }) {
   return (
     <div className="px-6 py-6 space-y-6">
       {/* Hero metric */}
-      <div className="bg-wr-surface/50 border border-wr-border rounded-sm px-6 py-6">
+      <div className="bg-cl-surface/50 border border-cl-border rounded-sm px-6 py-6">
         <p className="label-caps-v2 mb-2">Avance del rollout</p>
         <div className="flex items-baseline gap-3 mb-3">
           <span className="font-display text-[48px] font-semibold text-white leading-none">
             {wo.completed || counts.done}
           </span>
-          <span className="text-[20px] text-wr-text-dim">de</span>
-          <span className="font-display text-[28px] text-wr-text">{totalSites}</span>
-          <span className="text-[14px] text-wr-text-dim">sites · </span>
+          <span className="text-[20px] text-cl-text-dim">de</span>
+          <span className="font-display text-[28px] text-cl-text">{totalSites}</span>
+          <span className="text-[14px] text-cl-text-dim">sites · </span>
           <span
             className="font-mono text-[24px] font-semibold"
             style={{ color: progressPct >= 80 ? "#22C55E" : progressPct >= 50 ? "#F59E0B" : "#9CA3AF" }}
@@ -1157,7 +1157,7 @@ function DashboardTab({ dashboard, counts, totalSites, progressPct }) {
             {progressPct}%
           </span>
         </div>
-        <div className="w-full bg-wr-bg rounded-full h-2 overflow-hidden">
+        <div className="w-full bg-cl-bg rounded-full h-2 overflow-hidden">
           <div
             className="h-2 rounded-full transition-all"
             style={{
@@ -1212,7 +1212,7 @@ function DashboardTab({ dashboard, counts, totalSites, progressPct }) {
         />
       </div>
 
-      <p className="text-[10px] text-wr-text-dim font-mono">
+      <p className="text-[10px] text-cl-text-dim font-mono">
         Generado {dashboard?.generated_at ? new Date(dashboard.generated_at).toLocaleString("es-ES") : "—"}
       </p>
     </div>
@@ -1221,7 +1221,7 @@ function DashboardTab({ dashboard, counts, totalSites, progressPct }) {
 
 function KpiCard({ label, value, color }) {
   return (
-    <div className="bg-wr-surface/50 border border-wr-border rounded-sm px-4 py-3" style={{ borderLeftWidth: 2, borderLeftColor: color }}>
+    <div className="bg-cl-surface/50 border border-cl-border rounded-sm px-4 py-3" style={{ borderLeftWidth: 2, borderLeftColor: color }}>
       <p className="label-caps-v2 mb-1">{label}</p>
       <p className="font-display text-[28px] font-semibold leading-none" style={{ color }}>{value}</p>
     </div>
@@ -1230,11 +1230,11 @@ function KpiCard({ label, value, color }) {
 
 function DataPanel({ title, value, unit, color }) {
   return (
-    <div className="bg-wr-surface/40 border border-wr-border rounded-sm px-4 py-3">
+    <div className="bg-cl-surface/40 border border-cl-border rounded-sm px-4 py-3">
       <p className="label-caps-v2 mb-1">{title}</p>
       <div className="flex items-baseline gap-2">
         <span className="font-mono text-[22px] font-semibold" style={{ color: color || "#E5E5E5" }}>{value}</span>
-        <span className="text-[10px] text-wr-text-dim">{unit}</span>
+        <span className="text-[10px] text-cl-text-dim">{unit}</span>
       </div>
     </div>
   );
@@ -1312,12 +1312,12 @@ function TimelineTab({ wos, sites }) {
       <div className="mb-4 flex items-end justify-between gap-3 flex-wrap">
         <div>
           <p className="label-caps-v2 mb-1">Timeline del rollout</p>
-          <p className="text-[11px] text-wr-text-dim">
+          <p className="text-[11px] text-cl-text-dim">
             Sites × tiempo · barras por status · línea amber = HOY ({todayLabel}) · {rows.length} sites en rango
           </p>
         </div>
         <div className="flex items-center gap-1">
-          <span className="text-[10px] text-wr-text-dim uppercase mr-1.5" style={{ letterSpacing: "0.1em" }}>Rango:</span>
+          <span className="text-[10px] text-cl-text-dim uppercase mr-1.5" style={{ letterSpacing: "0.1em" }}>Rango:</span>
           {TIMELINE_RANGES.map((b) => (
             <button
               key={b.key}
@@ -1343,12 +1343,12 @@ function TimelineTab({ wos, sites }) {
           sublabel="Ampliá el rango o seleccioná 'Todo' para ver el histórico completo"
         />
       ) : (
-        <div className="border border-wr-border rounded-sm overflow-hidden">
+        <div className="border border-cl-border rounded-sm overflow-hidden">
           {/* Header months */}
-          <div className="grid border-b border-wr-border bg-wr-surface/40" style={{ gridTemplateColumns: `200px repeat(${months.length}, 1fr)` }}>
+          <div className="grid border-b border-cl-border bg-cl-surface/40" style={{ gridTemplateColumns: `200px repeat(${months.length}, 1fr)` }}>
             <div className="px-3 py-2 label-caps-v2">Site</div>
             {months.map((m, i) => (
-              <div key={i} className="px-2 py-2 text-[10px] text-wr-text-dim font-mono uppercase border-l border-wr-border" style={{ letterSpacing: "0.1em" }}>
+              <div key={i} className="px-2 py-2 text-[10px] text-cl-text-dim font-mono uppercase border-l border-cl-border" style={{ letterSpacing: "0.1em" }}>
                 {m.toLocaleDateString("es-ES", { month: "short", year: "2-digit" })}
               </div>
             ))}
@@ -1392,10 +1392,10 @@ function TimelineTab({ wos, sites }) {
               return (
                 <div
                   key={r.wo.id}
-                  className="grid border-b border-wr-border hover:bg-wr-surface/20 transition relative"
+                  className="grid border-b border-cl-border hover:bg-cl-surface/20 transition relative"
                   style={{ gridTemplateColumns: `200px 1fr`, minHeight: 28 }}
                 >
-                  <div className="px-3 py-2 text-[11px] text-wr-text font-mono truncate border-r border-wr-border" title={r.site.name || ""}>
+                  <div className="px-3 py-2 text-[11px] text-cl-text font-mono truncate border-r border-cl-border" title={r.site.name || ""}>
                     {r.site.code || r.site.name?.slice(0, 20)}
                   </div>
                   <div className="relative h-full">
@@ -1588,27 +1588,27 @@ function ExportReportButton({ project, wos, sites, users, counts, totalSites, pr
         <>
           <div className="fixed inset-0 z-[3000]" onClick={() => setOpen(false)} />
           <div
-            className="absolute right-0 mt-1 z-[3001] bg-wr-bg border border-wr-border rounded-sm overflow-hidden"
+            className="absolute right-0 mt-1 z-[3001] bg-cl-bg border border-cl-border rounded-sm overflow-hidden"
             style={{ minWidth: 220, boxShadow: "0 8px 24px rgba(0, 0, 0, 0.6)" }}
           >
             <button
               onClick={exportCsv}
-              className="w-full flex items-center gap-3 px-3 py-2.5 text-[11px] text-wr-text hover:bg-wr-surface/50 transition text-left"
+              className="w-full flex items-center gap-3 px-3 py-2.5 text-[11px] text-cl-text hover:bg-cl-surface/50 transition text-left"
             >
               <Icon icon={ICONS.document} size={16} color="#F59E0B" />
               <div className="flex-1">
                 <div className="font-medium">Exportar CSV / XLSX</div>
-                <div className="text-[9px] text-wr-text-dim font-mono mt-0.5">{wos.length} sites · Excel-ready</div>
+                <div className="text-[9px] text-cl-text-dim font-mono mt-0.5">{wos.length} sites · Excel-ready</div>
               </div>
             </button>
             <button
               onClick={exportPdf}
-              className="w-full flex items-center gap-3 px-3 py-2.5 text-[11px] text-wr-text hover:bg-wr-surface/50 transition text-left border-t border-wr-border"
+              className="w-full flex items-center gap-3 px-3 py-2.5 text-[11px] text-cl-text hover:bg-cl-surface/50 transition text-left border-t border-cl-border"
             >
               <Icon icon={ICONS.printer} size={16} color="#F59E0B" />
               <div className="flex-1">
                 <div className="font-medium">Imprimir PDF</div>
-                <div className="text-[9px] text-wr-text-dim font-mono mt-0.5">A4 landscape · "Guardar como PDF"</div>
+                <div className="text-[9px] text-cl-text-dim font-mono mt-0.5">A4 landscape · "Guardar como PDF"</div>
               </div>
             </button>
           </div>

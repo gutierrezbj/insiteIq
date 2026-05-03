@@ -56,7 +56,7 @@ export default function InterventionCardFull({
 
   return (
     <article
-      className="stage-border-top bg-wr-surface border border-wr-border rounded-sm p-4 hover:border-wr-border-strong transition cursor-pointer"
+      className="stage-border-top bg-cl-surface border border-cl-border rounded-sm p-4 hover:border-cl-border-strong transition cursor-pointer"
       style={{ "--stage-color": status.color }}
     >
       {/* Top row: WO code + badge stage */}
@@ -87,8 +87,8 @@ export default function InterventionCardFull({
       <h3 className="font-display text-[15px] font-semibold text-white mb-1 leading-tight">
         {site?.name || wo?.site_name || "Sin sitio"}
       </h3>
-      <p className="text-[11px] text-wr-text-dim mb-3">
-        {site?.code && <span>SITE <span className="text-wr-text-mid">{site.code}</span></span>}
+      <p className="text-[11px] text-cl-text-dim mb-3">
+        {site?.code && <span>SITE <span className="text-cl-text-mid">{site.code}</span></span>}
         {site?.city && <span> · {site.city}</span>}
         {wo?.summary && <span> · {wo.summary}</span>}
       </p>
@@ -97,14 +97,14 @@ export default function InterventionCardFull({
       <div className="space-y-1.5 text-[11px] mb-4">
         <div className="flex items-center gap-2">
           <Icon icon={ICONS.user} size={12} color="#9CA3AF" />
-          <span className={tech ? "text-wr-text" : "text-wr-text-dim italic"}>
+          <span className={tech ? "text-cl-text" : "text-cl-text-dim italic"}>
             {tech?.full_name || tech?.name || "Sin asignar"}
           </span>
         </div>
         {extra && (
           <div className="flex items-center gap-2">
             <Icon icon={ICONS.box} size={12} color="#9CA3AF" />
-            <span className="text-wr-text-mid">{extra}</span>
+            <span className="text-cl-text-mid">{extra}</span>
           </div>
         )}
       </div>

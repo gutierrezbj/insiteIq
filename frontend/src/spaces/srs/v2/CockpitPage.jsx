@@ -270,7 +270,7 @@ export default function V2CockpitPage({ scope = "srs" }) {
     return (
       <div className="px-6 py-5 space-y-5">
         {/* KPI strip skeleton · 5 cards */}
-        <section className="grid grid-cols-5 gap-px bg-wr-border">
+        <section className="grid grid-cols-5 gap-px bg-cl-border">
           {Array.from({ length: 5 }).map((_, i) => (
             <SkeletonKpiCard key={i} />
           ))}
@@ -292,7 +292,7 @@ export default function V2CockpitPage({ scope = "srs" }) {
               </div>
             </section>
           </div>
-          <aside className="col-span-12 lg:col-span-4 bg-wr-bg border border-wr-border rounded-sm overflow-hidden">
+          <aside className="col-span-12 lg:col-span-4 bg-cl-bg border border-cl-border rounded-sm overflow-hidden">
             <SkeletonWidget rows={3} />
             <SkeletonWidget rows={3} />
             <SkeletonWidget rows={2} />
@@ -321,13 +321,13 @@ export default function V2CockpitPage({ scope = "srs" }) {
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-3">
                 <p className="label-caps-v2">Intervenciones en curso</p>
-                <span className="font-mono text-[11px] text-wr-text">
+                <span className="font-mono text-[11px] text-cl-text">
                   {inCurseInterventions.length}
                 </span>
               </div>
               <button
                 onClick={() => navigate("/srs/ops")}
-                className="text-[11px] text-wr-amber hover:text-wr-amber-soft transition flex items-center gap-1"
+                className="text-[11px] text-cl-amber hover:text-cl-amber-soft transition flex items-center gap-1"
               >
                 Ver todas →
               </button>
@@ -364,13 +364,13 @@ export default function V2CockpitPage({ scope = "srs" }) {
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-3">
                 <p className="label-caps-v2">Historial reciente</p>
-                <span className="font-mono text-[11px] text-wr-text">
+                <span className="font-mono text-[11px] text-cl-text">
                   {recentHistory.length}
                 </span>
               </div>
               <button
                 onClick={() => navigate("/srs/ops")}
-                className="text-[11px] text-wr-amber hover:text-wr-amber-soft transition flex items-center gap-1"
+                className="text-[11px] text-cl-amber hover:text-cl-amber-soft transition flex items-center gap-1"
               >
                 Ver todas →
               </button>
@@ -399,7 +399,7 @@ export default function V2CockpitPage({ scope = "srs" }) {
         </div>
 
         {/* SIDEBAR DERECHO */}
-        <aside className="col-span-12 lg:col-span-4 bg-wr-bg border border-wr-border rounded-sm overflow-hidden">
+        <aside className="col-span-12 lg:col-span-4 bg-cl-bg border border-cl-border rounded-sm overflow-hidden">
           <AlertsWidget alerts={alertsForSidebar} />
           <ShieldsWidget agreements={agreementsForSidebar} />
           <WeatherWidget

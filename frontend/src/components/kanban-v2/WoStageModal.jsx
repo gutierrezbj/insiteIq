@@ -193,7 +193,7 @@ export default function WoStageModal({
           </div>
           <button
             onClick={onClose}
-            className="bg-transparent border-0 text-wr-text-dim hover:text-wr-amber transition cursor-pointer p-1 flex items-center"
+            className="bg-transparent border-0 text-cl-text-dim hover:text-cl-amber transition cursor-pointer p-1 flex items-center"
             aria-label="Cerrar"
           >
             <Icon icon={ICONS.close} size={22} />
@@ -204,14 +204,14 @@ export default function WoStageModal({
         <div style={{ padding: "16px 20px 14px" }}>
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <p className="font-mono text-[11px] text-wr-text-dim mb-1">{formatWoCode(wo)}</p>
+              <p className="font-mono text-[11px] text-cl-text-dim mb-1">{formatWoCode(wo)}</p>
               <h2
                 className="font-display text-white leading-tight"
                 style={{ fontSize: 24, fontWeight: 700, margin: 0 }}
               >
                 {site?.name || wo?.site_name || "Sin sitio"}
               </h2>
-              <p className="text-[13px] text-wr-text-mid mt-1">
+              <p className="text-[13px] text-cl-text-mid mt-1">
                 {client?.name && <span>{client.name}</span>}
                 {site?.city && (
                   <>
@@ -240,7 +240,7 @@ export default function WoStageModal({
               )}
               {tag && (
                 <span
-                  className="px-2 py-0.5 text-[11px] rounded bg-wr-surface-2 text-wr-text-mid"
+                  className="px-2 py-0.5 text-[11px] rounded bg-cl-surface-2 text-cl-text-mid"
                 >
                   {tag}
                 </span>
@@ -267,7 +267,7 @@ export default function WoStageModal({
               <div className="label-caps-v2 mb-1.5" style={{ color: "#94A3B8", letterSpacing: "0.14em" }}>
                 Descripción
               </div>
-              <p className="text-[13px] text-wr-text leading-relaxed m-0">{wo.description}</p>
+              <p className="text-[13px] text-cl-text leading-relaxed m-0">{wo.description}</p>
             </section>
           )}
 
@@ -277,7 +277,7 @@ export default function WoStageModal({
               <div className="label-caps-v2 mb-1.5" style={{ color: "#94A3B8", letterSpacing: "0.14em" }}>
                 Alcance
               </div>
-              <p className="text-[13px] text-wr-text-mid leading-relaxed m-0">{wo.scope}</p>
+              <p className="text-[13px] text-cl-text-mid leading-relaxed m-0">{wo.scope}</p>
             </section>
           )}
 
@@ -305,10 +305,10 @@ export default function WoStageModal({
                           <span style={{ fontSize: 12, color: labelColor, fontWeight: 500 }}>
                             {item.label}
                           </span>
-                          <span className="text-[10px] text-wr-text-dim">{item.time || ""}</span>
+                          <span className="text-[10px] text-cl-text-dim">{item.time || ""}</span>
                         </div>
                         {item.detail && (
-                          <p className="text-[11px] text-wr-text-mid mt-0.5 leading-snug">
+                          <p className="text-[11px] text-cl-text-mid mt-0.5 leading-snug">
                             {item.detail}
                           </p>
                         )}
@@ -326,7 +326,7 @@ export default function WoStageModal({
               <div className="label-caps-v2 mb-1.5" style={{ color: "#94A3B8", letterSpacing: "0.14em" }}>
                 Resultado
               </div>
-              <p className="text-[13px] text-wr-text leading-relaxed m-0">{wo.result}</p>
+              <p className="text-[13px] text-cl-text leading-relaxed m-0">{wo.result}</p>
             </section>
           )}
 
@@ -352,7 +352,7 @@ export default function WoStageModal({
                   {wo.risk_level || "Nominal"}
                 </span>
                 {wo.risk_note && (
-                  <span className="text-[12px] text-wr-text-mid">{wo.risk_note}</span>
+                  <span className="text-[12px] text-cl-text-mid">{wo.risk_note}</span>
                 )}
               </div>
             </section>
@@ -364,7 +364,7 @@ export default function WoStageModal({
               <div className="label-caps-v2 mb-1.5" style={{ color: "#94A3B8", letterSpacing: "0.14em" }}>
                 Razón cancelación
               </div>
-              <p className="text-[13px] text-wr-text leading-relaxed m-0">
+              <p className="text-[13px] text-cl-text leading-relaxed m-0">
                 {wo.cancellation_reason}
               </p>
             </section>
@@ -381,7 +381,7 @@ export default function WoStageModal({
             borderRadius: "0 0 12px 12px",
           }}
         >
-          <p className="text-[12px] text-wr-text-dim flex-1">{cta.note}</p>
+          <p className="text-[12px] text-cl-text-dim flex-1">{cta.note}</p>
           <div className="flex items-center gap-2">
             <button
               onClick={onClose}

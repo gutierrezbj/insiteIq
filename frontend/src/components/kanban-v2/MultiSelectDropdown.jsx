@@ -66,8 +66,8 @@ export default function MultiSelectDropdown({
         onClick={() => setOpen((o) => !o)}
         className={`h-9 px-3 flex items-center gap-1.5 text-[13px] border rounded-full transition ${
           hasSelection
-            ? "border-wr-amber/40 bg-wr-amber/10 text-wr-amber"
-            : "border-wr-border text-wr-text-mid hover:border-wr-border-strong"
+            ? "border-cl-amber/40 bg-cl-amber/10 text-cl-amber"
+            : "border-cl-border text-cl-text-mid hover:border-cl-border-strong"
         }`}
       >
         {label}
@@ -84,7 +84,7 @@ export default function MultiSelectDropdown({
 
       {open && (
         <div
-          className="absolute z-50 mt-1 left-0 bg-wr-surface border border-wr-border-strong rounded-md shadow-xl wr-scroll"
+          className="absolute z-50 mt-1 left-0 bg-cl-surface border border-cl-border-strong rounded-md shadow-xl wr-scroll"
           style={{
             minWidth: 220,
             maxHeight: 300,
@@ -94,7 +94,7 @@ export default function MultiSelectDropdown({
         >
           {normalized.length === 0 ? (
             <p
-              className="p-3 text-[12px] text-wr-text-dim italic"
+              className="p-3 text-[12px] text-cl-text-dim italic"
             >
               Sin opciones disponibles
             </p>
@@ -110,8 +110,8 @@ export default function MultiSelectDropdown({
                         onClick={() => toggle(opt.value)}
                         className={`w-full flex items-center gap-2 px-3 py-2 text-left text-[12px] transition ${
                           isSelected
-                            ? "text-wr-amber bg-wr-amber/5"
-                            : "text-wr-text-mid hover:text-wr-text hover:bg-wr-surface-2"
+                            ? "text-cl-amber bg-cl-amber/5"
+                            : "text-cl-text-mid hover:text-cl-text hover:bg-cl-surface-2"
                         }`}
                       >
                         <span
@@ -137,14 +137,14 @@ export default function MultiSelectDropdown({
               </ul>
               {hasSelection && (
                 <div
-                  className="border-t border-wr-border px-3 py-2 flex items-center justify-between"
+                  className="border-t border-cl-border px-3 py-2 flex items-center justify-between"
                 >
-                  <span className="text-[10px] text-wr-text-dim font-mono">
+                  <span className="text-[10px] text-cl-text-dim font-mono">
                     {count} seleccionado{count > 1 ? "s" : ""}
                   </span>
                   <button
                     onClick={clear}
-                    className="text-[11px] text-wr-text-dim hover:text-wr-amber transition"
+                    className="text-[11px] text-cl-text-dim hover:text-cl-amber transition"
                     style={{ letterSpacing: "0.06em" }}
                   >
                     Limpiar

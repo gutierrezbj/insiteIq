@@ -34,7 +34,7 @@ export default function InterventionCardMini({ wo, site, onClick }) {
 
   return (
     <article
-      className="stage-border-top bg-wr-surface border border-wr-border rounded-sm p-3 hover:border-wr-border-strong transition cursor-pointer"
+      className="stage-border-top bg-cl-surface border border-cl-border rounded-sm p-3 hover:border-cl-border-strong transition cursor-pointer"
       style={{ "--stage-color": status.color }}
       onClick={onClick}
     >
