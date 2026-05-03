@@ -300,7 +300,15 @@ async def project_dashboard(project_id: str, user: CurrentUser = Depends(get_cur
     buckets = {r["_id"]: r["count"] async for r in db.work_orders.aggregate(pipeline)}
 
     total_wos = sum(buckets.values())
-    completed = buckets.get("closed", 0)
+    # Iter 2.11 fix: contar TODOS los estados terminal-positivos como completados.
+    # Antes solo contaba "closed" (sealed + facturado), excluía "completed" (report
+    # generado pero no facturado) y "resolved" (tech terminó pero no sealed).
+    # Resultado: el Cuadro de Mando del Rollout mostraba 2/101 cuando realmente
+    # eran 70/90 (hoja Agustín). Bug detectado al conciliar XLSX maestro Panamá
+    # 2026-04-25 vs progress de Cockpit. Pain log #006 dolor #2 "discrepancia
+    # silenciosa entre cuentas" se aplicaba a NUESTRO sistema mismo.
+    TERMINAL_DONE_STATUSES = ["resolved", "completed", "closed"]
+    completed = sum(buckets.get(s, 0) for s in TERMINAL_DONE_STATUSES)
     active = total_wos - completed - buckets.get("cancelled", 0)
     target = p.get("total_sites_target") or total_wos or 1
 
