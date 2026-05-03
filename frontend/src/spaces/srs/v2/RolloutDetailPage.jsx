@@ -93,31 +93,32 @@ function classifyWoForFlag(wo) {
 }
 
 /**
- * Marker visual: pin con halo + iconify Solar flag dentro.
- * Consistente con DS v2 (Solar Linear único set, ICONS.flag).
+ * Marker visual: pin Lucide map-pin con fill color status (Iter 2.14).
  *
- * Estructura visual:
- *   - Pin shape (gota) con borde del color del status + relleno oscuro
- *   - Solar flag-bold en el color del status dentro del pin
- *   - Drop shadow profesional
- *   - Anchor: punta inferior del pin (donde toca el sitio en el mapa)
+ * Antes (Iter 2.2): teardrop SVG custom con fill negro + Solar flag dentro
+ * = "féretro funerario" (roast del owner 2026-05-03). Ahora glyph nativo
+ * Lucide map-pin (lucide.dev/icons/map-pin) inline con stroke del color
+ * status + fill semi-transparente. Pin reconocible universal · adios cripta.
+ *
+ *   - viewBox 24x24 estándar Lucide
+ *   - stroke 2.5 + linecap/linejoin round (firma técnica Lucide)
+ *   - Fill blanco para contraste sobre fondo color (mejor visibilidad)
+ *   - Color del stroke = status (verde/rojo/azul/gris)
+ *   - Anchor: punta inferior del pin
  */
 function flagMarkerHtml(color, flagKind) {
-  // Tooltip text para accesibilidad
   const label = flagKind === "done" ? "Hecho/Marcha"
     : flagKind === "problem" ? "Con problema"
     : flagKind === "scheduled" ? "Programado"
     : "Pendiente";
   return `
     <div class="rollout-pin" title="${label}" style="position:relative;width:32px;height:38px;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.45));">
-      <svg viewBox="0 0 32 38" width="32" height="38" xmlns="http://www.w3.org/2000/svg" style="position:absolute;top:0;left:0;">
-        <path d="M16 0 C7.16 0 0 7.16 0 16 C0 27.5 16 38 16 38 C16 38 32 27.5 32 16 C32 7.16 24.84 0 16 0 Z"
-              fill="#0A0A0A" stroke="${color}" stroke-width="2.2"/>
+      <svg viewBox="0 0 24 24" width="32" height="38" xmlns="http://www.w3.org/2000/svg"
+           fill="${color}" stroke="#FFFFFF" stroke-width="1.5"
+           stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 10c0 7-8 12-8 12s-8-5-8-12a8 8 0 0 1 16 0Z"/>
+        <circle cx="12" cy="10" r="3" fill="#FFFFFF" stroke="${color}" stroke-width="2"/>
       </svg>
-      <iconify-icon
-        icon="solar:flag-bold"
-        style="position:absolute;top:5px;left:6px;font-size:20px;color:${color};"
-      ></iconify-icon>
     </div>
   `;
 }
@@ -648,13 +649,11 @@ function LegendPin({ color, label }) {
   return (
     <span className="flex items-center gap-1.5">
       <span style={{ display: "inline-block", position: "relative", width: 14, height: 18, flexShrink: 0 }}>
-        <svg viewBox="0 0 32 38" width="14" height="18" xmlns="http://www.w3.org/2000/svg">
-          <path
-            d="M16 0 C7.16 0 0 7.16 0 16 C0 27.5 16 38 16 38 C16 38 32 27.5 32 16 C32 7.16 24.84 0 16 0 Z"
-            fill="#0A0A0A"
-            stroke={color}
-            strokeWidth={2.5}
-          />
+        <svg viewBox="0 0 24 24" width="14" height="18" xmlns="http://www.w3.org/2000/svg"
+             fill={color} stroke="#FFFFFF" strokeWidth={1.5}
+             strokeLinecap="round" strokeLinejoin="round">
+          <path d="M20 10c0 7-8 12-8 12s-8-5-8-12a8 8 0 0 1 16 0Z"/>
+          <circle cx="12" cy="10" r="3" fill="#FFFFFF" stroke={color} strokeWidth={2}/>
         </svg>
       </span>
       <span className="text-wr-text-mid">{label}</span>
