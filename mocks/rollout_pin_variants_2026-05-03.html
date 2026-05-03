@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Rollout Pin · 5 alternativas al "féretro" actual (2026-05-03)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    font-family: 'Instrument Sans', -apple-system, sans-serif;
+    background: #1A1A1A; color: #E5E5E5; line-height: 1.5;
+  }
+  .top-banner {
+    padding: 24px 36px; border-bottom: 1px solid #2A2A2A;
+    background: #0A0A0A;
+  }
+  .top-banner h1 {
+    font-size: 22px; font-weight: 700; color: #F59E0B;
+    letter-spacing: 0.04em; text-transform: uppercase;
+  }
+  .top-banner p {
+    color: #9CA3AF; font-family: 'JetBrains Mono', monospace; font-size: 12px;
+    margin-top: 6px; max-width: 800px;
+  }
+
+  /* Map tile mock — color similar a CartoDB Positron */
+  .map-bg {
+    background: #FAF8F5;
+    background-image:
+      linear-gradient(0deg, transparent 49%, rgba(0,0,0,0.04) 50%, transparent 51%),
+      linear-gradient(90deg, transparent 49%, rgba(0,0,0,0.04) 50%, transparent 51%);
+    background-size: 60px 60px;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+    gap: 24px;
+    padding: 32px;
+  }
+
+  .variant {
+    background: #FFFFFF;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #2A2A2A;
+  }
+  .variant-header {
+    padding: 14px 16px;
+    background: #0F0F0F;
+    color: #FFFFFF;
+  }
+  .variant-header .name {
+    font-size: 15px; font-weight: 600; letter-spacing: 0.02em;
+  }
+  .variant-header .desc {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    color: #9CA3AF; margin-top: 2px;
+  }
+  .pin-stage {
+    height: 220px;
+    display: flex; align-items: center; justify-content: space-around;
+    padding: 16px;
+  }
+  .pin-stage > div {
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+  }
+  .pin-stage .label {
+    font-family: 'JetBrains Mono', monospace; font-size: 9px;
+    color: #57534E; text-transform: uppercase; letter-spacing: 0.1em;
+  }
+
+  .footer-note {
+    padding: 32px; text-align: center;
+    color: #6B7280; font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    border-top: 1px solid #2A2A2A;
+  }
+
+  /* ─────────────────────── PIN VARIANTS ─────────────────────── */
+  /* Cada pin: contenedor 40x48 con SVG path teardrop + iconify dentro */
+
+  /* A · ACTUAL · feret pin negro */
+  .pin-a {
+    position: relative; width: 32px; height: 38px;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.45));
+  }
+  .pin-a svg {
+    position: absolute; top: 0; left: 0;
+  }
+  .pin-a iconify-icon {
+    position: absolute; top: 5px; left: 6px;
+    font-size: 20px;
+  }
+
+  /* B · INVERTED FILL · color status + ícono blanco */
+  .pin-b {
+    position: relative; width: 36px; height: 44px;
+    filter: drop-shadow(0 3px 5px rgba(0,0,0,0.35));
+  }
+  .pin-b svg { position: absolute; top: 0; left: 0; }
+  .pin-b iconify-icon {
+    position: absolute; top: 7px; left: 9px;
+    font-size: 18px; color: #FFFFFF;
+  }
+
+  /* C · COLOR + GLOW + WHITE INSIDE · más vivo */
+  .pin-c {
+    position: relative; width: 38px; height: 46px;
+  }
+  .pin-c .glow {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    border-radius: 50%;
+    filter: blur(8px); opacity: 0.5;
+  }
+  .pin-c svg { position: absolute; top: 0; left: 0; }
+  .pin-c iconify-icon {
+    position: absolute; top: 7px; left: 10px;
+    font-size: 18px; color: #FFFFFF;
+  }
+
+  /* D · MAP-POINT-WAVE (Solar map-point con waves) */
+  .pin-d {
+    position: relative; width: 40px; height: 48px;
+    display: flex; align-items: flex-start; justify-content: center;
+  }
+  .pin-d iconify-icon {
+    font-size: 40px;
+    filter: drop-shadow(0 3px 4px rgba(0,0,0,0.35));
+  }
+
+  /* E · STATUS-SEMANTIC (icono distinto por status) */
+  .pin-e {
+    position: relative; width: 36px; height: 44px;
+    filter: drop-shadow(0 3px 5px rgba(0,0,0,0.35));
+  }
+  .pin-e svg { position: absolute; top: 0; left: 0; }
+  .pin-e iconify-icon {
+    position: absolute; top: 6px; left: 9px;
+    font-size: 18px; color: #FFFFFF;
+  }
+</style>
+</head>
+<body>
+
+<div class="top-banner">
+  <h1>Rollout Pin · 5 alternativas al "féretro" actual</h1>
+  <p>
+    Owner JuanCho 2026-05-03: "las banderitas negras parecen de una empresa funeraria, aquí
+    está su difunto hahahah". Mockups sobre fondo similar a CartoDB Positron (mapa light).
+    Cada variante muestra los 4 status: HECHO (verde) · PROBLEMA (rojo) · PROGRAMADO (azul) · PENDIENTE (gris).
+  </p>
+</div>
+
+<div class="grid map-bg">
+
+  <!-- A: ACTUAL · referencia (fúnebre) -->
+  <div class="variant">
+    <div class="variant-header">
+      <div class="name">A · Actual (Iter 2.2) — el féretro</div>
+      <div class="desc">fill #0A0A0A + stroke color status + flag-bold dentro coloreado</div>
+    </div>
+    <div class="pin-stage">
+      <div>
+        <div class="pin-a">
+          <svg viewBox="0 0 32 38" width="32" height="38"><path d="M16 0 C7.16 0 0 7.16 0 16 C0 27.5 16 38 16 38 C16 38 32 27.5 32 16 C32 7.16 24.84 0 16 0 Z" fill="#0A0A0A" stroke="#22C55E" stroke-width="2.2"/></svg>
+          <iconify-icon icon="solar:flag-bold" style="color:#22C55E;"></iconify-icon>
+        </div>
+        <span class="label">hecho</span>
+      </div>
+      <div>
+        <div class="pin-a">
+          <svg viewBox="0 0 32 38" width="32" height="38"><path d="M16 0 C7.16 0 0 7.16 0 16 C0 27.5 16 38 16 38 C16 38 32 27.5 32 16 C32 7.16 24.84 0 16 0 Z" fill="#0A0A0A" stroke="#DC2626" stroke-width="2.2"/></svg>
+          <iconify-icon icon="solar:flag-bold" style="color:#DC2626;"></iconify-icon>
+        </div>
+        <span class="label">problema</span>
+      </div>
+      <div>
+        <div class="pin-a">
+          <svg viewBox="0 0 32 38" width="32" height="38"><path d="M16 0 C7.16 0 0 7.16 0 16 C0 27.5 16 38 16 38 C16 38 32 27.5 32 16 C32 7.16 24.84 0 16 0 Z" fill="#0A0A0A" stroke="#3B82F6" stroke-width="2.2"/></svg>
+          <iconify-icon icon="solar:flag-bold" style="color:#3B82F6;"></iconify-icon>
+        </div>
+        <span class="label">programado</span>
+      </div>
+      <div>
+        <div class="pin-a">
+          <svg viewBox="0 0 32 38" width="32" height="38"><path d="M16 0 C7.16 0 0 7.16 0 16 C0 27.5 16 38 16 38 C16 38 32 27.5 32 16 C32 7.16 24.84 0 16 0 Z" fill="#0A0A0A" stroke="#6B7280" stroke-width="2.2"/></svg>
+          <iconify-icon icon="solar:flag-bold" style="color:#6B7280;"></iconify-icon>
+        </div>
+        <span class="label">pendiente</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- B: INVERTED · color fill + ícono blanco -->
+  <div class="variant">
+    <div class="variant-header">
+      <div class="name">B · Inverted — color fill + flag blanco</div>
+      <div class="desc">Mismo SVG, pero fill = color status, sin negro. Icono blanco dentro.</div>
+    </div>
+    <div class="pin-stage">
+      <div>
+        <div class="pin-b">
+          <svg viewBox="0 0 32 38" width="36" height="44"><path d="M16 0 C7.16 0 0 7.16 0 16 C0 27.5 16 38 16 38 C16 38 32 27.5 32 16 C32 7.16 24.84 0 16 0 Z" fill="#22C55E" stroke="#FFFFFF" stroke-width="1.5"/></svg>
+          <iconify-icon icon="solar:flag-bold"></iconify-icon>
+        </div>
+        <span class="label">hecho</span>
+      </div>
+      <div>
+        <div class="pin-b">
+          <svg viewBox="0 0 32 38" width="36" height="44"><path d="M16 0 C7.16 0 0 7.16 0 16 C0 27.5 16 38 16 38 C16 38 32 27.5 32 16 C32 7.16 24.84 0 16 0 Z" fill="#DC2626" stroke="#FFFFFF" stroke-width="1.5"/></svg>
+          <iconify-icon icon="solar:flag-bold"></iconify-icon>
+        </div>
+        <span class="label">problema</span>
+      </div>
+      <div>
+        <div class="pin-b">
+          <svg viewBox="0 0 32 38" width="36" height="44"><path d="M16 0 C7.16 0 0 7.16 0 16 C0 27.5 16 38 16 38 C16 38 32 27.5 32 16 C32 7.16 24.84 0 16 0 Z" fill="#3B82F6" stroke="#FFFFFF" stroke-width="1.5"/></svg>
+          <iconify-icon icon="solar:flag-bold"></iconify-icon>
+        </div>
+        <span class="label">programado</span>
+      </div>
+      <div>
+        <div class="pin-b">
+          <svg viewBox="0 0 32 38" width="36" height="44"><path d="M16 0 C7.16 0 0 7.16 0 16 C0 27.5 16 38 16 38 C16 38 32 27.5 32 16 C32 7.16 24.84 0 16 0 Z" fill="#6B7280" stroke="#FFFFFF" stroke-width="1.5"/></svg>
+          <iconify-icon icon="solar:flag-bold"></iconify-icon>
+        </div>
+        <span class="label">pendiente</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- C: COLOR + GLOW · más vivo -->
+  <div class="variant">
+    <div class="variant-header">
+      <div class="name">C · Color + Glow halo — más vivo / radar</div>
+      <div class="desc">Color fill + glow blur background del mismo color. Atrae el ojo. Riesgo: glow puede saturar mapa.</div>
+    </div>
+    <div class="pin-stage">
+      <div>
+        <div class="pin-c">
+          <div class="glow" style="background:#22C55E;"></div>
+          <svg viewBox="0 0 32 38" width="38" height="46"><path d="M16 0 C7.16 0 0 7.16 0 16 C0 27.5 16 38 16 38 C16 38 32 27.5 32 16 C32 7.16 24.84 0 16 0 Z" fill="#22C55E" stroke="rgba(255,255,255,0.6)" stroke-width="1.5"/></svg>
+          <iconify-icon icon="solar:flag-bold"></iconify-icon>
+        </div>
+        <span class="label">hecho</span>
+      </div>
+      <div>
+        <div class="pin-c">
+          <div class="glow" style="background:#DC2626;"></div>
+          <svg viewBox="0 0 32 38" width="38" height="46"><path d="M16 0 C7.16 0 0 7.16 0 16 C0 27.5 16 38 16 38 C16 38 32 27.5 32 16 C32 7.16 24.84 0 16 0 Z" fill="#DC2626" stroke="rgba(255,255,255,0.6)" stroke-width="1.5"/></svg>
+          <iconify-icon icon="solar:flag-bold"></iconify-icon>
+        </div>
+        <span class="label">problema</span>
+      </div>
+      <div>
+        <div class="pin-c">
+          <div class="glow" style="background:#3B82F6;"></div>
+          <svg viewBox="0 0 32 38" width="38" height="46"><path d="M16 0 C7.16 0 0 7.16 0 16 C0 27.5 16 38 16 38 C16 38 32 27.5 32 16 C32 7.16 24.84 0 16 0 Z" fill="#3B82F6" stroke="rgba(255,255,255,0.6)" stroke-width="1.5"/></svg>
+          <iconify-icon icon="solar:flag-bold"></iconify-icon>
+        </div>
+        <span class="label">programado</span>
+      </div>
+      <div>
+        <div class="pin-c">
+          <div class="glow" style="background:#6B7280;"></div>
+          <svg viewBox="0 0 32 38" width="38" height="46"><path d="M16 0 C7.16 0 0 7.16 0 16 C0 27.5 16 38 16 38 C16 38 32 27.5 32 16 C32 7.16 24.84 0 16 0 Z" fill="#6B7280" stroke="rgba(255,255,255,0.6)" stroke-width="1.5"/></svg>
+          <iconify-icon icon="solar:flag-bold"></iconify-icon>
+        </div>
+        <span class="label">pendiente</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- D: MAP-POINT-WAVE (Solar shipping) · pin clásico location -->
+  <div class="variant">
+    <div class="variant-header">
+      <div class="name">D · Solar map-point-wave-bold</div>
+      <div class="desc">Glyph nativo Solar (no SVG custom) tipo "location pin" con onda. Más reconocible.</div>
+    </div>
+    <div class="pin-stage">
+      <div>
+        <div class="pin-d"><iconify-icon icon="solar:map-point-wave-bold" style="color:#22C55E;"></iconify-icon></div>
+        <span class="label">hecho</span>
+      </div>
+      <div>
+        <div class="pin-d"><iconify-icon icon="solar:map-point-wave-bold" style="color:#DC2626;"></iconify-icon></div>
+        <span class="label">problema</span>
+      </div>
+      <div>
+        <div class="pin-d"><iconify-icon icon="solar:map-point-wave-bold" style="color:#3B82F6;"></iconify-icon></div>
+        <span class="label">programado</span>
+      </div>
+      <div>
+        <div class="pin-d"><iconify-icon icon="solar:map-point-wave-bold" style="color:#6B7280;"></iconify-icon></div>
+        <span class="label">pendiente</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- E: ICONO SEMÁNTICO POR STATUS -->
+  <div class="variant">
+    <div class="variant-header">
+      <div class="name">E · Semantic icon por status</div>
+      <div class="desc">Pin filled + ícono distinto: check (hecho) · alarm (problema) · clock (programado) · pause (pendiente)</div>
+    </div>
+    <div class="pin-stage">
+      <div>
+        <div class="pin-e">
+          <svg viewBox="0 0 32 38" width="36" height="44"><path d="M16 0 C7.16 0 0 7.16 0 16 C0 27.5 16 38 16 38 C16 38 32 27.5 32 16 C32 7.16 24.84 0 16 0 Z" fill="#22C55E" stroke="#FFFFFF" stroke-width="1.5"/></svg>
+          <iconify-icon icon="solar:check-circle-bold"></iconify-icon>
+        </div>
+        <span class="label">hecho</span>
+      </div>
+      <div>
+        <div class="pin-e">
+          <svg viewBox="0 0 32 38" width="36" height="44"><path d="M16 0 C7.16 0 0 7.16 0 16 C0 27.5 16 38 16 38 C16 38 32 27.5 32 16 C32 7.16 24.84 0 16 0 Z" fill="#DC2626" stroke="#FFFFFF" stroke-width="1.5"/></svg>
+          <iconify-icon icon="solar:danger-triangle-bold"></iconify-icon>
+        </div>
+        <span class="label">problema</span>
+      </div>
+      <div>
+        <div class="pin-e">
+          <svg viewBox="0 0 32 38" width="36" height="44"><path d="M16 0 C7.16 0 0 7.16 0 16 C0 27.5 16 38 16 38 C16 38 32 27.5 32 16 C32 7.16 24.84 0 16 0 Z" fill="#3B82F6" stroke="#FFFFFF" stroke-width="1.5"/></svg>
+          <iconify-icon icon="solar:clock-circle-bold"></iconify-icon>
+        </div>
+        <span class="label">programado</span>
+      </div>
+      <div>
+        <div class="pin-e">
+          <svg viewBox="0 0 32 38" width="36" height="44"><path d="M16 0 C7.16 0 0 7.16 0 16 C0 27.5 16 38 16 38 C16 38 32 27.5 32 16 C32 7.16 24.84 0 16 0 Z" fill="#6B7280" stroke="#FFFFFF" stroke-width="1.5"/></svg>
+          <iconify-icon icon="solar:pause-circle-bold"></iconify-icon>
+        </div>
+        <span class="label">pendiente</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer-note">
+  Mocks estáticos sobre fondo similar a CartoDB Positron · cero código deployed tocado · cero deps<br>
+  Decisión owner: ¿A (mantener féretro), B (inverted simple), C (color+glow), D (Solar map-point-wave nativo), E (icono semántico)?<br>
+  Una vez firmado, edit puntual de <code>flagMarkerHtml()</code> en RolloutDetailPage.jsx (Iter 2.13).
+</div>
+
+</body>
+</html>
