@@ -45,7 +45,7 @@ export default function InterventionCardMini({ wo, site, onClick }) {
         {formatWoCode(wo)}
       </p>
       <h4
-        className="font-display text-[13px] font-semibold text-white leading-tight mt-1 mb-2 truncate"
+        className="font-jakarta text-[13px] font-semibold text-white leading-tight mt-1 mb-2 truncate"
         title={site?.name || wo?.site_name}
       >
         {site?.name || wo?.site_name || "Sin sitio"}

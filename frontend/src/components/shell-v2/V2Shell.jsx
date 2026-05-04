@@ -32,7 +32,7 @@ export default function V2Shell({
   return (
     <RefreshProvider>
       <div
-        className="h-screen flex bg-wr-bg text-wr-text font-mono"
+        className="h-screen flex bg-cl-bg text-cl-text font-mono"
         style={{ fontVariantNumeric: "tabular-nums" }}
       >
         <V2SidebarNav

@@ -7,7 +7,7 @@
  * Anatomía:
  *   - Border-top 2px color stage
  *   - Top row: drag handle 6-dots SVG + prio badge + sub-stage label uppercase + warning icon si SLA
- *   - Title site (font-display 15px white)
+ *   - Title site (font-jakarta 15px white)
  *   - Mono code · client · city
  *   - Tags row: tipo intervención pill + shield pill
  *   - Descripción 2 lines truncate
@@ -141,7 +141,7 @@ export default function WoKanbanCard({
       </div>
 
       {/* Title + meta */}
-      <h3 className="font-display text-[15px] font-semibold text-white leading-tight mb-1">
+      <h3 className="font-jakarta text-[15px] font-semibold text-white leading-tight mb-1">
         {site?.name || wo?.site_name || "Sin sitio"}
       </h3>
       <div className="flex items-center gap-1.5 text-[12px] text-cl-text-mid mb-2 flex-wrap">

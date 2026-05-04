@@ -56,7 +56,7 @@ export default function KanbanColumn({
       {/* Header */}
       <header className="px-4 py-3 flex items-center justify-between border-b border-cl-border flex-shrink-0">
         <h2
-          className="font-display text-[13px] font-semibold uppercase text-cl-text"
+          className="font-jakarta text-[13px] font-semibold uppercase text-cl-text"
           style={{ letterSpacing: "0.08em" }}
         >
           {title}

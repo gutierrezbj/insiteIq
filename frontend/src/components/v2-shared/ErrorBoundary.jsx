@@ -60,7 +60,7 @@ export default class V2ErrorBoundary extends Component {
           <div className="flex items-center gap-3 mb-3">
             <Icon icon={ICONS.dangerTriangle} size={24} color="#DC2626" />
             <h2
-              className="font-display text-[16px] font-semibold text-wr-text m-0"
+              className="font-jakarta text-[16px] font-semibold text-wr-text m-0"
               style={{ letterSpacing: "0.02em" }}
             >
               Algo se rompió en esta vista

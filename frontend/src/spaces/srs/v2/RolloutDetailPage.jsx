@@ -244,7 +244,7 @@ export default function RolloutDetailPage() {
               </span>
             </div>
             <h1
-              className="font-display text-[20px] font-semibold text-white leading-tight"
+              className="font-jakarta text-[20px] font-semibold text-white leading-tight"
               style={{ letterSpacing: "0.01em" }}
             >
               {project.title}
@@ -472,7 +472,7 @@ function BulkRescheduleModal({ wos, sites, users, onClose, onDone }) {
         {/* Header */}
         <header className="px-5 py-4 border-b border-cl-border flex-shrink-0">
           <p className="label-caps-v2 mb-1">Programar bulk</p>
-          <h2 className="font-display text-[18px] font-semibold text-white leading-tight">
+          <h2 className="font-jakarta text-[18px] font-semibold text-white leading-tight">
             {selected.size} de {wos.length} sites pending seleccionados
           </h2>
           <p className="text-[11px] text-cl-text-mid font-mono mt-0.5">
@@ -710,7 +710,7 @@ function ScheduleSiteModal({ wo, site, users, onClose, onScheduled }) {
         {/* Header */}
         <header className="px-5 py-4 border-b border-cl-border">
           <p className="label-caps-v2 mb-1">Programar instalación</p>
-          <h2 className="font-display text-[18px] font-semibold text-white leading-tight">
+          <h2 className="font-jakarta text-[18px] font-semibold text-white leading-tight">
             {site?.name || "Site sin nombre"}
           </h2>
           <p className="text-[11px] text-cl-text-mid font-mono mt-0.5">
@@ -1144,11 +1144,11 @@ function DashboardTab({ dashboard, counts, totalSites, progressPct }) {
       <div className="bg-cl-surface/50 border border-cl-border rounded-sm px-6 py-6">
         <p className="label-caps-v2 mb-2">Avance del rollout</p>
         <div className="flex items-baseline gap-3 mb-3">
-          <span className="font-display text-[48px] font-semibold text-white leading-none">
+          <span className="font-jakarta text-[48px] font-semibold text-white leading-none">
             {wo.completed || counts.done}
           </span>
           <span className="text-[20px] text-cl-text-dim">de</span>
-          <span className="font-display text-[28px] text-cl-text">{totalSites}</span>
+          <span className="font-jakarta text-[28px] text-cl-text">{totalSites}</span>
           <span className="text-[14px] text-cl-text-dim">sites · </span>
           <span
             className="font-mono text-[24px] font-semibold"
@@ -1223,7 +1223,7 @@ function KpiCard({ label, value, color }) {
   return (
     <div className="bg-cl-surface/50 border border-cl-border rounded-sm px-4 py-3" style={{ borderLeftWidth: 2, borderLeftColor: color }}>
       <p className="label-caps-v2 mb-1">{label}</p>
-      <p className="font-display text-[28px] font-semibold leading-none" style={{ color }}>{value}</p>
+      <p className="font-jakarta text-[28px] font-semibold leading-none" style={{ color }}>{value}</p>
     </div>
   );
 }

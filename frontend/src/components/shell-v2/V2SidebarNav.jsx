@@ -56,11 +56,11 @@ export default function V2SidebarNav({
   // Para client space, mostrar el nombre de la organización en el título.
   const titleText = scope === "client" && organizationName ? organizationName : labels.title;
   return (
-    <aside className="w-[200px] bg-wr-bg border-r border-wr-border flex-shrink-0 flex flex-col">
+    <aside className="w-[200px] bg-cl-bg border-r border-cl-border flex-shrink-0 flex flex-col">
       {/* Header */}
-      <div className="px-5 py-5 border-b border-wr-border">
+      <div className="px-5 py-5 border-b border-cl-border">
         <p className="label-caps-v2 mb-0.5" style={{ color: "#F59E0B" }}>{labels.caps}</p>
-        <h1 className="font-display text-[15px] text-wr-text font-semibold">{titleText}</h1>
+        <h1 className="font-jakarta text-[15px] text-cl-text font-semibold">{titleText}</h1>
       </div>
 
       {/* Nav items */}
@@ -73,9 +73,9 @@ export default function V2SidebarNav({
             className={({ isActive }) => {
               const base = "flex items-center px-3 py-2 rounded-sm transition font-body";
               if (isActive) {
-                return `${base} text-wr-amber bg-wr-amber/10 border-l-2 border-wr-amber`;
+                return `${base} text-cl-orange bg-cl-orange/10 border-l-2 border-cl-orange`;
               }
-              return `${base} text-wr-text-mid hover:text-wr-text hover:bg-wr-surface-2`;
+              return `${base} text-cl-text-mid hover:text-cl-text hover:bg-cl-surface-2`;
             }}
           >
             {n.label}
@@ -84,9 +84,9 @@ export default function V2SidebarNav({
       </nav>
 
       {/* Footer */}
-      <div className="px-4 py-3 border-t border-wr-border text-[10px] text-wr-text-dim space-y-1">
+      <div className="px-4 py-3 border-t border-cl-border text-[10px] text-cl-text-dim space-y-1">
         <div className="flex items-center gap-1.5">
-          <span className="w-1.5 h-1.5 rounded-full bg-wr-green animate-pulse-dot" />
+          <span className="w-1.5 h-1.5 rounded-full bg-cl-green animate-pulse-dot" />
           <span style={{ color: "#22C55E" }}>SISTEMA OPERATIVO</span>
         </div>
         <div className="flex items-center justify-between mt-2">

@@ -85,10 +85,10 @@ export default function V2TopHeader({
   const displayName = user?.full_name || user?.email?.split("@")[0] || "—";
 
   return (
-    <header className="px-6 py-4 border-b border-wr-border flex items-center justify-between flex-shrink-0 bg-wr-bg">
+    <header className="px-6 py-4 border-b border-cl-border flex items-center justify-between flex-shrink-0 bg-cl-bg">
       <div className="flex items-center gap-5">
         <h1
-          className="font-display text-[18px] font-semibold text-wr-text"
+          className="font-jakarta text-[18px] font-semibold text-cl-text"
           style={{ letterSpacing: "0.02em" }}
         >
           {finalTitle && <span>{finalTitle} </span>}
@@ -96,7 +96,7 @@ export default function V2TopHeader({
         </h1>
       </div>
 
-      <div className="flex items-center gap-4 text-[12px] text-wr-text-mid">
+      <div className="flex items-center gap-4 text-[12px] text-cl-text-mid">
         <span className="font-mono">{dateTime}</span>
         <span
           className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border"
@@ -130,9 +130,9 @@ export default function V2TopHeader({
         </span>
 
         {/* User identity + logout · destrabar "logines que no son" */}
-        <div className="flex items-center gap-2 pl-3 border-l border-wr-border">
+        <div className="flex items-center gap-2 pl-3 border-l border-cl-border">
           <span
-            className="font-mono text-[11px] text-wr-text-mid"
+            className="font-mono text-[11px] text-cl-text-mid"
             title={user?.email || ""}
             style={{ letterSpacing: "0.04em" }}
           >
@@ -142,7 +142,7 @@ export default function V2TopHeader({
             type="button"
             onClick={handleLogout}
             title="Cerrar sesión"
-            className="inline-flex items-center justify-center w-7 h-7 rounded-sm border border-wr-border text-wr-text-mid hover:text-wr-amber hover:border-wr-amber transition"
+            className="inline-flex items-center justify-center w-7 h-7 rounded-sm border border-cl-border text-cl-text-mid hover:text-cl-orange hover:border-cl-orange transition"
           >
             <Icon icon={ICONS.logout} size={14} />
           </button>

@@ -84,7 +84,7 @@ export default function InterventionCardFull({
       </div>
 
       {/* Title + subtitle */}
-      <h3 className="font-display text-[15px] font-semibold text-white mb-1 leading-tight">
+      <h3 className="font-jakarta text-[15px] font-semibold text-white mb-1 leading-tight">
         {site?.name || wo?.site_name || "Sin sitio"}
       </h3>
       <p className="text-[11px] text-cl-text-dim mb-3">

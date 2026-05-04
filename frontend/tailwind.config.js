@@ -100,36 +100,47 @@ export default {
         },
 
         /* ─────────────────────────────────────────────────────────────── */
-        /* v2 · Cockpit Light (Iter 2.16 · paleta D Hybrid SR firmada)     */
-        /* Tokens prefijo `cl-*`. Aplican en CONTENT de páginas SRS de     */
-        /* supervisión (Cockpit, Rollouts, Kanban, Cuadro, Timeline).      */
-        /* Shell v2 (sidebar/topheader/bottomstrip) sigue usando `wr-*`    */
-        /* (compromiso pragmático: content claro + shell oscuro).          */
-        /* Espacio OPS (war room intencional) NO usa `cl-*`.               */
+        /* v2 · Cockpit Light (Iter 2.17 · paleta F · NAVEGANTE MIX firmada)*/
+        /* Owner JuanCho 2026-05-04: "ME ENCANTA" + "esto va a quedar       */
+        /* INCREIBLE". Aplica en CONTENT + SHELL de páginas SRS supervisión.*/
+        /* Espacio OPS (war room intencional) NO usa `cl-*`.                */
+        /*                                                                  */
+        /* Filosofia: navy AS BRAND PRIMARY (Bloomberg/aviation/Reuters).   */
+        /* Orange #FF6B35 como ACENTO ESCASO (solo botones criticos · 1-2   */
+        /* por pantalla) — cuando aparece, IMPORTA.                         */
+        /* Status colors customizados NO Tailwind defaults: coral, mostaza, */
+        /* verde profundo, deep blue.                                       */
         /* ─────────────────────────────────────────────────────────────── */
         cl: {
-          bg: "#FAFAF9",            /* stone-50 warm off-white · canvas */
+          bg: "#FFFFFF",            /* canvas blanco puro */
           surface: "#FFFFFF",       /* cards, modales, panels */
-          "surface-2": "#F4F4F0",   /* cards sec, hover, filter inactivos */
-          border: "#E7E5E0",        /* border estandar cards/inputs */
-          "border-strong": "#D2CFC8",
-          text: "#1C1917",          /* stone-900 · titulos, numeros KPI */
-          "text-mid": "#57534E",    /* stone-600 · body, labels */
-          "text-dim": "#A8A29E",    /* stone-400 · metadata, timestamps */
-          "header-band": "#0C0A09", /* stone-950 · header dark band */
-          "text-on-dark": "#F5F5F4",/* texto sobre header dark */
-          amber: "#D97706",         /* amber-600 · brand SR mantenido */
-          "amber-soft": "#FEF3C7",  /* amber-50 · backgrounds amber */
-          "amber-strong": "#92400E",/* amber-800 · text sobre amber-soft */
-          brand: "#10B981",         /* verde SRS ecosystem */
-          red: "#DC2626",           /* critical sobre fondo claro */
-          "red-soft": "#FEE2E2",    /* bg para alertas suaves */
-          green: "#10B981",
-          "green-soft": "#D1FAE5",
-          blue: "#0284C7",          /* info accent (mas serio que cyan) */
-          "blue-soft": "#DBEAFE",
+          "surface-2": "#F7F8FA",   /* surface secundaria muy sutil azulado */
+          "surface-3": "#F4F6F8",   /* sidebar bg · cards sec */
+          border: "#E2E5EC",        /* borders estandar */
+          "border-strong": "#C8CDD8",
+          text: "#0A1628",          /* navy strong · brand primary · autoridad serena */
+          "text-mid": "#3D4A66",    /* slate medium · body */
+          "text-dim": "#8B95A8",    /* slate light · metadata */
+          "header-band": "#FFFFFF", /* header band tambien light */
+          "text-on-dark": "#0A1628",/* texto sobre header (mismo que text) */
+          amber: "#0A1628",         /* AMBER REDIRIGIDO A NAVY · brand primary nuevo */
+          "amber-soft": "#E8EDF5",  /* navy soft bg · pills/highlights */
+          "amber-strong": "#0A1628",/* mismo navy · usado donde antes era amber-strong */
+          orange: "#FF6B35",        /* DEEP ORANGE · acento escaso · solo botones criticos */
+          "orange-soft": "#FFE5DA", /* orange soft bg */
+          "orange-strong": "#C5481E",/* orange dark · hover */
+          brand: "#16A34A",         /* verde profundo · success */
+          "brand-soft": "#D9F1E5",
+          red: "#D63944",           /* critical coral · custom NO Tailwind */
+          "red-soft": "#FCE4E6",
+          green: "#16A34A",         /* success */
+          "green-soft": "#D9F1E5",
+          blue: "#0066B8",          /* info deep blue */
+          "blue-soft": "#DEEAF7",
           violet: "#7C3AED",
           "violet-soft": "#EDE9FE",
+          warn: "#E8A33D",          /* warn mostaza · diferente del orange brand */
+          "warn-soft": "#FCF1DC",
         },
 
         /* Stage colors v2 · state machine 9 stages (DS v1.7 §3.2) */
@@ -162,12 +173,17 @@ export default {
         },
       },
       fontFamily: {
-        display: ["'Instrument Sans'", "sans-serif"],
-        // Editorial serif — used in Client space for headlines.
-        // Foundation-available; per-space theme decides whether to apply it.
-        "display-serif": ["'Instrument Serif'", "serif"],
-        body: ["'DM Sans'", "sans-serif"],
+        // Iter 2.17 · Paleta F · Plus Jakarta Sans = font primary v2 (display + body + labels).
+        // Una sola family para TODA la UI (jerarquia via weight 400-800, no via familia).
+        // JetBrains Mono se reserva SOLO para data tabular (WO codes, site IDs, números columnar).
+        display: ["'Plus Jakarta Sans'", "sans-serif"],
+        body: ["'Plus Jakarta Sans'", "sans-serif"],
+        jakarta: ["'Plus Jakarta Sans'", "sans-serif"],   /* alias explicit */
         mono: ["'JetBrains Mono'", "monospace"],
+        // Legacy aliases · mantener para componentes que aún no migraron
+        "display-serif": ["'Instrument Serif'", "serif"],
+        "instrument": ["'Instrument Sans'", "sans-serif"],/* alias para Cockpit v1 legacy */
+        "dm-sans": ["'DM Sans'", "sans-serif"],
       },
       fontSize: {
         "2xs": ["0.625rem", { lineHeight: "0.875rem" }],

@@ -206,7 +206,7 @@ export default function WoStageModal({
             <div className="min-w-0">
               <p className="font-mono text-[11px] text-cl-text-dim mb-1">{formatWoCode(wo)}</p>
               <h2
-                className="font-display text-white leading-tight"
+                className="font-jakarta text-white leading-tight"
                 style={{ fontSize: 24, fontWeight: 700, margin: 0 }}
               >
                 {site?.name || wo?.site_name || "Sin sitio"}

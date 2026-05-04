@@ -377,7 +377,7 @@ export default function SideDetailPanel({
               <div className="px-[18px] pb-4">
                 <h2
                   id="detail-title"
-                  className="font-display text-[20px] font-semibold text-white m-0 leading-tight"
+                  className="font-jakarta text-[20px] font-semibold text-white m-0 leading-tight"
                 >
                   {site?.name || wo?.site_name || "Sin sitio"}
                 </h2>
@@ -792,7 +792,7 @@ function RegisterEtaModal({ wo, onClose, onSaved }) {
       >
         <header className="px-5 py-4 border-b border-wr-border">
           <p className="label-caps-v2 mb-1">Registrar ETA del tech</p>
-          <h2 className="font-display text-[16px] font-semibold text-white leading-tight">
+          <h2 className="font-jakarta text-[16px] font-semibold text-white leading-tight">
             {wo?.title || "Work Order"}
           </h2>
           <p className="text-[10px] text-wr-text-mid font-mono mt-0.5">{formatWoCode(wo)}</p>

@@ -124,7 +124,7 @@ export default function RolloutsListPage() {
           <div>
             <p className="label-caps-v2">Rollouts</p>
             <h1
-              className="font-display text-[20px] font-semibold text-white leading-tight"
+              className="font-jakarta text-[20px] font-semibold text-white leading-tight"
               style={{ letterSpacing: "0.01em" }}
             >
               {loading ? "Cargando…" : `${visible.length} de ${projects.length} ${projects.length === 1 ? "rollout" : "rollouts"}`}
@@ -281,7 +281,7 @@ function RolloutCard({ project, dashboard, orgsMap, onClick }) {
           <p className="font-mono text-[10px] text-cl-text-dim uppercase truncate" style={{ letterSpacing: "0.1em" }}>
             {project.code}
           </p>
-          <h3 className="font-display text-[15px] text-white font-semibold leading-tight mt-0.5 truncate" title={project.title}>
+          <h3 className="font-jakarta text-[15px] text-white font-semibold leading-tight mt-0.5 truncate" title={project.title}>
             {project.title}
           </h3>
         </div>

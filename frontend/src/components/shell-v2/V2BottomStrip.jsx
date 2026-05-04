@@ -33,11 +33,11 @@ function TechCard({ techName }) {
   const isPulse = info.status === "onduty";
 
   return (
-    <div className="flex items-center gap-2 px-3 py-2 bg-wr-surface border border-wr-border rounded-sm flex-shrink-0">
+    <div className="flex items-center gap-2 px-3 py-2 bg-cl-surface border border-cl-border rounded-sm flex-shrink-0">
       <Icon icon={ICONS.user} size={14} color="#9CA3AF" />
       <div className="leading-tight">
-        <p className="text-[11px] text-wr-text">{techName}</p>
-        <p className="text-[10px] font-mono text-wr-text-dim">
+        <p className="text-[11px] text-cl-text">{techName}</p>
+        <p className="text-[10px] font-mono text-cl-text-dim">
           {info.tzLabel} · {info.techTime}
         </p>
       </div>
@@ -60,7 +60,7 @@ export default function V2BottomStrip() {
   }, []);
 
   return (
-    <footer className="h-[84px] border-t border-wr-border bg-wr-bg flex items-center px-6 gap-4 flex-shrink-0">
+    <footer className="h-[84px] border-t border-cl-border bg-cl-bg flex items-center px-6 gap-4 flex-shrink-0">
       <span className="label-caps-v2 mr-2">Técnicos en pista</span>
 
       {/* Técnicos con timezone live */}
