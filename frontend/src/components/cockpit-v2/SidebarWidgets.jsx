@@ -27,17 +27,19 @@ export function AlertsWidget({ alerts = [] }) {
   const shown = alerts.slice(0, 3);
 
   return (
-    <section className="border-b border-cl-border">
+    <section className="border-b border-cl-border-strong">
       <header className="px-5 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="w-1.5 h-1.5 rounded-full bg-cl-red" />
-          <p className="label-caps-v2" style={{ color: "#DC2626" }}>
+          <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#D63944" }} />
+          <p className="label-caps-v2" style={{ color: "#D63944", fontWeight: 800 }}>
             Alertas operativas
           </p>
         </div>
         <button
-          className="text-cl-text-dim hover:text-cl-amber transition"
+          className="text-cl-text-dim transition"
           aria-label="Refrescar alertas"
+          onMouseEnter={(e) => (e.currentTarget.style.color = "#0A1628")}
+          onMouseLeave={(e) => (e.currentTarget.style.color = "#8B95A8")}
         >
           <Icon icon={ICONS.refresh} size={13} />
         </button>
@@ -48,29 +50,32 @@ export function AlertsWidget({ alerts = [] }) {
         ) : (
           shown.map((a, idx) => {
             const sev = a.severity || "warning";
-            const color = sev === "critical" ? "#DC2626" : sev === "warning" ? "#0A1628" : "#06B6D4";
+            const color = sev === "critical" ? "#D63944" : sev === "warning" ? "#E8A33D" : "#0066B8";
             return (
               <div
                 key={a.id || idx}
-                className="p-3"
-                style={{ background: `${color}0D`, borderLeft: `2px solid ${color}` }}
+                className="p-3 rounded-sm"
+                style={{ background: `${color}0F`, borderLeft: `3px solid ${color}` }}
               >
                 <div className="flex items-center justify-between mb-1">
                   <span
                     className="font-mono text-[10px]"
-                    style={{ color, fontWeight: 600 }}
+                    style={{ color, fontWeight: 700 }}
                   >
                     {a.wo_code || a.scope_ref?.work_order_id || "—"}
                   </span>
-                  <span className="text-[9px] font-mono text-cl-text-dim">
+                  <span className="text-[10px] font-mono text-cl-text-dim">
                     {a.duration || a.age || ""}
                   </span>
                 </div>
-                <p className="text-[12px] text-cl-text">
+                <p
+                  className="font-jakarta text-[13px]"
+                  style={{ color: "#0A1628", fontWeight: 600, lineHeight: 1.35 }}
+                >
                   {a.title || a.kind || "Alerta"}
                 </p>
                 {a.detail && (
-                  <p className="text-[10px] text-cl-text-dim mt-0.5">{a.detail}</p>
+                  <p className="text-[11px] text-cl-text-mid mt-1" style={{ lineHeight: 1.4 }}>{a.detail}</p>
                 )}
               </div>
             );
@@ -137,10 +142,10 @@ export function ShieldsWidget({ agreements = [] }) {
   }
 
   return (
-    <section className="border-b border-cl-border">
+    <section className="border-b border-cl-border-strong">
       <header className="px-5 py-3 flex items-center justify-between">
-        <p className="label-caps-v2">Shields</p>
-        <span className="text-[10px] font-mono" style={{ color: "#22C55E" }}>
+        <p className="label-caps-v2" style={{ color: "#0A1628", fontWeight: 800 }}>Shields</p>
+        <span className="font-jakarta uppercase" style={{ color: "#0A6131", fontSize: 10, fontWeight: 700, letterSpacing: "0.1em" }}>
           {total} activos
         </span>
       </header>
@@ -268,7 +273,7 @@ export function WeatherWidget({ sites = [], selectedSiteId, onSelectSite }) {
   );
 
   return (
-    <section className="border-b border-cl-border">
+    <section className="border-b border-cl-border-strong">
       <header className="px-5 py-3 flex items-center justify-between">
         <p className="label-caps-v2">Meteorología</p>
         <span className="text-[10px] text-cl-text-dim">
@@ -292,11 +297,13 @@ export function WeatherWidget({ sites = [], selectedSiteId, onSelectSite }) {
                   <button
                     key={site.id}
                     onClick={() => onSelectSite?.(site.id)}
-                    className={`inline-flex items-center gap-1 px-2 py-1 rounded-sm border text-[10px] transition ${
-                      isSelected
-                        ? "border-cl-amber/40 bg-cl-amber/10 text-cl-amber"
-                        : "border-cl-border text-cl-text-mid hover:border-cl-border-strong"
-                    }`}
+                    className="inline-flex items-center gap-1 px-2 py-1 rounded-sm border text-[10px] transition font-jakarta"
+                    style={{
+                      borderColor: isSelected ? "#0A1628" : "#C8CDD8",
+                      background: isSelected ? "#0A1628" : "transparent",
+                      color: isSelected ? "#FFFFFF" : "#3D4A66",
+                      fontWeight: isSelected ? 700 : 500,
+                    }}
                   >
                     <Icon icon={ICONS.mapPoint} size={9} />
                     {site.city || site.name}
@@ -327,10 +334,14 @@ export function WeatherWidget({ sites = [], selectedSiteId, onSelectSite }) {
                 </div>
               </div>
               <span
-                className="inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-semibold"
+                className="inline-flex items-center gap-1 px-2 py-1 rounded font-jakarta uppercase"
                 style={{
-                  background: weather.flightOk ? "#22C55E22" : "#DC262622",
-                  color: weather.flightOk ? "#22C55E" : "#DC2626",
+                  fontSize: 10,
+                  fontWeight: 700,
+                  letterSpacing: "0.08em",
+                  background: weather.flightOk ? "#D9F1E5" : "#FCE4E6",
+                  color: weather.flightOk ? "#0A6131" : "#8E1F2A",
+                  border: weather.flightOk ? "1px solid #16A34A" : "1px solid #D63944",
                 }}
               >
                 <Icon

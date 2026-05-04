@@ -85,24 +85,36 @@ export default function V2TopHeader({
   const displayName = user?.full_name || user?.email?.split("@")[0] || "—";
 
   return (
-    <header className="px-6 py-4 border-b border-cl-border flex items-center justify-between flex-shrink-0 bg-cl-bg">
+    // Header band: bg blanco con gradient sutil + border-bottom navy strong 2px PRESENCIA
+    // Replicates mock F: linear-gradient(180deg, #FFFFFF 0%, #F7F8FA 100%) + bottom border navy 2px.
+    <header
+      className="px-6 py-4 flex items-center justify-between flex-shrink-0"
+      style={{
+        background: "linear-gradient(180deg, #FFFFFF 0%, #F7F8FA 100%)",
+        borderBottom: "2px solid #0A1628",
+      }}
+    >
       <div className="flex items-center gap-5">
+        {/* Highlight ahora navy strong (no amber) — autoridad serena, paleta F */}
         <h1
-          className="font-jakarta text-[18px] font-semibold text-cl-text"
-          style={{ letterSpacing: "0.02em" }}
+          className="font-jakarta text-[18px] font-semibold"
+          style={{ letterSpacing: "0.02em", color: "#0A1628" }}
         >
-          {finalTitle && <span>{finalTitle} </span>}
-          <span style={{ color: "#F59E0B" }}>{finalHighlight}</span>
+          {finalTitle && (
+            <span style={{ color: "#3D4A66", fontWeight: 500 }}>{finalTitle} </span>
+          )}
+          <span style={{ color: "#0A1628", fontWeight: 800 }}>{finalHighlight}</span>
         </h1>
       </div>
 
       <div className="flex items-center gap-4 text-[12px] text-cl-text-mid">
-        <span className="font-mono">{dateTime}</span>
+        <span className="font-mono" style={{ color: "#3D4A66", fontWeight: 500 }}>{dateTime}</span>
+        {/* Pill live: weight bold + texto navy strong, no amber */}
         <span
-          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border"
+          className="inline-flex items-center gap-2 px-3 py-1 rounded-full border"
           style={{
-            borderColor: isRefreshing ? "rgba(245, 158, 11, 0.4)" : "rgba(34, 197, 94, 0.4)",
-            background: isRefreshing ? "rgba(245, 158, 11, 0.10)" : "rgba(34, 197, 94, 0.10)",
+            borderColor: isRefreshing ? "#E8A33D" : "#16A34A",
+            background: isRefreshing ? "#FCF1DC" : "#D9F1E5",
             transition: "border-color 280ms ease, background 280ms ease",
           }}
           title={
@@ -114,14 +126,15 @@ export default function V2TopHeader({
           <span
             className="w-1.5 h-1.5 rounded-full animate-pulse-dot"
             style={{
-              background: isRefreshing ? "#F59E0B" : "#22C55E",
+              background: isRefreshing ? "#E8A33D" : "#16A34A",
               transition: "background 280ms ease",
             }}
           />
           <span
-            className="font-mono font-semibold"
+            className="font-jakarta font-bold"
             style={{
-              color: isRefreshing ? "#F59E0B" : "#22C55E",
+              color: isRefreshing ? "#7E5212" : "#0A6131",
+              fontSize: 12,
               transition: "color 280ms ease",
             }}
           >
@@ -129,12 +142,12 @@ export default function V2TopHeader({
           </span>
         </span>
 
-        {/* User identity + logout · destrabar "logines que no son" */}
-        <div className="flex items-center gap-2 pl-3 border-l border-cl-border">
+        {/* User identity + logout · presencia navy strong, hover orange (acento escaso) */}
+        <div className="flex items-center gap-2 pl-3 border-l border-cl-border-strong">
           <span
-            className="font-mono text-[11px] text-cl-text-mid"
+            className="font-jakarta text-[12px]"
             title={user?.email || ""}
-            style={{ letterSpacing: "0.04em" }}
+            style={{ color: "#0A1628", fontWeight: 600, letterSpacing: "0.01em" }}
           >
             {displayName}
           </span>
@@ -142,7 +155,22 @@ export default function V2TopHeader({
             type="button"
             onClick={handleLogout}
             title="Cerrar sesión"
-            className="inline-flex items-center justify-center w-7 h-7 rounded-sm border border-cl-border text-cl-text-mid hover:text-cl-orange hover:border-cl-orange transition"
+            className="inline-flex items-center justify-center w-8 h-8 rounded-sm border transition"
+            style={{
+              background: "#FFFFFF",
+              borderColor: "#C8CDD8",
+              color: "#3D4A66",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "#FFE5DA";
+              e.currentTarget.style.borderColor = "#FF6B35";
+              e.currentTarget.style.color = "#FF6B35";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "#FFFFFF";
+              e.currentTarget.style.borderColor = "#C8CDD8";
+              e.currentTarget.style.color = "#3D4A66";
+            }}
           >
             <Icon icon={ICONS.logout} size={14} />
           </button>

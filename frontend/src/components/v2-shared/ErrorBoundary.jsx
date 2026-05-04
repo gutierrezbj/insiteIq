@@ -54,20 +54,28 @@ export default class V2ErrorBoundary extends Component {
         style={{ minHeight: "calc(100vh - 200px)", padding: 24 }}
       >
         <div
-          className="bg-wr-surface border border-wr-border rounded-md"
-          style={{ padding: 24, maxWidth: 480, width: "100%" }}
+          className="rounded-md"
+          style={{
+            padding: 28,
+            maxWidth: 480,
+            width: "100%",
+            background: "#FFFFFF",
+            border: "1px solid #C8CDD8",
+            borderLeft: "4px solid #D63944",
+            boxShadow: "0 16px 32px -4px rgba(10, 22, 40, 0.16)",
+          }}
         >
           <div className="flex items-center gap-3 mb-3">
-            <Icon icon={ICONS.dangerTriangle} size={24} color="#DC2626" />
+            <Icon icon={ICONS.dangerTriangle} size={24} color="#D63944" />
             <h2
-              className="font-jakarta text-[16px] font-semibold text-wr-text m-0"
-              style={{ letterSpacing: "0.02em" }}
+              className="font-jakarta text-[18px] m-0"
+              style={{ color: "#0A1628", fontWeight: 700, letterSpacing: "-0.005em" }}
             >
               Algo se rompió en esta vista
             </h2>
           </div>
 
-          <p className="text-[13px] text-wr-text-mid leading-relaxed m-0 mb-3">
+          <p className="text-[13px] leading-relaxed m-0 mb-3" style={{ color: "#3D4A66", fontWeight: 500 }}>
             La app no perdió tu sesión. Solo este panel falló al renderizar.
             Puedes intentar recargar o volver al cockpit.
           </p>
@@ -78,14 +86,14 @@ export default class V2ErrorBoundary extends Component {
               style={{ maxHeight: 160, overflowY: "auto" }}
             >
               <summary
-                className="cursor-pointer text-[11px] font-mono text-wr-text-dim hover:text-wr-amber transition"
-                style={{ letterSpacing: "0.06em" }}
+                className="cursor-pointer text-[11px] font-mono transition"
+                style={{ letterSpacing: "0.06em", color: "#3D4A66" }}
               >
                 Detalle técnico (solo dev)
               </summary>
               <pre
-                className="mt-2 text-[11px] text-wr-text-dim font-mono leading-snug"
-                style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}
+                className="mt-2 text-[11px] font-mono leading-snug"
+                style={{ whiteSpace: "pre-wrap", wordBreak: "break-word", color: "#3D4A66", background: "#F4F6F8", padding: 8, borderRadius: 4 }}
               >
                 {errorMsg}
                 {this.state.error?.stack && `\n\n${this.state.error.stack}`}
@@ -96,36 +104,54 @@ export default class V2ErrorBoundary extends Component {
           <div className="flex items-center gap-2">
             <button
               onClick={this.handleReset}
-              className="cursor-pointer transition rounded-sm"
+              className="cursor-pointer transition rounded-sm font-jakarta"
               style={{
                 height: 36,
-                padding: "0 14px",
+                padding: "0 16px",
                 fontSize: 12,
-                fontWeight: 500,
-                color: "#9CA3AF",
-                background: "transparent",
-                border: "1px solid #2A2A2A",
-                fontFamily: "JetBrains Mono, monospace",
+                fontWeight: 600,
+                color: "#3D4A66",
+                background: "#FFFFFF",
+                border: "1px solid #C8CDD8",
                 textTransform: "uppercase",
                 letterSpacing: "0.08em",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "#F4F6F8";
+                e.currentTarget.style.color = "#0A1628";
+                e.currentTarget.style.borderColor = "#0A1628";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "#FFFFFF";
+                e.currentTarget.style.color = "#3D4A66";
+                e.currentTarget.style.borderColor = "#C8CDD8";
               }}
             >
               Reintentar
             </button>
+            {/* Recargar app · ORANGE escaso (decisión con urgencia · "el sistema falló") */}
             <button
               onClick={this.handleReload}
-              className="cursor-pointer transition rounded-sm flex items-center gap-1.5"
+              className="cursor-pointer transition rounded-sm flex items-center gap-1.5 font-jakarta"
               style={{
                 height: 36,
-                padding: "0 14px",
+                padding: "0 16px",
                 fontSize: 12,
-                fontWeight: 600,
-                color: "#0A0A0A",
-                background: "#F59E0B",
-                border: "1px solid #F59E0B",
-                fontFamily: "JetBrains Mono, monospace",
+                fontWeight: 700,
+                color: "#FFFFFF",
+                background: "#FF6B35",
+                border: "1px solid #FF6B35",
                 textTransform: "uppercase",
                 letterSpacing: "0.08em",
+                boxShadow: "0 2px 6px -1px rgba(255, 107, 53, 0.32)",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "#C5481E";
+                e.currentTarget.style.borderColor = "#C5481E";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "#FF6B35";
+                e.currentTarget.style.borderColor = "#FF6B35";
               }}
             >
               <Icon icon={ICONS.refresh} size={13} />

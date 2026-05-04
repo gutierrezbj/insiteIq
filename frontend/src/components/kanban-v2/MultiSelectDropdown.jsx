@@ -64,32 +64,57 @@ export default function MultiSelectDropdown({
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className={`h-9 px-3 flex items-center gap-1.5 text-[13px] border rounded-full transition ${
-          hasSelection
-            ? "border-cl-amber/40 bg-cl-amber/10 text-cl-amber"
-            : "border-cl-border text-cl-text-mid hover:border-cl-border-strong"
-        }`}
+        className="px-3 flex items-center gap-1.5 text-[13px] transition font-jakarta"
+        style={{
+          height: 34,
+          borderRadius: 6,
+          border: "1.5px solid #0A1628",
+          background: hasSelection ? "#0A1628" : "#FFFFFF",
+          color: hasSelection ? "#FFFFFF" : "#0A1628",
+          fontWeight: 700,
+        }}
+        onMouseEnter={(e) => {
+          if (!hasSelection) {
+            e.currentTarget.style.background = "#F0F2F7";
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (!hasSelection) {
+            e.currentTarget.style.background = "#FFFFFF";
+          }
+        }}
       >
         {label}
         {hasSelection && (
           <span
-            className="px-1.5 py-0.5 rounded-full font-mono text-[10px] font-semibold"
-            style={{ background: "rgba(255, 107, 53, 0.2)", color: "#0A1628" }}
+            className="font-jakarta"
+            style={{
+              background: "#FFFFFF",
+              color: "#0A1628",
+              fontSize: 10,
+              fontWeight: 800,
+              minWidth: 20,
+              padding: "1px 6px",
+              borderRadius: 3,
+              textAlign: "center",
+            }}
           >
             {count}
           </span>
         )}
-        <Icon icon={ICONS.chevronDown} size={14} />
+        <Icon icon={ICONS.chevronDown} size={12} />
       </button>
 
       {open && (
         <div
-          className="absolute z-50 mt-1 left-0 bg-cl-surface border border-cl-border-strong rounded-md shadow-xl wr-scroll"
+          className="absolute z-50 mt-1 left-0 rounded-md wr-scroll"
           style={{
             minWidth: 220,
             maxHeight: 300,
             overflowY: "auto",
-            boxShadow: "0 12px 28px -4px rgba(0, 0, 0, 0.7)",
+            background: "#FFFFFF",
+            border: "1px solid #C8CDD8",
+            boxShadow: "0 16px 32px -4px rgba(10, 22, 40, 0.20), 0 8px 16px -4px rgba(10, 22, 40, 0.12)",
           }}
         >
           {normalized.length === 0 ? (
@@ -108,25 +133,38 @@ export default function MultiSelectDropdown({
                       <button
                         type="button"
                         onClick={() => toggle(opt.value)}
-                        className={`w-full flex items-center gap-2 px-3 py-2 text-left text-[12px] transition ${
-                          isSelected
-                            ? "text-cl-amber bg-cl-amber/5"
-                            : "text-cl-text-mid hover:text-cl-text hover:bg-cl-surface-2"
-                        }`}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-left text-[12px] font-jakarta transition"
+                        style={{
+                          color: isSelected ? "#0A1628" : "#3D4A66",
+                          background: isSelected ? "#E8EDF5" : "transparent",
+                          fontWeight: isSelected ? 700 : 500,
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!isSelected) {
+                            e.currentTarget.style.background = "#F7F8FA";
+                            e.currentTarget.style.color = "#0A1628";
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!isSelected) {
+                            e.currentTarget.style.background = "transparent";
+                            e.currentTarget.style.color = "#3D4A66";
+                          }
+                        }}
                       >
                         <span
                           className="flex items-center justify-center"
                           style={{
-                            width: 14,
-                            height: 14,
-                            borderRadius: 2,
-                            border: `1px solid ${isSelected ? "#0A1628" : "#2A2A2A"}`,
-                            background: isSelected ? "#0A1628" : "transparent",
+                            width: 16,
+                            height: 16,
+                            borderRadius: 3,
+                            border: `1.5px solid ${isSelected ? "#0A1628" : "#C8CDD8"}`,
+                            background: isSelected ? "#0A1628" : "#FFFFFF",
                             flexShrink: 0,
                           }}
                         >
                           {isSelected && (
-                            <Icon icon={ICONS.checkCircle} size={10} color="#FFFFFF" />
+                            <Icon icon={ICONS.checkCircle} size={11} color="#FFFFFF" />
                           )}
                         </span>
                         <span className="flex-1 truncate">{opt.label}</span>
@@ -137,15 +175,23 @@ export default function MultiSelectDropdown({
               </ul>
               {hasSelection && (
                 <div
-                  className="border-t border-cl-border px-3 py-2 flex items-center justify-between"
+                  className="px-3 py-2 flex items-center justify-between"
+                  style={{ borderTop: "1px solid #E2E5EC", background: "#F7F8FA" }}
                 >
                   <span className="text-[10px] text-cl-text-dim font-mono">
                     {count} seleccionado{count > 1 ? "s" : ""}
                   </span>
                   <button
                     onClick={clear}
-                    className="text-[11px] text-cl-text-dim hover:text-cl-amber transition"
-                    style={{ letterSpacing: "0.06em" }}
+                    className="font-jakarta uppercase transition"
+                    style={{
+                      fontSize: 11,
+                      color: "#3D4A66",
+                      fontWeight: 700,
+                      letterSpacing: "0.08em",
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = "#FF6B35")}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = "#3D4A66")}
                   >
                     Limpiar
                   </button>

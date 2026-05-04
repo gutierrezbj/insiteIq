@@ -61,7 +61,7 @@ const STAGE_CTA = {
 
 const SHIELD_META = {
   bronze:      { hex: "#B45309", label: "Bronze" },
-  bronze_plus: { hex: "#0A1628", label: "Bronze+" },
+  bronze_plus: { hex: "#D97706", label: "Bronze+" },
   silver:      { hex: "#64748B", label: "Silver" },
   gold:        { hex: "#CA8A04", label: "Gold" },
 };
@@ -114,7 +114,9 @@ export default function WoStageModal({
       style={{
         position: "fixed",
         inset: 0,
-        background: "rgba(10, 10, 10, 0.55)",
+        // Overlay con tinte navy oscuro (no negro hardcoded)
+        background: "rgba(10, 22, 40, 0.45)",
+        backdropFilter: "blur(2px)",
         zIndex: 50,
         padding: 24,
         display: "flex",
@@ -131,18 +133,23 @@ export default function WoStageModal({
           maxWidth: "100%",
           maxHeight: "calc(100vh - 48px)",
           borderRadius: 12,
-          border: "1px solid #2A2A2A",
-          boxShadow: "0 20px 40px -8px rgba(0, 0, 0, 0.7), 0 8px 16px -4px rgba(0, 0, 0, 0.5)",
+          border: "1px solid #C8CDD8",
+          boxShadow: "0 24px 48px -8px rgba(10, 22, 40, 0.32), 0 8px 16px -4px rgba(10, 22, 40, 0.16)",
           display: "flex",
           flexDirection: "column",
-          fontFamily: "JetBrains Mono, monospace",
+          fontFamily: "'Plus Jakarta Sans', sans-serif",
           animation: "panelIn 280ms cubic-bezier(0.16, 1, 0.3, 1)",
         }}
       >
-        {/* Header */}
+        {/* Header · navy band sutil con presencia */}
         <header
           className="flex items-center justify-between flex-shrink-0"
-          style={{ padding: "14px 20px 12px", borderBottom: "1px solid #E2E5EC" }}
+          style={{
+            padding: "14px 20px 12px",
+            borderBottom: "1px solid #E2E5EC",
+            background: "#F7F8FA",
+            borderRadius: "12px 12px 0 0",
+          }}
         >
           <div className="flex items-center gap-2 flex-wrap">
             <span
@@ -193,25 +200,33 @@ export default function WoStageModal({
           </div>
           <button
             onClick={onClose}
-            className="bg-transparent border-0 text-cl-text-dim hover:text-cl-amber transition cursor-pointer p-1 flex items-center"
+            className="bg-transparent border-0 text-cl-text-dim transition cursor-pointer p-1 flex items-center rounded"
             aria-label="Cerrar"
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = "#0A1628";
+              e.currentTarget.style.background = "#E8EDF5";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = "#8B95A8";
+              e.currentTarget.style.background = "transparent";
+            }}
           >
             <Icon icon={ICONS.close} size={22} />
           </button>
         </header>
 
-        {/* Title block */}
+        {/* Title block · site name navy strong (NO text-white) */}
         <div style={{ padding: "16px 20px 14px" }}>
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <p className="font-mono text-[11px] text-cl-text-dim mb-1">{formatWoCode(wo)}</p>
               <h2
-                className="font-jakarta text-white leading-tight"
-                style={{ fontSize: 24, fontWeight: 700, margin: 0 }}
+                className="font-jakarta leading-tight"
+                style={{ fontSize: 24, fontWeight: 700, margin: 0, color: "#0A1628", letterSpacing: "-0.015em" }}
               >
                 {site?.name || wo?.site_name || "Sin sitio"}
               </h2>
-              <p className="text-[13px] text-cl-text-mid mt-1">
+              <p className="text-[13px] mt-1" style={{ color: "#3D4A66", fontWeight: 500 }}>
                 {client?.name && <span>{client.name}</span>}
                 {site?.city && (
                   <>
@@ -371,17 +386,17 @@ export default function WoStageModal({
           )}
         </div>
 
-        {/* Footer */}
+        {/* Footer · bg surface-3 sutil (NO dark band) + botones presence */}
         <footer
           className="flex items-center justify-between gap-3 flex-shrink-0"
           style={{
             padding: "14px 20px",
             borderTop: "1px solid #E2E5EC",
-            background: "rgba(20, 20, 20, 0.5)",
+            background: "#F7F8FA",
             borderRadius: "0 0 12px 12px",
           }}
         >
-          <p className="text-[12px] text-cl-text-dim flex-1">{cta.note}</p>
+          <p className="text-[12px] flex-1" style={{ color: "#3D4A66", fontWeight: 500, lineHeight: 1.45 }}>{cta.note}</p>
           <div className="flex items-center gap-2">
             <button
               onClick={onClose}
@@ -390,11 +405,21 @@ export default function WoStageModal({
                 height: 36,
                 padding: "0 16px",
                 fontSize: 13,
-                fontWeight: 500,
+                fontWeight: 600,
                 color: "#3D4A66",
-                background: "transparent",
-                border: "1px solid #2A2A2A",
-                fontFamily: "JetBrains Mono, monospace",
+                background: "#FFFFFF",
+                border: "1px solid #C8CDD8",
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "#F4F6F8";
+                e.currentTarget.style.color = "#0A1628";
+                e.currentTarget.style.borderColor = "#0A1628";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "#FFFFFF";
+                e.currentTarget.style.color = "#3D4A66";
+                e.currentTarget.style.borderColor = "#C8CDD8";
               }}
             >
               Cerrar
@@ -414,15 +439,17 @@ export default function WoStageModal({
                 className="cursor-pointer transition rounded-md flex items-center gap-1.5"
                 style={{
                   height: 36,
-                  padding: "0 16px",
+                  padding: "0 18px",
                   fontSize: 13,
-                  fontWeight: 600,
+                  fontWeight: 700,
                   background: cta.bg,
                   color: "#FFFFFF",
-                  border: "none",
+                  border: `1px solid ${cta.bg}`,
                   opacity: cta.disabled ? 0.5 : 1,
-                  fontFamily: "JetBrains Mono, monospace",
+                  fontFamily: "'Plus Jakarta Sans', sans-serif",
                   cursor: cta.disabled ? "not-allowed" : "pointer",
+                  letterSpacing: "0.01em",
+                  boxShadow: cta.disabled ? "none" : "0 2px 6px -1px rgba(10, 22, 40, 0.18)",
                 }}
               >
                 {cta.label}

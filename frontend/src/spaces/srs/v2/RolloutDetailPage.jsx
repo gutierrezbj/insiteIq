@@ -225,18 +225,20 @@ export default function RolloutDetailPage() {
 
   return (
     <div className="h-full flex flex-col">
-      {/* Header sticky */}
-      <header className="border-b border-cl-border bg-cl-bg flex-shrink-0">
+      {/* Header sticky · bg blanco con border-bottom strong para presencia */}
+      <header className="bg-cl-bg flex-shrink-0" style={{ borderBottom: "1px solid #C8CDD8" }}>
         <div className="px-6 py-4 flex items-start justify-between gap-4">
           <div className="min-w-0">
             <div className="flex items-center gap-2.5 mb-1 flex-wrap">
-              <p className="label-caps-v2">Rollout</p>
-              <span className="font-mono text-[10px] text-cl-text-dim">{project.code}</span>
+              <p className="label-caps-v2" style={{ color: "#0A1628", fontWeight: 800 }}>Rollout</p>
+              <span className="font-mono text-[11px] text-cl-text-dim">{project.code}</span>
               <span
-                className="text-[9px] uppercase font-semibold px-1.5 py-0.5 rounded-sm"
+                className="font-jakarta text-[10px] uppercase px-2 py-0.5 rounded-sm"
                 style={{
-                  color: project.status === "active" ? "#22C55E" : "#3D4A66",
-                  background: project.status === "active" ? "rgba(34,197,94,0.1)" : "rgba(156,163,175,0.1)",
+                  color: project.status === "active" ? "#0A6131" : "#3D4A66",
+                  background: project.status === "active" ? "#D9F1E5" : "#F4F6F8",
+                  border: project.status === "active" ? "1px solid #16A34A" : "1px solid #C8CDD8",
+                  fontWeight: 700,
                   letterSpacing: "0.1em",
                 }}
               >
@@ -244,16 +246,20 @@ export default function RolloutDetailPage() {
               </span>
             </div>
             <h1
-              className="font-jakarta text-[20px] font-semibold text-white leading-tight"
-              style={{ letterSpacing: "0.01em" }}
+              className="font-jakarta text-[22px] leading-tight"
+              style={{ color: "#0A1628", fontWeight: 800, letterSpacing: "-0.015em" }}
             >
               {project.title}
             </h1>
-            <div className="flex items-center gap-4 mt-1 text-[12px] text-cl-text-mid font-mono">
-              <span><strong className="text-cl-text">{completed}</strong> / {totalSites} sites · <span style={{ color: "#22C55E" }}>{progressPct}%</span></span>
-              <span style={{ color: FLAG_COLORS.problem }}>● {counts.problem} con problemas</span>
-              <span style={{ color: FLAG_COLORS.scheduled }}>● {counts.scheduled} en calendario</span>
-              <span style={{ color: FLAG_COLORS.done }}>● {counts.done} hecho/marcha</span>
+            <div className="flex items-center gap-4 mt-2 text-[12px] flex-wrap" style={{ color: "#3D4A66", fontWeight: 500 }}>
+              <span className="font-mono">
+                <strong style={{ color: "#0A1628", fontWeight: 700 }}>{completed}</strong> / {totalSites} sites
+                <span> · </span>
+                <span style={{ color: "#16A34A", fontWeight: 700 }}>{progressPct}%</span>
+              </span>
+              <span style={{ color: FLAG_COLORS.problem, fontWeight: 600 }}>● {counts.problem} con problemas</span>
+              <span style={{ color: FLAG_COLORS.scheduled, fontWeight: 600 }}>● {counts.scheduled} en calendario</span>
+              <span style={{ color: FLAG_COLORS.done, fontWeight: 600 }}>● {counts.done} hecho/marcha</span>
             </div>
           </div>
 
@@ -275,19 +281,34 @@ export default function RolloutDetailPage() {
           </div>
         </div>
 
-        {/* Tabs nav */}
-        <nav className="px-6 flex items-center gap-1">
+        {/* Tabs nav · activo navy strong + bottom-border-3px navy + bold */}
+        <nav className="px-6 flex items-center gap-0">
           {TABS.map((t) => {
             const isActive = activeTab === t.key;
             return (
               <button
                 key={t.key}
                 onClick={() => setActiveTab(t.key)}
-                className={`flex items-center gap-2 px-4 py-2.5 text-[12px] font-medium border-b-2 transition`}
+                className="flex items-center gap-2 px-4 py-3 transition font-jakarta"
                 style={{
+                  fontSize: 13,
                   color: isActive ? "#0A1628" : "#3D4A66",
-                  borderBottomColor: isActive ? "#0A1628" : "transparent",
-                  letterSpacing: "0.04em",
+                  borderBottom: isActive ? "3px solid #0A1628" : "3px solid transparent",
+                  fontWeight: isActive ? 700 : 600,
+                  letterSpacing: "0.02em",
+                  background: isActive ? "#F7F8FA" : "transparent",
+                }}
+                onMouseEnter={(e) => {
+                  if (!isActive) {
+                    e.currentTarget.style.color = "#0A1628";
+                    e.currentTarget.style.background = "#F7F8FA";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isActive) {
+                    e.currentTarget.style.color = "#3D4A66";
+                    e.currentTarget.style.background = "transparent";
+                  }
                 }}
               >
                 <Icon icon={t.icon} size={14} />
@@ -296,28 +317,48 @@ export default function RolloutDetailPage() {
             );
           })}
 
-          {/* Filter rápido (solo en Mapa y Kanban) */}
+          {/* Filter rápido (solo en Mapa y Kanban) · pills outline navy strong */}
           {(activeTab === "mapa" || activeTab === "kanban") && (
             <div className="ml-auto flex items-center gap-2 py-2">
-              <span className="text-[10px] text-cl-text-dim uppercase" style={{ letterSpacing: "0.1em" }}>Ver:</span>
+              <span className="font-jakarta uppercase" style={{ fontSize: 10, color: "#3D4A66", fontWeight: 700, letterSpacing: "0.12em" }}>Ver:</span>
               {[
                 { key: "all", label: "Todos" },
                 { key: "problems", label: `Problemas (${counts.problem})`, color: FLAG_COLORS.problem },
                 { key: "scheduled", label: `Programados (${counts.scheduled})`, color: FLAG_COLORS.scheduled },
-              ].map((f) => (
-                <button
-                  key={f.key}
-                  onClick={() => setFilter(f.key)}
-                  className={`text-[11px] px-2.5 py-1 rounded-sm border transition`}
-                  style={{
-                    color: filter === f.key ? "#0A1628" : (f.color || "#3D4A66"),
-                    borderColor: filter === f.key ? "#0A1628" : "#E2E5EC",
-                    background: filter === f.key ? "rgba(255, 107, 53, 0.08)" : "transparent",
-                  }}
-                >
-                  {f.label}
-                </button>
-              ))}
+              ].map((f) => {
+                const isActive = filter === f.key;
+                return (
+                  <button
+                    key={f.key}
+                    onClick={() => setFilter(f.key)}
+                    className="font-jakarta px-3 py-1 rounded-sm transition"
+                    style={{
+                      fontSize: 11,
+                      color: isActive ? "#FFFFFF" : (f.color || "#3D4A66"),
+                      borderWidth: 1,
+                      borderStyle: "solid",
+                      borderColor: isActive ? "#0A1628" : "#C8CDD8",
+                      background: isActive ? "#0A1628" : "#FFFFFF",
+                      fontWeight: isActive ? 700 : 600,
+                      boxShadow: isActive ? "0 1px 3px rgba(10, 22, 40, 0.18)" : "none",
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isActive) {
+                        e.currentTarget.style.background = "#F4F6F8";
+                        e.currentTarget.style.borderColor = "#0A1628";
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isActive) {
+                        e.currentTarget.style.background = "#FFFFFF";
+                        e.currentTarget.style.borderColor = "#C8CDD8";
+                      }
+                    }}
+                  >
+                    {f.label}
+                  </button>
+                );
+              })}
             </div>
           )}
         </nav>
@@ -368,12 +409,27 @@ function BulkRescheduleButton({ count, onClick }) {
   return (
     <button
       onClick={onClick}
-      className="inline-flex items-center gap-2 px-3 py-2 rounded-sm border text-[11px] uppercase font-medium transition"
+      className="inline-flex items-center gap-2 px-3 py-2 rounded-sm font-jakarta uppercase transition"
       style={{
-        color: hasPending ? "#3B82F6" : "#8B95A8",
-        borderColor: hasPending ? "#3B82F6" : "#E2E5EC",
-        background: hasPending ? "rgba(59, 130, 246, 0.08)" : "transparent",
+        fontSize: 11,
+        fontWeight: 700,
+        color: hasPending ? "#0066B8" : "#8B95A8",
+        border: hasPending ? "1px solid #0066B8" : "1px solid #C8CDD8",
+        background: hasPending ? "#DEEAF7" : "#FFFFFF",
         letterSpacing: "0.08em",
+        cursor: hasPending ? "pointer" : "default",
+      }}
+      onMouseEnter={(e) => {
+        if (hasPending) {
+          e.currentTarget.style.background = "#0066B8";
+          e.currentTarget.style.color = "#FFFFFF";
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (hasPending) {
+          e.currentTarget.style.background = "#DEEAF7";
+          e.currentTarget.style.color = "#0066B8";
+        }
       }}
       title={hasPending ? `Programar ${count} sites pending en bulk` : "Sin sites pending"}
     >
@@ -462,20 +518,25 @@ function BulkRescheduleModal({ wos, sites, users, onClose, onDone }) {
   return (
     <div
       className="fixed inset-0 z-[5000] flex items-center justify-center"
-      style={{ background: "rgba(10, 10, 10, 0.65)" }}
+      style={{ background: "rgba(10, 22, 40, 0.55)", backdropFilter: "blur(2px)" }}
       onClick={submitting ? undefined : onClose}
     >
       <div
-        className="bg-cl-bg border border-cl-border rounded-sm w-[640px] max-w-[95vw] max-h-[90vh] flex flex-col"
+        className="rounded-md w-[640px] max-w-[95vw] max-h-[90vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
+        style={{
+          background: "#FFFFFF",
+          border: "1px solid #C8CDD8",
+          boxShadow: "0 24px 48px -8px rgba(10, 22, 40, 0.32)",
+        }}
       >
-        {/* Header */}
-        <header className="px-5 py-4 border-b border-cl-border flex-shrink-0">
-          <p className="label-caps-v2 mb-1">Programar bulk</p>
-          <h2 className="font-jakarta text-[18px] font-semibold text-white leading-tight">
+        {/* Header · navy strong title con presencia */}
+        <header className="px-5 py-4 flex-shrink-0" style={{ borderBottom: "1px solid #C8CDD8", background: "#F7F8FA", borderRadius: "6px 6px 0 0" }}>
+          <p className="label-caps-v2 mb-1" style={{ color: "#0A1628", fontWeight: 800 }}>Programar bulk</p>
+          <h2 className="font-jakarta text-[18px] leading-tight" style={{ color: "#0A1628", fontWeight: 700, letterSpacing: "-0.005em" }}>
             {selected.size} de {wos.length} sites pending seleccionados
           </h2>
-          <p className="text-[11px] text-cl-text-mid font-mono mt-0.5">
+          <p className="text-[12px] mt-1 font-mono" style={{ color: "#3D4A66", fontWeight: 500 }}>
             Avanza intake → triage con tech + fecha. Operación secuencial (1 POST por site).
           </p>
         </header>
@@ -515,22 +576,24 @@ function BulkRescheduleModal({ wos, sites, users, onClose, onDone }) {
           </div>
 
           {/* Lista checkboxes */}
-          <div className="px-5 py-2 border-b border-cl-border flex items-center justify-between flex-shrink-0">
+          <div className="px-5 py-2 flex items-center justify-between flex-shrink-0" style={{ borderBottom: "1px solid #E2E5EC" }}>
             <button
               onClick={toggleAll}
               disabled={submitting}
-              className="text-[11px] text-cl-amber hover:underline uppercase"
-              style={{ letterSpacing: "0.08em" }}
+              className="font-jakarta text-[11px] uppercase transition"
+              style={{ letterSpacing: "0.08em", color: "#0A1628", fontWeight: 700 }}
+              onMouseEnter={(e) => (e.currentTarget.style.textDecoration = "underline")}
+              onMouseLeave={(e) => (e.currentTarget.style.textDecoration = "none")}
             >
               {selected.size === wos.length ? "Deseleccionar todos" : "Seleccionar todos"}
             </button>
-            <span className="text-[10px] text-cl-text-dim font-mono">{selected.size} / {wos.length}</span>
+            <span className="text-[11px] text-cl-text-mid font-mono">{selected.size} / {wos.length}</span>
           </div>
           {wos.length === 0 && (
             <div className="flex-1 flex items-center justify-center px-5 py-12 text-center">
               <div>
-                <p className="text-[12px] text-cl-text-mid mb-1">Sin sites pending para programar</p>
-                <p className="text-[10px] text-cl-text-dim font-mono">Solo aparecen aquí los sites en estado <span className="text-cl-amber">intake</span> (no asignados todavía)</p>
+                <p className="text-[13px] mb-1" style={{ color: "#3D4A66", fontWeight: 600 }}>Sin sites pending para programar</p>
+                <p className="text-[11px] text-cl-text-dim font-mono">Solo aparecen aquí los sites en estado <span style={{ color: "#0A1628", fontWeight: 700 }}>intake</span> (no asignados todavía)</p>
               </div>
             </div>
           )}
@@ -550,7 +613,7 @@ function BulkRescheduleModal({ wos, sites, users, onClose, onDone }) {
                     checked={isSelected}
                     onChange={() => toggle(w.id)}
                     disabled={submitting}
-                    className="accent-cl-amber"
+                    style={{ accentColor: "#0A1628" }}
                   />
                   <div className="min-w-0 flex-1">
                     <div className="text-[12px] text-cl-text truncate">{s.name || "Site sin nombre"}</div>
@@ -566,14 +629,14 @@ function BulkRescheduleModal({ wos, sites, users, onClose, onDone }) {
 
           {/* Progress bar / errors */}
           {submitting && (
-            <div className="px-5 py-2 border-t border-cl-border flex-shrink-0">
-              <div className="flex items-center justify-between text-[11px] text-cl-text mb-1">
-                <span>Programando…</span>
-                <span className="font-mono">{progress.done} / {progress.total}</span>
+            <div className="px-5 py-2 flex-shrink-0" style={{ borderTop: "1px solid #E2E5EC" }}>
+              <div className="flex items-center justify-between text-[12px] mb-1" style={{ color: "#0A1628" }}>
+                <span style={{ fontWeight: 600 }}>Programando…</span>
+                <span className="font-mono" style={{ fontWeight: 700 }}>{progress.done} / {progress.total}</span>
               </div>
-              <div className="w-full bg-cl-bg rounded-full h-1 overflow-hidden">
+              <div className="w-full rounded-full h-1.5 overflow-hidden" style={{ background: "#E8EDF5" }}>
                 <div
-                  className="h-1 transition-all"
+                  className="h-1.5 transition-all"
                   style={{
                     width: progress.total ? `${(progress.done / progress.total) * 100}%` : "0%",
                     background: "#0A1628",
@@ -583,34 +646,39 @@ function BulkRescheduleModal({ wos, sites, users, onClose, onDone }) {
             </div>
           )}
           {!submitting && progress.errors.length > 0 && (
-            <div className="px-5 py-2 border-t border-cl-border flex-shrink-0 max-h-[100px] overflow-y-auto">
-              <p className="text-[10px] text-red-400 font-mono mb-1">{progress.errors.length} errores:</p>
+            <div className="px-5 py-2 flex-shrink-0 max-h-[100px] overflow-y-auto wr-scroll" style={{ borderTop: "1px solid #E2E5EC", background: "#FCE4E6" }}>
+              <p className="text-[11px] font-mono mb-1" style={{ color: "#8E1F2A", fontWeight: 700 }}>{progress.errors.length} errores:</p>
               {progress.errors.map((e, i) => (
-                <p key={i} className="text-[10px] text-cl-text-mid font-mono">{e.code}: {e.msg}</p>
+                <p key={i} className="text-[10px] font-mono" style={{ color: "#3D4A66" }}>{e.code}: {e.msg}</p>
               ))}
             </div>
           )}
         </div>
 
-        {/* Footer */}
-        <footer className="px-5 py-3 border-t border-cl-border flex items-center justify-end gap-2 flex-shrink-0">
+        {/* Footer · navy strong primary CTA */}
+        <footer className="px-5 py-3 flex items-center justify-end gap-2 flex-shrink-0" style={{ borderTop: "1px solid #E2E5EC", background: "#F7F8FA", borderRadius: "0 0 6px 6px" }}>
           <button
             onClick={onClose}
             disabled={submitting}
-            className="text-[11px] text-cl-text-mid hover:text-cl-text uppercase px-3 py-2 transition"
-            style={{ letterSpacing: "0.08em" }}
+            className="font-jakarta text-[11px] uppercase px-3 py-2 transition"
+            style={{ letterSpacing: "0.08em", color: "#3D4A66", fontWeight: 600 }}
+            onMouseEnter={(e) => !submitting && (e.currentTarget.style.color = "#0A1628")}
+            onMouseLeave={(e) => !submitting && (e.currentTarget.style.color = "#3D4A66")}
           >
             {submitting ? "Esperá…" : "Cancelar"}
           </button>
           <button
             onClick={execute}
             disabled={submitting || selected.size === 0 || !techId || !scheduledAt}
-            className="text-[11px] uppercase font-medium px-4 py-2 rounded-sm transition"
+            className="font-jakarta text-[11px] uppercase px-5 py-2 rounded-sm transition"
             style={{
               background: submitting || selected.size === 0 || !techId || !scheduledAt ? "#E2E5EC" : "#0A1628",
               color: submitting || selected.size === 0 || !techId || !scheduledAt ? "#8B95A8" : "#FFFFFF",
+              border: submitting || selected.size === 0 || !techId || !scheduledAt ? "1px solid #E2E5EC" : "1px solid #0A1628",
               cursor: submitting || selected.size === 0 || !techId || !scheduledAt ? "not-allowed" : "pointer",
               letterSpacing: "0.08em",
+              fontWeight: 700,
+              boxShadow: submitting || selected.size === 0 || !techId || !scheduledAt ? "none" : "0 2px 6px -1px rgba(10, 22, 40, 0.18)",
             }}
           >
             {submitting ? `Programando ${progress.done}/${progress.total}…` : `Programar ${selected.size} sites`}
@@ -626,12 +694,24 @@ function NotesButton({ onClick }) {
   return (
     <button
       onClick={onClick}
-      className="inline-flex items-center gap-2 px-3 py-2 rounded-sm border text-[11px] uppercase font-medium transition"
+      className="inline-flex items-center gap-2 px-3 py-2 rounded-sm font-jakarta uppercase transition"
       style={{
+        fontSize: 11,
+        fontWeight: 700,
         color: "#3D4A66",
-        borderColor: "#E2E5EC",
-        background: "transparent",
+        border: "1px solid #C8CDD8",
+        background: "#FFFFFF",
         letterSpacing: "0.08em",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.background = "#F4F6F8";
+        e.currentTarget.style.borderColor = "#0A1628";
+        e.currentTarget.style.color = "#0A1628";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = "#FFFFFF";
+        e.currentTarget.style.borderColor = "#C8CDD8";
+        e.currentTarget.style.color = "#3D4A66";
       }}
       title="Notas internas del rollout"
     >
@@ -700,17 +780,22 @@ function ScheduleSiteModal({ wo, site, users, onClose, onScheduled }) {
   return (
     <div
       className="fixed inset-0 z-[5000] flex items-center justify-center"
-      style={{ background: "rgba(10, 10, 10, 0.65)" }}
+      style={{ background: "rgba(10, 22, 40, 0.55)", backdropFilter: "blur(2px)" }}
       onClick={onClose}
     >
       <div
-        className="bg-cl-bg border border-cl-border rounded-sm w-[460px] max-w-[95vw]"
+        className="rounded-md w-[460px] max-w-[95vw]"
         onClick={(e) => e.stopPropagation()}
+        style={{
+          background: "#FFFFFF",
+          border: "1px solid #C8CDD8",
+          boxShadow: "0 24px 48px -8px rgba(10, 22, 40, 0.32)",
+        }}
       >
-        {/* Header */}
-        <header className="px-5 py-4 border-b border-cl-border">
-          <p className="label-caps-v2 mb-1">Programar instalación</p>
-          <h2 className="font-jakarta text-[18px] font-semibold text-white leading-tight">
+        {/* Header · navy strong title */}
+        <header className="px-5 py-4" style={{ borderBottom: "1px solid #E2E5EC", background: "#F7F8FA", borderRadius: "6px 6px 0 0" }}>
+          <p className="label-caps-v2 mb-1" style={{ color: "#0A1628", fontWeight: 800 }}>Programar instalación</p>
+          <h2 className="font-jakarta text-[18px] leading-tight" style={{ color: "#0A1628", fontWeight: 700, letterSpacing: "-0.005em" }}>
             {site?.name || "Site sin nombre"}
           </h2>
           <p className="text-[11px] text-cl-text-mid font-mono mt-0.5">
@@ -721,13 +806,14 @@ function ScheduleSiteModal({ wo, site, users, onClose, onScheduled }) {
         {/* Body */}
         <div className="px-5 py-4 space-y-4">
           <div>
-            <label className="block text-[10px] text-cl-text-dim uppercase mb-1.5" style={{ letterSpacing: "0.14em" }}>
+            <label className="block font-jakarta text-[10px] uppercase mb-1.5" style={{ letterSpacing: "0.14em", color: "#3D4A66", fontWeight: 700 }}>
               Técnico asignado
             </label>
             <select
               value={techId}
               onChange={(e) => setTechId(e.target.value)}
-              className="w-full bg-cl-surface/40 border border-cl-border rounded-sm px-3 py-2 text-[13px] text-cl-text font-mono"
+              className="w-full rounded-sm px-3 py-2 text-[13px] font-mono"
+              style={{ background: "#FFFFFF", border: "1px solid #C8CDD8", color: "#0A1628", outline: "none" }}
             >
               <option value="">— Selecciona técnico —</option>
               {techCandidates.map((u) => (
@@ -739,43 +825,49 @@ function ScheduleSiteModal({ wo, site, users, onClose, onScheduled }) {
           </div>
 
           <div>
-            <label className="block text-[10px] text-cl-text-dim uppercase mb-1.5" style={{ letterSpacing: "0.14em" }}>
+            <label className="block font-jakarta text-[10px] uppercase mb-1.5" style={{ letterSpacing: "0.14em", color: "#3D4A66", fontWeight: 700 }}>
               Fecha y hora programada (local)
             </label>
             <input
               type="datetime-local"
               value={scheduledAt}
               onChange={(e) => setScheduledAt(e.target.value)}
-              className="w-full bg-cl-surface/40 border border-cl-border rounded-sm px-3 py-2 text-[13px] text-cl-text font-mono"
+              className="w-full rounded-sm px-3 py-2 text-[13px] font-mono"
+              style={{ background: "#FFFFFF", border: "1px solid #C8CDD8", color: "#0A1628", outline: "none" }}
             />
           </div>
 
-          <p className="text-[11px] text-cl-text-mid leading-relaxed">
-            Avanza este site de <span className="text-cl-text-dim">intake</span> a{" "}
-            <span style={{ color: "#0A1628" }}>triage</span> con tech asignado y fecha
+          <p className="text-[12px] leading-relaxed" style={{ color: "#3D4A66", fontWeight: 500 }}>
+            Avanza este site de <span style={{ color: "#8B95A8" }}>intake</span> a{" "}
+            <span style={{ color: "#0A1628", fontWeight: 700 }}>triage</span> con tech asignado y fecha
             agendada. La banderita pasa de azul (programado) a verde (en marcha).
           </p>
         </div>
 
-        {/* Footer */}
-        <footer className="px-5 py-3 border-t border-cl-border flex items-center justify-end gap-2">
+        {/* Footer · navy strong primary CTA */}
+        <footer className="px-5 py-3 flex items-center justify-end gap-2" style={{ borderTop: "1px solid #E2E5EC", background: "#F7F8FA", borderRadius: "0 0 6px 6px" }}>
           <button
             onClick={onClose}
             disabled={submitting}
-            className="text-[11px] text-cl-text-mid hover:text-cl-text uppercase px-3 py-2 transition"
-            style={{ letterSpacing: "0.08em" }}
+            className="font-jakarta text-[11px] uppercase px-3 py-2 transition"
+            style={{ letterSpacing: "0.08em", color: "#3D4A66", fontWeight: 600 }}
+            onMouseEnter={(e) => !submitting && (e.currentTarget.style.color = "#0A1628")}
+            onMouseLeave={(e) => !submitting && (e.currentTarget.style.color = "#3D4A66")}
           >
             Cancelar
           </button>
           <button
             onClick={handleSubmit}
             disabled={submitting || !techId || !scheduledAt}
-            className="text-[11px] uppercase font-medium px-4 py-2 rounded-sm transition"
+            className="font-jakarta text-[11px] uppercase px-5 py-2 rounded-sm transition"
             style={{
               background: submitting || !techId || !scheduledAt ? "#E2E5EC" : "#0A1628",
               color: submitting || !techId || !scheduledAt ? "#8B95A8" : "#FFFFFF",
+              border: submitting || !techId || !scheduledAt ? "1px solid #E2E5EC" : "1px solid #0A1628",
               cursor: submitting || !techId || !scheduledAt ? "not-allowed" : "pointer",
               letterSpacing: "0.08em",
+              fontWeight: 700,
+              boxShadow: submitting || !techId || !scheduledAt ? "none" : "0 2px 6px -1px rgba(10, 22, 40, 0.18)",
             }}
           >
             {submitting ? "Programando…" : "Programar"}
@@ -995,11 +1087,27 @@ function MapTab({ wos, sites, users, onScheduled }) {
     <div className="h-full relative">
       <div ref={mapRef} className="absolute inset-0" />
 
-      {/* Iter 2.15: botón "Vista general" top-right · resetea zoom + bounds originales */}
+      {/* Iter 2.15: botón "Vista general" top-right · navy strong + sombra para call-to-action visible */}
       <button
         onClick={resetToOverview}
-        className="absolute top-3 right-3 z-[400] bg-cl-surface/95 border border-cl-border rounded-sm px-3 py-2 flex items-center gap-2 text-[11px] uppercase font-medium text-cl-text hover:text-cl-amber hover:border-cl-amber/60 transition backdrop-blur-sm"
-        style={{ letterSpacing: "0.06em" }}
+        className="absolute top-3 right-3 z-[400] rounded-sm px-3 py-2 flex items-center gap-2 font-jakarta uppercase transition backdrop-blur-sm"
+        style={{
+          fontSize: 11,
+          fontWeight: 700,
+          letterSpacing: "0.08em",
+          background: "#FFFFFF",
+          color: "#0A1628",
+          border: "1px solid #0A1628",
+          boxShadow: "0 4px 12px -2px rgba(10, 22, 40, 0.18), 0 2px 4px -1px rgba(10, 22, 40, 0.10)",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = "#0A1628";
+          e.currentTarget.style.color = "#FFFFFF";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = "#FFFFFF";
+          e.currentTarget.style.color = "#0A1628";
+        }}
         title="Reset zoom (atajo: Esc)"
       >
         <Icon icon="map" size={14} />
@@ -1140,29 +1248,33 @@ function DashboardTab({ dashboard, counts, totalSites, progressPct }) {
 
   return (
     <div className="px-6 py-6 space-y-6">
-      {/* Hero metric */}
-      <div className="bg-cl-surface/50 border border-cl-border rounded-sm px-6 py-6">
-        <p className="label-caps-v2 mb-2">Avance del rollout</p>
-        <div className="flex items-baseline gap-3 mb-3">
-          <span className="font-jakarta text-[48px] font-semibold text-white leading-none">
+      {/* Hero metric · navy strong + border-strong para autoridad */}
+      <div className="rounded-sm px-6 py-6" style={{ background: "#FFFFFF", border: "1px solid #C8CDD8", borderLeft: "4px solid #0A1628" }}>
+        <p className="label-caps-v2 mb-2" style={{ color: "#0A1628", fontWeight: 800 }}>Avance del rollout</p>
+        <div className="flex items-baseline gap-3 mb-3 flex-wrap">
+          {/* Número GIGANTE 48px navy strong (NO text-white) */}
+          <span
+            className="font-jakarta leading-none"
+            style={{ color: "#0A1628", fontSize: 48, fontWeight: 800, letterSpacing: "-0.025em", fontVariantNumeric: "tabular-nums" }}
+          >
             {wo.completed || counts.done}
           </span>
-          <span className="text-[20px] text-cl-text-dim">de</span>
-          <span className="font-jakarta text-[28px] text-cl-text">{totalSites}</span>
-          <span className="text-[14px] text-cl-text-dim">sites · </span>
+          <span className="text-[20px]" style={{ color: "#8B95A8" }}>de</span>
+          <span className="font-jakarta text-[28px]" style={{ color: "#3D4A66", fontWeight: 600 }}>{totalSites}</span>
+          <span className="text-[14px]" style={{ color: "#8B95A8" }}>sites · </span>
           <span
-            className="font-mono text-[24px] font-semibold"
-            style={{ color: progressPct >= 80 ? "#22C55E" : progressPct >= 50 ? "#0A1628" : "#3D4A66" }}
+            className="font-jakarta text-[28px]"
+            style={{ color: progressPct >= 80 ? "#16A34A" : progressPct >= 50 ? "#E8A33D" : "#D63944", fontWeight: 800, fontVariantNumeric: "tabular-nums" }}
           >
             {progressPct}%
           </span>
         </div>
-        <div className="w-full bg-cl-bg rounded-full h-2 overflow-hidden">
+        <div className="w-full rounded-full h-2 overflow-hidden" style={{ background: "#E8EDF5" }}>
           <div
             className="h-2 rounded-full transition-all"
             style={{
               width: `${progressPct}%`,
-              background: progressPct >= 80 ? "#22C55E" : progressPct >= 50 ? "#0A1628" : "#3B82F6",
+              background: progressPct >= 80 ? "#16A34A" : progressPct >= 50 ? "#E8A33D" : "#D63944",
             }}
           />
         </div>
@@ -1221,20 +1333,20 @@ function DashboardTab({ dashboard, counts, totalSites, progressPct }) {
 
 function KpiCard({ label, value, color }) {
   return (
-    <div className="bg-cl-surface/50 border border-cl-border rounded-sm px-4 py-3" style={{ borderLeftWidth: 2, borderLeftColor: color }}>
-      <p className="label-caps-v2 mb-1">{label}</p>
-      <p className="font-jakarta text-[28px] font-semibold leading-none" style={{ color }}>{value}</p>
+    <div className="rounded-sm px-4 py-3" style={{ background: "#FFFFFF", border: "1px solid #E2E5EC", borderLeftWidth: 4, borderLeftColor: color }}>
+      <p className="label-caps-v2 mb-1" style={{ color: color, fontWeight: 800 }}>{label}</p>
+      <p className="font-jakarta leading-none" style={{ fontSize: 32, color: "#0A1628", fontWeight: 800, letterSpacing: "-0.02em", fontVariantNumeric: "tabular-nums" }}>{value}</p>
     </div>
   );
 }
 
 function DataPanel({ title, value, unit, color }) {
   return (
-    <div className="bg-cl-surface/40 border border-cl-border rounded-sm px-4 py-3">
-      <p className="label-caps-v2 mb-1">{title}</p>
+    <div className="rounded-sm px-4 py-3" style={{ background: "#FFFFFF", border: "1px solid #E2E5EC" }}>
+      <p className="label-caps-v2 mb-1" style={{ color: "#0A1628", fontWeight: 800 }}>{title}</p>
       <div className="flex items-baseline gap-2">
-        <span className="font-mono text-[22px] font-semibold" style={{ color: color || "#0A1628" }}>{value}</span>
-        <span className="text-[10px] text-cl-text-dim">{unit}</span>
+        <span className="font-jakarta" style={{ fontSize: 26, fontWeight: 800, color: color || "#0A1628", letterSpacing: "-0.015em" }}>{value}</span>
+        <span className="text-[11px]" style={{ color: "#3D4A66", fontWeight: 500 }}>{unit}</span>
       </div>
     </div>
   );
@@ -1569,14 +1681,28 @@ function ExportReportButton({ project, wos, sites, users, counts, totalSites, pr
 
   return (
     <div className="relative flex-shrink-0">
+      {/* Botón EXPORTAR · cambio a navy strong cuando está abierto = autoridad serena (no orange acento) */}
       <button
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex items-center gap-2 px-3 py-2 rounded-sm border text-[11px] uppercase font-medium transition"
+        className="inline-flex items-center gap-2 px-3 py-2 rounded-sm font-jakarta uppercase transition"
         style={{
-          color: "#0A1628",
-          borderColor: "#0A1628",
-          background: open ? "rgba(255, 107, 53, 0.18)" : "rgba(255, 107, 53, 0.08)",
+          fontSize: 11,
+          fontWeight: 700,
+          color: open ? "#FFFFFF" : "#0A1628",
+          border: "1px solid #0A1628",
+          background: open ? "#0A1628" : "#FFFFFF",
           letterSpacing: "0.08em",
+          boxShadow: open ? "0 2px 6px rgba(10, 22, 40, 0.24)" : "none",
+        }}
+        onMouseEnter={(e) => {
+          if (!open) {
+            e.currentTarget.style.background = "#F4F6F8";
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (!open) {
+            e.currentTarget.style.background = "#FFFFFF";
+          }
         }}
         title="Exportar reporte"
       >
@@ -1588,27 +1714,42 @@ function ExportReportButton({ project, wos, sites, users, counts, totalSites, pr
         <>
           <div className="fixed inset-0 z-[3000]" onClick={() => setOpen(false)} />
           <div
-            className="absolute right-0 mt-1 z-[3001] bg-cl-bg border border-cl-border rounded-sm overflow-hidden"
-            style={{ minWidth: 220, boxShadow: "0 8px 24px rgba(0, 0, 0, 0.6)" }}
+            className="absolute right-0 mt-1 z-[3001] rounded-sm overflow-hidden"
+            style={{
+              minWidth: 240,
+              background: "#FFFFFF",
+              border: "1px solid #C8CDD8",
+              boxShadow: "0 16px 32px -4px rgba(10, 22, 40, 0.20), 0 8px 16px -4px rgba(10, 22, 40, 0.12)",
+            }}
           >
             <button
               onClick={exportCsv}
-              className="w-full flex items-center gap-3 px-3 py-2.5 text-[11px] text-cl-text hover:bg-cl-surface/50 transition text-left"
+              className="w-full flex items-center gap-3 px-3 py-3 transition text-left font-jakarta"
+              style={{ color: "#0A1628", fontSize: 12 }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "#F4F6F8")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
             >
               <Icon icon={ICONS.document} size={16} color="#0A1628" />
               <div className="flex-1">
-                <div className="font-medium">Exportar CSV / XLSX</div>
-                <div className="text-[9px] text-cl-text-dim font-mono mt-0.5">{wos.length} sites · Excel-ready</div>
+                <div style={{ fontWeight: 700 }}>Exportar CSV / XLSX</div>
+                <div className="text-[10px] text-cl-text-dim font-mono mt-0.5">{wos.length} sites · Excel-ready</div>
               </div>
             </button>
             <button
               onClick={exportPdf}
-              className="w-full flex items-center gap-3 px-3 py-2.5 text-[11px] text-cl-text hover:bg-cl-surface/50 transition text-left border-t border-cl-border"
+              className="w-full flex items-center gap-3 px-3 py-3 transition text-left font-jakarta"
+              style={{
+                color: "#0A1628",
+                fontSize: 12,
+                borderTop: "1px solid #E2E5EC",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "#F4F6F8")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
             >
               <Icon icon={ICONS.printer} size={16} color="#0A1628" />
               <div className="flex-1">
-                <div className="font-medium">Imprimir PDF</div>
-                <div className="text-[9px] text-cl-text-dim font-mono mt-0.5">A4 landscape · "Guardar como PDF"</div>
+                <div style={{ fontWeight: 700 }}>Imprimir PDF</div>
+                <div className="text-[10px] text-cl-text-dim font-mono mt-0.5">A4 landscape · "Guardar como PDF"</div>
               </div>
             </button>
           </div>

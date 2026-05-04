@@ -342,13 +342,28 @@ export default function InterventionsKanbanPage({ scope = "srs" }) {
             placeholder="Buscar WO, site, cliente, técnico..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="bg-cl-surface border border-cl-border focus:border-cl-amber rounded-full text-[13px] text-cl-text"
+            className="bg-cl-surface text-[13px] text-cl-text font-jakarta"
             style={{
-              height: 36,
+              height: 34,
               width: 320,
               paddingLeft: 36,
               paddingRight: 12,
               outline: "none",
+              border: "1px solid #C8CDD8",
+              borderRadius: 6,
+              fontWeight: 500,
+            }}
+            onFocus={(e) => {
+              e.currentTarget.style.border = "1.5px solid #0A1628";
+              e.currentTarget.style.boxShadow = "0 0 0 3px rgba(10, 22, 40, 0.10)";
+              e.currentTarget.style.paddingLeft = "35.5px";
+              e.currentTarget.style.paddingRight = "11.5px";
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.border = "1px solid #C8CDD8";
+              e.currentTarget.style.boxShadow = "none";
+              e.currentTarget.style.paddingLeft = "36px";
+              e.currentTarget.style.paddingRight = "12px";
             }}
           />
         </div>
@@ -382,28 +397,65 @@ export default function InterventionsKanbanPage({ scope = "srs" }) {
         <div className="flex-1" />
 
         {/* Toggle canceladas */}
-        <label className="flex items-center gap-2 text-[12px] text-cl-text-mid cursor-pointer">
+        <label className="flex items-center gap-2 text-[12px] cursor-pointer font-jakarta" style={{ color: "#3D4A66", fontWeight: 600 }}>
           <input
             type="checkbox"
             checked={showCancelled}
             onChange={(e) => setShowCancelled(e.target.checked)}
-            className="accent-cl-amber"
+            style={{ accentColor: "#0A1628" }}
           />
           Ver canceladas
         </label>
 
-        {/* Refresh */}
+        {/* Refresh · squared navy 1.5px (Iter 2.19 A · SQUARED OPS) */}
         <button
           onClick={load}
-          className="h-9 w-9 flex items-center justify-center text-cl-text-mid border border-cl-border rounded-full hover:border-cl-border-strong transition"
+          className="flex items-center justify-center transition"
+          style={{
+            height: 34,
+            width: 34,
+            borderRadius: 6,
+            background: "#FFFFFF",
+            border: "1.5px solid #0A1628",
+            color: "#0A1628",
+          }}
           title="Refrescar"
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "#0A1628";
+            e.currentTarget.style.color = "#FFFFFF";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "#FFFFFF";
+            e.currentTarget.style.color = "#0A1628";
+          }}
         >
           <Icon icon={ICONS.refresh} size={14} />
         </button>
 
-        {/* CTA primary */}
+        {/* CTA primary · navy squared (Iter 2.19 A · SQUARED OPS) */}
         <button
-          className="h-9 px-4 flex items-center gap-2 text-[13px] font-medium text-white bg-cl-amber hover:brightness-110 rounded-full transition"
+          className="flex items-center gap-2 text-[13px] font-jakarta transition"
+          style={{
+            height: 34,
+            padding: "0 16px",
+            borderRadius: 6,
+            background: "#0A1628",
+            color: "#FFFFFF",
+            fontWeight: 700,
+            letterSpacing: "0.01em",
+            border: "1.5px solid #0A1628",
+            boxShadow: "0 2px 6px -1px rgba(10, 22, 40, 0.32)",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "#1A2640";
+            e.currentTarget.style.borderColor = "#1A2640";
+            e.currentTarget.style.boxShadow = "0 4px 12px -2px rgba(10, 22, 40, 0.42)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "#0A1628";
+            e.currentTarget.style.borderColor = "#0A1628";
+            e.currentTarget.style.boxShadow = "0 2px 6px -1px rgba(10, 22, 40, 0.32)";
+          }}
           onClick={() => toast.info("Crear nueva solicitud · disponible en próxima fase")}
         >
           + Nueva solicitud

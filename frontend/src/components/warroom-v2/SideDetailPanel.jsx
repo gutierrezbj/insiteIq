@@ -88,21 +88,22 @@ function TimezoneBlock({ tech }) {
           {info.label}
         </span>
       </div>
-      <div className="flex items-baseline gap-3 mb-2">
+      <div className="flex items-baseline gap-3 mb-2 flex-wrap">
+        {/* Hora del tech navy strong (NO white) */}
         <span
           className="font-mono"
-          style={{ fontSize: 28, fontWeight: 600, color: "#FFFFFF", lineHeight: 1 }}
+          style={{ fontSize: 28, fontWeight: 700, color: "#0A1628", lineHeight: 1, letterSpacing: "-0.01em" }}
         >
           {info.techTime}
         </span>
         <span
-          className="text-[11px]"
-          style={{ color: "#3D4A66", letterSpacing: "0.14em", textTransform: "uppercase" }}
+          className="text-[11px] font-jakarta"
+          style={{ color: "#8B95A8", letterSpacing: "0.14em", textTransform: "uppercase", fontWeight: 700 }}
         >
           {info.tzLabel}
         </span>
         <span className="text-[11px] text-cl-text-dim">·</span>
-        <span className="text-[12px] text-cl-text-mid">{techName}</span>
+        <span className="text-[12px]" style={{ color: "#3D4A66", fontWeight: 600 }}>{techName}</span>
       </div>
       <div className="flex items-center gap-2 text-[11px] text-cl-text-dim font-mono">
         <span>Tú estás en {info.viewerTime} {VIEWER_TZ_LABEL}</span>
@@ -375,14 +376,16 @@ export default function SideDetailPanel({
               </div>
 
               <div className="px-[18px] pb-4">
+                {/* Site title navy strong (NO text-white) */}
                 <h2
                   id="detail-title"
-                  className="font-jakarta text-[20px] font-semibold text-white m-0 leading-tight"
+                  className="font-jakarta text-[22px] m-0 leading-tight"
+                  style={{ color: "#0A1628", fontWeight: 700, letterSpacing: "-0.015em" }}
                 >
                   {site?.name || wo?.site_name || "Sin sitio"}
                 </h2>
-                <p className="text-[11px] text-cl-text-dim m-0">
-                  <span className="text-cl-text-mid">{site?.code || site?.id || "—"}</span>
+                <p className="text-[12px] m-0 mt-1" style={{ color: "#3D4A66", fontWeight: 500 }}>
+                  <span className="font-mono" style={{ color: "#0A1628", fontWeight: 600 }}>{site?.code || site?.id || "—"}</span>
                   {site?.city && <span> · {site.city}</span>}
                   {site?.country && <span>, {site.country}</span>}
                   {client?.name && <span> · {client.name}</span>}
@@ -588,46 +591,84 @@ export default function SideDetailPanel({
               )}
             </div>
 
-            {/* Footer sticky */}
+            {/* Footer sticky · bg surface-3 + border-top strong + CTA orange ESCASO porque escalar es decisión con urgencia */}
             <footer
-              className="flex-shrink-0 border-t border-cl-border bg-cl-bg flex items-center gap-2"
-              style={{ padding: "14px 18px" }}
+              className="flex-shrink-0 flex items-center gap-2"
+              style={{
+                padding: "14px 18px",
+                borderTop: "1px solid #C8CDD8",
+                background: "#F7F8FA",
+              }}
             >
               <button
-                className="bg-transparent text-cl-text-mid border border-cl-border-strong rounded-sm cursor-pointer flex items-center justify-center transition hover:text-cl-orange"
-                style={{ width: 36, height: 36 }}
+                className="rounded-sm cursor-pointer flex items-center justify-center transition"
+                style={{
+                  width: 36,
+                  height: 36,
+                  background: "#FFFFFF",
+                  color: "#3D4A66",
+                  border: "1px solid #C8CDD8",
+                }}
                 title="Más acciones"
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "#F4F6F8";
+                  e.currentTarget.style.color = "#0A1628";
+                  e.currentTarget.style.borderColor = "#0A1628";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "#FFFFFF";
+                  e.currentTarget.style.color = "#3D4A66";
+                  e.currentTarget.style.borderColor = "#C8CDD8";
+                }}
               >
                 <Icon icon={ICONS.menuDots} size={16} />
               </button>
               <button
                 onClick={onClose}
-                className="flex-1 bg-transparent text-cl-text-mid border border-cl-border-strong rounded-sm cursor-pointer transition hover:text-cl-text"
+                className="flex-1 rounded-sm cursor-pointer transition font-jakarta uppercase"
                 style={{
                   height: 36,
-                  fontFamily: "JetBrains Mono, monospace",
                   fontSize: 11,
-                  fontWeight: 500,
-                  textTransform: "uppercase",
+                  fontWeight: 700,
                   letterSpacing: "0.08em",
+                  background: "#FFFFFF",
+                  color: "#3D4A66",
+                  border: "1px solid #C8CDD8",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "#F4F6F8";
+                  e.currentTarget.style.color = "#0A1628";
+                  e.currentTarget.style.borderColor = "#0A1628";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "#FFFFFF";
+                  e.currentTarget.style.color = "#3D4A66";
+                  e.currentTarget.style.borderColor = "#C8CDD8";
                 }}
               >
                 Cerrar
               </button>
               <button
                 onClick={onEscalate}
-                className="rounded-sm cursor-pointer flex items-center justify-center gap-1.5 transition hover:brightness-110"
+                className="rounded-sm cursor-pointer flex items-center justify-center gap-1.5 transition font-jakarta uppercase"
                 style={{
                   flex: 2,
                   height: 36,
-                  background: "#0A1628",
+                  background: "#FF6B35",
                   color: "#FFFFFF",
-                  border: "1px solid #0A1628",
-                  fontFamily: "JetBrains Mono, monospace",
+                  border: "1px solid #FF6B35",
                   fontSize: 11,
-                  fontWeight: 600,
-                  textTransform: "uppercase",
+                  fontWeight: 700,
                   letterSpacing: "0.08em",
+                  boxShadow: "0 2px 6px -1px rgba(255, 107, 53, 0.32)",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "#C5481E";
+                  e.currentTarget.style.borderColor = "#C5481E";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "#FF6B35";
+                  e.currentTarget.style.borderColor = "#FF6B35";
                 }}
               >
                 Escalar ball → cliente
@@ -737,7 +778,7 @@ function EtaSection({ wo, onUpdated }) {
       </section>
 
       {modalOpen && (
-        <RegisterEtaModal
+        <RegisterEtaModalLight
           wo={wo}
           onClose={() => setModalOpen(false)}
           onSaved={() => {
@@ -750,7 +791,7 @@ function EtaSection({ wo, onUpdated }) {
   );
 }
 
-function RegisterEtaModal({ wo, onClose, onSaved }) {
+function RegisterEtaModalLight({ wo, onClose, onSaved }) {
   const initial = wo?.eta_ack?.proposed_eta
     ? new Date(wo.eta_ack.proposed_eta).toISOString().slice(0, 16)
     : (wo?.scheduled_at ? new Date(wo.scheduled_at).toISOString().slice(0, 16) : "");
@@ -783,19 +824,25 @@ function RegisterEtaModal({ wo, onClose, onSaved }) {
   return (
     <div
       className="fixed inset-0 z-[6000] flex items-center justify-center"
-      style={{ background: "rgba(10, 10, 10, 0.7)" }}
+      style={{ background: "rgba(10, 22, 40, 0.55)", backdropFilter: "blur(2px)" }}
       onClick={submitting ? undefined : onClose}
     >
       <div
-        className="bg-cl-bg border border-cl-border rounded-sm w-[460px] max-w-[95vw]"
+        className="rounded-md w-[460px] max-w-[95vw]"
         onClick={(e) => e.stopPropagation()}
+        style={{
+          background: "#FFFFFF",
+          border: "1px solid #C8CDD8",
+          boxShadow: "0 24px 48px -8px rgba(10, 22, 40, 0.32)",
+        }}
       >
-        <header className="px-5 py-4 border-b border-cl-border">
-          <p className="label-caps-v2 mb-1">Registrar ETA del tech</p>
-          <h2 className="font-jakarta text-[16px] font-semibold text-white leading-tight">
+        <header className="px-5 py-4" style={{ borderBottom: "1px solid #E2E5EC", background: "#F7F8FA", borderRadius: "6px 6px 0 0" }}>
+          <p className="label-caps-v2 mb-1" style={{ color: "#0A1628", fontWeight: 800 }}>Registrar ETA del tech</p>
+          {/* Title navy strong (NO text-white) */}
+          <h2 className="font-jakarta text-[18px] leading-tight" style={{ color: "#0A1628", fontWeight: 700, letterSpacing: "-0.005em" }}>
             {wo?.title || "Work Order"}
           </h2>
-          <p className="text-[10px] text-cl-text-mid font-mono mt-0.5">{formatWoCode(wo)}</p>
+          <p className="text-[11px] text-cl-text-mid font-mono mt-0.5">{formatWoCode(wo)}</p>
         </header>
 
         <div className="px-5 py-4 space-y-4">
@@ -825,11 +872,12 @@ function RegisterEtaModal({ wo, onClose, onSaved }) {
               <button
                 onClick={() => setAckSource("by_coord")}
                 disabled={submitting}
-                className="text-[11px] px-3 py-1.5 rounded-sm border transition"
+                className="font-jakarta text-[11px] px-3 py-1.5 rounded-sm transition"
                 style={{
-                  color: ackSource === "by_coord" ? "#0A1628" : "#3D4A66",
-                  borderColor: ackSource === "by_coord" ? "#0A1628" : "#E2E5EC",
-                  background: ackSource === "by_coord" ? "rgba(255,107,53,0.08)" : "transparent",
+                  color: ackSource === "by_coord" ? "#FFFFFF" : "#3D4A66",
+                  border: ackSource === "by_coord" ? "1px solid #0A1628" : "1px solid #C8CDD8",
+                  background: ackSource === "by_coord" ? "#0A1628" : "#FFFFFF",
+                  fontWeight: ackSource === "by_coord" ? 700 : 600,
                 }}
                 title="SRS registró info externa (WhatsApp/llamada)"
               >
@@ -838,11 +886,12 @@ function RegisterEtaModal({ wo, onClose, onSaved }) {
               <button
                 onClick={() => setAckSource("self")}
                 disabled={submitting}
-                className="text-[11px] px-3 py-1.5 rounded-sm border transition"
+                className="font-jakarta text-[11px] px-3 py-1.5 rounded-sm transition"
                 style={{
-                  color: ackSource === "self" ? "#0A1628" : "#3D4A66",
-                  borderColor: ackSource === "self" ? "#0A1628" : "#E2E5EC",
-                  background: ackSource === "self" ? "rgba(255,107,53,0.08)" : "transparent",
+                  color: ackSource === "self" ? "#FFFFFF" : "#3D4A66",
+                  border: ackSource === "self" ? "1px solid #0A1628" : "1px solid #C8CDD8",
+                  background: ackSource === "self" ? "#0A1628" : "#FFFFFF",
+                  fontWeight: ackSource === "self" ? 700 : 600,
                 }}
                 title="Tech confirmó directamente"
               >
@@ -866,24 +915,29 @@ function RegisterEtaModal({ wo, onClose, onSaved }) {
           </div>
         </div>
 
-        <footer className="px-5 py-3 border-t border-cl-border flex items-center justify-end gap-2">
+        <footer className="px-5 py-3 flex items-center justify-end gap-2" style={{ borderTop: "1px solid #E2E5EC", background: "#F7F8FA", borderRadius: "0 0 6px 6px" }}>
           <button
             onClick={onClose}
             disabled={submitting}
-            className="text-[11px] text-cl-text-mid hover:text-cl-text uppercase px-3 py-2 transition"
-            style={{ letterSpacing: "0.08em" }}
+            className="font-jakarta text-[11px] uppercase px-3 py-2 transition"
+            style={{ letterSpacing: "0.08em", color: "#3D4A66", fontWeight: 600 }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = "#0A1628")}
+            onMouseLeave={(e) => (e.currentTarget.style.color = "#3D4A66")}
           >
             Cancelar
           </button>
           <button
             onClick={handleSubmit}
             disabled={submitting || !proposedEta}
-            className="text-[11px] uppercase font-medium px-4 py-2 rounded-sm transition"
+            className="font-jakarta text-[11px] uppercase px-5 py-2 rounded-sm transition"
             style={{
               background: submitting || !proposedEta ? "#E2E5EC" : "#0A1628",
               color: submitting || !proposedEta ? "#8B95A8" : "#FFFFFF",
+              border: submitting || !proposedEta ? "1px solid #E2E5EC" : "1px solid #0A1628",
               cursor: submitting || !proposedEta ? "not-allowed" : "pointer",
               letterSpacing: "0.08em",
+              fontWeight: 700,
+              boxShadow: submitting || !proposedEta ? "none" : "0 2px 6px -1px rgba(10, 22, 40, 0.18)",
             }}
           >
             {submitting ? "Registrando…" : "Registrar ETA"}

@@ -122,14 +122,14 @@ export default function RolloutsListPage() {
       <header className="mb-4">
         <div className="flex items-end justify-between gap-3 flex-wrap mb-3">
           <div>
-            <p className="label-caps-v2">Rollouts</p>
+            <p className="label-caps-v2" style={{ color: "#0A1628", fontWeight: 800 }}>Rollouts</p>
             <h1
-              className="font-jakarta text-[20px] font-semibold text-white leading-tight"
-              style={{ letterSpacing: "0.01em" }}
+              className="font-jakarta text-[22px] leading-tight"
+              style={{ color: "#0A1628", fontWeight: 800, letterSpacing: "-0.015em" }}
             >
               {loading ? "Cargando…" : `${visible.length} de ${projects.length} ${projects.length === 1 ? "rollout" : "rollouts"}`}
             </h1>
-            <p className="text-[11px] text-cl-text-mid mt-1 font-mono">
+            <p className="text-[12px] text-cl-text-mid mt-1" style={{ fontWeight: 500 }}>
               Click en una tarjeta para ver mapa · kanban · cuadro de mando · timeline
             </p>
           </div>
@@ -176,23 +176,43 @@ export default function RolloutsListPage() {
             )}
           </div>
 
-          {/* Status filter chips */}
+          {/* Status filter chips · activo navy bg + white text */}
           <div className="flex items-center gap-1">
-            {STATUS_FILTERS.map((f) => (
-              <button
-                key={f.key}
-                onClick={() => setStatusFilter(f.key)}
-                className="text-[11px] px-2.5 py-1 rounded-sm border transition"
-                style={{
-                  color: statusFilter === f.key ? "#0A1628" : "#3D4A66",
-                  borderColor: statusFilter === f.key ? "#0A1628" : "#E2E5EC",
-                  background: statusFilter === f.key ? "rgba(255, 107, 53, 0.08)" : "transparent",
-                  letterSpacing: "0.04em",
-                }}
-              >
-                {f.label} <span className="text-[9px] opacity-70 ml-0.5">({statusCounts[f.key]})</span>
-              </button>
-            ))}
+            {STATUS_FILTERS.map((f) => {
+              const isActive = statusFilter === f.key;
+              return (
+                <button
+                  key={f.key}
+                  onClick={() => setStatusFilter(f.key)}
+                  className="font-jakarta px-3 py-1.5 rounded-sm transition"
+                  style={{
+                    fontSize: 11,
+                    fontWeight: isActive ? 700 : 600,
+                    color: isActive ? "#FFFFFF" : "#3D4A66",
+                    border: isActive ? "1px solid #0A1628" : "1px solid #C8CDD8",
+                    background: isActive ? "#0A1628" : "#FFFFFF",
+                    letterSpacing: "0.04em",
+                    boxShadow: isActive ? "0 1px 3px rgba(10, 22, 40, 0.18)" : "none",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isActive) {
+                      e.currentTarget.style.background = "#F4F6F8";
+                      e.currentTarget.style.borderColor = "#0A1628";
+                      e.currentTarget.style.color = "#0A1628";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isActive) {
+                      e.currentTarget.style.background = "#FFFFFF";
+                      e.currentTarget.style.borderColor = "#C8CDD8";
+                      e.currentTarget.style.color = "#3D4A66";
+                    }
+                  }}
+                >
+                  {f.label} <span className="text-[9px] ml-0.5" style={{ opacity: 0.7 }}>({statusCounts[f.key]})</span>
+                </button>
+              );
+            })}
           </div>
         </div>
       </header>
@@ -273,23 +293,47 @@ function RolloutCard({ project, dashboard, orgsMap, onClick }) {
   return (
     <article
       onClick={onClick}
-      className="bg-cl-surface/40 border border-cl-border rounded-sm px-4 py-4 cursor-pointer hover:border-cl-amber/50 transition"
-      style={{ borderLeftWidth: 3, borderLeftColor: accentColor }}
+      className="rounded-sm px-4 py-4 cursor-pointer transition"
+      style={{
+        background: "#FFFFFF",
+        border: "1px solid #E2E5EC",
+        borderLeftWidth: 4,
+        borderLeftColor: accentColor,
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.borderColor = "#C8CDD8";
+        e.currentTarget.style.borderLeftColor = accentColor;
+        e.currentTarget.style.boxShadow = "0 4px 12px -2px rgba(10, 22, 40, 0.10)";
+        e.currentTarget.style.transform = "translateY(-1px)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.borderColor = "#E2E5EC";
+        e.currentTarget.style.borderLeftColor = accentColor;
+        e.currentTarget.style.boxShadow = "none";
+        e.currentTarget.style.transform = "translateY(0)";
+      }}
     >
       <div className="flex items-start justify-between gap-2 mb-2">
         <div className="min-w-0 flex-1">
           <p className="font-mono text-[10px] text-cl-text-dim uppercase truncate" style={{ letterSpacing: "0.1em" }}>
             {project.code}
           </p>
-          <h3 className="font-jakarta text-[15px] text-white font-semibold leading-tight mt-0.5 truncate" title={project.title}>
+          {/* Title navy strong (NO text-white) */}
+          <h3
+            className="font-jakarta text-[16px] leading-tight mt-0.5 truncate"
+            title={project.title}
+            style={{ color: "#0A1628", fontWeight: 700, letterSpacing: "-0.005em" }}
+          >
             {project.title}
           </h3>
         </div>
         <span
-          className="text-[9px] uppercase font-semibold px-2 py-0.5 rounded-sm flex-shrink-0"
+          className="font-jakarta text-[10px] uppercase px-2 py-0.5 rounded-sm flex-shrink-0"
           style={{
-            color: project.status === "active" ? "#22C55E" : "#3D4A66",
-            background: project.status === "active" ? "rgba(34,197,94,0.1)" : "rgba(156,163,175,0.1)",
+            color: project.status === "active" ? "#0A6131" : "#3D4A66",
+            background: project.status === "active" ? "#D9F1E5" : "#F4F6F8",
+            border: project.status === "active" ? "1px solid #16A34A" : "1px solid #C8CDD8",
+            fontWeight: 700,
             letterSpacing: "0.1em",
           }}
         >
@@ -320,32 +364,41 @@ function RolloutCard({ project, dashboard, orgsMap, onClick }) {
 
       <div className="space-y-2.5 mt-3">
         <div className="flex items-baseline justify-between">
-          <span className="text-[11px] text-cl-text-mid">Avance</span>
-          <span className="font-mono text-[14px] font-semibold text-white">
-            {completed}/{totalSites} <span className="text-[11px] text-cl-text-dim">· {progressPct}%</span>
+          <span className="text-[11px] font-jakarta uppercase" style={{ color: "#3D4A66", fontWeight: 700, letterSpacing: "0.1em" }}>Avance</span>
+          {/* Avance navy strong + counter limpio */}
+          <span className="font-jakarta" style={{ fontSize: 16, color: "#0A1628", fontWeight: 800, letterSpacing: "-0.01em", fontVariantNumeric: "tabular-nums" }}>
+            {completed}/{totalSites} <span className="text-[11px]" style={{ color: "#8B95A8", fontWeight: 600 }}>· {progressPct}%</span>
           </span>
         </div>
 
-        <div className="w-full bg-cl-bg rounded-full h-1.5 overflow-hidden">
+        <div className="w-full rounded-full h-1.5 overflow-hidden" style={{ background: "#E8EDF5" }}>
           <div
             className="h-1.5 rounded-full transition-all"
             style={{
               width: `${progressPct}%`,
-              background: progressPct >= 80 ? "#22C55E" : progressPct >= 50 ? "#0A1628" : "#3B82F6",
+              background: progressPct >= 80 ? "#16A34A" : progressPct >= 50 ? "#E8A33D" : "#0066B8",
             }}
           />
         </div>
 
         <div className="grid grid-cols-2 gap-2 text-[11px] mt-3">
-          <div className="bg-cl-bg/40 px-2 py-1.5 rounded-sm">
-            <p className="text-[9px] text-cl-text-dim uppercase" style={{ letterSpacing: "0.1em" }}>Activas</p>
-            <p className="font-mono text-[14px] text-cl-text font-semibold">{active}</p>
+          <div className="px-3 py-2 rounded-sm" style={{ background: "#F7F8FA", border: "1px solid #E2E5EC" }}>
+            <p className="text-[9px] font-jakarta uppercase" style={{ color: "#8B95A8", fontWeight: 700, letterSpacing: "0.1em" }}>Activas</p>
+            <p className="font-jakarta" style={{ fontSize: 18, color: "#0A1628", fontWeight: 800, fontVariantNumeric: "tabular-nums" }}>{active}</p>
           </div>
-          <div className="bg-cl-bg/40 px-2 py-1.5 rounded-sm" style={{ borderLeft: incidents > 0 ? "2px solid #DC2626" : "2px solid #E2E5EC" }}>
-            <p className="text-[9px] text-cl-text-dim uppercase" style={{ letterSpacing: "0.1em" }}>Incidentes</p>
+          <div
+            className="px-3 py-2 rounded-sm"
+            style={{
+              background: incidents > 0 ? "#FCE4E6" : "#F7F8FA",
+              border: incidents > 0 ? "1px solid #D63944" : "1px solid #E2E5EC",
+              borderLeftWidth: 3,
+              borderLeftColor: incidents > 0 ? "#D63944" : "#16A34A",
+            }}
+          >
+            <p className="text-[9px] font-jakarta uppercase" style={{ color: incidents > 0 ? "#8E1F2A" : "#8B95A8", fontWeight: 700, letterSpacing: "0.1em" }}>Incidentes</p>
             <p
-              className="font-mono text-[14px] font-semibold"
-              style={{ color: incidents > 0 ? "#DC2626" : "#22C55E" }}
+              className="font-jakarta"
+              style={{ fontSize: 18, color: incidents > 0 ? "#D63944" : "#16A34A", fontWeight: 800, fontVariantNumeric: "tabular-nums" }}
             >
               {incidents}
             </p>
@@ -353,8 +406,8 @@ function RolloutCard({ project, dashboard, orgsMap, onClick }) {
         </div>
       </div>
 
-      <div className="mt-3 pt-2 border-t border-cl-border flex items-center justify-between text-[10px] text-cl-amber">
-        <span className="uppercase font-medium" style={{ letterSpacing: "0.08em" }}>Abrir rollout</span>
+      <div className="mt-3 pt-2 flex items-center justify-between text-[11px]" style={{ borderTop: "1px solid #E2E5EC", color: "#0A1628" }}>
+        <span className="font-jakarta uppercase" style={{ fontWeight: 700, letterSpacing: "0.08em" }}>Abrir rollout</span>
         <Icon icon={ICONS.arrowRight} size={12} />
       </div>
     </article>

@@ -111,53 +111,84 @@ export default function RolloutNotesPanel({ projectId, currentUser, onClose }) {
 
   return (
     <>
-      {/* Backdrop */}
+      {/* Backdrop · tinte navy (paleta F) */}
       <div
         className="fixed inset-0 z-[4000]"
-        style={{ background: "rgba(10,10,10,0.45)" }}
+        style={{ background: "rgba(10, 22, 40, 0.45)", backdropFilter: "blur(2px)" }}
         onClick={onClose}
       />
-      {/* Panel slide-in derecho */}
+      {/* Panel slide-in derecho · bg blanco con border-strong */}
       <aside
-        className="fixed top-0 right-0 bottom-0 z-[4001] bg-cl-bg border-l border-cl-border flex flex-col"
-        style={{ width: 460, maxWidth: "100vw", boxShadow: "-12px 0 30px rgba(0,0,0,0.6)" }}
+        className="fixed top-0 right-0 bottom-0 z-[4001] flex flex-col"
+        style={{
+          width: 460,
+          maxWidth: "100vw",
+          background: "#FFFFFF",
+          borderLeft: "1px solid #C8CDD8",
+          boxShadow: "-24px 0 60px -8px rgba(10, 22, 40, 0.20)",
+        }}
       >
-        {/* Header */}
-        <header className="px-5 py-4 border-b border-cl-border flex items-start justify-between gap-3 flex-shrink-0">
+        {/* Header · navy strong title */}
+        <header className="px-5 py-4 flex items-start justify-between gap-3 flex-shrink-0" style={{ borderBottom: "1px solid #C8CDD8", background: "#F7F8FA" }}>
           <div>
-            <p className="label-caps-v2 mb-0.5">Notas internas</p>
-            <p className="text-[11px] text-cl-text-mid font-mono">
+            <p className="label-caps-v2 mb-0.5" style={{ color: "#0A1628", fontWeight: 800 }}>Notas internas</p>
+            <p className="text-[12px] font-mono" style={{ color: "#3D4A66", fontWeight: 500 }}>
               {loading ? "Cargando…" : `${notes.length} ${notes.length === 1 ? "nota" : "notas"}`}
             </p>
           </div>
           <button
             onClick={onClose}
-            className="text-cl-text-dim hover:text-cl-text transition"
+            className="transition rounded p-1"
             title="Cerrar (Esc)"
+            style={{ color: "#8B95A8" }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = "#0A1628";
+              e.currentTarget.style.background = "#E8EDF5";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = "#8B95A8";
+              e.currentTarget.style.background = "transparent";
+            }}
           >
             <Icon icon={ICONS.close} size={18} />
           </button>
         </header>
 
-        {/* Composer */}
-        <div className="px-5 py-3 border-b border-cl-border flex-shrink-0">
+        {/* Composer · input navy focus */}
+        <div className="px-5 py-3 flex-shrink-0" style={{ borderBottom: "1px solid #E2E5EC" }}>
           <textarea
             value={composer}
             onChange={(e) => setComposer(e.target.value)}
             placeholder="Anotá contexto del rollout…"
             rows={3}
-            className="w-full bg-cl-surface/40 border border-cl-border rounded-sm px-3 py-2 text-[12px] text-cl-text font-mono placeholder-cl-text-dim focus:outline-none focus:border-cl-amber/60 resize-none"
+            className="w-full rounded-sm px-3 py-2 text-[13px] font-jakarta resize-none"
+            style={{
+              background: "#FFFFFF",
+              border: "1px solid #C8CDD8",
+              color: "#0A1628",
+              outline: "none",
+              fontWeight: 500,
+            }}
+            onFocus={(e) => {
+              e.currentTarget.style.borderColor = "#0A1628";
+              e.currentTarget.style.boxShadow = "0 0 0 3px rgba(10, 22, 40, 0.10)";
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.borderColor = "#C8CDD8";
+              e.currentTarget.style.boxShadow = "none";
+            }}
             disabled={submitting}
           />
           <div className="flex items-center justify-between mt-2 gap-2">
             <div className="flex items-center gap-1">
               <button
                 onClick={() => setComposerVisibility("srs_internal")}
-                className="text-[10px] px-2 py-1 rounded-sm border transition"
+                className="font-jakarta text-[10px] px-2.5 py-1 rounded-sm transition"
                 style={{
-                  color: composerVisibility === "srs_internal" ? "#0A1628" : "#3D4A66",
-                  borderColor: composerVisibility === "srs_internal" ? "#0A1628" : "#E2E5EC",
-                  background: composerVisibility === "srs_internal" ? "rgba(255,107,53,0.08)" : "transparent",
+                  color: composerVisibility === "srs_internal" ? "#FFFFFF" : "#3D4A66",
+                  border: composerVisibility === "srs_internal" ? "1px solid #0A1628" : "1px solid #C8CDD8",
+                  background: composerVisibility === "srs_internal" ? "#0A1628" : "#FFFFFF",
+                  fontWeight: composerVisibility === "srs_internal" ? 700 : 600,
                 }}
                 title="Solo visible para SRS (ropa en casa)"
               >
@@ -165,11 +196,12 @@ export default function RolloutNotesPanel({ projectId, currentUser, onClose }) {
               </button>
               <button
                 onClick={() => setComposerVisibility("shared")}
-                className="text-[10px] px-2 py-1 rounded-sm border transition"
+                className="font-jakarta text-[10px] px-2.5 py-1 rounded-sm transition"
                 style={{
-                  color: composerVisibility === "shared" ? "#0A1628" : "#3D4A66",
-                  borderColor: composerVisibility === "shared" ? "#0A1628" : "#E2E5EC",
-                  background: composerVisibility === "shared" ? "rgba(255,107,53,0.08)" : "transparent",
+                  color: composerVisibility === "shared" ? "#FFFFFF" : "#3D4A66",
+                  border: composerVisibility === "shared" ? "1px solid #0A1628" : "1px solid #C8CDD8",
+                  background: composerVisibility === "shared" ? "#0A1628" : "#FFFFFF",
+                  fontWeight: composerVisibility === "shared" ? 700 : 600,
                 }}
                 title="Visible también para client coordinator"
               >
@@ -179,12 +211,15 @@ export default function RolloutNotesPanel({ projectId, currentUser, onClose }) {
             <button
               onClick={submitNew}
               disabled={submitting || !composer.trim()}
-              className="text-[11px] uppercase font-medium px-3 py-1.5 rounded-sm transition"
+              className="font-jakarta text-[11px] uppercase px-4 py-1.5 rounded-sm transition"
               style={{
                 background: submitting || !composer.trim() ? "#E2E5EC" : "#0A1628",
                 color: submitting || !composer.trim() ? "#8B95A8" : "#FFFFFF",
+                border: submitting || !composer.trim() ? "1px solid #E2E5EC" : "1px solid #0A1628",
                 cursor: submitting || !composer.trim() ? "not-allowed" : "pointer",
                 letterSpacing: "0.08em",
+                fontWeight: 700,
+                boxShadow: submitting || !composer.trim() ? "none" : "0 2px 6px -1px rgba(10, 22, 40, 0.18)",
               }}
             >
               {submitting ? "Guardando…" : "Guardar"}

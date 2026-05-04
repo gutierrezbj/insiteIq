@@ -23,10 +23,10 @@ const SHIMMER_KEYFRAMES = `
 }
 `;
 
-// Estilo base reutilizable. Background gradient subtle dark.
+// Estilo base reutilizable · paleta F navegante mix · light gradient navy soft.
 const baseStyle = {
   background:
-    "linear-gradient(90deg, #141414 0%, #1F1F1F 50%, #141414 100%)",
+    "linear-gradient(90deg, #E8EDF5 0%, #F4F6F8 50%, #E8EDF5 100%)",
   backgroundSize: "800px 100%",
   animation: "skeleton-shimmer 1.6s ease-in-out infinite",
   borderRadius: 4,
@@ -50,12 +50,11 @@ export function SkeletonBlock({ width = "100%", height = 60, className = "", sty
   );
 }
 
-/* KPI Card · matchea exact dimensions de KpiStripV2 */
+/* KPI Card · matchea exact dimensions de KpiStripV2 (paleta F light) */
 export function SkeletonKpiCard() {
   return (
     <div
-      className="bg-wr-bg border-l-2 border-wr-border"
-      style={{ padding: "16px 20px" }}
+      style={{ padding: "16px 20px", background: "#FFFFFF", borderLeft: "4px solid #C8CDD8" }}
     >
       <div className="flex items-center justify-between mb-3">
         <SkeletonLine width="50%" height={10} />
@@ -67,12 +66,12 @@ export function SkeletonKpiCard() {
   );
 }
 
-/* Intervention card horizontal Full · matchea dimensions */
+/* Intervention card horizontal Full · matchea dimensions (paleta F light) */
 export function SkeletonInterventionCardFull() {
   return (
     <div
-      className="bg-wr-surface border border-wr-border rounded-sm"
-      style={{ padding: 14, borderTop: "2px solid #1F1F1F" }}
+      className="rounded-sm"
+      style={{ padding: 14, background: "#FFFFFF", border: "1px solid #E2E5EC", borderTop: "2px solid #C8CDD8" }}
     >
       <div className="flex justify-between mb-3">
         <SkeletonLine width={90} height={11} />
@@ -92,12 +91,12 @@ export function SkeletonInterventionCardFull() {
   );
 }
 
-/* Intervention card mini (4-cols grid) · matchea dimensions */
+/* Intervention card mini (4-cols grid) · matchea dimensions (paleta F light) */
 export function SkeletonInterventionCardMini() {
   return (
     <div
-      className="bg-wr-surface border border-wr-border rounded-sm"
-      style={{ padding: 12, borderTop: "2px solid #1F1F1F" }}
+      className="rounded-sm"
+      style={{ padding: 12, background: "#FFFFFF", border: "1px solid #E2E5EC", borderTop: "2px solid #C8CDD8" }}
     >
       <SkeletonLine width="60%" height={10} style={{ marginTop: 3, marginBottom: 8 }} />
       <SkeletonLine width="85%" height={13} style={{ marginBottom: 12 }} />
@@ -109,15 +108,16 @@ export function SkeletonInterventionCardMini() {
   );
 }
 
-/* Kanban card · matchea dimensions de WoKanbanCard */
+/* Kanban card · matchea dimensions de WoKanbanCard (paleta F light) */
 export function SkeletonKanbanCard() {
   return (
     <div
-      className="bg-wr-surface border border-wr-border"
       style={{
         padding: 14,
         borderRadius: "0 0 8px 8px",
-        borderTop: "2px solid #1F1F1F",
+        background: "#FFFFFF",
+        border: "1px solid #E2E5EC",
+        borderTop: "2px solid #C8CDD8",
       }}
     >
       <div className="flex items-center gap-2 mb-2">
@@ -137,7 +137,7 @@ export function SkeletonKanbanCard() {
       </div>
       <div
         className="flex justify-between pt-2"
-        style={{ borderTop: "1px solid #1F1F1F" }}
+        style={{ borderTop: "1px solid #E2E5EC" }}
       >
         <SkeletonLine width="40%" height={11} />
         <SkeletonLine width="25%" height={11} />
@@ -146,10 +146,10 @@ export function SkeletonKanbanCard() {
   );
 }
 
-/* Sidebar widget · genérico */
+/* Sidebar widget · genérico (paleta F light) */
 export function SkeletonWidget({ title, rows = 3 }) {
   return (
-    <section className="border-b border-wr-border">
+    <section style={{ borderBottom: "1px solid #E2E5EC" }}>
       <header className="px-5 py-3">
         <SkeletonLine width="40%" height={10} />
       </header>

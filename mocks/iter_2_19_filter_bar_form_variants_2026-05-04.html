@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>InsiteIQ · Filter bar Kanban · 3 variantes de FORMA (2026-05-04)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: #F0F2F7;
+    color: #0A1628;
+    font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ───────────── TOC sticky ───────────── */
+  .toc {
+    position: sticky; top: 0; z-index: 100;
+    background: #0A1628; color: #FFFFFF;
+    padding: 14px 24px; display: flex; align-items: center; gap: 18px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    box-shadow: 0 2px 8px rgba(10, 22, 40, 0.18);
+  }
+  .toc-title { color: #FFFFFF; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; margin-right: 12px; font-size: 11px; }
+  .toc a { color: #C8CDD8; text-decoration: none; padding: 6px 12px; border-radius: 4px; border: 1px solid transparent; transition: all 180ms; }
+  .toc a:hover { color: #FFFFFF; border-color: #3D4A66; background: rgba(255,255,255,0.04); }
+  .toc-meta { margin-left: auto; color: #8B95A8; font-size: 10px; }
+
+  /* ───────────── Variant banner ───────────── */
+  .variant {
+    padding: 32px 40px 48px;
+    background: #FFFFFF;
+    border-bottom: 1px solid #E2E5EC;
+  }
+  .variant + .variant { border-top: 8px solid #F0F2F7; }
+  .variant h2 {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 22px; font-weight: 800; color: #0A1628;
+    margin-bottom: 4px;
+    letter-spacing: -0.01em;
+  }
+  .variant .subtitle {
+    color: #8B95A8;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: 14px;
+    font-weight: 600;
+  }
+  .variant .rationale {
+    color: #3D4A66;
+    font-size: 13.5px;
+    max-width: 920px;
+    line-height: 1.6;
+    margin-bottom: 28px;
+  }
+  .variant .rationale strong { color: #0A1628; font-weight: 700; }
+
+  .state-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: #8B95A8;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    margin: 24px 0 12px;
+    font-weight: 700;
+  }
+  .state-label:first-of-type { margin-top: 0; }
+
+  /* ───────────── App frame mock (light) ───────────── */
+  .app-frame {
+    background: #F7F8FA;
+    border: 1px solid #E2E5EC;
+    border-radius: 8px;
+    padding: 18px 22px;
+  }
+
+  .filter-bar {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  }
+
+  /* ════════════════════════════════════════════════════════════════ */
+  /* VARIANTE A · SQUARED OPS                                          */
+  /* ════════════════════════════════════════════════════════════════ */
+
+  .va-search {
+    position: relative;
+  }
+  .va-search input {
+    height: 34px; width: 320px;
+    border: 1.5px solid #0A1628;
+    background: #FFFFFF;
+    border-radius: 6px;
+    padding: 0 12px 0 36px;
+    font-size: 13px;
+    color: #0A1628;
+    font-family: inherit;
+    font-weight: 500;
+    outline: none;
+  }
+  .va-search input::placeholder { color: #8B95A8; font-weight: 500; }
+  .va-search .icon {
+    position: absolute; left: 11px; top: 50%; transform: translateY(-50%);
+    color: #0A1628;
+  }
+  .va-pill {
+    height: 34px; padding: 0 12px;
+    display: inline-flex; align-items: center; gap: 6px;
+    border: 1.5px solid #0A1628;
+    background: #FFFFFF;
+    color: #0A1628;
+    font-size: 13px; font-weight: 700;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 160ms;
+  }
+  .va-pill:hover { background: #F0F2F7; }
+  .va-pill.is-selected {
+    background: #0A1628; color: #FFFFFF;
+  }
+  .va-pill .caret { font-size: 9px; opacity: 0.7; margin-left: 2px; }
+  .va-pill .count {
+    background: #FFFFFF; color: #0A1628;
+    font-size: 10px; font-weight: 800;
+    padding: 1px 6px; border-radius: 3px;
+    margin-left: 2px;
+  }
+  .va-check {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 12.5px; color: #0A1628; font-weight: 600; cursor: pointer;
+  }
+  .va-check input { accent-color: #0A1628; width: 14px; height: 14px; }
+  .va-icon-btn {
+    height: 34px; width: 34px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border: 1.5px solid #0A1628;
+    background: #FFFFFF;
+    color: #0A1628;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 160ms;
+  }
+  .va-icon-btn:hover { background: #0A1628; color: #FFFFFF; }
+  .va-cta {
+    height: 34px; padding: 0 16px;
+    display: inline-flex; align-items: center; gap: 6px;
+    background: #0A1628; color: #FFFFFF;
+    border: 1.5px solid #0A1628;
+    border-radius: 6px;
+    font-size: 13px; font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    box-shadow: 0 2px 6px -1px rgba(10, 22, 40, 0.32);
+    transition: all 160ms;
+  }
+  .va-cta:hover { background: #1A2640; box-shadow: 0 4px 12px -2px rgba(10, 22, 40, 0.42); }
+
+  /* ════════════════════════════════════════════════════════════════ */
+  /* VARIANTE B · TAB UNDERLINE MINIMAL                                */
+  /* ════════════════════════════════════════════════════════════════ */
+
+  .vb-search {
+    position: relative;
+  }
+  .vb-search input {
+    height: 36px; width: 320px;
+    border: none;
+    border-bottom: 1.5px solid #C8CDD8;
+    background: transparent;
+    padding: 0 4px 0 28px;
+    font-size: 13px;
+    color: #0A1628;
+    font-family: inherit;
+    font-weight: 500;
+    outline: none;
+    border-radius: 0;
+    transition: border-color 160ms;
+  }
+  .vb-search input::placeholder { color: #8B95A8; }
+  .vb-search input:focus { border-bottom-color: #0A1628; border-bottom-width: 2px; padding-bottom: 0; }
+  .vb-search .icon {
+    position: absolute; left: 4px; top: 50%; transform: translateY(-50%);
+    color: #0A1628;
+  }
+  .vb-pill {
+    height: 30px; padding: 0 4px;
+    display: inline-flex; align-items: center; gap: 4px;
+    background: transparent;
+    color: #3D4A66;
+    border: none;
+    font-size: 13px; font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    position: relative;
+    transition: color 160ms;
+  }
+  .vb-pill::after {
+    content: ''; position: absolute; left: 4px; right: 4px; bottom: 0;
+    height: 2px; background: transparent; transition: background 160ms;
+  }
+  .vb-pill:hover { color: #0A1628; }
+  .vb-pill:hover::after { background: #0A1628; }
+  .vb-pill.is-selected { color: #0A1628; font-weight: 700; }
+  .vb-pill.is-selected::after { background: #0A1628; }
+  .vb-pill .caret { font-size: 9px; opacity: 0.6; }
+  .vb-pill .count {
+    background: #0A1628; color: #FFFFFF;
+    font-size: 10px; font-weight: 800;
+    padding: 1px 6px; border-radius: 8px;
+    margin-left: 2px;
+  }
+  .vb-check {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 12.5px; color: #3D4A66; font-weight: 600; cursor: pointer;
+  }
+  .vb-check input { accent-color: #0A1628; width: 14px; height: 14px; }
+  .vb-icon-btn {
+    height: 30px; width: 30px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border: none;
+    background: transparent;
+    color: #3D4A66;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 160ms;
+  }
+  .vb-icon-btn:hover { background: #F0F2F7; color: #0A1628; }
+  .vb-cta {
+    height: 34px; padding: 0 18px;
+    display: inline-flex; align-items: center; gap: 6px;
+    background: #0A1628; color: #FFFFFF;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px; font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    box-shadow: 0 1px 3px rgba(10, 22, 40, 0.20);
+    transition: all 160ms;
+  }
+  .vb-cta:hover { background: #1A2640; box-shadow: 0 4px 10px rgba(10, 22, 40, 0.28); }
+
+  /* ════════════════════════════════════════════════════════════════ */
+  /* VARIANTE C · SEGMENTED CONTROL                                    */
+  /* ════════════════════════════════════════════════════════════════ */
+
+  .vc-search {
+    position: relative;
+  }
+  .vc-search input {
+    height: 36px; width: 320px;
+    border: 1px solid #C8CDD8;
+    background: #FFFFFF;
+    border-radius: 8px;
+    padding: 0 12px 0 36px;
+    font-size: 13px;
+    color: #0A1628;
+    font-family: inherit;
+    font-weight: 500;
+    outline: none;
+    transition: all 160ms;
+  }
+  .vc-search input::placeholder { color: #8B95A8; }
+  .vc-search input:focus {
+    border-color: #0A1628;
+    box-shadow: 0 0 0 3px rgba(10, 22, 40, 0.10);
+  }
+  .vc-search .icon {
+    position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+    color: #8B95A8;
+  }
+  .vc-segment {
+    display: inline-flex;
+    background: #FFFFFF;
+    border: 1px solid #C8CDD8;
+    border-radius: 8px;
+    overflow: hidden;
+    height: 36px;
+  }
+  .vc-segment .vc-pill {
+    height: 100%; padding: 0 14px;
+    display: inline-flex; align-items: center; gap: 6px;
+    background: transparent;
+    color: #3D4A66;
+    border: none;
+    border-right: 1px solid #E2E5EC;
+    font-size: 13px; font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 160ms;
+  }
+  .vc-segment .vc-pill:last-child { border-right: none; }
+  .vc-segment .vc-pill:hover { background: #F0F2F7; color: #0A1628; }
+  .vc-segment .vc-pill.is-selected {
+    background: #0A1628; color: #FFFFFF; font-weight: 700;
+  }
+  .vc-pill .caret { font-size: 9px; opacity: 0.65; }
+  .vc-pill .count {
+    background: #FFFFFF; color: #0A1628;
+    font-size: 10px; font-weight: 800;
+    padding: 1px 6px; border-radius: 3px;
+    margin-left: 2px;
+  }
+  .vc-check {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 12.5px; color: #3D4A66; font-weight: 600; cursor: pointer;
+  }
+  .vc-check input { accent-color: #0A1628; width: 14px; height: 14px; }
+  .vc-icon-btn {
+    height: 36px; width: 36px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border: 1px solid #C8CDD8;
+    background: #FFFFFF;
+    color: #0A1628;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 160ms;
+  }
+  .vc-icon-btn:hover {
+    background: #0A1628; color: #FFFFFF; border-color: #0A1628;
+  }
+  .vc-cta {
+    height: 36px; padding: 0 18px;
+    display: inline-flex; align-items: center; gap: 6px;
+    background: #0A1628; color: #FFFFFF;
+    border: 1px solid #0A1628;
+    border-radius: 8px;
+    font-size: 13px; font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    box-shadow: 0 2px 6px -1px rgba(10, 22, 40, 0.28);
+    transition: all 160ms;
+  }
+  .vc-cta:hover { background: #1A2640; }
+
+  /* ───────────── Footer comparativo ───────────── */
+  .compare {
+    padding: 36px 40px;
+    background: #0A1628;
+    color: #FFFFFF;
+  }
+  .compare h3 {
+    font-size: 16px; font-weight: 700; margin-bottom: 18px;
+    letter-spacing: 0.04em;
+  }
+  .compare table {
+    width: 100%; max-width: 1100px;
+    border-collapse: collapse;
+    font-size: 12.5px;
+  }
+  .compare th, .compare td {
+    text-align: left; padding: 10px 14px;
+    border-bottom: 1px solid #1A2640;
+    vertical-align: top;
+  }
+  .compare th {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; color: #8B95A8;
+    text-transform: uppercase; letter-spacing: 0.12em;
+    font-weight: 600;
+  }
+  .compare td.label { color: #C8CDD8; font-weight: 600; width: 22%; }
+  .compare td.val { color: #FFFFFF; }
+
+  .footnote {
+    padding: 22px 40px;
+    background: #F0F2F7;
+    color: #3D4A66;
+    font-size: 12px;
+    line-height: 1.55;
+    font-family: 'JetBrains Mono', monospace;
+  }
+</style>
+</head>
+<body>
+
+<nav class="toc">
+  <span class="toc-title">Iter 2.19 · Filter bar form</span>
+  <a href="#va">A · SQUARED OPS</a>
+  <a href="#vb">B · TAB MINIMAL</a>
+  <a href="#vc">C · SEGMENTED</a>
+  <span class="toc-meta">2026-05-04 · paleta F NAVEGANTE preservada · solo cambia FORMA</span>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- VARIANTE A · SQUARED OPS                                  -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="variant" id="va">
+  <h2>A · SQUARED OPS</h2>
+  <div class="subtitle">rounded-md 6px · h-34 · border navy 1.5px · peso militar/industrial</div>
+  <p class="rationale">
+    Todo cuadrado con corners suaves (6px). Border navy <strong>1.5px</strong> en cada elemento — peso visual contundente, NO border gris fantasma. Heights uniformes (34px) excepto el CTA que mantiene 34px también. Caret pequeño (9px) en filters, no chevron pesado. <strong>Look "operations control center"</strong>, no candy SaaS. Refresh cuadrado mismo lenguaje. CTA mismo squared con shadow navy. Cero rounded-full.
+  </p>
+
+  <div class="state-label">Estado idle (sin selección)</div>
+  <div class="app-frame">
+    <div class="filter-bar">
+      <div class="va-search">
+        <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" placeholder="Buscar WO, site, cliente, técnico...">
+      </div>
+      <button class="va-pill">Prioridad <span class="caret">▼</span></button>
+      <button class="va-pill">Cliente <span class="caret">▼</span></button>
+      <button class="va-pill">Shield <span class="caret">▼</span></button>
+      <button class="va-pill">Técnico <span class="caret">▼</span></button>
+      <div style="flex:1"></div>
+      <label class="va-check"><input type="checkbox"> Ver canceladas</label>
+      <button class="va-icon-btn" title="Refrescar">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 12a9 9 0 0 1 15.5-6.36L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.5 6.36L3 16"/><path d="M3 21v-5h5"/></svg>
+      </button>
+      <button class="va-cta">+ Nueva solicitud</button>
+    </div>
+  </div>
+
+  <div class="state-label">Estado con selección activa (Cliente · 3, Shield · 2)</div>
+  <div class="app-frame">
+    <div class="filter-bar">
+      <div class="va-search">
+        <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" placeholder="Buscar WO, site, cliente, técnico...">
+      </div>
+      <button class="va-pill">Prioridad <span class="caret">▼</span></button>
+      <button class="va-pill is-selected">Cliente <span class="count">3</span> <span class="caret">▼</span></button>
+      <button class="va-pill is-selected">Shield <span class="count">2</span> <span class="caret">▼</span></button>
+      <button class="va-pill">Técnico <span class="caret">▼</span></button>
+      <div style="flex:1"></div>
+      <label class="va-check"><input type="checkbox"> Ver canceladas</label>
+      <button class="va-icon-btn" title="Refrescar">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 12a9 9 0 0 1 15.5-6.36L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.5 6.36L3 16"/><path d="M3 21v-5h5"/></svg>
+      </button>
+      <button class="va-cta">+ Nueva solicitud</button>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- VARIANTE B · TAB UNDERLINE MINIMAL                        -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="variant" id="vb">
+  <h2>B · TAB UNDERLINE MINIMAL</h2>
+  <div class="subtitle">sin border en filters · search border-bottom · CTA es la única forma con peso</div>
+  <p class="rationale">
+    Filtros como <strong>tabs/text-buttons</strong> sin border ni fill — el peso lo da el texto navy bold + underline al hover/selected. Search input con solo border-bottom (focus = navy 2px). Refresh es ghost icon. <strong>El CTA es la única forma con peso visual</strong> (rounded-md fill navy) — establece jerarquía clara: filtros = navegación, CTA = acción. Look "linear/notion/raycast" sobrio. Cero pills, cero capsulas.
+  </p>
+
+  <div class="state-label">Estado idle (sin selección)</div>
+  <div class="app-frame">
+    <div class="filter-bar">
+      <div class="vb-search">
+        <svg class="icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" placeholder="Buscar WO, site, cliente, técnico...">
+      </div>
+      <button class="vb-pill">Prioridad <span class="caret">▼</span></button>
+      <button class="vb-pill">Cliente <span class="caret">▼</span></button>
+      <button class="vb-pill">Shield <span class="caret">▼</span></button>
+      <button class="vb-pill">Técnico <span class="caret">▼</span></button>
+      <div style="flex:1"></div>
+      <label class="vb-check"><input type="checkbox"> Ver canceladas</label>
+      <button class="vb-icon-btn" title="Refrescar">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 15.5-6.36L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.5 6.36L3 16"/><path d="M3 21v-5h5"/></svg>
+      </button>
+      <button class="vb-cta">+ Nueva solicitud</button>
+    </div>
+  </div>
+
+  <div class="state-label">Estado con selección activa (Cliente · 3, Shield · 2)</div>
+  <div class="app-frame">
+    <div class="filter-bar">
+      <div class="vb-search">
+        <svg class="icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" placeholder="Buscar WO, site, cliente, técnico...">
+      </div>
+      <button class="vb-pill">Prioridad <span class="caret">▼</span></button>
+      <button class="vb-pill is-selected">Cliente <span class="count">3</span> <span class="caret">▼</span></button>
+      <button class="vb-pill is-selected">Shield <span class="count">2</span> <span class="caret">▼</span></button>
+      <button class="vb-pill">Técnico <span class="caret">▼</span></button>
+      <div style="flex:1"></div>
+      <label class="vb-check"><input type="checkbox"> Ver canceladas</label>
+      <button class="vb-icon-btn" title="Refrescar">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 15.5-6.36L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.5 6.36L3 16"/><path d="M3 21v-5h5"/></svg>
+      </button>
+      <button class="vb-cta">+ Nueva solicitud</button>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- VARIANTE C · SEGMENTED CONTROL                           -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="variant" id="vc">
+  <h2>C · SEGMENTED CONTROL</h2>
+  <div class="subtitle">los 4 filters fusionados en un solo bloque segmentado · search e icon-btn rounded-md 8px</div>
+  <p class="rationale">
+    Los <strong>4 filters viven en UN solo container segmentado</strong> (border 1px gris + dividers internos finos). Visualmente es un cluster compacto, no 4 islas separadas. Selected = bg navy fill. Search rounded-md 8px más pulido. Refresh squared 8px que matchea el search. CTA squared 8px navy fill. Look "macOS-ish segmented" — denso, ordenado, jerarquía clara: cluster filters / acciones secundarias / CTA primario.
+  </p>
+
+  <div class="state-label">Estado idle (sin selección)</div>
+  <div class="app-frame">
+    <div class="filter-bar">
+      <div class="vc-search">
+        <svg class="icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" placeholder="Buscar WO, site, cliente, técnico...">
+      </div>
+      <div class="vc-segment">
+        <button class="vc-pill">Prioridad <span class="caret">▼</span></button>
+        <button class="vc-pill">Cliente <span class="caret">▼</span></button>
+        <button class="vc-pill">Shield <span class="caret">▼</span></button>
+        <button class="vc-pill">Técnico <span class="caret">▼</span></button>
+      </div>
+      <div style="flex:1"></div>
+      <label class="vc-check"><input type="checkbox"> Ver canceladas</label>
+      <button class="vc-icon-btn" title="Refrescar">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 15.5-6.36L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.5 6.36L3 16"/><path d="M3 21v-5h5"/></svg>
+      </button>
+      <button class="vc-cta">+ Nueva solicitud</button>
+    </div>
+  </div>
+
+  <div class="state-label">Estado con selección activa (Cliente · 3, Shield · 2)</div>
+  <div class="app-frame">
+    <div class="filter-bar">
+      <div class="vc-search">
+        <svg class="icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" placeholder="Buscar WO, site, cliente, técnico...">
+      </div>
+      <div class="vc-segment">
+        <button class="vc-pill">Prioridad <span class="caret">▼</span></button>
+        <button class="vc-pill is-selected">Cliente <span class="count">3</span> <span class="caret">▼</span></button>
+        <button class="vc-pill is-selected">Shield <span class="count">2</span> <span class="caret">▼</span></button>
+        <button class="vc-pill">Técnico <span class="caret">▼</span></button>
+      </div>
+      <div style="flex:1"></div>
+      <label class="vc-check"><input type="checkbox"> Ver canceladas</label>
+      <button class="vc-icon-btn" title="Refrescar">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 15.5-6.36L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.5 6.36L3 16"/><path d="M3 21v-5h5"/></svg>
+      </button>
+      <button class="vc-cta">+ Nueva solicitud</button>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- TABLA COMPARATIVA                                          -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="compare">
+  <h3>Comparativa rápida</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Atributo</th>
+        <th>A · SQUARED OPS</th>
+        <th>B · TAB MINIMAL</th>
+        <th>C · SEGMENTED</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="label">Curvatura</td>
+        <td class="val">rounded-md 6px todo</td>
+        <td class="val">cero (texto puro)</td>
+        <td class="val">rounded-md 8px</td>
+      </tr>
+      <tr>
+        <td class="label">Border filters idle</td>
+        <td class="val">navy 1.5px contundente</td>
+        <td class="val">ninguno (underline en hover)</td>
+        <td class="val">cluster con 1px gris exterior</td>
+      </tr>
+      <tr>
+        <td class="label">Jerarquía visual</td>
+        <td class="val">igual peso todos (operativo)</td>
+        <td class="val">filters ligeros · CTA pesado</td>
+        <td class="val">cluster filters · acciones · CTA</td>
+      </tr>
+      <tr>
+        <td class="label">Densidad</td>
+        <td class="val">media (gap 12px)</td>
+        <td class="val">baja (filters muy ligeros)</td>
+        <td class="val">alta (4 filters en 1 bloque)</td>
+      </tr>
+      <tr>
+        <td class="label">Vibe</td>
+        <td class="val">ops control center · serio</td>
+        <td class="val">linear/notion · sobrio</td>
+        <td class="val">macOS segmented · pulido</td>
+      </tr>
+      <tr>
+        <td class="label">Anti-IA score</td>
+        <td class="val">★★★ (squared peso = no SaaS genérico)</td>
+        <td class="val">★★ (minimal puede confundirse con vibe-coded)</td>
+        <td class="val">★★★ (segmented requiere intención)</td>
+      </tr>
+      <tr>
+        <td class="label">Riesgo</td>
+        <td class="val">muchos borders navy = ruido si la página tiene KPIs/cards también con peso</td>
+        <td class="val">filters pueden parecer secundarios cuando son críticos</td>
+        <td class="val">segmented con 4 items + caret puede romper en móvil</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<div class="footnote">
+  · El COLOR no se está discutiendo — se mantiene navy/light paleta F.<br>
+  · Lo que cambia es FORMA: curvatura, peso de border, density, jerarquía.<br>
+  · Después de elegir A/B/C aplico al código real (MultiSelectDropdown.jsx + InterventionsKanbanPage.jsx) + barrido residual amber index.css + commit Iter 2.19.<br>
+  · Si ninguna te llama del todo, dime cuál se acerca y qué pieza específica cambio.
+</div>
+
+</body>
+</html>

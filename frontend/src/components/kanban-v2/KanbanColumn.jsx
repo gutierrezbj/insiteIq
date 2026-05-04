@@ -32,8 +32,13 @@ export default function KanbanColumn({
   return (
     <section
       data-col={id}
-      className="kanban-col flex-shrink-0 bg-cl-surface-2/60 rounded-lg flex flex-col"
-      style={{ width: 300, maxHeight: "calc(100vh - 280px)" }}
+      className="kanban-col flex-shrink-0 rounded-lg flex flex-col"
+      style={{
+        width: 300,
+        maxHeight: "calc(100vh - 280px)",
+        background: "#F4F6F8",
+        border: "1px solid #E2E5EC",
+      }}
       onDragOver={(e) => {
         e.preventDefault();
         e.dataTransfer.dropEffect = "move";
@@ -53,16 +58,28 @@ export default function KanbanColumn({
         onDrop?.(id, e);
       }}
     >
-      {/* Header */}
-      <header className="px-4 py-3 flex items-center justify-between border-b border-cl-border flex-shrink-0">
+      {/* Header · navy strong title + counter pill navy soft */}
+      <header
+        className="px-4 py-3 flex items-center justify-between flex-shrink-0"
+        style={{ borderBottom: "1px solid #C8CDD8" }}
+      >
         <h2
-          className="font-jakarta text-[13px] font-semibold uppercase text-cl-text"
-          style={{ letterSpacing: "0.08em" }}
+          className="font-jakarta text-[13px] uppercase"
+          style={{ color: "#0A1628", fontWeight: 800, letterSpacing: "0.1em" }}
         >
           {title}
         </h2>
         <span
-          className="px-2 py-0.5 rounded-full bg-cl-bg border border-cl-border font-mono text-[11px] text-cl-text-mid"
+          className="font-jakarta px-2.5 py-0.5 rounded-full"
+          style={{
+            background: "#0A1628",
+            color: "#FFFFFF",
+            fontSize: 11,
+            fontWeight: 700,
+            fontVariantNumeric: "tabular-nums",
+            minWidth: 28,
+            textAlign: "center",
+          }}
         >
           {count}
         </span>

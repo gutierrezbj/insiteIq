@@ -92,11 +92,11 @@ function buildQuickPopupHtml({ wo, site, tech, client, warning }) {
         <span style="font-size:10px;color:${severity.color};font-weight:600;letter-spacing:0.1em;">· ${severity.label}</span>
       </div>
 
-      <!-- Title -->
+      <!-- Title navy strong (NO white) sobre popup fondo blanco -->
       <div style="padding:12px 14px 10px;">
-        <p style="margin:0 0 3px;font-family:'Instrument Sans',sans-serif;font-size:15px;font-weight:600;color:#FFFFFF;line-height:1.25;">${site?.name || wo?.site_name || "Sin sitio"}</p>
-        <p style="margin:0;font-size:11px;color:#8B95A8;">
-          <span style="color:#3D4A66;">${site?.code || site?.id || "—"}</span>
+        <p style="margin:0 0 3px;font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;font-weight:700;color:#0A1628;line-height:1.25;letter-spacing:-0.005em;">${site?.name || wo?.site_name || "Sin sitio"}</p>
+        <p style="margin:0;font-size:11px;color:#3D4A66;font-weight:500;">
+          <span style="color:#0A1628;font-family:'JetBrains Mono',monospace;font-weight:600;">${site?.code || site?.id || "—"}</span>
           ${site?.city ? ` · ${site.city}` : ""}${site?.country ? `, ${site.country}` : ""}
         </p>
       </div>
@@ -122,16 +122,16 @@ function buildQuickPopupHtml({ wo, site, tech, client, warning }) {
       </div>
 
       ${tzInfo ? `
-        <!-- Timezone block -->
-        <div style="margin:0 14px 10px;padding:9px 11px;background:${tzInfo.color}12;border-left:2px solid ${tzInfo.color};">
+        <!-- Timezone block · navy strong sobre popup blanco -->
+        <div style="margin:0 14px 10px;padding:9px 11px;background:${tzInfo.color}12;border-left:3px solid ${tzInfo.color};border-radius:0 4px 4px 0;">
           <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:3px;">
             <div style="display:flex;align-items:baseline;gap:6px;">
-              <span style="font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:600;color:#FFFFFF;">${tzInfo.techTime}</span>
-              <span style="font-size:10px;color:#3D4A66;letter-spacing:0.1em;text-transform:uppercase;">${tzInfo.tzLabel}</span>
+              <span style="font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:700;color:#0A1628;letter-spacing:-0.01em;">${tzInfo.techTime}</span>
+              <span style="font-size:10px;color:#8B95A8;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;">${tzInfo.tzLabel}</span>
             </div>
-            <span style="font-size:9px;padding:2px 6px;border-radius:2px;background:${tzInfo.color}22;color:${tzInfo.color};font-weight:600;letter-spacing:0.1em;">${tzInfo.label}</span>
+            <span style="font-size:9px;padding:2px 7px;border-radius:3px;background:${tzInfo.color}22;color:${tzInfo.color};font-weight:700;letter-spacing:0.1em;">${tzInfo.label}</span>
           </div>
-          <p style="margin:0;font-size:10px;color:#8B95A8;font-family:'JetBrains Mono',monospace;">
+          <p style="margin:0;font-size:10px;color:#3D4A66;font-family:'JetBrains Mono',monospace;">
             Tu hora ${tzInfo.viewerTime} ${VIEWER_TZ_LABEL} · ${tzInfo.offsetText}${tzInfo.untilEndOfDay ? ` · fin jornada en ${tzInfo.untilEndOfDay}` : ""}
           </p>
         </div>
@@ -145,10 +145,10 @@ function buildQuickPopupHtml({ wo, site, tech, client, warning }) {
         </div>
       ` : ""}
 
-      <!-- Actions -->
+      <!-- Actions · navy strong primary + outline -->
       <div style="padding:0 14px 12px;display:flex;gap:6px;">
-        <button data-action="view-detail" data-wo-id="${wo?.id || ""}" style="flex:1;height:28px;background:#E2E5EC;color:#0A1628;border:1px solid #2A2A2A;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">Ver detalle →</button>
-        ${techName ? `<button data-action="contact-tech" data-tech="${techName}" style="flex:1;height:28px;background:transparent;color:#3D4A66;border:1px solid #2A2A2A;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;">Contactar tech</button>` : ""}
+        <button data-action="view-detail" data-wo-id="${wo?.id || ""}" style="flex:1;height:32px;background:#0A1628;color:#FFFFFF;border:1px solid #0A1628;border-radius:4px;font-family:'Plus Jakarta Sans',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 2px 6px -1px rgba(10,22,40,0.18);">Ver detalle →</button>
+        ${techName ? `<button data-action="contact-tech" data-tech="${techName}" style="flex:1;height:32px;background:#FFFFFF;color:#3D4A66;border:1px solid #C8CDD8;border-radius:4px;font-family:'Plus Jakarta Sans',sans-serif;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;">Contactar tech</button>` : ""}
       </div>
     </div>
   `;

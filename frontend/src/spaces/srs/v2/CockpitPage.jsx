@@ -269,8 +269,16 @@ export default function V2CockpitPage({ scope = "srs" }) {
   if (!hasLoadedOnce) {
     return (
       <div className="px-6 py-5 space-y-5">
-        {/* KPI strip skeleton · 5 cards */}
-        <section className="grid grid-cols-5 gap-px bg-cl-border">
+        {/* KPI strip skeleton · 5 cards · borde navy soft + bg surface-3 */}
+        <section
+          className="grid grid-cols-5 gap-px"
+          style={{
+            background: "#C8CDD8",
+            border: "1px solid #C8CDD8",
+            borderRadius: 6,
+            overflow: "hidden",
+          }}
+        >
           {Array.from({ length: 5 }).map((_, i) => (
             <SkeletonKpiCard key={i} />
           ))}
@@ -292,7 +300,7 @@ export default function V2CockpitPage({ scope = "srs" }) {
               </div>
             </section>
           </div>
-          <aside className="col-span-12 lg:col-span-4 bg-cl-bg border border-cl-border rounded-sm overflow-hidden">
+          <aside className="col-span-12 lg:col-span-4 bg-cl-surface border border-cl-border-strong rounded-sm overflow-hidden">
             <SkeletonWidget rows={3} />
             <SkeletonWidget rows={3} />
             <SkeletonWidget rows={2} />
@@ -320,14 +328,32 @@ export default function V2CockpitPage({ scope = "srs" }) {
           <section>
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-3">
-                <p className="label-caps-v2">Intervenciones en curso</p>
-                <span className="font-mono text-[11px] text-cl-text">
+                <p className="label-caps-v2" style={{ color: "#0A1628" }}>Intervenciones en curso</p>
+                <span
+                  className="font-jakarta"
+                  style={{
+                    fontSize: 13,
+                    color: "#0A1628",
+                    fontWeight: 700,
+                    background: "#E8EDF5",
+                    padding: "2px 10px",
+                    borderRadius: 999,
+                  }}
+                >
                   {inCurseInterventions.length}
                 </span>
               </div>
               <button
                 onClick={() => navigate("/srs/ops")}
-                className="text-[11px] text-cl-amber hover:text-cl-amber-soft transition flex items-center gap-1"
+                className="font-jakarta transition flex items-center gap-1"
+                style={{
+                  fontSize: 12,
+                  color: "#0A1628",
+                  fontWeight: 700,
+                  letterSpacing: "0.02em",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = "#FF6B35")}
+                onMouseLeave={(e) => (e.currentTarget.style.color = "#0A1628")}
               >
                 Ver todas →
               </button>
@@ -363,14 +389,32 @@ export default function V2CockpitPage({ scope = "srs" }) {
           <section>
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-3">
-                <p className="label-caps-v2">Historial reciente</p>
-                <span className="font-mono text-[11px] text-cl-text">
+                <p className="label-caps-v2" style={{ color: "#0A1628" }}>Historial reciente</p>
+                <span
+                  className="font-jakarta"
+                  style={{
+                    fontSize: 13,
+                    color: "#0A1628",
+                    fontWeight: 700,
+                    background: "#E8EDF5",
+                    padding: "2px 10px",
+                    borderRadius: 999,
+                  }}
+                >
                   {recentHistory.length}
                 </span>
               </div>
               <button
                 onClick={() => navigate("/srs/ops")}
-                className="text-[11px] text-cl-amber hover:text-cl-amber-soft transition flex items-center gap-1"
+                className="font-jakarta transition flex items-center gap-1"
+                style={{
+                  fontSize: 12,
+                  color: "#0A1628",
+                  fontWeight: 700,
+                  letterSpacing: "0.02em",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = "#FF6B35")}
+                onMouseLeave={(e) => (e.currentTarget.style.color = "#0A1628")}
               >
                 Ver todas →
               </button>
@@ -398,8 +442,8 @@ export default function V2CockpitPage({ scope = "srs" }) {
           </section>
         </div>
 
-        {/* SIDEBAR DERECHO */}
-        <aside className="col-span-12 lg:col-span-4 bg-cl-bg border border-cl-border rounded-sm overflow-hidden">
+        {/* SIDEBAR DERECHO · bg blanco con border-strong para presencia */}
+        <aside className="col-span-12 lg:col-span-4 bg-cl-surface border border-cl-border-strong rounded-sm overflow-hidden">
           <AlertsWidget alerts={alertsForSidebar} />
           <ShieldsWidget agreements={agreementsForSidebar} />
           <WeatherWidget

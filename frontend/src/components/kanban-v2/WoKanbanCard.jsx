@@ -32,7 +32,7 @@ import { computeSlaInfo, getTag } from "../../lib/woFields";
 
 const SHIELD_META = {
   bronze:      { hex: "#B45309", label: "Bronze" },
-  bronze_plus: { hex: "#0A1628", label: "Bronze+" },
+  bronze_plus: { hex: "#D97706", label: "Bronze+" },
   silver:      { hex: "#64748B", label: "Silver" },
   gold:        { hex: "#CA8A04", label: "Gold" },
 };
@@ -107,12 +107,14 @@ export default function WoKanbanCard({
         if (e.currentTarget.classList.contains("is-dragging")) return;
         onClick?.(wo);
       }}
-      className="wo-kanban-card stage-border-top bg-cl-surface border border-cl-border hover:border-cl-border-strong transition cursor-grab"
+      className="wo-kanban-card stage-border-top transition cursor-grab"
       style={{
         "--stage-color": status.color,
         padding: 14,
         borderRadius: "0 0 8px 8px",
-        transition: "transform 180ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 180ms ease",
+        background: "#FFFFFF",
+        border: "1px solid #E2E5EC",
+        transition: "transform 180ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 180ms ease, border-color 180ms ease",
       }}
     >
       {/* Top row: drag handle + prio + sub-stage + warning */}
@@ -120,38 +122,52 @@ export default function WoKanbanCard({
         <div className="flex items-center gap-2">
           <DragHandle />
           <span
-            className="label-caps-v2"
+            className="font-jakarta uppercase"
             style={{
-              padding: "1.5px 6px",
-              borderRadius: 2,
+              padding: "2px 7px",
+              borderRadius: 3,
               color: severity.color,
-              background: `${severity.color}1A`,
+              background: `${severity.color}14`,
+              border: `1px solid ${severity.color}55`,
               fontSize: 10,
-              letterSpacing: "0.06em",
-              fontWeight: 600,
+              letterSpacing: "0.08em",
+              fontWeight: 700,
             }}
           >
             {severity.label?.toUpperCase()}
           </span>
-          <span className="label-caps-v2 text-cl-text-dim">{status.label}</span>
+          <span
+            className="font-jakarta uppercase"
+            style={{
+              fontSize: 10,
+              color: "#3D4A66",
+              fontWeight: 700,
+              letterSpacing: "0.1em",
+            }}
+          >
+            {status.label}
+          </span>
         </div>
         {hasSlaAlert && (
-          <Icon icon={ICONS.dangerTriangle} size={14} color="#DC2626" />
+          <Icon icon={ICONS.dangerTriangle} size={14} color="#D63944" />
         )}
       </div>
 
-      {/* Title + meta */}
-      <h3 className="font-jakarta text-[15px] font-semibold text-white leading-tight mb-1">
+      {/* Title navy strong (NO text-white) + meta */}
+      <h3
+        className="font-jakarta text-[15px] leading-tight mb-1"
+        style={{ color: "#0A1628", fontWeight: 700, letterSpacing: "-0.005em" }}
+      >
         {site?.name || wo?.site_name || "Sin sitio"}
       </h3>
-      <div className="flex items-center gap-1.5 text-[12px] text-cl-text-mid mb-2 flex-wrap">
+      <div className="flex items-center gap-1.5 text-[12px] mb-2 flex-wrap" style={{ color: "#3D4A66" }}>
         <span className="font-mono text-[11px] text-cl-text-dim">{formatWoCode(wo)}</span>
         <span className="text-cl-text-dim">·</span>
-        <span>{client?.name || "—"}</span>
+        <span style={{ fontWeight: 500 }}>{client?.name || "—"}</span>
         {site?.city && (
           <>
             <span className="text-cl-text-dim">·</span>
-            <span>{site.city}</span>
+            <span style={{ fontWeight: 500 }}>{site.city}</span>
           </>
         )}
       </div>
@@ -159,14 +175,17 @@ export default function WoKanbanCard({
       {/* Tags row */}
       <div className="flex items-center gap-1.5 mb-2 flex-wrap">
         {tag && (
-          <span className="px-2 py-0.5 text-[11px] rounded bg-cl-surface-2 text-cl-text-mid">
+          <span
+            className="font-jakarta px-2 py-0.5 text-[11px] rounded"
+            style={{ background: "#F4F6F8", color: "#3D4A66", fontWeight: 600, border: "1px solid #E2E5EC" }}
+          >
             {tag}
           </span>
         )}
         {shield && (
           <span
-            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium"
-            style={{ background: `${shield.hex}26`, color: shield.hex }}
+            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-jakarta"
+            style={{ background: `${shield.hex}1A`, color: shield.hex, border: `1px solid ${shield.hex}55`, fontWeight: 700 }}
           >
             <Icon icon={ICONS.shield} size={11} />
             {shield.label}
@@ -177,8 +196,10 @@ export default function WoKanbanCard({
       {/* Description */}
       {wo?.description && (
         <p
-          className="text-[12px] text-cl-text-dim mb-3 leading-snug"
+          className="text-[12px] mb-3 leading-snug"
           style={{
+            color: "#3D4A66",
+            fontWeight: 400,
             display: "-webkit-box",
             WebkitLineClamp: 2,
             WebkitBoxOrient: "vertical",
@@ -189,19 +210,19 @@ export default function WoKanbanCard({
         </p>
       )}
 
-      {/* Footer: tech + tiempo relativo */}
-      <div className="flex items-center justify-between pt-2 border-t border-cl-border">
+      {/* Footer: tech + tiempo relativo · border-top navy soft */}
+      <div className="flex items-center justify-between pt-2" style={{ borderTop: "1px solid #E2E5EC" }}>
         <div className="flex items-center gap-1.5 text-[11px]">
           {tech ? (
             <>
               <Icon icon={ICONS.user} size={12} color="#3D4A66" />
-              <span className="text-cl-text-mid">{tech.full_name || tech.name}</span>
+              <span style={{ color: "#0A1628", fontWeight: 600 }}>{tech.full_name || tech.name}</span>
             </>
           ) : (
             <span className="text-cl-text-dim italic">Sin asignar</span>
           )}
         </div>
-        <div className="flex items-center gap-1 text-[11px] text-cl-text-dim">
+        <div className="flex items-center gap-1 text-[11px] text-cl-text-dim font-mono">
           <Icon icon={ICONS.clock} size={11} />
           <span>{timeAgo(wo?.updated_at || wo?.created_at)}</span>
         </div>

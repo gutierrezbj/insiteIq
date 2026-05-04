@@ -18,10 +18,10 @@ import { getStatusInfo } from "./InterventionCardFull";
 import { formatWoCode } from "../../lib/woCode";
 
 const SEVERITY_LABEL = {
-  critical: { label: "URGENTE", color: "#DC2626" },
-  high:     { label: "ALTA",    color: "#0A1628" },
+  critical: { label: "URGENTE", color: "#D63944" },
+  high:     { label: "ALTA",    color: "#E8A33D" },
   medium:   { label: "Normal",  color: "#3D4A66" },
-  low:      { label: "Baja",    color: "#3D4A66" },
+  low:      { label: "Baja",    color: "#8B95A8" },
 };
 
 function getSeverityInfo(severity) {
@@ -34,37 +34,59 @@ export default function InterventionCardMini({ wo, site, onClick }) {
 
   return (
     <article
-      className="stage-border-top bg-cl-surface border border-cl-border rounded-sm p-3 hover:border-cl-border-strong transition cursor-pointer"
-      style={{ "--stage-color": status.color }}
+      className="stage-border-top bg-cl-surface rounded-sm p-3 transition cursor-pointer"
+      style={{
+        "--stage-color": status.color,
+        border: "1px solid #E2E5EC",
+      }}
       onClick={onClick}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.borderColor = "#C8CDD8";
+        e.currentTarget.style.background = "#FAFBFC";
+        e.currentTarget.style.boxShadow = "0 2px 6px -1px rgba(10, 22, 40, 0.08)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.borderColor = "#E2E5EC";
+        e.currentTarget.style.background = "#FFFFFF";
+        e.currentTarget.style.boxShadow = "none";
+      }}
     >
       <p
         className="font-mono text-[10px]"
-        style={{ color: status.color, fontWeight: 600, marginTop: 3 }}
+        style={{ color: status.color, fontWeight: 700, marginTop: 3 }}
       >
         {formatWoCode(wo)}
       </p>
+      {/* Site title navy strong (NO text-white) */}
       <h4
-        className="font-jakarta text-[13px] font-semibold text-white leading-tight mt-1 mb-2 truncate"
+        className="font-jakarta text-[14px] leading-tight mt-1 mb-2 truncate"
         title={site?.name || wo?.site_name}
+        style={{ color: "#0A1628", fontWeight: 700, letterSpacing: "-0.005em" }}
       >
         {site?.name || wo?.site_name || "Sin sitio"}
       </h4>
       <div className="flex items-center justify-between">
         <span
-          className="text-[10px]"
-          style={{ color: severity.color }}
+          className="font-jakarta uppercase"
+          style={{
+            fontSize: 10,
+            color: severity.color,
+            fontWeight: 700,
+            letterSpacing: "0.08em",
+          }}
         >
           {severity.label}
         </span>
         <span
+          className="font-jakarta"
           style={{
             fontSize: 9,
-            padding: "1.5px 6px",
-            borderRadius: 2,
-            background: `${status.color}22`,
+            padding: "2px 6px",
+            borderRadius: 3,
+            background: `${status.color}1A`,
             color: status.color,
-            fontWeight: 600,
+            border: `1px solid ${status.color}55`,
+            fontWeight: 700,
             letterSpacing: "0.12em",
           }}
         >

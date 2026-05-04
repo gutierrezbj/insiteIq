@@ -41,20 +41,20 @@ export default function EmptyState({
   const sublabelSize = compact ? 10 : 11;
 
   return (
-    <div className={`text-center ${padding} text-wr-text-dim`}>
+    <div className={`text-center ${padding}`}>
       <Icon icon={icon} size={iconSize} color={color} />
       {title && (
         <p
-          className="mt-2 leading-snug"
-          style={{ fontSize: titleSize, color: "#9CA3AF" }}
+          className="mt-2 leading-snug font-jakarta"
+          style={{ fontSize: titleSize, color: "#3D4A66", fontWeight: 600 }}
         >
           {title}
         </p>
       )}
       {sublabel && (
         <p
-          className="mt-1 leading-snug"
-          style={{ fontSize: sublabelSize, color: "#6B7280" }}
+          className="mt-1 leading-snug font-jakarta"
+          style={{ fontSize: sublabelSize, color: "#8B95A8", fontWeight: 500 }}
         >
           {sublabel}
         </p>
@@ -62,12 +62,24 @@ export default function EmptyState({
       {action && (
         <button
           onClick={action.onClick}
-          className="mt-3 px-3 py-1.5 bg-transparent border border-wr-border-strong rounded-sm cursor-pointer uppercase transition hover:border-wr-amber"
+          className="mt-3 px-4 py-1.5 rounded-sm cursor-pointer uppercase transition font-jakarta"
           style={{
             fontSize: 11,
-            color: "#F59E0B",
+            background: "#FFFFFF",
+            color: "#0A1628",
+            border: "1px solid #C8CDD8",
             letterSpacing: "0.08em",
-            fontFamily: "JetBrains Mono, monospace",
+            fontWeight: 700,
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "#0A1628";
+            e.currentTarget.style.color = "#FFFFFF";
+            e.currentTarget.style.borderColor = "#0A1628";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "#FFFFFF";
+            e.currentTarget.style.color = "#0A1628";
+            e.currentTarget.style.borderColor = "#C8CDD8";
           }}
         >
           {action.label}
