@@ -30,18 +30,18 @@ const STATUS_DISPLAY = {
   pre_flight:    { label: "PREPARANDO",  color: "#8B5CF6" },
   dispatched:    { label: "DESPACHADA",  color: "#7C3AED" },
   assigned:      { label: "DESPACHADA",  color: "#7C3AED" },
-  en_route:      { label: "EN RUTA",     color: "#F59E0B" },
+  en_route:      { label: "EN RUTA",     color: "#0A1628" },
   on_site:       { label: "EN SITIO",    color: "#EA580C" },
   in_progress:   { label: "EN SITIO",    color: "#EA580C" },
   in_closeout:   { label: "RESUELTA",    color: "#22C55E" },
   resolved:      { label: "RESUELTA",    color: "#22C55E" },
   completed:     { label: "CERRADA",     color: "#16A34A" },
   closed:        { label: "CERRADA",     color: "#16A34A" },
-  cancelled:     { label: "CANCELADA",   color: "#6B7280" },
+  cancelled:     { label: "CANCELADA",   color: "#8B95A8" },
 };
 
 function getStatusInfo(status) {
-  return STATUS_DISPLAY[status] || { label: status?.toUpperCase() || "—", color: "#6B7280" };
+  return STATUS_DISPLAY[status] || { label: status?.toUpperCase() || "—", color: "#8B95A8" };
 }
 
 export default function InterventionCardFull({
@@ -96,14 +96,14 @@ export default function InterventionCardFull({
       {/* Info rows */}
       <div className="space-y-1.5 text-[11px] mb-4">
         <div className="flex items-center gap-2">
-          <Icon icon={ICONS.user} size={12} color="#9CA3AF" />
+          <Icon icon={ICONS.user} size={12} color="#3D4A66" />
           <span className={tech ? "text-cl-text" : "text-cl-text-dim italic"}>
             {tech?.full_name || tech?.name || "Sin asignar"}
           </span>
         </div>
         {extra && (
           <div className="flex items-center gap-2">
-            <Icon icon={ICONS.box} size={12} color="#9CA3AF" />
+            <Icon icon={ICONS.box} size={12} color="#3D4A66" />
             <span className="text-cl-text-mid">{extra}</span>
           </div>
         )}

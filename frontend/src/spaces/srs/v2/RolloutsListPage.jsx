@@ -156,7 +156,7 @@ export default function RolloutsListPage() {
             <Icon
               icon={ICONS.search}
               size={14}
-              style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "#6B7280" }}
+              style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "#8B95A8" }}
             />
             <input
               type="text"
@@ -184,9 +184,9 @@ export default function RolloutsListPage() {
                 onClick={() => setStatusFilter(f.key)}
                 className="text-[11px] px-2.5 py-1 rounded-sm border transition"
                 style={{
-                  color: statusFilter === f.key ? "#F59E0B" : "#9CA3AF",
-                  borderColor: statusFilter === f.key ? "#F59E0B" : "#1F1F1F",
-                  background: statusFilter === f.key ? "rgba(245, 158, 11, 0.08)" : "transparent",
+                  color: statusFilter === f.key ? "#0A1628" : "#3D4A66",
+                  borderColor: statusFilter === f.key ? "#0A1628" : "#E2E5EC",
+                  background: statusFilter === f.key ? "rgba(255, 107, 53, 0.08)" : "transparent",
                   letterSpacing: "0.04em",
                 }}
               >
@@ -267,8 +267,8 @@ function RolloutCard({ project, dashboard, orgsMap, onClick }) {
   const accentColor = incidents > 0
     ? "#DC2626"
     : project.status === "active"
-      ? "#F59E0B"
-      : "#1F1F1F";
+      ? "#0A1628"
+      : "#E2E5EC";
 
   return (
     <article
@@ -288,7 +288,7 @@ function RolloutCard({ project, dashboard, orgsMap, onClick }) {
         <span
           className="text-[9px] uppercase font-semibold px-2 py-0.5 rounded-sm flex-shrink-0"
           style={{
-            color: project.status === "active" ? "#22C55E" : "#9CA3AF",
+            color: project.status === "active" ? "#22C55E" : "#3D4A66",
             background: project.status === "active" ? "rgba(34,197,94,0.1)" : "rgba(156,163,175,0.1)",
             letterSpacing: "0.1em",
           }}
@@ -331,7 +331,7 @@ function RolloutCard({ project, dashboard, orgsMap, onClick }) {
             className="h-1.5 rounded-full transition-all"
             style={{
               width: `${progressPct}%`,
-              background: progressPct >= 80 ? "#22C55E" : progressPct >= 50 ? "#F59E0B" : "#3B82F6",
+              background: progressPct >= 80 ? "#22C55E" : progressPct >= 50 ? "#0A1628" : "#3B82F6",
             }}
           />
         </div>
@@ -341,7 +341,7 @@ function RolloutCard({ project, dashboard, orgsMap, onClick }) {
             <p className="text-[9px] text-cl-text-dim uppercase" style={{ letterSpacing: "0.1em" }}>Activas</p>
             <p className="font-mono text-[14px] text-cl-text font-semibold">{active}</p>
           </div>
-          <div className="bg-cl-bg/40 px-2 py-1.5 rounded-sm" style={{ borderLeft: incidents > 0 ? "2px solid #DC2626" : "2px solid #1F1F1F" }}>
+          <div className="bg-cl-bg/40 px-2 py-1.5 rounded-sm" style={{ borderLeft: incidents > 0 ? "2px solid #DC2626" : "2px solid #E2E5EC" }}>
             <p className="text-[9px] text-cl-text-dim uppercase" style={{ letterSpacing: "0.1em" }}>Incidentes</p>
             <p
               className="font-mono text-[14px] font-semibold"

@@ -74,7 +74,7 @@ export default function MultiSelectDropdown({
         {hasSelection && (
           <span
             className="px-1.5 py-0.5 rounded-full font-mono text-[10px] font-semibold"
-            style={{ background: "rgba(245, 158, 11, 0.2)", color: "#F59E0B" }}
+            style={{ background: "rgba(255, 107, 53, 0.2)", color: "#0A1628" }}
           >
             {count}
           </span>
@@ -120,13 +120,13 @@ export default function MultiSelectDropdown({
                             width: 14,
                             height: 14,
                             borderRadius: 2,
-                            border: `1px solid ${isSelected ? "#F59E0B" : "#2A2A2A"}`,
-                            background: isSelected ? "#F59E0B" : "transparent",
+                            border: `1px solid ${isSelected ? "#0A1628" : "#2A2A2A"}`,
+                            background: isSelected ? "#0A1628" : "transparent",
                             flexShrink: 0,
                           }}
                         >
                           {isSelected && (
-                            <Icon icon={ICONS.checkCircle} size={10} color="#0A0A0A" />
+                            <Icon icon={ICONS.checkCircle} size={10} color="#FFFFFF" />
                           )}
                         </span>
                         <span className="flex-1 truncate">{opt.label}</span>

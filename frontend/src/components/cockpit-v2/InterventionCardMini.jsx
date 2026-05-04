@@ -19,13 +19,13 @@ import { formatWoCode } from "../../lib/woCode";
 
 const SEVERITY_LABEL = {
   critical: { label: "URGENTE", color: "#DC2626" },
-  high:     { label: "ALTA",    color: "#F59E0B" },
-  medium:   { label: "Normal",  color: "#9CA3AF" },
-  low:      { label: "Baja",    color: "#9CA3AF" },
+  high:     { label: "ALTA",    color: "#0A1628" },
+  medium:   { label: "Normal",  color: "#3D4A66" },
+  low:      { label: "Baja",    color: "#3D4A66" },
 };
 
 function getSeverityInfo(severity) {
-  return SEVERITY_LABEL[severity] || { label: "Normal", color: "#9CA3AF" };
+  return SEVERITY_LABEL[severity] || { label: "Normal", color: "#3D4A66" };
 }
 
 export default function InterventionCardMini({ wo, site, onClick }) {

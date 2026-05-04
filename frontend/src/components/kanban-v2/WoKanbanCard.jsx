@@ -32,7 +32,7 @@ import { computeSlaInfo, getTag } from "../../lib/woFields";
 
 const SHIELD_META = {
   bronze:      { hex: "#B45309", label: "Bronze" },
-  bronze_plus: { hex: "#D97706", label: "Bronze+" },
+  bronze_plus: { hex: "#0A1628", label: "Bronze+" },
   silver:      { hex: "#64748B", label: "Silver" },
   gold:        { hex: "#CA8A04", label: "Gold" },
 };
@@ -194,7 +194,7 @@ export default function WoKanbanCard({
         <div className="flex items-center gap-1.5 text-[11px]">
           {tech ? (
             <>
-              <Icon icon={ICONS.user} size={12} color="#9CA3AF" />
+              <Icon icon={ICONS.user} size={12} color="#3D4A66" />
               <span className="text-cl-text-mid">{tech.full_name || tech.name}</span>
             </>
           ) : (

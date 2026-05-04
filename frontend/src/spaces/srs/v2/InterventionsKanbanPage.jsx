@@ -334,7 +334,7 @@ export default function InterventionsKanbanPage({ scope = "srs" }) {
           <Icon
             icon={ICONS.search}
             size={16}
-            color="#6B7280"
+            color="#8B95A8"
             style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)" }}
           />
           <input

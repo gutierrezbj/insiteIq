@@ -155,9 +155,9 @@ export default function RolloutNotesPanel({ projectId, currentUser, onClose }) {
                 onClick={() => setComposerVisibility("srs_internal")}
                 className="text-[10px] px-2 py-1 rounded-sm border transition"
                 style={{
-                  color: composerVisibility === "srs_internal" ? "#F59E0B" : "#9CA3AF",
-                  borderColor: composerVisibility === "srs_internal" ? "#F59E0B" : "#1F1F1F",
-                  background: composerVisibility === "srs_internal" ? "rgba(245,158,11,0.08)" : "transparent",
+                  color: composerVisibility === "srs_internal" ? "#0A1628" : "#3D4A66",
+                  borderColor: composerVisibility === "srs_internal" ? "#0A1628" : "#E2E5EC",
+                  background: composerVisibility === "srs_internal" ? "rgba(255,107,53,0.08)" : "transparent",
                 }}
                 title="Solo visible para SRS (ropa en casa)"
               >
@@ -167,9 +167,9 @@ export default function RolloutNotesPanel({ projectId, currentUser, onClose }) {
                 onClick={() => setComposerVisibility("shared")}
                 className="text-[10px] px-2 py-1 rounded-sm border transition"
                 style={{
-                  color: composerVisibility === "shared" ? "#F59E0B" : "#9CA3AF",
-                  borderColor: composerVisibility === "shared" ? "#F59E0B" : "#1F1F1F",
-                  background: composerVisibility === "shared" ? "rgba(245,158,11,0.08)" : "transparent",
+                  color: composerVisibility === "shared" ? "#0A1628" : "#3D4A66",
+                  borderColor: composerVisibility === "shared" ? "#0A1628" : "#E2E5EC",
+                  background: composerVisibility === "shared" ? "rgba(255,107,53,0.08)" : "transparent",
                 }}
                 title="Visible también para client coordinator"
               >
@@ -181,8 +181,8 @@ export default function RolloutNotesPanel({ projectId, currentUser, onClose }) {
               disabled={submitting || !composer.trim()}
               className="text-[11px] uppercase font-medium px-3 py-1.5 rounded-sm transition"
               style={{
-                background: submitting || !composer.trim() ? "#1F1F1F" : "#F59E0B",
-                color: submitting || !composer.trim() ? "#6B7280" : "#0A0A0A",
+                background: submitting || !composer.trim() ? "#E2E5EC" : "#0A1628",
+                color: submitting || !composer.trim() ? "#8B95A8" : "#FFFFFF",
                 cursor: submitting || !composer.trim() ? "not-allowed" : "pointer",
                 letterSpacing: "0.08em",
               }}
@@ -221,7 +221,7 @@ export default function RolloutNotesPanel({ projectId, currentUser, onClose }) {
                         disabled={!isOwn}
                         className="text-[9px] uppercase font-semibold px-1.5 py-0.5 rounded-sm flex-shrink-0"
                         style={{
-                          color: n.visibility === "shared" ? "#22C55E" : "#9CA3AF",
+                          color: n.visibility === "shared" ? "#22C55E" : "#3D4A66",
                           background: n.visibility === "shared" ? "rgba(34,197,94,0.1)" : "rgba(156,163,175,0.1)",
                           letterSpacing: "0.1em",
                           cursor: isOwn ? "pointer" : "default",
@@ -245,7 +245,7 @@ export default function RolloutNotesPanel({ projectId, currentUser, onClose }) {
                           <button
                             onClick={() => saveEdit(n.id)}
                             className="text-[10px] uppercase font-medium px-2 py-1 rounded-sm"
-                            style={{ background: "#F59E0B", color: "#0A0A0A", letterSpacing: "0.08em" }}
+                            style={{ background: "#0A1628", color: "#FFFFFF", letterSpacing: "0.08em" }}
                           >
                             Guardar
                           </button>

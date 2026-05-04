@@ -33,19 +33,24 @@ function TechCard({ techName }) {
   const isPulse = info.status === "onduty";
 
   return (
-    <div className="flex items-center gap-2 px-3 py-2 bg-cl-surface border border-cl-border rounded-sm flex-shrink-0">
-      <Icon icon={ICONS.user} size={14} color="#9CA3AF" />
+    <div
+      className="flex items-center gap-2.5 px-3 py-2 bg-cl-surface border border-cl-border rounded-md flex-shrink-0 hover:border-cl-border-strong transition"
+      title={`${techName} · ${info.label}`}
+    >
+      {/* Avatar with presence dot top-right (estilo Slack/Teams) */}
+      <div className="relative flex-shrink-0">
+        <Icon icon={ICONS.user} size={18} color="#3D4A66" />
+        <span
+          className={`absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white${isPulse ? " animate-pulse-dot" : ""}`}
+          style={{ background: dotColor, boxShadow: `0 0 0 1px ${dotColor}33` }}
+        />
+      </div>
       <div className="leading-tight">
-        <p className="text-[11px] text-cl-text">{techName}</p>
+        <p className="text-[12px] font-jakarta font-semibold text-cl-text">{techName}</p>
         <p className="text-[10px] font-mono text-cl-text-dim">
           {info.tzLabel} · {info.techTime}
         </p>
       </div>
-      <span
-        className={`w-1.5 h-1.5 rounded-full ml-1${isPulse ? " animate-pulse-dot" : ""}`}
-        style={{ background: dotColor }}
-        title={info.label}
-      />
     </div>
   );
 }

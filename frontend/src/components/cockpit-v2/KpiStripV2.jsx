@@ -34,14 +34,14 @@ const KPI_DEFS = [
     key: "slaRisk",
     label: "SLA en riesgo",
     sublabel: "Breach o próximo breach",
-    color: "#F59E0B",
+    color: "#0A1628",
     icon: ICONS.dangerTriangle,
   },
   {
     key: "ballSrs",
     label: "Ball SRS >6h",
     sublabel: "Pendiente acción nuestra",
-    color: "#F59E0B",
+    color: "#0A1628",
     icon: ICONS.clock,
   },
   {

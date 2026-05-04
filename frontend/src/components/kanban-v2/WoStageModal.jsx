@@ -6,7 +6,7 @@
  *
  * Estructura común:
  *   - Overlay rgba(10,10,10,0.55) con animación fade
- *   - Panel centrado 560px, bg #0A0A0A, radius 12, animación scale + slide
+ *   - Panel centrado 560px, bg #FFFFFF, radius 12, animación scale + slide
  *   - Header: stage badge color + prio badge + SLA alert si aplica + close X
  *   - Title block: WO code + site name bold + city + shield + tipo
  *   - Sections con label uppercase tracking-wide:
@@ -47,8 +47,8 @@ const STAGE_CTA = {
   intake:      { label: "Triagear",                      target: "triage",     bg: "#0EA5E9", note: "Mover a evaluación interna." },
   triage:      { label: "Preparar intervención",         target: "pre_flight", bg: "#8B5CF6", note: "Inicia la lista de preparación SRS." },
   pre_flight:  { label: "Despachar",                     target: "dispatched", bg: "#7C3AED", note: "Requiere lista de preparación completa." },
-  dispatched:  { label: "Esperando confirmación del técnico", target: null,    bg: "#F59E0B", note: "Bloqueado hasta que el técnico firme la preparación.", disabled: true },
-  assigned:    { label: "Esperando confirmación del técnico", target: null,    bg: "#F59E0B", note: "Bloqueado hasta que el técnico firme la preparación.", disabled: true },
+  dispatched:  { label: "Esperando confirmación del técnico", target: null,    bg: "#0A1628", note: "Bloqueado hasta que el técnico firme la preparación.", disabled: true },
+  assigned:    { label: "Esperando confirmación del técnico", target: null,    bg: "#0A1628", note: "Bloqueado hasta que el técnico firme la preparación.", disabled: true },
   en_route:    { label: "Llegar al sitio",               target: "on_site",    bg: "#EA580C", note: "Confirmar arribo del técnico." },
   on_site:     { label: "Marcar como resuelta",          target: "resolved",   bg: "#22C55E", note: "Requiere captura de evidencia." },
   in_progress: { label: "Marcar como resuelta",          target: "resolved",   bg: "#22C55E", note: "Requiere captura de evidencia." },
@@ -61,7 +61,7 @@ const STAGE_CTA = {
 
 const SHIELD_META = {
   bronze:      { hex: "#B45309", label: "Bronze" },
-  bronze_plus: { hex: "#D97706", label: "Bronze+" },
+  bronze_plus: { hex: "#0A1628", label: "Bronze+" },
   silver:      { hex: "#64748B", label: "Silver" },
   gold:        { hex: "#CA8A04", label: "Gold" },
 };
@@ -126,7 +126,7 @@ export default function WoStageModal({
     >
       <div
         style={{
-          background: "#0A0A0A",
+          background: "#FFFFFF",
           width: 560,
           maxWidth: "100%",
           maxHeight: "calc(100vh - 48px)",
@@ -142,7 +142,7 @@ export default function WoStageModal({
         {/* Header */}
         <header
           className="flex items-center justify-between flex-shrink-0"
-          style={{ padding: "14px 20px 12px", borderBottom: "1px solid #1F1F1F" }}
+          style={{ padding: "14px 20px 12px", borderBottom: "1px solid #E2E5EC" }}
         >
           <div className="flex items-center gap-2 flex-wrap">
             <span
@@ -293,10 +293,10 @@ export default function WoStageModal({
                     : item.kind === "active" ? "is-active"
                     : item.kind === "error" ? "is-error"
                     : "";
-                  const labelColor = item.kind === "pending" ? "#6B7280"
+                  const labelColor = item.kind === "pending" ? "#8B95A8"
                     : item.kind === "error" ? "#DC2626"
-                    : item.kind === "active" ? "#F59E0B"
-                    : "#E5E5E5";
+                    : item.kind === "active" ? "#0A1628"
+                    : "#0A1628";
                   return (
                     <div className="detail-tl-item" key={idx}>
                       <div className={`detail-tl-dot ${kindClass}`} />
@@ -376,7 +376,7 @@ export default function WoStageModal({
           className="flex items-center justify-between gap-3 flex-shrink-0"
           style={{
             padding: "14px 20px",
-            borderTop: "1px solid #1F1F1F",
+            borderTop: "1px solid #E2E5EC",
             background: "rgba(20, 20, 20, 0.5)",
             borderRadius: "0 0 12px 12px",
           }}
@@ -391,7 +391,7 @@ export default function WoStageModal({
                 padding: "0 16px",
                 fontSize: 13,
                 fontWeight: 500,
-                color: "#9CA3AF",
+                color: "#3D4A66",
                 background: "transparent",
                 border: "1px solid #2A2A2A",
                 fontFamily: "JetBrains Mono, monospace",

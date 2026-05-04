@@ -50,7 +50,7 @@ function severityRank(s) {
 
 const SLA_BADGE = {
   BREACH:  { label: "BREACH",  bg: "#DC262622", color: "#DC2626", border: "#DC2626" },
-  AT_RISK: { label: "AT RISK", bg: "#F59E0B22", color: "#F59E0B", border: "#F59E0B" },
+  AT_RISK: { label: "AT RISK", bg: "#0A162822", color: "#0A1628", border: "#0A1628" },
   OK:      { label: "OK",      bg: "#22C55E22", color: "#22C55E", border: "#22C55E" },
 };
 
@@ -77,15 +77,15 @@ function buildQuickPopupHtml({ wo, site, tech, client, warning }) {
   const tag = getTag(wo);
 
   return `
-    <div style="background:#0A0A0A;color:#E5E5E5;font-family:'JetBrains Mono',monospace;">
+    <div style="background:#FFFFFF;color:#0A1628;font-family:'JetBrains Mono',monospace;">
       <!-- Header WO + SLA -->
-      <div style="padding:11px 14px 10px;border-bottom:1px solid #1F1F1F;display:flex;align-items:center;justify-content:space-between;gap:8px;">
+      <div style="padding:11px 14px 10px;border-bottom:1px solid #E2E5EC;display:flex;align-items:center;justify-content:space-between;gap:8px;">
         <span style="font-size:11px;color:${severity.color};font-weight:600;letter-spacing:0.05em;">${formatWoCode(wo)}</span>
         <span style="font-size:9px;padding:2px 6px;border-radius:2px;background:${sla.bg};color:${sla.color};border:1px solid ${sla.border};font-weight:600;letter-spacing:0.1em;">${sla.label} · ${slaTime}</span>
       </div>
 
       <!-- Status row -->
-      <div style="padding:8px 14px;border-bottom:1px solid #1F1F1F;display:flex;align-items:center;gap:10px;">
+      <div style="padding:8px 14px;border-bottom:1px solid #E2E5EC;display:flex;align-items:center;gap:10px;">
         <span style="display:inline-flex;align-items:center;gap:5px;font-size:10px;color:${status.color};font-weight:600;letter-spacing:0.1em;">
           <span style="width:6px;height:6px;border-radius:50%;background:${status.color};"></span>${status.label}
         </span>
@@ -95,8 +95,8 @@ function buildQuickPopupHtml({ wo, site, tech, client, warning }) {
       <!-- Title -->
       <div style="padding:12px 14px 10px;">
         <p style="margin:0 0 3px;font-family:'Instrument Sans',sans-serif;font-size:15px;font-weight:600;color:#FFFFFF;line-height:1.25;">${site?.name || wo?.site_name || "Sin sitio"}</p>
-        <p style="margin:0;font-size:11px;color:#6B7280;">
-          <span style="color:#9CA3AF;">${site?.code || site?.id || "—"}</span>
+        <p style="margin:0;font-size:11px;color:#8B95A8;">
+          <span style="color:#3D4A66;">${site?.code || site?.id || "—"}</span>
           ${site?.city ? ` · ${site.city}` : ""}${site?.country ? `, ${site.country}` : ""}
         </p>
       </div>
@@ -104,20 +104,20 @@ function buildQuickPopupHtml({ wo, site, tech, client, warning }) {
       <!-- Metadata 2x2 (todos los fields con fallback "—" para no salir vacíos) -->
       <div style="padding:4px 14px 12px;display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;">
         <div>
-          <p style="margin:0 0 2px;font-size:9px;color:#6B7280;letter-spacing:0.14em;text-transform:uppercase;">CLI</p>
-          <p style="margin:0;font-size:12px;color:${client?.name ? "#E5E5E5" : "#6B7280"};">${client?.name || "—"}</p>
+          <p style="margin:0 0 2px;font-size:9px;color:#8B95A8;letter-spacing:0.14em;text-transform:uppercase;">CLI</p>
+          <p style="margin:0;font-size:12px;color:${client?.name ? "#0A1628" : "#8B95A8"};">${client?.name || "—"}</p>
         </div>
         <div>
-          <p style="margin:0 0 2px;font-size:9px;color:#6B7280;letter-spacing:0.14em;text-transform:uppercase;">BALL</p>
-          <p style="margin:0;font-size:12px;color:${ballParty === "—" ? "#6B7280" : ballColor};font-weight:500;">${ballParty}</p>
+          <p style="margin:0 0 2px;font-size:9px;color:#8B95A8;letter-spacing:0.14em;text-transform:uppercase;">BALL</p>
+          <p style="margin:0;font-size:12px;color:${ballParty === "—" ? "#8B95A8" : ballColor};font-weight:500;">${ballParty}</p>
         </div>
         <div>
-          <p style="margin:0 0 2px;font-size:9px;color:#6B7280;letter-spacing:0.14em;text-transform:uppercase;">TECH</p>
-          <p style="margin:0;font-size:12px;color:${techName ? "#E5E5E5" : "#6B7280"};">${techName || "Sin asignar"}</p>
+          <p style="margin:0 0 2px;font-size:9px;color:#8B95A8;letter-spacing:0.14em;text-transform:uppercase;">TECH</p>
+          <p style="margin:0;font-size:12px;color:${techName ? "#0A1628" : "#8B95A8"};">${techName || "Sin asignar"}</p>
         </div>
         <div>
-          <p style="margin:0 0 2px;font-size:9px;color:#6B7280;letter-spacing:0.14em;text-transform:uppercase;">TAG</p>
-          <p style="margin:0;font-size:12px;color:${tag ? "#E5E5E5" : "#6B7280"};">${tag || "—"}</p>
+          <p style="margin:0 0 2px;font-size:9px;color:#8B95A8;letter-spacing:0.14em;text-transform:uppercase;">TAG</p>
+          <p style="margin:0;font-size:12px;color:${tag ? "#0A1628" : "#8B95A8"};">${tag || "—"}</p>
         </div>
       </div>
 
@@ -127,11 +127,11 @@ function buildQuickPopupHtml({ wo, site, tech, client, warning }) {
           <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:3px;">
             <div style="display:flex;align-items:baseline;gap:6px;">
               <span style="font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:600;color:#FFFFFF;">${tzInfo.techTime}</span>
-              <span style="font-size:10px;color:#9CA3AF;letter-spacing:0.1em;text-transform:uppercase;">${tzInfo.tzLabel}</span>
+              <span style="font-size:10px;color:#3D4A66;letter-spacing:0.1em;text-transform:uppercase;">${tzInfo.tzLabel}</span>
             </div>
             <span style="font-size:9px;padding:2px 6px;border-radius:2px;background:${tzInfo.color}22;color:${tzInfo.color};font-weight:600;letter-spacing:0.1em;">${tzInfo.label}</span>
           </div>
-          <p style="margin:0;font-size:10px;color:#6B7280;font-family:'JetBrains Mono',monospace;">
+          <p style="margin:0;font-size:10px;color:#8B95A8;font-family:'JetBrains Mono',monospace;">
             Tu hora ${tzInfo.viewerTime} ${VIEWER_TZ_LABEL} · ${tzInfo.offsetText}${tzInfo.untilEndOfDay ? ` · fin jornada en ${tzInfo.untilEndOfDay}` : ""}
           </p>
         </div>
@@ -139,16 +139,16 @@ function buildQuickPopupHtml({ wo, site, tech, client, warning }) {
 
       ${warning ? `
         <!-- Warning row -->
-        <div style="margin:0 14px 10px;padding:8px 10px;background:rgba(245, 158, 11, 0.06);border-left:2px solid #F59E0B;font-size:11px;color:#F59E0B;">
+        <div style="margin:0 14px 10px;padding:8px 10px;background:rgba(255, 107, 53, 0.06);border-left:2px solid #0A1628;font-size:11px;color:#0A1628;">
           <span style="font-weight:600;letter-spacing:0.08em;">${warning.type?.replace("_", " ") || "WARNING"}</span>
-          <p style="margin:2px 0 0;color:#9CA3AF;font-weight:400;font-size:11px;line-height:1.35;">${warning.detail || ""}</p>
+          <p style="margin:2px 0 0;color:#3D4A66;font-weight:400;font-size:11px;line-height:1.35;">${warning.detail || ""}</p>
         </div>
       ` : ""}
 
       <!-- Actions -->
       <div style="padding:0 14px 12px;display:flex;gap:6px;">
-        <button data-action="view-detail" data-wo-id="${wo?.id || ""}" style="flex:1;height:28px;background:#1F1F1F;color:#F59E0B;border:1px solid #2A2A2A;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">Ver detalle →</button>
-        ${techName ? `<button data-action="contact-tech" data-tech="${techName}" style="flex:1;height:28px;background:transparent;color:#9CA3AF;border:1px solid #2A2A2A;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;">Contactar tech</button>` : ""}
+        <button data-action="view-detail" data-wo-id="${wo?.id || ""}" style="flex:1;height:28px;background:#E2E5EC;color:#0A1628;border:1px solid #2A2A2A;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">Ver detalle →</button>
+        ${techName ? `<button data-action="contact-tech" data-tech="${techName}" style="flex:1;height:28px;background:transparent;color:#3D4A66;border:1px solid #2A2A2A;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;">Contactar tech</button>` : ""}
       </div>
     </div>
   `;
@@ -487,55 +487,55 @@ export default function EspacioOpsPage({ scope = "srs" }) {
       <div className="flex-1 relative" style={{ minHeight: 400 }}>
         <div className="absolute top-3 left-5 z-[400] flex items-center gap-3 pointer-events-none">
           <p className="label-caps-v2">Mapa operativo</p>
-          <span className="font-mono text-[11px] text-wr-text">
+          <span className="font-mono text-[11px] text-cl-text">
             {filteredWos.length} {filteredWos.length === 1 ? "intervención" : "intervenciones"} visibles
           </span>
         </div>
         <div className="absolute top-3 right-5 z-[400] flex items-center gap-4 text-[11px] pointer-events-none">
           <span className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full" style={{ background: "#DC2626" }} />
-            <span className="text-wr-text-mid">CRÍTICO</span>
+            <span className="text-cl-text-mid">CRÍTICO</span>
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full" style={{ background: "#F59E0B" }} />
-            <span className="text-wr-text-mid">ACTIVO</span>
+            <span className="w-2 h-2 rounded-full" style={{ background: "#0A1628" }} />
+            <span className="text-cl-text-mid">ACTIVO</span>
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full" style={{ background: "#6B7280" }} />
-            <span className="text-wr-text-mid">NORMAL</span>
+            <span className="w-2 h-2 rounded-full" style={{ background: "#8B95A8" }} />
+            <span className="text-cl-text-mid">NORMAL</span>
           </span>
         </div>
         <div ref={mapRef} className="absolute inset-0" />
 
         {/* Legend inferior izq · estados de intervención */}
-        <div className="absolute bottom-3 left-5 z-[400] bg-wr-surface/95 border border-wr-border rounded-sm px-3 py-2 flex items-center gap-3 text-[10px] backdrop-blur-sm pointer-events-none">
+        <div className="absolute bottom-3 left-5 z-[400] bg-cl-surface/95 border border-cl-border rounded-sm px-3 py-2 flex items-center gap-3 text-[10px] backdrop-blur-sm pointer-events-none">
           <p className="label-caps-v2">Estado</p>
-          <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ background: "#3B82F6" }}/><span className="text-wr-text-mid">Entrada</span></span>
-          <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ background: "#8B5CF6" }}/><span className="text-wr-text-mid">Preparando</span></span>
-          <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ background: "#F59E0B" }}/><span className="text-wr-text-mid">En ruta</span></span>
-          <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ background: "#EA580C" }}/><span className="text-wr-text-mid">En sitio</span></span>
-          <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ background: "#22C55E" }}/><span className="text-wr-text-mid">Resuelta</span></span>
+          <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ background: "#3B82F6" }}/><span className="text-cl-text-mid">Entrada</span></span>
+          <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ background: "#8B5CF6" }}/><span className="text-cl-text-mid">Preparando</span></span>
+          <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ background: "#0A1628" }}/><span className="text-cl-text-mid">En ruta</span></span>
+          <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ background: "#EA580C" }}/><span className="text-cl-text-mid">En sitio</span></span>
+          <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ background: "#22C55E" }}/><span className="text-cl-text-mid">Resuelta</span></span>
         </div>
 
         {!window.L && (
-          <div className="absolute inset-0 flex items-center justify-center text-wr-text-dim text-[12px] font-mono">
+          <div className="absolute inset-0 flex items-center justify-center text-cl-text-dim text-[12px] font-mono">
             Cargando mapa…
           </div>
         )}
       </div>
 
       {/* Bottom panel · minicards grid */}
-      <section className="border-t border-wr-border bg-wr-bg flex flex-col" style={{ maxHeight: "38%" }}>
-        <header className="px-6 py-3 flex items-center justify-between border-b border-wr-border flex-shrink-0">
+      <section className="border-t border-cl-border bg-cl-bg flex flex-col" style={{ maxHeight: "38%" }}>
+        <header className="px-6 py-3 flex items-center justify-between border-b border-cl-border flex-shrink-0">
           <div className="flex items-center gap-3">
             <p className="label-caps-v2">Intervenciones en marcha</p>
-            <span className="font-mono text-[11px] text-wr-text">{filteredWos.length}</span>
+            <span className="font-mono text-[11px] text-cl-text">{filteredWos.length}</span>
             {activeFilter && (
-              <span className="ml-3 inline-flex items-center gap-2 pl-3 border-l border-wr-border">
-                <span className="label-caps-v2" style={{ color: "#F59E0B" }}>Filtro activo</span>
+              <span className="ml-3 inline-flex items-center gap-2 pl-3 border-l border-cl-border">
+                <span className="label-caps-v2" style={{ color: "#0A1628" }}>Filtro activo</span>
                 <button
                   onClick={() => setActiveFilter(null)}
-                  className="text-wr-text-dim hover:text-wr-amber transition"
+                  className="text-cl-text-dim hover:text-cl-orange transition"
                   title="Quitar filtro"
                 >
                   <Icon icon={ICONS.close} size={14} />
@@ -545,7 +545,7 @@ export default function EspacioOpsPage({ scope = "srs" }) {
           </div>
           <button
             onClick={load}
-            className="text-[11px] text-wr-text-mid hover:text-wr-amber uppercase transition flex items-center gap-1"
+            className="text-[11px] text-cl-text-mid hover:text-cl-orange uppercase transition flex items-center gap-1"
             style={{ letterSpacing: "0.08em" }}
           >
             <Icon icon={ICONS.refresh} size={12} />

@@ -77,7 +77,7 @@ const FLAG_COLORS = {
   done:       "#22C55E",  // verde · hecho o en marcha
   problem:    "#DC2626",  // rojo · con problemas
   scheduled:  "#3B82F6",  // azul · en calendario (bombillo)
-  pending:    "#6B7280",  // gris · sin estado claro
+  pending:    "#8B95A8",  // gris · sin estado claro
 };
 
 function classifyWoForFlag(wo) {
@@ -235,7 +235,7 @@ export default function RolloutDetailPage() {
               <span
                 className="text-[9px] uppercase font-semibold px-1.5 py-0.5 rounded-sm"
                 style={{
-                  color: project.status === "active" ? "#22C55E" : "#9CA3AF",
+                  color: project.status === "active" ? "#22C55E" : "#3D4A66",
                   background: project.status === "active" ? "rgba(34,197,94,0.1)" : "rgba(156,163,175,0.1)",
                   letterSpacing: "0.1em",
                 }}
@@ -285,8 +285,8 @@ export default function RolloutDetailPage() {
                 onClick={() => setActiveTab(t.key)}
                 className={`flex items-center gap-2 px-4 py-2.5 text-[12px] font-medium border-b-2 transition`}
                 style={{
-                  color: isActive ? "#F59E0B" : "#9CA3AF",
-                  borderBottomColor: isActive ? "#F59E0B" : "transparent",
+                  color: isActive ? "#0A1628" : "#3D4A66",
+                  borderBottomColor: isActive ? "#0A1628" : "transparent",
                   letterSpacing: "0.04em",
                 }}
               >
@@ -310,9 +310,9 @@ export default function RolloutDetailPage() {
                   onClick={() => setFilter(f.key)}
                   className={`text-[11px] px-2.5 py-1 rounded-sm border transition`}
                   style={{
-                    color: filter === f.key ? "#F59E0B" : (f.color || "#9CA3AF"),
-                    borderColor: filter === f.key ? "#F59E0B" : "#1F1F1F",
-                    background: filter === f.key ? "rgba(245, 158, 11, 0.08)" : "transparent",
+                    color: filter === f.key ? "#0A1628" : (f.color || "#3D4A66"),
+                    borderColor: filter === f.key ? "#0A1628" : "#E2E5EC",
+                    background: filter === f.key ? "rgba(255, 107, 53, 0.08)" : "transparent",
                   }}
                 >
                   {f.label}
@@ -370,8 +370,8 @@ function BulkRescheduleButton({ count, onClick }) {
       onClick={onClick}
       className="inline-flex items-center gap-2 px-3 py-2 rounded-sm border text-[11px] uppercase font-medium transition"
       style={{
-        color: hasPending ? "#3B82F6" : "#6B7280",
-        borderColor: hasPending ? "#3B82F6" : "#1F1F1F",
+        color: hasPending ? "#3B82F6" : "#8B95A8",
+        borderColor: hasPending ? "#3B82F6" : "#E2E5EC",
         background: hasPending ? "rgba(59, 130, 246, 0.08)" : "transparent",
         letterSpacing: "0.08em",
       }}
@@ -576,7 +576,7 @@ function BulkRescheduleModal({ wos, sites, users, onClose, onDone }) {
                   className="h-1 transition-all"
                   style={{
                     width: progress.total ? `${(progress.done / progress.total) * 100}%` : "0%",
-                    background: "#F59E0B",
+                    background: "#0A1628",
                   }}
                 />
               </div>
@@ -607,8 +607,8 @@ function BulkRescheduleModal({ wos, sites, users, onClose, onDone }) {
             disabled={submitting || selected.size === 0 || !techId || !scheduledAt}
             className="text-[11px] uppercase font-medium px-4 py-2 rounded-sm transition"
             style={{
-              background: submitting || selected.size === 0 || !techId || !scheduledAt ? "#1F1F1F" : "#F59E0B",
-              color: submitting || selected.size === 0 || !techId || !scheduledAt ? "#6B7280" : "#0A0A0A",
+              background: submitting || selected.size === 0 || !techId || !scheduledAt ? "#E2E5EC" : "#0A1628",
+              color: submitting || selected.size === 0 || !techId || !scheduledAt ? "#8B95A8" : "#FFFFFF",
               cursor: submitting || selected.size === 0 || !techId || !scheduledAt ? "not-allowed" : "pointer",
               letterSpacing: "0.08em",
             }}
@@ -628,8 +628,8 @@ function NotesButton({ onClick }) {
       onClick={onClick}
       className="inline-flex items-center gap-2 px-3 py-2 rounded-sm border text-[11px] uppercase font-medium transition"
       style={{
-        color: "#9CA3AF",
-        borderColor: "#1F1F1F",
+        color: "#3D4A66",
+        borderColor: "#E2E5EC",
         background: "transparent",
         letterSpacing: "0.08em",
       }}
@@ -752,7 +752,7 @@ function ScheduleSiteModal({ wo, site, users, onClose, onScheduled }) {
 
           <p className="text-[11px] text-cl-text-mid leading-relaxed">
             Avanza este site de <span className="text-cl-text-dim">intake</span> a{" "}
-            <span style={{ color: "#F59E0B" }}>triage</span> con tech asignado y fecha
+            <span style={{ color: "#0A1628" }}>triage</span> con tech asignado y fecha
             agendada. La banderita pasa de azul (programado) a verde (en marcha).
           </p>
         </div>
@@ -772,8 +772,8 @@ function ScheduleSiteModal({ wo, site, users, onClose, onScheduled }) {
             disabled={submitting || !techId || !scheduledAt}
             className="text-[11px] uppercase font-medium px-4 py-2 rounded-sm transition"
             style={{
-              background: submitting || !techId || !scheduledAt ? "#1F1F1F" : "#F59E0B",
-              color: submitting || !techId || !scheduledAt ? "#6B7280" : "#0A0A0A",
+              background: submitting || !techId || !scheduledAt ? "#E2E5EC" : "#0A1628",
+              color: submitting || !techId || !scheduledAt ? "#8B95A8" : "#FFFFFF",
               cursor: submitting || !techId || !scheduledAt ? "not-allowed" : "pointer",
               letterSpacing: "0.08em",
             }}
@@ -910,19 +910,19 @@ function MapTab({ wos, sites, users, onScheduled }) {
       }
       const isScheduled = flag === "scheduled";
       const ctaButton = isScheduled
-        ? `<button data-action="schedule" data-wo-id="${wo.id}" style="margin-top:6px;width:100%;background:#F59E0B;color:#0A0A0A;border:0;border-radius:3px;padding:6px 10px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;">Programar instalación →</button>`
+        ? `<button data-action="schedule" data-wo-id="${wo.id}" style="margin-top:6px;width:100%;background:#0A1628;color:#FFFFFF;border:0;border-radius:3px;padding:6px 10px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;">Programar instalación →</button>`
         : "";
       const popupHtml = `
-        <div style="background:#0A0A0A;color:#E5E5E5;font-family:'JetBrains Mono',monospace;min-width:220px;">
-          <div style="padding:9px 12px;border-bottom:1px solid #1F1F1F;">
+        <div style="background:#FFFFFF;color:#0A1628;font-family:'JetBrains Mono',monospace;min-width:220px;">
+          <div style="padding:9px 12px;border-bottom:1px solid #E2E5EC;">
             <div style="font-size:10px;color:${color};font-weight:600;letter-spacing:0.1em;text-transform:uppercase;">${flag === "done" ? "Hecho/Marcha" : flag === "problem" ? "Problema" : flag === "scheduled" ? "Programado · sin agendar" : "Pendiente"}</div>
             <div style="font-size:13px;color:#FFFFFF;font-weight:600;margin-top:2px;">${site.name || "Sin nombre"}</div>
-            <div style="font-size:10px;color:#9CA3AF;">${site.code || ""}</div>
+            <div style="font-size:10px;color:#3D4A66;">${site.code || ""}</div>
           </div>
           <div style="padding:8px 12px;font-size:11px;line-height:1.5;">
-            <div><span style="color:#6B7280;">WO:</span> ${formatWoCode(wo)}</div>
-            <div><span style="color:#6B7280;">Status:</span> ${wo.status}</div>
-            <div><span style="color:#6B7280;">Tech:</span> ${techName}</div>
+            <div><span style="color:#8B95A8;">WO:</span> ${formatWoCode(wo)}</div>
+            <div><span style="color:#8B95A8;">Status:</span> ${wo.status}</div>
+            <div><span style="color:#8B95A8;">Tech:</span> ${techName}</div>
             ${ctaButton}
           </div>
         </div>
@@ -1152,7 +1152,7 @@ function DashboardTab({ dashboard, counts, totalSites, progressPct }) {
           <span className="text-[14px] text-cl-text-dim">sites · </span>
           <span
             className="font-mono text-[24px] font-semibold"
-            style={{ color: progressPct >= 80 ? "#22C55E" : progressPct >= 50 ? "#F59E0B" : "#9CA3AF" }}
+            style={{ color: progressPct >= 80 ? "#22C55E" : progressPct >= 50 ? "#0A1628" : "#3D4A66" }}
           >
             {progressPct}%
           </span>
@@ -1162,7 +1162,7 @@ function DashboardTab({ dashboard, counts, totalSites, progressPct }) {
             className="h-2 rounded-full transition-all"
             style={{
               width: `${progressPct}%`,
-              background: progressPct >= 80 ? "#22C55E" : progressPct >= 50 ? "#F59E0B" : "#3B82F6",
+              background: progressPct >= 80 ? "#22C55E" : progressPct >= 50 ? "#0A1628" : "#3B82F6",
             }}
           />
         </div>
@@ -1173,7 +1173,7 @@ function DashboardTab({ dashboard, counts, totalSites, progressPct }) {
         <KpiCard label="Hecho/Marcha" value={counts.done} color={FLAG_COLORS.done} />
         <KpiCard label="Con problemas" value={counts.problem} color={FLAG_COLORS.problem} />
         <KpiCard label="Programados" value={counts.scheduled} color={FLAG_COLORS.scheduled} />
-        <KpiCard label="Activas hoy" value={wo.active || 0} color="#9CA3AF" />
+        <KpiCard label="Activas hoy" value={wo.active || 0} color="#3D4A66" />
       </div>
 
       {/* Velocidad + drift + ETA */}
@@ -1187,7 +1187,7 @@ function DashboardTab({ dashboard, counts, totalSites, progressPct }) {
           title="Drift vs SOW"
           value={k.on_schedule_pct != null ? `${k.on_schedule_pct}%` : "—"}
           unit={k.on_schedule_pct == null ? "sin baseline" : k.on_schedule_pct >= 100 ? "adelantados" : "atrasados"}
-          color={k.on_schedule_pct == null ? "#9CA3AF" : k.on_schedule_pct >= 100 ? "#22C55E" : k.on_schedule_pct >= 80 ? "#F59E0B" : "#DC2626"}
+          color={k.on_schedule_pct == null ? "#3D4A66" : k.on_schedule_pct >= 100 ? "#22C55E" : k.on_schedule_pct >= 80 ? "#0A1628" : "#DC2626"}
         />
         <DataPanel
           title="ETA 100%"
@@ -1202,7 +1202,7 @@ function DashboardTab({ dashboard, counts, totalSites, progressPct }) {
           title="SLA compliance"
           value={k.sla_compliance_pct != null ? `${k.sla_compliance_pct}%` : "—"}
           unit="WOs cerradas dentro deadline"
-          color={k.sla_compliance_pct == null ? "#9CA3AF" : k.sla_compliance_pct >= 90 ? "#22C55E" : "#F59E0B"}
+          color={k.sla_compliance_pct == null ? "#3D4A66" : k.sla_compliance_pct >= 90 ? "#22C55E" : "#0A1628"}
         />
         <DataPanel
           title="Incidentes activos"
@@ -1233,7 +1233,7 @@ function DataPanel({ title, value, unit, color }) {
     <div className="bg-cl-surface/40 border border-cl-border rounded-sm px-4 py-3">
       <p className="label-caps-v2 mb-1">{title}</p>
       <div className="flex items-baseline gap-2">
-        <span className="font-mono text-[22px] font-semibold" style={{ color: color || "#E5E5E5" }}>{value}</span>
+        <span className="font-mono text-[22px] font-semibold" style={{ color: color || "#0A1628" }}>{value}</span>
         <span className="text-[10px] text-cl-text-dim">{unit}</span>
       </div>
     </div>
@@ -1324,9 +1324,9 @@ function TimelineTab({ wos, sites }) {
               onClick={() => setRangeKey(b.key)}
               className="text-[11px] px-2.5 py-1 rounded-sm border transition"
               style={{
-                color: rangeKey === b.key ? "#F59E0B" : "#9CA3AF",
-                borderColor: rangeKey === b.key ? "#F59E0B" : "#1F1F1F",
-                background: rangeKey === b.key ? "rgba(245, 158, 11, 0.08)" : "transparent",
+                color: rangeKey === b.key ? "#0A1628" : "#3D4A66",
+                borderColor: rangeKey === b.key ? "#0A1628" : "#E2E5EC",
+                background: rangeKey === b.key ? "rgba(255, 107, 53, 0.08)" : "transparent",
                 letterSpacing: "0.04em",
               }}
             >
@@ -1363,9 +1363,9 @@ function TimelineTab({ wos, sites }) {
                 style={{
                   left: `calc(200px + (100% - 200px) * ${todayPct / 100})`,
                   width: 2,
-                  background: "#F59E0B",
+                  background: "#0A1628",
                   opacity: 0.7,
-                  boxShadow: "0 0 6px rgba(245, 158, 11, 0.55)",
+                  boxShadow: "0 0 6px rgba(255, 107, 53, 0.55)",
                 }}
                 title={`HOY · ${todayLabel}`}
               />
@@ -1536,7 +1536,7 @@ function ExportReportButton({ project, wos, sites, users, counts, totalSites, pr
           <div style="color:#DC2626;">● ${counts.problem} con problemas</div>
           <div style="color:#3B82F6;">● ${counts.scheduled} en calendario</div>
           <div style="color:#16A34A;">● ${counts.done} hecho/marcha</div>
-          ${counts.pending ? `<div style="color:#6B7280;">● ${counts.pending} pendientes</div>` : ""}
+          ${counts.pending ? `<div style="color:#8B95A8;">● ${counts.pending} pendientes</div>` : ""}
         </section>
         <table style="width:100%;border-collapse:collapse;font-size:10px;">
           <thead><tr style="background:#f5f5f5;">
@@ -1573,9 +1573,9 @@ function ExportReportButton({ project, wos, sites, users, counts, totalSites, pr
         onClick={() => setOpen((v) => !v)}
         className="inline-flex items-center gap-2 px-3 py-2 rounded-sm border text-[11px] uppercase font-medium transition"
         style={{
-          color: "#F59E0B",
-          borderColor: "#F59E0B",
-          background: open ? "rgba(245, 158, 11, 0.18)" : "rgba(245, 158, 11, 0.08)",
+          color: "#0A1628",
+          borderColor: "#0A1628",
+          background: open ? "rgba(255, 107, 53, 0.18)" : "rgba(255, 107, 53, 0.08)",
           letterSpacing: "0.08em",
         }}
         title="Exportar reporte"
@@ -1595,7 +1595,7 @@ function ExportReportButton({ project, wos, sites, users, counts, totalSites, pr
               onClick={exportCsv}
               className="w-full flex items-center gap-3 px-3 py-2.5 text-[11px] text-cl-text hover:bg-cl-surface/50 transition text-left"
             >
-              <Icon icon={ICONS.document} size={16} color="#F59E0B" />
+              <Icon icon={ICONS.document} size={16} color="#0A1628" />
               <div className="flex-1">
                 <div className="font-medium">Exportar CSV / XLSX</div>
                 <div className="text-[9px] text-cl-text-dim font-mono mt-0.5">{wos.length} sites · Excel-ready</div>
@@ -1605,7 +1605,7 @@ function ExportReportButton({ project, wos, sites, users, counts, totalSites, pr
               onClick={exportPdf}
               className="w-full flex items-center gap-3 px-3 py-2.5 text-[11px] text-cl-text hover:bg-cl-surface/50 transition text-left border-t border-cl-border"
             >
-              <Icon icon={ICONS.printer} size={16} color="#F59E0B" />
+              <Icon icon={ICONS.printer} size={16} color="#0A1628" />
               <div className="flex-1">
                 <div className="font-medium">Imprimir PDF</div>
                 <div className="text-[9px] text-cl-text-dim font-mono mt-0.5">A4 landscape · "Guardar como PDF"</div>

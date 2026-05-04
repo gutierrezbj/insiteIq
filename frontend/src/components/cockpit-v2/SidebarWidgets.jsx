@@ -48,7 +48,7 @@ export function AlertsWidget({ alerts = [] }) {
         ) : (
           shown.map((a, idx) => {
             const sev = a.severity || "warning";
-            const color = sev === "critical" ? "#DC2626" : sev === "warning" ? "#F59E0B" : "#06B6D4";
+            const color = sev === "critical" ? "#DC2626" : sev === "warning" ? "#0A1628" : "#06B6D4";
             return (
               <div
                 key={a.id || idx}
@@ -87,7 +87,7 @@ export function AlertsWidget({ alerts = [] }) {
 
 const SHIELD_DOT_COLOR = {
   bronze:      "#B45309",
-  bronze_plus: "#D97706",
+  bronze_plus: "#0A1628",
   silver:      "#64748B",
   gold:        "#CA8A04",
 };
@@ -152,7 +152,7 @@ export function ShieldsWidget({ agreements = [] }) {
               Próximos a vencer
             </p>
             {upcoming.map((a) => {
-              const dot = SHIELD_DOT_COLOR[a.shield_level] || "#9CA3AF";
+              const dot = SHIELD_DOT_COLOR[a.shield_level] || "#3D4A66";
               const name = SHIELD_NAME[a.shield_level] || "—";
               return (
                 <div
@@ -179,7 +179,7 @@ export function ShieldsWidget({ agreements = [] }) {
         <div className="space-y-1">
           {orderedLevels.map((level) => {
             const count = byLevel[level];
-            const dot = SHIELD_DOT_COLOR[level] || "#9CA3AF";
+            const dot = SHIELD_DOT_COLOR[level] || "#3D4A66";
             const name = SHIELD_NAME[level] || level;
             return (
               <div
@@ -316,7 +316,7 @@ export function WeatherWidget({ sites = [], selectedSiteId, onSelectSite }) {
           <div className="bg-cl-surface border border-cl-border rounded-sm p-3">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <Icon icon={ICONS.cloud} size={20} color="#9CA3AF" />
+                <Icon icon={ICONS.cloud} size={20} color="#3D4A66" />
                 <div>
                   <p className="text-[13px] text-cl-text font-medium">
                     {weather.condition}
@@ -412,7 +412,7 @@ export function SummaryWidget({ stats = {}, viewerScope = "srs" }) {
             <span className="text-[12px] text-cl-text-mid">Facturado MTD</span>
             <span
               className="font-mono text-[14px]"
-              style={{ color: "#F59E0B", fontWeight: 600 }}
+              style={{ color: "#0A1628", fontWeight: 600 }}
             >
               € {Number(stats.invoicedMtd).toLocaleString("es-ES")}
             </span>
