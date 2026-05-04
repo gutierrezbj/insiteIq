@@ -1,15 +1,9 @@
 /**
- * SRS Projects · list page (Iter 2.21 · paleta F NAVEGANTE).
+ * SRS Projects · list page (Iter 2.22 · refactor a v2-shared).
  *
- * Migración del v1 amber legacy a v2 inline paleta F. Self-contained:
- * NO usa Badges/KpiCard/BackLink shared (esos siguen tokens v1) hasta
- * que el paquete shared se migre en otro sprint. Inline styles para
- * navy + Plus Jakarta + JetBrains Mono.
- *
- * Estructura preservada del v1:
- *   - Header con count h1 + chips type counters
- *   - Tabla 12-col grid: Code/Título · Type · Pattern · Status · Target sites
- *   - Filas clickeables a /srs/projects/{id}
+ * Sin cambio visual respecto a Iter 2.21. Solo sustituye los inline
+ * definitions por imports de v2-shared/. Patrón replicable para futuras
+ * migraciones.
  *
  * Endpoint: GET /api/projects → [{ id, code, title, type, delivery_pattern,
  *   status, total_sites_target, ... }]
@@ -17,47 +11,8 @@
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useFetch } from "../../../lib/useFetch";
-
-const JAKARTA = "'Plus Jakarta Sans', sans-serif";
-
-const MONO_CAPS = {
-  fontFamily: "'JetBrains Mono', monospace",
-  fontWeight: 700,
-  letterSpacing: "0.14em",
-  textTransform: "uppercase",
-};
-
-// Project status → estilo inline paleta F
-const STATUS_STYLES = {
-  draft:     { bg: "#F0F2F7",  border: "#C8CDD8", color: "#3D4A66" },
-  active:    { bg: "#D9F1E5",  border: "#16A34A", color: "#0A6131" },
-  paused:    { bg: "#FCF1DC",  border: "#E8A33D", color: "#7E5212" },
-  completed: { bg: "#DBEAFE",  border: "#2563EB", color: "#1E3A8A" },
-  cancelled: { bg: "#FEE2E2",  border: "#DC2626", color: "#7F1D1D" },
-};
-
-function StatusPill({ status }) {
-  const s = STATUS_STYLES[status] || STATUS_STYLES.draft;
-  return (
-    <span
-      style={{
-        display: "inline-block",
-        padding: "2px 8px",
-        borderRadius: 4,
-        background: s.bg,
-        border: `1px solid ${s.border}`,
-        color: s.color,
-        fontFamily: "'JetBrains Mono', monospace",
-        fontSize: 10,
-        fontWeight: 700,
-        letterSpacing: "0.12em",
-        textTransform: "uppercase",
-      }}
-    >
-      {status}
-    </span>
-  );
-}
+import { ProjectStatusPill } from "../../../components/v2-shared/Pills";
+import { JAKARTA, MONO_CAPS } from "../../../components/v2-shared/typography";
 
 export default function ProjectsListPage() {
   const { data, loading } = useFetch("/projects");
@@ -200,7 +155,7 @@ export default function ProjectsListPage() {
               {p.delivery_pattern}
             </div>
             <div>
-              <StatusPill status={p.status} />
+              <ProjectStatusPill status={p.status} />
             </div>
             <div
               style={{

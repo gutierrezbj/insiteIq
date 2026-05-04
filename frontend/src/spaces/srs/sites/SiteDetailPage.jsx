@@ -1,16 +1,26 @@
 /**
- * SRS Site detail — read-only Fase 2 plumbing.
- * Fase 5 suma Site Bible completo (Domain 10 Knowledge).
+ * SRS Site detail · v2 paleta F (Iter 2.22).
+ *
+ * Migración v1 amber legacy → v2 usando v2-shared (Pills, KpiTile,
+ * BackLinkV2, SectionCard, MetaRow, typography).
+ *
+ * Endpoints:
+ *   GET /api/sites/{id}
+ *   GET /api/work-orders?limit=200 (filtra client-side por site_id)
  */
 import { useMemo } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useFetch } from "../../../lib/useFetch";
-import BackLink from "../../../components/ui/BackLink";
 import {
-  BallBadge,
-  SeverityBadge,
-  StatusBadge,
-} from "../../../components/ui/Badges";
+  WoStatusPill,
+  SeverityPill,
+  BallPill,
+  SiteStatusPill,
+} from "../../../components/v2-shared/Pills";
+import BackLinkV2 from "../../../components/v2-shared/BackLinkV2";
+import SectionCard, { SectionTitle } from "../../../components/v2-shared/SectionCard";
+import MetaRow from "../../../components/v2-shared/MetaRow";
+import { JAKARTA, MONO_CAPS } from "../../../components/v2-shared/typography";
 
 export default function SiteDetailPage() {
   const { site_id } = useParams();
@@ -37,126 +47,267 @@ export default function SiteDetailPage() {
   if (!site) return <CenteredMessage text="—" />;
 
   return (
-    <div className="px-4 md:px-8 py-5 md:py-7 max-w-wide">
-      <BackLink to="/srs/sites" label="Sites" />
+    <div style={{ padding: "32px 40px", maxWidth: 1400 }}>
+      <BackLinkV2 to="/srs/sites" label="Sites" />
 
-      <div className="accent-bar pl-4 mb-6">
-        <div className="flex items-center gap-3 mb-1">
-          <span className="label-caps">Site</span>
+      {/* Header */}
+      <div
+        style={{
+          paddingLeft: 16,
+          borderLeft: "3px solid #0A1628",
+          marginBottom: 24,
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6, flexWrap: "wrap" }}>
+          <span style={{ ...MONO_CAPS, fontSize: 10, color: "#0A1628", letterSpacing: "0.16em" }}>
+            Site
+          </span>
           {site.code && (
-            <span className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+            <span style={{ ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.12em" }}>
               {site.code}
             </span>
           )}
-          <span className="font-mono text-2xs uppercase tracking-widest-srs text-text-secondary">
+          <span style={{ ...MONO_CAPS, fontSize: 10, color: "#3D4A66", letterSpacing: "0.14em" }}>
             · {site.country || "—"}
           </span>
-          {site.status !== "active" && (
-            <span className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
-              · {site.status}
-            </span>
-          )}
+          <SiteStatusPill status={site.status} />
         </div>
-        <h1 className="font-display text-2xl text-text-primary leading-tight">
+        <h1
+          style={{
+            fontFamily: JAKARTA,
+            fontSize: 28,
+            fontWeight: 800,
+            color: "#0A1628",
+            letterSpacing: "-0.02em",
+            lineHeight: 1.15,
+          }}
+        >
           {site.name}
         </h1>
         {site.address && (
-          <p className="font-body text-text-secondary mt-1">
+          <p
+            style={{
+              fontFamily: JAKARTA,
+              fontSize: 13.5,
+              color: "#3D4A66",
+              marginTop: 8,
+              fontWeight: 500,
+              lineHeight: 1.5,
+            }}
+          >
             {site.address}
             {site.city && <>, {site.city}</>}
           </p>
         )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Metadata */}
-        <section className="bg-surface-raised accent-bar rounded-sm p-4">
-          <div className="label-caps mb-3">Location + cierre</div>
-          <dl className="font-body text-sm divide-y divide-surface-border">
-            <Row label="Country" value={site.country || "—"} />
-            <Row label="City" value={site.city || "—"} />
-            <Row label="Timezone" value={site.timezone || "—"} />
-            <Row
+      {/* Body grid */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))",
+          gap: 16,
+        }}
+      >
+        {/* Location + cierre */}
+        <SectionCard>
+          <SectionTitle>Location + cierre</SectionTitle>
+          <dl style={{ display: "flex", flexDirection: "column" }}>
+            <MetaRow label="Country" value={site.country || "—"} />
+            <MetaRow label="City" value={site.city || "—"} />
+            <MetaRow label="Timezone" value={site.timezone || "—"} />
+            <MetaRow
               label="Cierre model"
               value={
                 site.has_physical_resident
-                  ? "Residente fisico (DC/24x7)"
+                  ? "Residente físico (DC/24x7)"
                   : "NOC remoto (default)"
               }
             />
             {site.default_noc_operator_user_id && (
-              <Row
-                label="Default NOC"
-                value={short(site.default_noc_operator_user_id)}
+              <MetaRow label="Default NOC" value={short(site.default_noc_operator_user_id)} />
+            )}
+            {site.lat != null && site.lng != null && (
+              <MetaRow
+                label="Lat / Lng"
+                value={`${site.lat.toFixed(5)} · ${site.lng.toFixed(5)}`}
               />
             )}
+            {site.site_type && <MetaRow label="Site type" value={site.site_type} />}
           </dl>
-        </section>
+        </SectionCard>
 
         {/* Contact + access */}
-        <section className="bg-surface-raised accent-bar rounded-sm p-4">
-          <div className="label-caps mb-3">Contacto onsite + acceso</div>
+        <SectionCard>
+          <SectionTitle>Contacto onsite + acceso</SectionTitle>
           {site.onsite_contact ? (
-            <div className="mb-3 bg-surface-base rounded-sm p-3">
-              <div className="font-display text-base text-text-primary leading-tight">
+            <div
+              style={{
+                background: "#F4F6F8",
+                border: "1px solid #E2E5EC",
+                borderRadius: 4,
+                padding: 12,
+                marginBottom: 12,
+              }}
+            >
+              <div
+                style={{
+                  fontFamily: JAKARTA,
+                  fontSize: 14,
+                  fontWeight: 700,
+                  color: "#0A1628",
+                  lineHeight: 1.2,
+                }}
+              >
                 {site.onsite_contact.name}
               </div>
               {site.onsite_contact.role && (
-                <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary mt-0.5">
+                <div
+                  style={{
+                    ...MONO_CAPS,
+                    fontSize: 9.5,
+                    color: "#8B95A8",
+                    letterSpacing: "0.12em",
+                    marginTop: 2,
+                  }}
+                >
                   {site.onsite_contact.role}
                 </div>
               )}
               {site.onsite_contact.email && (
-                <div className="font-body text-sm text-text-secondary mt-1">
+                <div
+                  style={{
+                    fontFamily: JAKARTA,
+                    fontSize: 13,
+                    color: "#3D4A66",
+                    marginTop: 6,
+                    fontWeight: 500,
+                  }}
+                >
                   {site.onsite_contact.email}
                 </div>
               )}
               {site.onsite_contact.phone && (
-                <div className="font-mono text-sm text-text-primary mt-0.5">
+                <div
+                  style={{
+                    fontFamily: "'JetBrains Mono', monospace",
+                    fontSize: 13,
+                    color: "#0A1628",
+                    marginTop: 2,
+                    fontWeight: 600,
+                  }}
+                >
                   {site.onsite_contact.phone}
                 </div>
               )}
             </div>
           ) : (
-            <div className="font-body text-sm text-text-tertiary mb-3">
+            <div
+              style={{
+                ...MONO_CAPS,
+                fontSize: 10,
+                color: "#8B95A8",
+                letterSpacing: "0.14em",
+                marginBottom: 12,
+              }}
+            >
               — sin contacto onsite registrado —
             </div>
           )}
 
-          <div className="label-caps mb-1.5">Access notes</div>
+          <div
+            style={{
+              ...MONO_CAPS,
+              fontSize: 9.5,
+              color: "#3D4A66",
+              letterSpacing: "0.14em",
+              marginBottom: 4,
+            }}
+          >
+            Access notes
+          </div>
           {site.access_notes ? (
-            <p className="font-body text-sm text-text-primary whitespace-pre-line">
+            <p
+              style={{
+                fontFamily: JAKARTA,
+                fontSize: 13,
+                color: "#0A1628",
+                whiteSpace: "pre-line",
+                lineHeight: 1.55,
+                fontWeight: 500,
+              }}
+            >
               {site.access_notes}
             </p>
           ) : (
-            <p className="font-body text-sm text-text-tertiary">
+            <p
+              style={{
+                fontFamily: JAKARTA,
+                fontSize: 13,
+                color: "#8B95A8",
+                lineHeight: 1.55,
+                fontWeight: 500,
+              }}
+            >
               — sin notas de acceso — Site Bible en Fase 5 expandirá esto (parking,
               QR locks, horarios, contactos de respaldo, fotos).
             </p>
           )}
-        </section>
+        </SectionCard>
       </div>
 
+      {/* Notes */}
       {site.notes && (
-        <section className="bg-surface-raised accent-bar rounded-sm p-4 mt-4">
-          <div className="label-caps mb-2">Notas</div>
-          <p className="font-body text-sm text-text-primary whitespace-pre-line">
+        <SectionCard style={{ marginTop: 16 }}>
+          <SectionTitle marginBottom={8}>Notas</SectionTitle>
+          <p
+            style={{
+              fontFamily: JAKARTA,
+              fontSize: 13,
+              color: "#0A1628",
+              whiteSpace: "pre-line",
+              lineHeight: 1.55,
+              fontWeight: 500,
+            }}
+          >
             {site.notes}
           </p>
-        </section>
+        </SectionCard>
       )}
 
-      {/* WOs del site */}
-      <section className="bg-surface-raised accent-bar rounded-sm mt-4">
-        <header className="px-4 py-3 border-b border-surface-border">
-          <div className="label-caps">Work orders · activas</div>
-          <h2 className="font-display text-base text-text-primary">
-            {activeWos.length} abiertas
-          </h2>
+      {/* WOs activas */}
+      <SectionCard padding={0} style={{ marginTop: 16 }}>
+        <header
+          style={{
+            padding: "14px 18px",
+            borderBottom: "1px solid #E2E5EC",
+          }}
+        >
+          <div style={{ ...MONO_CAPS, fontSize: 10, color: "#3D4A66", letterSpacing: "0.14em", marginBottom: 2 }}>
+            Work orders · activas
+          </div>
+          <div
+            style={{
+              fontFamily: JAKARTA,
+              fontSize: 16,
+              fontWeight: 700,
+              color: "#0A1628",
+            }}
+          >
+            {activeWos.length} <span style={{ color: "#3D4A66", fontWeight: 500 }}>abiertas</span>
+          </div>
         </header>
-        <div className="divide-y divide-surface-border">
+        <div>
           {activeWos.length === 0 && (
-            <div className="px-4 py-6 font-body text-sm text-text-tertiary">
+            <div
+              style={{
+                padding: "20px 18px",
+                ...MONO_CAPS,
+                fontSize: 10,
+                color: "#8B95A8",
+                letterSpacing: "0.14em",
+              }}
+            >
               — sin WOs activas —
             </div>
           )}
@@ -164,85 +315,137 @@ export default function SiteDetailPage() {
             <Link
               key={w.id}
               to={`/srs/ops/${w.id}`}
-              className="block px-4 py-3 hover:bg-surface-overlay/60 transition-colors duration-fast"
+              style={{
+                display: "block",
+                padding: "12px 18px",
+                borderBottom: "1px solid #F0F2F7",
+                textDecoration: "none",
+                transition: "background 160ms",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "#F7F8FA")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
             >
-              <div className="flex items-center justify-between gap-3 mb-1">
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <span className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 2 }}>
+                    <span style={{ ...MONO_CAPS, fontSize: 9.5, color: "#8B95A8", letterSpacing: "0.12em" }}>
                       {w.reference}
                     </span>
-                    <SeverityBadge severity={w.severity} />
+                    <SeverityPill severity={w.severity} />
                   </div>
-                  <div className="font-body text-sm text-text-primary truncate">
+                  <div
+                    style={{
+                      fontFamily: JAKARTA,
+                      fontSize: 13.5,
+                      fontWeight: 600,
+                      color: "#0A1628",
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                    }}
+                  >
                     {w.title}
                   </div>
                 </div>
-                <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                  <StatusBadge status={w.status} />
-                  <BallBadge
-                    side={w.ball_in_court?.side}
-                    sinceIso={w.ball_in_court?.since}
-                  />
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6, flexShrink: 0 }}>
+                  <WoStatusPill status={w.status} />
+                  <BallPill side={w.ball_in_court?.side} />
                 </div>
               </div>
             </Link>
           ))}
         </div>
-      </section>
+      </SectionCard>
 
+      {/* Histórico reciente */}
       {recentClosed.length > 0 && (
-        <section className="bg-surface-raised accent-bar rounded-sm mt-4">
-          <header className="px-4 py-3 border-b border-surface-border">
-            <div className="label-caps">Historico reciente (últimos 5)</div>
+        <SectionCard padding={0} style={{ marginTop: 16 }}>
+          <header
+            style={{
+              padding: "14px 18px",
+              borderBottom: "1px solid #E2E5EC",
+            }}
+          >
+            <div style={{ ...MONO_CAPS, fontSize: 10, color: "#3D4A66", letterSpacing: "0.14em" }}>
+              Histórico reciente (últimos 5)
+            </div>
           </header>
-          <div className="divide-y divide-surface-border">
+          <div>
             {recentClosed.map((w) => (
               <Link
                 key={w.id}
                 to={`/srs/ops/${w.id}`}
-                className="block px-4 py-2.5 hover:bg-surface-overlay/60 transition-colors duration-fast"
+                style={{
+                  display: "block",
+                  padding: "12px 18px",
+                  borderBottom: "1px solid #F0F2F7",
+                  textDecoration: "none",
+                  transition: "background 160ms",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "#F7F8FA")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
               >
-                <div className="flex items-center justify-between gap-3">
-                  <div className="min-w-0 flex-1">
-                    <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div
+                      style={{
+                        ...MONO_CAPS,
+                        fontSize: 9.5,
+                        color: "#8B95A8",
+                        letterSpacing: "0.12em",
+                      }}
+                    >
                       {w.reference}
                     </div>
-                    <div className="font-body text-sm text-text-primary truncate">
+                    <div
+                      style={{
+                        fontFamily: JAKARTA,
+                        fontSize: 13,
+                        fontWeight: 600,
+                        color: "#0A1628",
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      }}
+                    >
                       {w.title}
                     </div>
                   </div>
-                  <StatusBadge status={w.status} />
+                  <WoStatusPill status={w.status} />
                 </div>
               </Link>
             ))}
           </div>
-        </section>
+        </SectionCard>
       )}
 
-      <p className="mt-6 text-text-tertiary font-mono text-2xs uppercase tracking-widest-srs">
+      <p
+        style={{
+          marginTop: 24,
+          ...MONO_CAPS,
+          fontSize: 10,
+          color: "#8B95A8",
+          letterSpacing: "0.14em",
+        }}
+      >
         Fase 2 plumbing · Site Bible completo · Fase 5 (Domain 10)
       </p>
     </div>
   );
 }
 
-function Row({ label, value }) {
-  return (
-    <div className="flex items-center justify-between gap-3 py-1.5">
-      <span className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary flex-shrink-0">
-        {label}
-      </span>
-      <span className="font-body text-sm text-text-primary truncate max-w-[60%] text-right">
-        {value}
-      </span>
-    </div>
-  );
-}
-
 function CenteredMessage({ text }) {
   return (
-    <div className="px-8 py-16 text-center font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+    <div
+      style={{
+        padding: "60px 32px",
+        textAlign: "center",
+        ...MONO_CAPS,
+        fontSize: 11,
+        color: "#8B95A8",
+        letterSpacing: "0.14em",
+      }}
+    >
       {text}
     </div>
   );

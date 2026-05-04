@@ -1,11 +1,18 @@
 /**
- * SRS Sites — listado (Fase 2 plumbing).
- * Read-only vista over /api/sites. Site Bible completo llega en Fase 5.
+ * SRS Sites · list page (Iter 2.22 · paleta F NAVEGANTE).
+ *
+ * Migración v1 amber legacy → v2 paleta F usando v2-shared (Pills,
+ * typography). Filters inline (search + country select) + tabla.
+ *
+ * Endpoint: GET /api/sites → [{ id, code, name, country, city, address,
+ *   lat, lng, site_type, status, has_physical_resident, ... }]
  */
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useFetch } from "../../../lib/useFetch";
 import CreateSiteAction from "../../../components/admin/CreateSiteAction";
+import { SiteStatusPill } from "../../../components/v2-shared/Pills";
+import { JAKARTA, MONO_CAPS } from "../../../components/v2-shared/typography";
 
 export default function SitesListPage() {
   const { data: sites, loading, reload } = useFetch("/sites");
@@ -36,24 +43,78 @@ export default function SitesListPage() {
   }, [list, country, query]);
 
   return (
-    <div className="px-4 md:px-8 py-5 md:py-7 max-w-wide">
-      <div className="accent-bar pl-4 mb-6 flex items-start justify-between gap-4 flex-wrap">
+    <div style={{ padding: "32px 40px", maxWidth: 1400 }}>
+      {/* Header */}
+      <div
+        style={{
+          paddingLeft: 16,
+          borderLeft: "3px solid #0A1628",
+          marginBottom: 22,
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
+          gap: 16,
+          flexWrap: "wrap",
+        }}
+      >
         <div>
-          <div className="label-caps">Sites</div>
-          <h1 className="font-display text-2xl text-text-primary leading-tight">
-            {list.length} sites registrados
+          <div style={{ ...MONO_CAPS, fontSize: 11, color: "#8B95A8", marginBottom: 6 }}>
+            Sites
+          </div>
+          <h1
+            style={{
+              fontFamily: JAKARTA,
+              fontSize: 28,
+              fontWeight: 800,
+              color: "#0A1628",
+              letterSpacing: "-0.02em",
+              lineHeight: 1.1,
+            }}
+          >
+            {list.length} <span style={{ color: "#3D4A66", fontWeight: 600 }}>sites registrados</span>
           </h1>
-          <p className="font-body text-text-secondary text-sm mt-1">
-            Fase 2 plumbing · Site Bible completo aterriza en Fase 5 (Domain 10 Knowledge)
+          <p
+            style={{
+              fontFamily: JAKARTA,
+              fontSize: 13,
+              color: "#3D4A66",
+              marginTop: 6,
+              fontWeight: 500,
+            }}
+          >
+            Fase 2 plumbing · Site Bible completo aterriza en Fase 5 (Domain 10)
           </p>
         </div>
         <CreateSiteAction onCreated={() => reload()} />
       </div>
 
       {/* Filters */}
-      <div className="bg-surface-raised accent-bar rounded-sm p-3 mb-4 flex flex-wrap gap-3">
+      <div
+        style={{
+          background: "#FFFFFF",
+          border: "1px solid #E2E5EC",
+          borderLeft: "3px solid #0A1628",
+          borderRadius: 6,
+          padding: 14,
+          marginBottom: 16,
+          display: "flex",
+          flexWrap: "wrap",
+          gap: 14,
+          alignItems: "flex-end",
+        }}
+      >
         <div>
-          <label htmlFor="q" className="label-caps block mb-1">
+          <label
+            htmlFor="q"
+            style={{
+              ...MONO_CAPS,
+              display: "block",
+              fontSize: 9.5,
+              color: "#3D4A66",
+              letterSpacing: "0.14em",
+              marginBottom: 4,
+            }}
+          >
             Buscar
           </label>
           <input
@@ -62,18 +123,60 @@ export default function SitesListPage() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="nombre, code, ciudad, address…"
-            className="bg-surface-overlay border border-surface-border rounded-sm px-3 py-1.5 text-text-primary font-body text-sm focus:outline-none focus:border-primary focus:shadow-glow-primary transition-all duration-fast w-64"
+            style={{
+              width: 280,
+              height: 32,
+              border: "1px solid #C8CDD8",
+              borderRadius: 6,
+              padding: "0 10px",
+              fontFamily: JAKARTA,
+              fontSize: 13,
+              fontWeight: 500,
+              color: "#0A1628",
+              outline: "none",
+              transition: "all 160ms",
+            }}
+            onFocus={(e) => {
+              e.currentTarget.style.border = "1.5px solid #0A1628";
+              e.currentTarget.style.boxShadow = "0 0 0 3px rgba(10, 22, 40, 0.10)";
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.border = "1px solid #C8CDD8";
+              e.currentTarget.style.boxShadow = "none";
+            }}
           />
         </div>
         <div>
-          <label htmlFor="c" className="label-caps block mb-1">
+          <label
+            htmlFor="c"
+            style={{
+              ...MONO_CAPS,
+              display: "block",
+              fontSize: 9.5,
+              color: "#3D4A66",
+              letterSpacing: "0.14em",
+              marginBottom: 4,
+            }}
+          >
             País
           </label>
           <select
             id="c"
             value={country}
             onChange={(e) => setCountry(e.target.value)}
-            className="bg-surface-overlay border border-surface-border rounded-sm px-3 py-1.5 text-text-primary font-body text-sm focus:outline-none focus:border-primary focus:shadow-glow-primary transition-all duration-fast"
+            style={{
+              height: 32,
+              border: "1px solid #C8CDD8",
+              borderRadius: 6,
+              padding: "0 10px",
+              fontFamily: JAKARTA,
+              fontSize: 13,
+              fontWeight: 500,
+              color: "#0A1628",
+              background: "#FFFFFF",
+              outline: "none",
+              cursor: "pointer",
+            }}
           >
             <option value="">todos</option>
             {countries.map((c) => (
@@ -83,87 +186,145 @@ export default function SitesListPage() {
             ))}
           </select>
         </div>
-        <div className="ml-auto self-end font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
-          {filtered.length} / {list.length}
+        <div
+          style={{
+            marginLeft: "auto",
+            ...MONO_CAPS,
+            fontSize: 11,
+            color: "#0A1628",
+            letterSpacing: "0.14em",
+            fontVariantNumeric: "tabular-nums",
+          }}
+        >
+          <span style={{ fontWeight: 800 }}>{filtered.length}</span>{" "}
+          <span style={{ color: "#8B95A8" }}>/ {list.length}</span>
         </div>
       </div>
 
       {/* Table */}
-      <div className="bg-surface-raised accent-bar rounded-sm overflow-hidden">
-        <div className="grid grid-cols-12 gap-3 px-4 py-2 border-b border-surface-border text-text-tertiary">
-          <div className="col-span-4 label-caps">Site</div>
-          <div className="col-span-2 label-caps">Country</div>
-          <div className="col-span-3 label-caps">City</div>
-          <div className="col-span-2 label-caps">Residente</div>
-          <div className="col-span-1 label-caps text-right">Status</div>
+      <div
+        style={{
+          background: "#FFFFFF",
+          border: "1px solid #E2E5EC",
+          borderRadius: 8,
+          overflow: "hidden",
+          boxShadow: "0 1px 3px rgba(10, 22, 40, 0.05)",
+        }}
+      >
+        {/* Header row */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "4fr 2fr 3fr 2fr 1fr",
+            gap: 12,
+            padding: "12px 18px",
+            background: "#F4F6F8",
+            borderBottom: "1px solid #E2E5EC",
+            ...MONO_CAPS,
+            fontSize: 10,
+            color: "#3D4A66",
+            letterSpacing: "0.14em",
+          }}
+        >
+          <div>Site</div>
+          <div>Country</div>
+          <div>City</div>
+          <div>Residente</div>
+          <div style={{ textAlign: "right" }}>Status</div>
         </div>
 
-        <div className="divide-y divide-surface-border">
-          {loading && <EmptyRow text="cargando…" />}
-          {!loading && filtered.length === 0 && (
-            <EmptyRow text="— nada match —" />
-          )}
-          {filtered.map((s) => (
-            <Link
-              key={s.id}
-              to={`/srs/sites/${s.id}`}
-              className="grid grid-cols-12 gap-3 px-4 py-3 items-center hover:bg-surface-overlay/60 transition-colors duration-fast"
-            >
-              <div className="col-span-4 min-w-0">
-                {s.code && (
-                  <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
-                    {s.code}
-                  </div>
-                )}
-                <div className="font-body text-sm text-text-primary truncate">
-                  {s.name}
+        {/* Rows */}
+        {loading && <EmptyRow text="cargando…" />}
+        {!loading && filtered.length === 0 && <EmptyRow text="— nada match —" />}
+        {filtered.map((s) => (
+          <Link
+            key={s.id}
+            to={`/srs/sites/${s.id}`}
+            style={{
+              display: "grid",
+              gridTemplateColumns: "4fr 2fr 3fr 2fr 1fr",
+              gap: 12,
+              padding: "14px 18px",
+              borderBottom: "1px solid #E2E5EC",
+              alignItems: "center",
+              textDecoration: "none",
+              transition: "background 160ms",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "#F7F8FA")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+          >
+            <div style={{ minWidth: 0 }}>
+              {s.code && (
+                <div
+                  style={{
+                    ...MONO_CAPS,
+                    fontSize: 9.5,
+                    color: "#8B95A8",
+                    letterSpacing: "0.12em",
+                    marginBottom: 2,
+                  }}
+                >
+                  {s.code}
                 </div>
+              )}
+              <div
+                style={{
+                  fontFamily: JAKARTA,
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: "#0A1628",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+              >
+                {s.name}
               </div>
-              <div className="col-span-2 font-mono text-2xs uppercase tracking-widest-srs text-text-secondary">
-                {s.country || "—"}
-              </div>
-              <div className="col-span-3 font-body text-sm text-text-secondary truncate">
-                {s.city || "—"}
-              </div>
-              <div className="col-span-2 font-mono text-2xs uppercase tracking-widest-srs">
-                {s.has_physical_resident ? (
-                  <span className="text-info">· residente</span>
-                ) : (
-                  <span className="text-text-tertiary">NOC remoto</span>
-                )}
-              </div>
-              <div className="col-span-1 text-right">
-                <StatusPill status={s.status} />
-              </div>
-            </Link>
-          ))}
-        </div>
+            </div>
+            <div style={{ ...MONO_CAPS, fontSize: 10, color: "#3D4A66", letterSpacing: "0.14em" }}>
+              {s.country || "—"}
+            </div>
+            <div
+              style={{
+                fontFamily: JAKARTA,
+                fontSize: 13,
+                color: "#3D4A66",
+                fontWeight: 500,
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+              }}
+            >
+              {s.city || "—"}
+            </div>
+            <div style={{ ...MONO_CAPS, fontSize: 9.5, letterSpacing: "0.14em" }}>
+              {s.has_physical_resident ? (
+                <span style={{ color: "#1E3A8A" }}>· residente</span>
+              ) : (
+                <span style={{ color: "#8B95A8" }}>NOC remoto</span>
+              )}
+            </div>
+            <div style={{ textAlign: "right" }}>
+              <SiteStatusPill status={s.status} />
+            </div>
+          </Link>
+        ))}
       </div>
     </div>
   );
 }
 
-function StatusPill({ status }) {
-  const isActive = status === "active";
-  return (
-    <span
-      className={`inline-flex items-center gap-1 font-mono text-2xs uppercase tracking-widest-srs ${
-        isActive ? "text-success" : "text-text-tertiary"
-      }`}
-    >
-      <span
-        className={`w-1.5 h-1.5 rounded-full ${
-          isActive ? "bg-success" : "bg-text-tertiary"
-        }`}
-      />
-      {status || "—"}
-    </span>
-  );
-}
-
 function EmptyRow({ text }) {
   return (
-    <div className="px-4 py-6 font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+    <div
+      style={{
+        padding: "24px 18px",
+        ...MONO_CAPS,
+        fontSize: 11,
+        color: "#8B95A8",
+        letterSpacing: "0.14em",
+      }}
+    >
       {text}
     </div>
   );
