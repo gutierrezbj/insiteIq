@@ -5,7 +5,7 @@
 <title>InsiteIQ · Cockpit Typography · 3 variantes (2026-05-03)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body {
@@ -98,6 +98,106 @@
   .opt-c .cockpit-side .nav.active {
     background: #FEF3C7;        /* amber-soft */
     color: var(--amber);
+  }
+
+  /* D · Blue mustard sandwich (Adobe Color · Jennifer Talbott) */
+  .opt-d {
+    --bg: #FFFFFF;
+    --surface: #FFFFFF;
+    --surface-2: #F4F6F8;
+    --border: #DDE2EA;
+    --border-strong: #BCC4D0;
+    --text: #001542;            /* navy strong autoridad */
+    --text-mid: #3D4A66;
+    --text-dim: #7A7A7A;
+    --header-band: #FFFFFF;
+    --text-on-dark: #001542;
+    --amber: #FFB30D;           /* MUSTARD brand */
+    --amber-soft: #FFF1CC;
+    --brand: #16A34A;           /* verde added · no viene en paleta */
+    --critical: #DC2626;
+    --warn: #FFB30D;            /* mismo mustard */
+    --info: #085454;            /* teal de la paleta */
+  }
+  .opt-d .cockpit-header { border-bottom: 1px solid var(--border); }
+  .opt-d .cockpit-side {
+    background: #F4F6F8;
+    border-right: 1px solid var(--border);
+    color: var(--text);
+  }
+  .opt-d .cockpit-side .nav { color: var(--text-mid); }
+  .opt-d .cockpit-side .nav.active {
+    background: rgba(255, 179, 13, 0.15);
+    color: #B07000;
+  }
+
+  /* E · NAVEGANTE'S PICK · WOW · paleta + tipografía propias */
+  .opt-e {
+    --bg: #FFFFFF;
+    --surface: #FFFFFF;
+    --surface-2: #F7F8FA;       /* azulado MUY sutil */
+    --border: #E2E5EC;
+    --border-strong: #C8CDD8;
+    --text: #0A1628;            /* navy MUY oscuro · autoridad serena · no negro */
+    --text-mid: #3D4A66;        /* slate medium */
+    --text-dim: #8B95A8;        /* slate muted */
+    --header-band: #0A1628;     /* navy strong · NO negro */
+    --text-on-dark: #F7F8FA;
+    --amber: #FF6B35;           /* DEEP ORANGE · NO Tailwind amber default · firma SR */
+    --amber-soft: #FFE5DA;
+    --amber-strong: #C5481E;
+    --brand: #1E9F6E;           /* verde profundo · NO Tailwind 500 */
+    --critical: #D63944;        /* rojo coral · NO red-600 default */
+    --warn: #E8A33D;            /* mostaza · distinto del brand orange */
+    --info: #0066B8;            /* deep blue · scheduled */
+  }
+  .opt-e .cockpit-header { border-bottom: none; }
+  .opt-e .cockpit-side {
+    background: #0A1628;
+    border-right: 1px solid #1A2438;
+    color: var(--text-on-dark);
+  }
+  .opt-e .cockpit-side .nav { color: rgba(247, 248, 250, 0.6); }
+  .opt-e .cockpit-side .nav.active {
+    background: rgba(255, 107, 53, 0.18);
+    color: var(--amber);
+    border-left: 2px solid var(--amber);
+    padding-left: 10px;
+  }
+  /* Tipografía especial · Space Grotesk display + IBM Plex Mono */
+  .opt-e .label-caps {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--text-dim); font-weight: 600;
+  }
+  .opt-e .kpi-num {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 40px; font-weight: 700; line-height: 1; letter-spacing: -0.02em;
+  }
+  .opt-e .kpi-foot {
+    font-family: 'DM Sans', sans-serif; font-size: 12px;
+    color: var(--text-mid); line-height: 1.45;
+  }
+  .opt-e .body {
+    font-family: 'DM Sans', sans-serif; font-size: 14px;
+    color: var(--text-mid); line-height: 1.6;
+  }
+  .opt-e .title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 16px; font-weight: 600; color: var(--text); letter-spacing: -0.01em;
+  }
+  .opt-e .meta {
+    font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+    color: var(--text-dim);
+  }
+  .opt-e .btn-pill {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 11px; padding: 7px 14px; border-radius: 4px;
+    text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600;
+  }
+  .opt-e .section-count {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 14px; font-weight: 600; color: var(--text);
   }
 
   /* ─────────────── Cockpit base layout ─────────────── */
@@ -239,6 +339,8 @@
   <a href="#opt-a">A · DM Sans + bump</a>
   <a href="#opt-b">B · Mono pero más grande</a>
   <a href="#opt-c">C · TODO LIGHT (sin negro shell)</a>
+  <a href="#opt-d">D · Blue mustard sandwich</a>
+  <a href="#opt-e" style="color:#FF6B35">E · Navegante's pick · WOW</a>
   <span class="toc-meta">2026-05-03 · iter 2.17 propuesta · cero código deployed tocado</span>
 </div>
 
@@ -515,10 +617,155 @@
   </div>
 </section>
 
+<!-- ═════════════════════════════════════════════════════════════ -->
+<!-- OPCIÓN D: Blue mustard sandwich (Adobe Color · Jennifer Talbott) -->
+<!-- ═════════════════════════════════════════════════════════════ -->
+<section id="opt-d">
+  <div class="variant-banner">
+    <h2>D · Blue mustard sandwich · brand mustard + autoridad navy</h2>
+    <p class="subtitle">Mustard #FFB30D (prima del amber SR) · Navy #001542 como text-strong · Teal #085454 como info accent · canvas blanco · TODO LIGHT shell</p>
+    <p class="rationale">
+      Paleta firmada con tipografía igual que A (DM Sans body + Mono solo data). Mustard
+      mantiene continuidad con amber brand SR cross-app (OverWatch, SKYPRO360). Navy como
+      text-strong da autoridad serena estilo Bloomberg. Teal substituye al blue genérico
+      para info/scheduled. Status semánticos rojo/verde se anexan (no vienen en paleta).
+    </p>
+    <div class="swatches">
+      <div class="swatch"><span class="swatch-label">brand</span><span class="swatch-val">#FFB30D mustard</span></div>
+      <div class="swatch"><span class="swatch-label">text</span><span class="swatch-val">#001542 navy</span></div>
+      <div class="swatch"><span class="swatch-label">info</span><span class="swatch-val">#085454 teal</span></div>
+      <div class="swatch"><span class="swatch-label">canvas</span><span class="swatch-val">#FFFFFF</span></div>
+      <div class="swatch"><span class="swatch-label">grey</span><span class="swatch-val">#7A7A7A</span></div>
+    </div>
+  </div>
+
+  <div class="cockpit opt-d">
+    <header class="cockpit-header"><span class="meta" style="color:var(--text-on-dark);font-weight:700;letter-spacing:0.04em;">COCKPIT DE OPERACIONES</span></header>
+    <aside class="cockpit-side"><div class="nav active">Operaciones</div><div class="nav">Espacio OPS</div><div class="nav">Intervenciones</div><div class="nav">Rollouts</div><div class="nav">Proyectos</div></aside>
+    <main class="cockpit-main">
+      <div>
+        <div class="kpi-strip">
+          <div class="kpi-card crit"><div class="label-caps">Críticos abiertos</div><div class="kpi-num" style="color:var(--critical)">9</div><div class="kpi-foot">SLA breach activo</div></div>
+          <div class="kpi-card warn"><div class="label-caps">SLA en riesgo</div><div class="kpi-num" style="color:var(--warn)">10</div><div class="kpi-foot">Próximo breach &lt; 2h</div></div>
+          <div class="kpi-card brand"><div class="label-caps">Ball SRS &gt;6h</div><div class="kpi-num" style="color:var(--brand)">100</div><div class="kpi-foot">Acción nuestra pendiente</div></div>
+          <div class="kpi-card info"><div class="label-caps">Sin asignar</div><div class="kpi-num" style="color:var(--info)">109</div><div class="kpi-foot">Activas sin tech</div></div>
+          <div class="kpi-card brand"><div class="label-caps">Activas hoy</div><div class="kpi-num" style="color:var(--brand)">13</div><div class="kpi-foot">En ruta + on-site</div></div>
+        </div>
+        <div class="section-label"><div class="label-caps">Intervenciones en curso</div><span class="section-count">3</span></div>
+        <div class="cards-grid">
+          <article class="int-card">
+            <div style="display:flex;justify-content:space-between;align-items:center"><span class="meta">WO-D75AEAE5</span><span class="stage-pill route">EN RUTA</span></div>
+            <h3 class="title">Carolina Herrera Madison Avenue</h3>
+            <p class="body">SITE CH-US-NY01 · New York · Agustín Rivera está en camino con ETA 09:30 EST</p>
+            <div style="display:flex;gap:6px"><button class="btn-pill primary">Detalle</button><button class="btn-pill secondary">Compliance</button></div>
+          </article>
+          <article class="int-card crit">
+            <div style="display:flex;justify-content:space-between;align-items:center"><span class="meta">WO-E5519062</span><span class="stage-pill crit">ON-SITE</span></div>
+            <h3 class="title">Carolina Herrera Flagship Serrano</h3>
+            <p class="body">SITE CH-ES-SER01 · Madrid · Sin tech asignado todavía</p>
+            <div style="display:flex;gap:6px"><button class="btn-pill primary">Detalle</button><button class="btn-pill secondary">Compliance</button></div>
+          </article>
+          <article class="int-card">
+            <div style="display:flex;justify-content:space-between;align-items:center"><span class="meta">WO-D75AEACB</span><span class="stage-pill route">EN RUTA</span></div>
+            <h3 class="title">Claro US Warehouse Miramar</h3>
+            <p class="body">SITE CLARO-US-MIRAMAR · Miramar · Arlindo Ochoa</p>
+            <div style="display:flex;gap:6px"><button class="btn-pill primary">Detalle</button><button class="btn-pill secondary">Compliance</button></div>
+          </article>
+        </div>
+      </div>
+      <aside>
+        <div class="widget">
+          <div class="label-caps">Alertas operativas · 3 activas</div>
+          <div class="alert-row crit"><span class="dot"></span><span class="meta">NO SHOW · WO-D75AEAE5</span></div>
+          <div class="alert-row crit"><span class="dot"></span><span class="meta">ACCESS DENIED · WO-D75AEACB</span></div>
+          <div class="alert-row warn"><span class="dot"></span><span class="meta">ACCIDENT · WO-E5519062</span></div>
+        </div>
+      </aside>
+    </main>
+  </div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════════ -->
+<!-- OPCIÓN E: NAVEGANTE'S PICK · WOW · paleta + tipografía propias -->
+<!-- ═════════════════════════════════════════════════════════════ -->
+<section id="opt-e">
+  <div class="variant-banner" style="background: linear-gradient(135deg, #0A1628 0%, #14233D 100%); border-bottom: 2px solid #FF6B35;">
+    <h2 style="color: #FF6B35; font-family: 'Space Grotesk', sans-serif; letter-spacing: -0.02em;">E · NAVEGANTE'S PICK · MISSION CONTROL SR</h2>
+    <p class="subtitle" style="color: #8B95A8;">Navy strong · deep orange brand · Space Grotesk display + DM Sans body + IBM Plex Mono data · sidebar dark con accent amber · vibe Bloomberg Terminal × SpaceX Mission Control × field IT operativo</p>
+    <p class="rationale" style="color: #C8CDD8;">
+      Mi propuesta navegante. Saca el "vibe SaaS amber default" sin perder calidad operativa.
+      <br><br>
+      <strong style="color:#FF6B35;">Brand orange profundo #FF6B35</strong> en lugar de amber Tailwind genérico — firma SR única, recuerda a SpaceX/Mars rover dashboards, NO se confunde con stock SaaS.
+      <br><br>
+      <strong style="color:#FF6B35;">Tipografía Space Grotesk</strong> para display + KPI numbers (geom amplias, presencia técnica moderna sin ser brutal) · <strong>DM Sans</strong> body (ya en DS) · <strong>IBM Plex Mono</strong> para data tabular (más personalidad que JetBrains, IBM-pedigree).
+      <br><br>
+      <strong style="color:#FF6B35;">Navy text #0A1628</strong> = autoridad sin negro flat. Slate text-mid tampoco gris muerto. Status colors customizados (no Tailwind defaults): rojo coral, verde profundo, mostaza warning distinta del orange brand.
+      <br><br>
+      <strong style="color:#FF6B35;">Sidebar dark navy con accent amber</strong> = identidad fuerte, no genérico, mantiene cierto "war-room sentiment" sin chocar con content claro (el navy NO es negro pleno, tiene profundidad).
+    </p>
+    <div class="swatches">
+      <div class="swatch" style="background: rgba(255,255,255,0.08);"><span class="swatch-label" style="color:#8B95A8">brand</span><span class="swatch-val" style="color:#FF6B35;">#FF6B35 deep orange</span></div>
+      <div class="swatch" style="background: rgba(255,255,255,0.08);"><span class="swatch-label" style="color:#8B95A8">text</span><span class="swatch-val" style="color:#F7F8FA;">#0A1628 navy</span></div>
+      <div class="swatch" style="background: rgba(255,255,255,0.08);"><span class="swatch-label" style="color:#8B95A8">success</span><span class="swatch-val" style="color:#1E9F6E;">#1E9F6E</span></div>
+      <div class="swatch" style="background: rgba(255,255,255,0.08);"><span class="swatch-label" style="color:#8B95A8">critical</span><span class="swatch-val" style="color:#D63944;">#D63944</span></div>
+      <div class="swatch" style="background: rgba(255,255,255,0.08);"><span class="swatch-label" style="color:#8B95A8">warn</span><span class="swatch-val" style="color:#E8A33D;">#E8A33D</span></div>
+      <div class="swatch" style="background: rgba(255,255,255,0.08);"><span class="swatch-label" style="color:#8B95A8">info</span><span class="swatch-val" style="color:#0066B8;">#0066B8</span></div>
+      <div class="swatch" style="background: rgba(255,255,255,0.08);"><span class="swatch-label" style="color:#8B95A8">display</span><span class="swatch-val" style="color:#F7F8FA;">Space Grotesk 700</span></div>
+      <div class="swatch" style="background: rgba(255,255,255,0.08);"><span class="swatch-label" style="color:#8B95A8">body</span><span class="swatch-val" style="color:#F7F8FA;">DM Sans 14px</span></div>
+      <div class="swatch" style="background: rgba(255,255,255,0.08);"><span class="swatch-label" style="color:#8B95A8">mono</span><span class="swatch-val" style="color:#F7F8FA;">IBM Plex Mono 11px</span></div>
+    </div>
+  </div>
+
+  <div class="cockpit opt-e">
+    <header class="cockpit-header"><span style="font-family: 'Space Grotesk', sans-serif; color:var(--text-on-dark); font-weight:700; letter-spacing:0.06em; font-size:14px; text-transform:uppercase;">COCKPIT DE <span style="color:#FF6B35;">OPERACIONES</span></span></header>
+    <aside class="cockpit-side"><div class="nav active" style="font-family:'Space Grotesk',sans-serif;font-weight:600;">Operaciones</div><div class="nav" style="font-family:'Space Grotesk',sans-serif;">Espacio OPS</div><div class="nav" style="font-family:'Space Grotesk',sans-serif;">Intervenciones</div><div class="nav" style="font-family:'Space Grotesk',sans-serif;">Rollouts</div><div class="nav" style="font-family:'Space Grotesk',sans-serif;">Proyectos</div></aside>
+    <main class="cockpit-main">
+      <div>
+        <div class="kpi-strip">
+          <div class="kpi-card crit"><div class="label-caps">Críticos abiertos</div><div class="kpi-num" style="color:var(--critical)">9</div><div class="kpi-foot">SLA breach activo</div></div>
+          <div class="kpi-card warn"><div class="label-caps">SLA en riesgo</div><div class="kpi-num" style="color:var(--warn)">10</div><div class="kpi-foot">Próximo breach &lt; 2h</div></div>
+          <div class="kpi-card brand"><div class="label-caps">Ball SRS &gt;6h</div><div class="kpi-num" style="color:var(--amber)">100</div><div class="kpi-foot">Acción nuestra pendiente</div></div>
+          <div class="kpi-card info"><div class="label-caps">Sin asignar</div><div class="kpi-num" style="color:var(--info)">109</div><div class="kpi-foot">Activas sin tech</div></div>
+          <div class="kpi-card brand"><div class="label-caps">Activas hoy</div><div class="kpi-num" style="color:var(--brand)">13</div><div class="kpi-foot">En ruta + on-site</div></div>
+        </div>
+        <div class="section-label"><div class="label-caps">Intervenciones en curso</div><span class="section-count">3</span></div>
+        <div class="cards-grid">
+          <article class="int-card" style="border-top-color: var(--warn);">
+            <div style="display:flex;justify-content:space-between;align-items:center"><span class="meta">WO-D75AEAE5</span><span class="stage-pill" style="background:rgba(232,163,61,0.18);color:var(--warn);font-family:'IBM Plex Mono',monospace;">EN RUTA</span></div>
+            <h3 class="title">Carolina Herrera Madison Avenue</h3>
+            <p class="body">SITE CH-US-NY01 · New York · Agustín Rivera está en camino con ETA 09:30 EST</p>
+            <div style="display:flex;gap:6px"><button class="btn-pill primary" style="background:var(--amber);color:#FFFFFF;border:1px solid var(--amber);">Detalle</button><button class="btn-pill secondary">Compliance</button></div>
+          </article>
+          <article class="int-card crit" style="border-top-color: var(--critical);">
+            <div style="display:flex;justify-content:space-between;align-items:center"><span class="meta">WO-E5519062</span><span class="stage-pill crit" style="background:rgba(214,57,68,0.18);color:var(--critical);font-family:'IBM Plex Mono',monospace;">ON-SITE</span></div>
+            <h3 class="title">Carolina Herrera Flagship Serrano</h3>
+            <p class="body">SITE CH-ES-SER01 · Madrid · Sin tech asignado todavía</p>
+            <div style="display:flex;gap:6px"><button class="btn-pill primary" style="background:var(--amber);color:#FFFFFF;border:1px solid var(--amber);">Detalle</button><button class="btn-pill secondary">Compliance</button></div>
+          </article>
+          <article class="int-card" style="border-top-color: var(--warn);">
+            <div style="display:flex;justify-content:space-between;align-items:center"><span class="meta">WO-D75AEACB</span><span class="stage-pill" style="background:rgba(232,163,61,0.18);color:var(--warn);font-family:'IBM Plex Mono',monospace;">EN RUTA</span></div>
+            <h3 class="title">Claro US Warehouse Miramar</h3>
+            <p class="body">SITE CLARO-US-MIRAMAR · Miramar · Arlindo Ochoa</p>
+            <div style="display:flex;gap:6px"><button class="btn-pill primary" style="background:var(--amber);color:#FFFFFF;border:1px solid var(--amber);">Detalle</button><button class="btn-pill secondary">Compliance</button></div>
+          </article>
+        </div>
+      </div>
+      <aside>
+        <div class="widget">
+          <div class="label-caps">Alertas operativas · 3 activas</div>
+          <div class="alert-row" style="background:rgba(214,57,68,0.08);"><span class="dot" style="background:var(--critical);"></span><span class="meta">NO SHOW · WO-D75AEAE5</span></div>
+          <div class="alert-row" style="background:rgba(214,57,68,0.08);"><span class="dot" style="background:var(--critical);"></span><span class="meta">ACCESS DENIED · WO-D75AEACB</span></div>
+          <div class="alert-row" style="background:rgba(232,163,61,0.08);"><span class="dot" style="background:var(--warn);"></span><span class="meta">ACCIDENT · WO-E5519062</span></div>
+        </div>
+      </aside>
+    </main>
+  </div>
+</section>
+
 <div class="footer-note">
   Mocks autocontained · cero código deployed tocado · cero deps · puro HTML+CSS+Google Fonts<br>
-  Decisión owner: ANTES · A (DM Sans + shell dark) · B (Mono+grande + shell dark) · C (TODO LIGHT)<br>
-  Una vez firmado: edit puntual de index.css + tailwind config + V2Shell tokens (Iter 2.17 · ~2.5h)
+  Decisión owner: ANTES · A · B · C · D (Blue mustard) · <strong style="color:#FF6B35;">E (Navegante's WOW)</strong><br>
+  Una vez firmado: edit puntual de index.css + tailwind config + V2Shell tokens + Google Fonts (Iter 2.17 · ~3h)
 </div>
 
 </body>
