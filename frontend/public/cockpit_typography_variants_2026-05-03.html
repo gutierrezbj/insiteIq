@@ -5,7 +5,7 @@
 <title>InsiteIQ · Cockpit Typography · 3 variantes (2026-05-03)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body {
@@ -200,6 +200,83 @@
     font-size: 14px; font-weight: 600; color: var(--text);
   }
 
+  /* F · NAVEGANTE MIX · claro D + navy E + Plus Jakarta Sans (la del screenshot) */
+  .opt-f {
+    --bg: #FFFFFF;
+    --surface: #FFFFFF;
+    --surface-2: #F7F8FA;
+    --border: #E2E5EC;
+    --border-strong: #C8CDD8;
+    --text: #0A1628;            /* navy strong autoridad · BRUTAL del E */
+    --text-mid: #3D4A66;        /* slate medium · respira */
+    --text-dim: #8B95A8;        /* slate light */
+    --header-band: #FFFFFF;     /* claro del D */
+    --text-on-dark: #0A1628;
+    --amber: #0A1628;           /* navy AS PRIMARY brand (Bloomberg-style) */
+    --amber-soft: #E8EDF5;      /* navy soft bg */
+    --amber-strong: #FF6B35;    /* orange como ACENTO escaso para CTAs muy importantes */
+    --brand: #16A34A;           /* verde success */
+    --critical: #D63944;        /* rojo coral · custom */
+    --warn: #E8A33D;            /* mostaza · diferente del orange */
+    --info: #0066B8;            /* deep blue (info) */
+  }
+  .opt-f .cockpit-header {
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(180deg, #FFFFFF 0%, #F7F8FA 100%);
+  }
+  .opt-f .cockpit-side {
+    background: #F4F6F8;
+    border-right: 1px solid var(--border);
+    color: var(--text);
+  }
+  .opt-f .cockpit-side .nav {
+    color: var(--text-mid);
+    font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 500;
+  }
+  .opt-f .cockpit-side .nav.active {
+    background: var(--amber-soft);
+    color: var(--text);
+    font-weight: 700;
+    border-left: 3px solid var(--text);
+    padding-left: 9px;
+  }
+  /* Tipografía F · Plus Jakarta Sans en TODO (display + body + labels) · JetBrains Mono solo data tabular */
+  .opt-f .label-caps {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--text-dim); font-weight: 700;
+  }
+  .opt-f .kpi-num {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 44px; font-weight: 800; line-height: 1; letter-spacing: -0.025em;
+    color: var(--text);
+  }
+  .opt-f .kpi-foot {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 12px; color: var(--text-mid); line-height: 1.45; font-weight: 400;
+  }
+  .opt-f .body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 14px; color: var(--text-mid); line-height: 1.6; font-weight: 400;
+  }
+  .opt-f .title {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 17px; font-weight: 700; color: var(--text); letter-spacing: -0.01em;
+  }
+  .opt-f .meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; color: var(--text-dim);
+  }
+  .opt-f .btn-pill {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 12px; padding: 8px 16px; border-radius: 6px;
+    text-transform: none; letter-spacing: 0; font-weight: 600;
+  }
+  .opt-f .section-count {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 14px; font-weight: 700; color: var(--text);
+  }
+
   /* ─────────────── Cockpit base layout ─────────────── */
   .cockpit {
     background: var(--bg);
@@ -341,7 +418,8 @@
   <a href="#opt-c">C · TODO LIGHT (sin negro shell)</a>
   <a href="#opt-d">D · Blue mustard sandwich</a>
   <a href="#opt-e" style="color:#FF6B35">E · Navegante's pick · WOW</a>
-  <span class="toc-meta">2026-05-03 · iter 2.17 propuesta · cero código deployed tocado</span>
+  <a href="#opt-f" style="color:#0A1628; background:#FFB800; padding:4px 12px; border-radius:3px; font-weight:700;">F · NAVEGANTE MIX (firma)</a>
+  <span class="toc-meta">2026-05-04 · iter 2.17 propuesta · cero código deployed tocado</span>
 </div>
 
 <!-- ═════════════════════════════════════════════════════════════ -->
@@ -762,9 +840,104 @@
   </div>
 </section>
 
+<!-- ═════════════════════════════════════════════════════════════ -->
+<!-- OPCIÓN F: NAVEGANTE MIX · firma propuesta · claro D + navy E + Plus Jakarta -->
+<!-- ═════════════════════════════════════════════════════════════ -->
+<section id="opt-f">
+  <div class="variant-banner" style="background: linear-gradient(135deg, #FFFFFF 0%, #F4F6F8 100%); border-bottom: 3px solid #0A1628;">
+    <h2 style="color: #0A1628; font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; letter-spacing: -0.02em;">F · NAVEGANTE MIX · firma propuesta navegante</h2>
+    <p class="subtitle" style="color: #3D4A66; font-family: 'Plus Jakarta Sans', sans-serif;">Claro total del D + navy strong del E como brand primary + Plus Jakarta Sans (la del screenshot que mostraste) en TODO · JetBrains Mono solo en data tabular</p>
+    <p class="rationale" style="color: #0A1628; font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 400;">
+      <strong>Filosofía de diseño:</strong> autoridad sin agresividad. El navy #0A1628 es el brand
+      primary (no orange amber default) — referencia Bloomberg Terminal / aviation cockpit /
+      Reuters dashboard. El orange #FF6B35 queda como ACENTO ESCASO solo para acciones muy
+      importantes (1-2 botones por pantalla, no everywhere).
+      <br><br>
+      <strong>Tipografía:</strong> Plus Jakarta Sans en TODO (display + body + labels). Una sola
+      family = coherencia visual total, jerarquía vía weight (400/500/600/700/800), no familia.
+      JetBrains Mono se reserva SOLO para WO codes, site IDs y números tabulares (donde alinear
+      columnas SÍ ayuda). Esto es lo que vos viste en el screenshot que te enamoró.
+      <br><br>
+      <strong>Claro total:</strong> sin negro shell pleno (cumple D), sidebar #F4F6F8 stone-100,
+      header band con gradient blanco → muy sutil para dar profundidad sin chirriar.
+      <br><br>
+      <strong>Status colors customizados:</strong> coral critical · mostaza warn ≠ orange brand ·
+      verde profundo success · deep blue info · sin Tailwind defaults genéricos.
+    </p>
+    <div class="swatches">
+      <div class="swatch"><span class="swatch-label">brand primary</span><span class="swatch-val">#0A1628 navy</span></div>
+      <div class="swatch"><span class="swatch-label">accent escaso</span><span class="swatch-val" style="color:#FF6B35;">#FF6B35 orange</span></div>
+      <div class="swatch"><span class="swatch-label">canvas</span><span class="swatch-val">#FFFFFF · #F4F6F8 sidebar</span></div>
+      <div class="swatch"><span class="swatch-label">text-mid</span><span class="swatch-val">#3D4A66 slate</span></div>
+      <div class="swatch"><span class="swatch-label">font</span><span class="swatch-val" style="font-family:'Plus Jakarta Sans';font-weight:600;">Plus Jakarta Sans 400-800</span></div>
+      <div class="swatch"><span class="swatch-label">data mono</span><span class="swatch-val">JetBrains Mono 11px</span></div>
+      <div class="swatch"><span class="swatch-label">success</span><span class="swatch-val" style="color:#16A34A;">#16A34A</span></div>
+      <div class="swatch"><span class="swatch-label">critical</span><span class="swatch-val" style="color:#D63944;">#D63944 coral</span></div>
+      <div class="swatch"><span class="swatch-label">warn</span><span class="swatch-val" style="color:#E8A33D;">#E8A33D mostaza</span></div>
+    </div>
+  </div>
+
+  <div class="cockpit opt-f">
+    <header class="cockpit-header"><span style="font-family: 'Plus Jakarta Sans', sans-serif; color:var(--text-on-dark); font-weight:800; letter-spacing:-0.01em; font-size:18px;">Cockpit de <span style="color:#FF6B35;">Operaciones</span></span></header>
+    <aside class="cockpit-side"><div class="nav active">Operaciones</div><div class="nav">Espacio OPS</div><div class="nav">Intervenciones</div><div class="nav">Rollouts</div><div class="nav">Proyectos</div></aside>
+    <main class="cockpit-main">
+      <div>
+        <div class="kpi-strip">
+          <div class="kpi-card crit"><div class="label-caps">Críticos abiertos</div><div class="kpi-num" style="color:var(--critical)">9</div><div class="kpi-foot">SLA breach activo</div></div>
+          <div class="kpi-card warn"><div class="label-caps">SLA en riesgo</div><div class="kpi-num" style="color:var(--warn)">10</div><div class="kpi-foot">Próximo breach &lt; 2h</div></div>
+          <div class="kpi-card brand"><div class="label-caps">Ball SRS &gt;6h</div><div class="kpi-num" style="color:var(--text)">100</div><div class="kpi-foot">Acción nuestra pendiente</div></div>
+          <div class="kpi-card info"><div class="label-caps">Sin asignar</div><div class="kpi-num" style="color:var(--info)">109</div><div class="kpi-foot">Activas sin tech</div></div>
+          <div class="kpi-card brand"><div class="label-caps">Activas hoy</div><div class="kpi-num" style="color:var(--brand)">13</div><div class="kpi-foot">En ruta + on-site</div></div>
+        </div>
+        <div class="section-label"><div class="label-caps">Intervenciones en curso</div><span class="section-count">3</span></div>
+        <div class="cards-grid">
+          <article class="int-card" style="border-top-color: var(--warn);">
+            <div style="display:flex;justify-content:space-between;align-items:center"><span class="meta">WO-D75AEAE5</span><span class="stage-pill" style="background:rgba(232,163,61,0.15);color:#9A6E27;font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;">EN RUTA</span></div>
+            <h3 class="title">Carolina Herrera Madison Avenue</h3>
+            <p class="body">SITE CH-US-NY01 · New York · Agustín Rivera está en camino con ETA 09:30 EST</p>
+            <div style="display:flex;gap:8px"><button class="btn-pill" style="background:var(--text);color:#FFFFFF;border:1px solid var(--text);">Detalle</button><button class="btn-pill" style="background:var(--surface);color:var(--text-mid);border:1px solid var(--border-strong);">Compliance</button></div>
+          </article>
+          <article class="int-card crit" style="border-top-color: var(--critical);">
+            <div style="display:flex;justify-content:space-between;align-items:center"><span class="meta">WO-E5519062</span><span class="stage-pill" style="background:rgba(214,57,68,0.15);color:#9A2128;font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;">ON-SITE</span></div>
+            <h3 class="title">Carolina Herrera Flagship Serrano</h3>
+            <p class="body">SITE CH-ES-SER01 · Madrid · Sin tech asignado todavía</p>
+            <div style="display:flex;gap:8px"><button class="btn-pill" style="background:#FF6B35;color:#FFFFFF;border:1px solid #FF6B35;">Asignar tech ahora</button><button class="btn-pill" style="background:var(--surface);color:var(--text-mid);border:1px solid var(--border-strong);">Compliance</button></div>
+          </article>
+          <article class="int-card" style="border-top-color: var(--warn);">
+            <div style="display:flex;justify-content:space-between;align-items:center"><span class="meta">WO-D75AEACB</span><span class="stage-pill" style="background:rgba(232,163,61,0.15);color:#9A6E27;font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;">EN RUTA</span></div>
+            <h3 class="title">Claro US Warehouse Miramar</h3>
+            <p class="body">SITE CLARO-US-MIRAMAR · Miramar · Arlindo Ochoa</p>
+            <div style="display:flex;gap:8px"><button class="btn-pill" style="background:var(--text);color:#FFFFFF;border:1px solid var(--text);">Detalle</button><button class="btn-pill" style="background:var(--surface);color:var(--text-mid);border:1px solid var(--border-strong);">Compliance</button></div>
+          </article>
+        </div>
+      </div>
+      <aside>
+        <div class="widget">
+          <div class="label-caps">Alertas operativas · 3 activas</div>
+          <div class="alert-row" style="background:rgba(214,57,68,0.06);"><span class="dot" style="background:var(--critical);"></span><span class="meta">NO SHOW · WO-D75AEAE5</span></div>
+          <div class="alert-row" style="background:rgba(214,57,68,0.06);"><span class="dot" style="background:var(--critical);"></span><span class="meta">ACCESS DENIED · WO-D75AEACB</span></div>
+          <div class="alert-row" style="background:rgba(232,163,61,0.06);"><span class="dot" style="background:var(--warn);"></span><span class="meta">ACCIDENT · WO-E5519062</span></div>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <!-- Notas del navegante sobre F -->
+  <div style="background:#F4F6F8; padding:24px 36px; border-top:1px solid #E2E5EC; border-bottom:1px solid #E2E5EC;">
+    <p style="font-family:'Plus Jakarta Sans',sans-serif; color:#0A1628; font-size:13px; font-weight:600; margin-bottom:8px; letter-spacing:0.04em; text-transform:uppercase;">Notas del navegante sobre F</p>
+    <ul style="font-family:'Plus Jakarta Sans',sans-serif; color:#3D4A66; font-size:14px; line-height:1.6; padding-left:20px; margin:0;">
+      <li><strong style="color:#0A1628">Botón primario navy</strong> en cards normales · botón <strong style="color:#FF6B35">orange "Asignar tech ahora"</strong> SOLO en card crítica sin tech (atención inmediata). Esto es el truco: el orange solo aparece cuando importa.</li>
+      <li><strong style="color:#0A1628">Plus Jakarta Sans 800</strong> en KPI numbers + 700 en titles + 600 en labels caps + 500 nav + 400 body = jerarquía vía weight, no via familia. Coherencia total.</li>
+      <li><strong style="color:#0A1628">"Cockpit de Operaciones"</strong> en navy + segunda palabra orange = micro-detalle de identidad sin gritar.</li>
+      <li><strong style="color:#0A1628">Sidebar nav activo</strong> con border-left navy 3px + bg navy-soft. Sin amber. La navegación es estructura, no llamada de atención.</li>
+      <li><strong style="color:#0A1628">Status pill</strong> con texto en color status oscuro (no vivo) sobre fondo soft del status. Más legible, menos saturado, no "screams".</li>
+    </ul>
+  </div>
+</section>
+
 <div class="footer-note">
   Mocks autocontained · cero código deployed tocado · cero deps · puro HTML+CSS+Google Fonts<br>
-  Decisión owner: ANTES · A · B · C · D (Blue mustard) · <strong style="color:#FF6B35;">E (Navegante's WOW)</strong><br>
+  Opciones owner: ANTES · A · B · C · D (Blue mustard) · E (WOW Mission Control) · <strong style="color:#0A1628; background:#FFB800; padding:2px 8px; border-radius:3px;">F (Navegante Mix)</strong><br>
   Una vez firmado: edit puntual de index.css + tailwind config + V2Shell tokens + Google Fonts (Iter 2.17 · ~3h)
 </div>
 
