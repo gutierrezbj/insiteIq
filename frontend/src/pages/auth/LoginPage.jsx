@@ -1,14 +1,19 @@
 /**
  * Login — shared across the 3 spaces.
- * SRS Identity Sprint applied: war room + relojeria suiza. Mechanical precision,
- * mono-caps CTA, amber glow on hover, tight radius, Spanish UI (internal SRS).
  *
- * Z-a patch · quick-access demo chips:
- * Herramienta interna, solo usuarios sembrados. Para acelerar
- * review multi-rol (JuanCho + equipo SRS + clientes invited), se muestran
- * 5 chips de un click que rellenan email + password seed (InsiteIQ2026!)
- * y disparan login. Si el user no rotó su contraseña, el backend redirige
- * al forced-rotation automáticamente.
+ * Iter 2.20 (2026-05-05) · Variante B BANDA HERO ALTA
+ *   - Top: banda navy con wordmark + tagline + 3 counters horizontales
+ *   - Border-bottom verde 4px (signature live · paleta F)
+ *   - Bottom: form light centrado en card + 6 demo chips
+ *   - Cero quote interna (la frase canónica del owner queda en CLAUDE.md/memory,
+ *     NO en cara pública del login)
+ *
+ * Paleta F NAVEGANTE: navy #0A1628 + slate #C8CDD8 + Plus Jakarta + JetBrains Mono.
+ *
+ * Quick-access demo chips (Z-a · sigue vigente):
+ * Herramienta interna, solo usuarios sembrados. 6 chips de un click que
+ * rellenan email + password seed (InsiteIQ2026!) y disparan login.
+ * Si el user no rotó su contraseña, el backend redirige al forced-rotation.
  */
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -18,43 +23,28 @@ import { preferredSpaceFor, spaceToPath } from "../../lib/auth";
 const SEED_PASSWORD = "InsiteIQ2026!";
 
 const DEMO_ROLES = [
-  {
-    key: "admin",
-    label: "Admin SRS",
-    sub: "Owner · full",
-    email: "juang@systemrapid.io",
-  },
-  {
-    key: "coord",
-    label: "Coord SRS",
-    sub: "Ops · Andros",
-    email: "androsb@systemrapid.com",
-  },
-  {
-    key: "finance",
-    label: "Finanzas SRS",
-    sub: "Adriana",
-    email: "adrianab@systemrapid.com",
-  },
-  {
-    key: "client",
-    label: "Cliente",
-    sub: "Fractalia · Rackel",
-    email: "rackel.rocha@fractaliasystems.es",
-  },
-  {
-    key: "tech",
-    label: "Tech plantilla",
-    sub: "Agustin",
-    email: "agustinc@systemrapid.com",
-  },
-  {
-    key: "tech_ext",
-    label: "Tech externo",
-    sub: "Arlindo · sub",
-    email: "arlindoo@systemrapid.com",
-  },
+  { key: "admin",    label: "Admin SRS",       sub: "Owner · full",       email: "juang@systemrapid.io" },
+  { key: "coord",    label: "Coord SRS",       sub: "Ops · Andros",       email: "androsb@systemrapid.com" },
+  { key: "finance",  label: "Finanzas SRS",    sub: "Adriana",            email: "adrianab@systemrapid.com" },
+  { key: "client",   label: "Cliente",         sub: "Fractalia · Rackel", email: "rackel.rocha@fractaliasystems.es" },
+  { key: "tech",     label: "Tech plantilla",  sub: "Agustin",            email: "agustinc@systemrapid.com" },
+  { key: "tech_ext", label: "Tech externo",    sub: "Arlindo · sub",      email: "arlindoo@systemrapid.com" },
 ];
+
+const HERO_COUNTERS = [
+  { num: "142", label: "Sitios" },
+  { num: "23",  label: "Técnicos" },
+  { num: "11",  label: "WO · live" },
+];
+
+const MONO_LABEL = {
+  fontFamily: "'JetBrains Mono', monospace",
+  fontWeight: 700,
+  letterSpacing: "0.16em",
+  textTransform: "uppercase",
+};
+
+const JAKARTA = "'Plus Jakarta Sans', sans-serif";
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -95,93 +85,312 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 bg-surface-base">
-      <div className="w-full max-w-md">
-        <form
-          onSubmit={handleSubmit}
-          className="accent-bar bg-surface-raised p-6 rounded-md shadow-lg"
+    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "#F4F6F8" }}>
+      {/* ─── Hero band navy ─────────────────────────────────────── */}
+      <div
+        style={{
+          background: "#0A1628",
+          color: "#FFFFFF",
+          padding: "36px 48px 28px",
+          borderBottom: "4px solid #16A34A",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "flex-end",
+            justifyContent: "space-between",
+            gap: 40,
+            maxWidth: 1100,
+            margin: "0 auto",
+            flexWrap: "wrap",
+          }}
         >
-          <div className="label-caps mb-2">InsiteIQ · v1 Foundation</div>
-          <h1 className="font-display text-2xl text-text-primary mb-6 tracking-tight">
-            Iniciar sesion
-          </h1>
-
-          <label className="label-caps block mb-1.5" htmlFor="login-email">
-            Email
-          </label>
-          <input
-            id="login-email"
-            type="email"
-            autoComplete="username"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            className="w-full mb-4 bg-surface-overlay border border-surface-border rounded-sm px-3 py-2 text-text-primary font-body focus:outline-none focus:border-primary focus:shadow-glow-primary transition-all duration-fast ease-out-expo"
-          />
-
-          <label className="label-caps block mb-1.5" htmlFor="login-password">
-            Contrasena
-          </label>
-          <input
-            id="login-password"
-            type="password"
-            autoComplete="current-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            className="w-full mb-5 bg-surface-overlay border border-surface-border rounded-sm px-3 py-2 text-text-primary font-body focus:outline-none focus:border-primary focus:shadow-glow-primary transition-all duration-fast ease-out-expo"
-          />
-
-          {error && (
-            <div className="accent-bar-danger bg-surface-base text-danger text-sm px-3 py-2 mb-4 rounded-sm">
-              {error}
+          <div style={{ flex: 1, minWidth: 280 }}>
+            <div style={{ ...MONO_LABEL, fontSize: 10, color: "#C8CDD8", letterSpacing: "0.18em", marginBottom: 8 }}>
+              SRS · Sistema operativo interno · v1 Foundation
             </div>
-          )}
-
-          <button
-            type="submit"
-            disabled={busy}
-            className="w-full bg-primary text-text-inverse font-mono font-semibold uppercase tracking-widest-srs text-xs py-3 rounded-sm transition-all duration-fast ease-out-expo hover:bg-primary-light hover:shadow-glow-primary disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {busy ? "Validando…" : "Iniciar sesion"}
-          </button>
-
-        </form>
-
-        {/* Quick-access demo chips */}
-        <div className="mt-6 p-4 bg-surface-raised/50 border border-surface-border rounded-md">
-          <div className="flex items-center justify-between mb-3">
-            <span className="label-caps">Demo</span>
+            <div
+              style={{
+                fontFamily: JAKARTA,
+                fontSize: 48,
+                fontWeight: 800,
+                letterSpacing: "-0.025em",
+                lineHeight: 1,
+              }}
+            >
+              InsiteIQ
+            </div>
+            <div
+              style={{
+                fontFamily: JAKARTA,
+                fontStyle: "italic",
+                fontSize: 16,
+                fontWeight: 400,
+                color: "#C8CDD8",
+                marginTop: 10,
+                maxWidth: 540,
+              }}
+            >
+              Field services IT · cobertura internacional · 25 años de operación.
+            </div>
           </div>
-          <div className="grid grid-cols-2 gap-2">
-            {DEMO_ROLES.map((role) => {
-              const isActive = quickKey === role.key;
-              return (
-                <button
-                  key={role.key}
-                  type="button"
-                  disabled={busy}
-                  onClick={() => handleQuick(role)}
-                  className={`text-left px-3 py-2 rounded-sm border transition-all duration-fast ease-out-expo group
-                    ${
-                      isActive
-                        ? "border-primary bg-surface-overlay shadow-glow-primary"
-                        : "border-surface-border bg-surface-overlay/40 hover:border-primary hover:bg-surface-overlay hover:shadow-glow-primary"
-                    }
-                    disabled:opacity-40 disabled:cursor-not-allowed`}
+
+          <div style={{ display: "flex", gap: 36 }}>
+            {HERO_COUNTERS.map((c) => (
+              <div key={c.label} style={{ textAlign: "right" }}>
+                <div
+                  style={{
+                    fontFamily: JAKARTA,
+                    fontSize: 28,
+                    fontWeight: 800,
+                    color: "#FFFFFF",
+                    letterSpacing: "-0.01em",
+                    lineHeight: 1,
+                    fontVariantNumeric: "tabular-nums",
+                  }}
                 >
-                  <div className="font-display text-sm text-text-primary leading-tight group-hover:text-primary-light transition-colors duration-fast">
-                    {role.label}
-                  </div>
-                  <div className="font-mono text-[10px] uppercase tracking-widest-srs text-text-tertiary mt-0.5">
-                    {role.sub}
-                  </div>
-                </button>
-              );
-            })}
+                  {c.num}
+                </div>
+                <div style={{ ...MONO_LABEL, fontSize: 9, color: "#8B95A8", letterSpacing: "0.14em", marginTop: 4 }}>
+                  {c.label}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ─── Body con form + chips ─────────────────────────────── */}
+      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "32px 24px" }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "100%", maxWidth: 420 }}>
+          <form
+            onSubmit={handleSubmit}
+            style={{
+              width: "100%",
+              background: "#FFFFFF",
+              padding: "32px 28px",
+              borderRadius: 8,
+              border: "1px solid #E2E5EC",
+              boxShadow: "0 8px 24px -4px rgba(10, 22, 40, 0.08), 0 4px 8px -2px rgba(10, 22, 40, 0.04)",
+            }}
+          >
+            <div style={{ ...MONO_LABEL, fontSize: 10, color: "#8B95A8", marginBottom: 6 }}>
+              Acceso operativo
+            </div>
+            <h2
+              style={{
+                fontFamily: JAKARTA,
+                fontSize: 26,
+                fontWeight: 800,
+                color: "#0A1628",
+                letterSpacing: "-0.02em",
+                marginBottom: 22,
+              }}
+            >
+              Iniciar sesión
+            </h2>
+
+            <FieldLabel>Email</FieldLabel>
+            <input
+              type="email"
+              autoComplete="username"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              style={inputStyle}
+              onFocus={focusInput}
+              onBlur={blurInput}
+            />
+
+            <FieldLabel>Contraseña</FieldLabel>
+            <input
+              type="password"
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              style={inputStyle}
+              onFocus={focusInput}
+              onBlur={blurInput}
+            />
+
+            {error && (
+              <div
+                style={{
+                  background: "#FEF2F2",
+                  border: "1px solid #FCA5A5",
+                  borderLeft: "3px solid #DC2626",
+                  color: "#991B1B",
+                  fontFamily: JAKARTA,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  padding: "8px 12px",
+                  borderRadius: 4,
+                  marginTop: 4,
+                  marginBottom: 12,
+                }}
+              >
+                {error}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={busy}
+              style={{
+                width: "100%",
+                height: 42,
+                background: "#0A1628",
+                color: "#FFFFFF",
+                border: "1.5px solid #0A1628",
+                borderRadius: 6,
+                fontFamily: JAKARTA,
+                fontSize: 13,
+                fontWeight: 700,
+                letterSpacing: "0.04em",
+                textTransform: "uppercase",
+                cursor: busy ? "not-allowed" : "pointer",
+                marginTop: 8,
+                opacity: busy ? 0.5 : 1,
+                boxShadow: "0 2px 6px -1px rgba(10, 22, 40, 0.32)",
+                transition: "all 160ms",
+              }}
+              onMouseEnter={(e) => {
+                if (busy) return;
+                e.currentTarget.style.background = "#1A2640";
+                e.currentTarget.style.boxShadow = "0 4px 12px -2px rgba(10, 22, 40, 0.42)";
+              }}
+              onMouseLeave={(e) => {
+                if (busy) return;
+                e.currentTarget.style.background = "#0A1628";
+                e.currentTarget.style.boxShadow = "0 2px 6px -1px rgba(10, 22, 40, 0.32)";
+              }}
+            >
+              {busy ? "Validando…" : "Iniciar sesión"}
+            </button>
+          </form>
+
+          {/* ─── Demo chips · 6 cuentas (Z-a + Iter 2.20) ────────── */}
+          <div
+            style={{
+              width: "100%",
+              marginTop: 18,
+              padding: "16px 18px",
+              background: "rgba(255, 255, 255, 0.92)",
+              border: "1px solid #E2E5EC",
+              borderRadius: 8,
+            }}
+          >
+            <div style={{ ...MONO_LABEL, fontSize: 10, color: "#8B95A8", marginBottom: 12 }}>
+              Demo
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+              {DEMO_ROLES.map((role) => {
+                const isActive = quickKey === role.key;
+                return (
+                  <button
+                    key={role.key}
+                    type="button"
+                    disabled={busy}
+                    onClick={() => handleQuick(role)}
+                    style={{
+                      textAlign: "left",
+                      padding: "8px 12px",
+                      background: isActive ? "#0A1628" : "#FFFFFF",
+                      border: `1px solid ${isActive ? "#0A1628" : "#C8CDD8"}`,
+                      borderRadius: 6,
+                      cursor: busy ? "not-allowed" : "pointer",
+                      opacity: busy && !isActive ? 0.4 : 1,
+                      transition: "all 160ms",
+                    }}
+                    onMouseEnter={(e) => {
+                      if (busy || isActive) return;
+                      e.currentTarget.style.borderColor = "#0A1628";
+                      e.currentTarget.style.background = "#F4F6F8";
+                    }}
+                    onMouseLeave={(e) => {
+                      if (busy || isActive) return;
+                      e.currentTarget.style.borderColor = "#C8CDD8";
+                      e.currentTarget.style.background = "#FFFFFF";
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontFamily: JAKARTA,
+                        fontSize: 13,
+                        fontWeight: 700,
+                        color: isActive ? "#FFFFFF" : "#0A1628",
+                        lineHeight: 1.2,
+                      }}
+                    >
+                      {role.label}
+                    </div>
+                    <div
+                      style={{
+                        ...MONO_LABEL,
+                        fontSize: 9,
+                        color: isActive ? "#C8CDD8" : "#8B95A8",
+                        letterSpacing: "0.1em",
+                        marginTop: 3,
+                      }}
+                    >
+                      {role.sub}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
     </div>
   );
+}
+
+/* ─── Helpers ────────────────────────────────────────────────── */
+
+function FieldLabel({ children }) {
+  return (
+    <label
+      style={{
+        display: "block",
+        fontFamily: "'JetBrains Mono', monospace",
+        fontSize: 10,
+        fontWeight: 700,
+        color: "#3D4A66",
+        letterSpacing: "0.14em",
+        textTransform: "uppercase",
+        marginBottom: 6,
+      }}
+    >
+      {children}
+    </label>
+  );
+}
+
+const inputStyle = {
+  width: "100%",
+  height: 38,
+  border: "1px solid #C8CDD8",
+  borderRadius: 6,
+  padding: "0 12px",
+  fontSize: 13.5,
+  color: "#0A1628",
+  fontFamily: JAKARTA,
+  fontWeight: 500,
+  outline: "none",
+  marginBottom: 14,
+  transition: "all 160ms",
+  background: "#FFFFFF",
+};
+
+function focusInput(e) {
+  e.currentTarget.style.border = "1.5px solid #0A1628";
+  e.currentTarget.style.boxShadow = "0 0 0 3px rgba(10, 22, 40, 0.10)";
+}
+
+function blurInput(e) {
+  e.currentTarget.style.border = "1px solid #C8CDD8";
+  e.currentTarget.style.boxShadow = "none";
 }

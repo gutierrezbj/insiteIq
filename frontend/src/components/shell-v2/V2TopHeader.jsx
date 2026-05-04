@@ -60,6 +60,7 @@ export default function V2TopHeader({
   highlight,
   liveCount = 0,
   liveLabel = "activas",
+  compact = false,
 }) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -94,18 +95,24 @@ export default function V2TopHeader({
         borderBottom: "2px solid #0A1628",
       }}
     >
-      <div className="flex items-center gap-5">
-        {/* Highlight ahora navy strong (no amber) — autoridad serena, paleta F */}
-        <h1
-          className="font-jakarta text-[18px] font-semibold"
-          style={{ letterSpacing: "0.02em", color: "#0A1628" }}
-        >
-          {finalTitle && (
-            <span style={{ color: "#3D4A66", fontWeight: 500 }}>{finalTitle} </span>
-          )}
-          <span style={{ color: "#0A1628", fontWeight: 800 }}>{finalHighlight}</span>
-        </h1>
-      </div>
+      {compact ? (
+        // Modo compact: en rutas v1 legacy la página interna pinta su propio h1.
+        // V2TopHeader cede el lado izq (spacer) para evitar el choque visual.
+        <div />
+      ) : (
+        <div className="flex items-center gap-5">
+          {/* Highlight ahora navy strong (no amber) — autoridad serena, paleta F */}
+          <h1
+            className="font-jakarta text-[18px] font-semibold"
+            style={{ letterSpacing: "0.02em", color: "#0A1628" }}
+          >
+            {finalTitle && (
+              <span style={{ color: "#3D4A66", fontWeight: 500 }}>{finalTitle} </span>
+            )}
+            <span style={{ color: "#0A1628", fontWeight: 800 }}>{finalHighlight}</span>
+          </h1>
+        </div>
+      )}
 
       <div className="flex items-center gap-4 text-[12px] text-cl-text-mid">
         <span className="font-mono" style={{ color: "#3D4A66", fontWeight: 500 }}>{dateTime}</span>

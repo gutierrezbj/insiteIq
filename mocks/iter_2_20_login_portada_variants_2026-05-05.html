@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>InsiteIQ · Login portada · 3 variantes (2026-05-05)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Instrument+Serif:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: #F0F2F7; color: #0A1628;
+    font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .toc {
+    position: sticky; top: 0; z-index: 100;
+    background: #0A1628; color: #FFFFFF;
+    padding: 14px 24px; display: flex; align-items: center; gap: 18px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    box-shadow: 0 2px 8px rgba(10, 22, 40, 0.18);
+  }
+  .toc-title { color: #FFFFFF; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; margin-right: 12px; font-size: 11px; }
+  .toc a { color: #C8CDD8; text-decoration: none; padding: 6px 12px; border-radius: 4px; border: 1px solid transparent; transition: all 180ms; }
+  .toc a:hover { color: #FFFFFF; border-color: #3D4A66; background: rgba(255,255,255,0.04); }
+  .toc-meta { margin-left: auto; color: #8B95A8; font-size: 10px; }
+
+  .variant-banner {
+    padding: 24px 40px;
+    background: #FFFFFF;
+    border-bottom: 1px solid #E2E5EC;
+  }
+  .variant-banner h2 {
+    font-size: 22px; font-weight: 800; color: #0A1628;
+    letter-spacing: -0.01em; margin-bottom: 4px;
+  }
+  .variant-banner .subtitle {
+    color: #8B95A8;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em;
+    margin-bottom: 12px; font-weight: 600;
+  }
+  .variant-banner .rationale {
+    color: #3D4A66; font-size: 13.5px; max-width: 920px; line-height: 1.6;
+  }
+  .variant-banner .rationale strong { color: #0A1628; font-weight: 700; }
+
+  .frame {
+    height: 760px;
+    border: 1px solid #E2E5EC;
+    overflow: hidden;
+    position: relative;
+  }
+  .variant + .variant { border-top: 8px solid #F0F2F7; }
+
+  /* ═══════════════════════════════════════════════════════════ */
+  /* Common form pieces (paleta F · cocinados igual en las 3 vistas) */
+  /* ═══════════════════════════════════════════════════════════ */
+
+  .form-card {
+    width: 100%; max-width: 420px;
+    background: #FFFFFF;
+    padding: 36px 32px;
+    border-radius: 8px;
+    border: 1px solid #E2E5EC;
+    box-shadow: 0 8px 24px -4px rgba(10, 22, 40, 0.08), 0 4px 8px -2px rgba(10, 22, 40, 0.04);
+  }
+  .form-card .breadcrumb {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; font-weight: 700;
+    color: #8B95A8;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .form-card h2 {
+    font-size: 26px; font-weight: 800; color: #0A1628;
+    letter-spacing: -0.02em; margin-bottom: 22px;
+  }
+  .form-card label {
+    display: block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; font-weight: 700;
+    color: #3D4A66;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .form-card input {
+    width: 100%; height: 38px;
+    border: 1px solid #C8CDD8;
+    border-radius: 6px;
+    padding: 0 12px;
+    font-size: 13.5px;
+    color: #0A1628;
+    font-family: inherit;
+    font-weight: 500;
+    outline: none;
+    margin-bottom: 14px;
+    transition: all 160ms;
+  }
+  .form-card input:focus {
+    border: 1.5px solid #0A1628;
+    box-shadow: 0 0 0 3px rgba(10, 22, 40, 0.10);
+  }
+  .form-card .submit {
+    width: 100%; height: 42px;
+    background: #0A1628; color: #FFFFFF;
+    border: 1.5px solid #0A1628;
+    border-radius: 6px;
+    font-size: 13px; font-weight: 700;
+    font-family: inherit;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    cursor: pointer;
+    margin-top: 8px;
+    box-shadow: 0 2px 6px -1px rgba(10, 22, 40, 0.32);
+    transition: all 160ms;
+  }
+  .form-card .submit:hover { background: #1A2640; box-shadow: 0 4px 12px -2px rgba(10, 22, 40, 0.42); }
+
+  .demo-chips {
+    width: 100%; max-width: 420px;
+    margin-top: 18px;
+    padding: 18px 22px;
+    background: rgba(255,255,255,0.92);
+    border: 1px solid #E2E5EC;
+    border-radius: 8px;
+  }
+  .demo-chips .demo-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; font-weight: 700;
+    color: #8B95A8;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .demo-chips .grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+  }
+  .demo-chips .chip {
+    text-align: left;
+    padding: 8px 12px;
+    background: #FFFFFF;
+    border: 1px solid #C8CDD8;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 160ms;
+  }
+  .demo-chips .chip:hover { border-color: #0A1628; background: #F4F6F8; }
+  .demo-chips .chip-name { font-size: 13px; font-weight: 700; color: #0A1628; }
+  .demo-chips .chip-sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9.5px; font-weight: 500;
+    color: #8B95A8;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  /* ═══════════════════════════════════════════════════════════ */
+  /* VARIANTE A · SPLIT 50/50 WAR-ROOM                            */
+  /* ═══════════════════════════════════════════════════════════ */
+
+  .va-frame { display: flex; height: 760px; }
+
+  .va-left {
+    flex: 1;
+    background: #0A1628;
+    color: #FFFFFF;
+    padding: 56px 64px;
+    display: flex; flex-direction: column; justify-content: space-between;
+    position: relative;
+    overflow: hidden;
+  }
+  .va-left::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(circle at 20% 30%, rgba(255,255,255,0.04), transparent 50%),
+      radial-gradient(circle at 80% 70%, rgba(255,255,255,0.03), transparent 50%);
+    pointer-events: none;
+  }
+  .va-left > * { position: relative; z-index: 1; }
+  .va-brand-row {
+    display: flex; align-items: center; gap: 12px;
+  }
+  .va-compass {
+    width: 32px; height: 32px;
+    border: 1.5px solid #C8CDD8;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: #C8CDD8;
+  }
+  .va-brand-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; font-weight: 700;
+    color: #C8CDD8;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+  .va-wordmark {
+    font-size: 64px; font-weight: 800;
+    letter-spacing: -0.025em;
+    line-height: 1;
+    margin-top: 28px;
+  }
+  .va-tagline {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    font-size: 21px;
+    color: #C8CDD8;
+    line-height: 1.45;
+    max-width: 460px;
+    margin-top: 14px;
+    font-weight: 400;
+  }
+  .va-quote {
+    border-left: 2px solid #FFFFFF;
+    padding: 14px 0 14px 20px;
+    margin-top: 36px;
+    max-width: 460px;
+  }
+  .va-quote p {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    font-size: 17px;
+    color: #FFFFFF;
+    line-height: 1.5;
+    font-weight: 400;
+  }
+  .va-quote cite {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; font-weight: 600;
+    color: #8B95A8;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-style: normal;
+    margin-top: 10px;
+    display: block;
+  }
+  .va-counters {
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px;
+    border-top: 1px solid #1A2640;
+    padding-top: 22px;
+  }
+  .va-counter-num {
+    font-size: 32px; font-weight: 800;
+    color: #FFFFFF;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .va-counter-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9.5px; font-weight: 700;
+    color: #8B95A8;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin-top: 6px;
+  }
+
+  .va-right {
+    flex: 1;
+    background: linear-gradient(180deg, #FFFFFF 0%, #F4F6F8 100%);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 40px;
+  }
+
+  /* ═══════════════════════════════════════════════════════════ */
+  /* VARIANTE B · BANDA HERO ALTA                                  */
+  /* ═══════════════════════════════════════════════════════════ */
+
+  .vb-frame {
+    display: flex; flex-direction: column; height: 760px;
+    background: #F4F6F8;
+  }
+  .vb-hero {
+    background: #0A1628;
+    color: #FFFFFF;
+    padding: 36px 48px 28px;
+    border-bottom: 4px solid #16A34A;
+    position: relative;
+    overflow: hidden;
+  }
+  .vb-hero-row {
+    display: flex; align-items: flex-end; justify-content: space-between; gap: 40px;
+    max-width: 1100px; margin: 0 auto;
+  }
+  .vb-hero-left { flex: 1; }
+  .vb-brand-meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; font-weight: 700;
+    color: #C8CDD8;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .vb-wordmark {
+    font-size: 48px; font-weight: 800;
+    letter-spacing: -0.025em;
+    line-height: 1;
+  }
+  .vb-tagline {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    font-size: 17px;
+    color: #C8CDD8;
+    margin-top: 8px;
+  }
+  .vb-counters {
+    display: flex; gap: 36px;
+  }
+  .vb-counter { text-align: right; }
+  .vb-counter-num {
+    font-size: 28px; font-weight: 800; color: #FFFFFF;
+    letter-spacing: -0.01em; line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .vb-counter-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; font-weight: 700; color: #8B95A8;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    margin-top: 4px;
+  }
+  .vb-body {
+    flex: 1;
+    display: flex; align-items: center; justify-content: center;
+    padding: 32px 40px;
+  }
+
+  /* ═══════════════════════════════════════════════════════════ */
+  /* VARIANTE C · MISSION CONTROL DARK                             */
+  /* ═══════════════════════════════════════════════════════════ */
+
+  .vc-frame {
+    height: 760px;
+    background: radial-gradient(ellipse at center, #0F1F38 0%, #0A1628 70%);
+    color: #FFFFFF;
+    display: flex; flex-direction: column;
+    padding: 40px 56px;
+    position: relative;
+    overflow: hidden;
+  }
+  .vc-frame::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size: 36px 36px;
+    pointer-events: none;
+    mask-image: radial-gradient(ellipse at center, #000 30%, transparent 80%);
+  }
+  .vc-frame > * { position: relative; z-index: 1; }
+  .vc-top {
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .vc-brand {
+    display: flex; align-items: center; gap: 14px;
+  }
+  .vc-compass {
+    width: 36px; height: 36px;
+    border: 1.5px solid #C8CDD8;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: #C8CDD8;
+  }
+  .vc-wordmark {
+    font-size: 22px; font-weight: 800; letter-spacing: -0.01em;
+  }
+  .vc-meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; font-weight: 700;
+    color: #8B95A8;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+  .vc-center {
+    flex: 1;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .vc-card {
+    width: 100%; max-width: 460px;
+    background: #FFFFFF;
+    border-radius: 10px;
+    padding: 40px 36px;
+    box-shadow:
+      0 32px 64px -8px rgba(0, 0, 0, 0.5),
+      0 12px 24px -4px rgba(0, 0, 0, 0.3),
+      0 0 0 1px rgba(255, 255, 255, 0.06);
+  }
+  .vc-card .breadcrumb {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; font-weight: 700;
+    color: #8B95A8;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .vc-card h2 {
+    font-size: 28px; font-weight: 800; color: #0A1628;
+    letter-spacing: -0.02em; margin-bottom: 24px;
+  }
+  .vc-card label {
+    display: block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; font-weight: 700;
+    color: #3D4A66;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .vc-card input {
+    width: 100%; height: 38px;
+    border: 1px solid #C8CDD8;
+    border-radius: 6px;
+    padding: 0 12px;
+    font-size: 13.5px; color: #0A1628;
+    font-family: inherit; font-weight: 500;
+    outline: none; margin-bottom: 14px;
+  }
+  .vc-card .submit {
+    width: 100%; height: 42px;
+    background: #0A1628; color: #FFFFFF;
+    border: 1.5px solid #0A1628;
+    border-radius: 6px;
+    font-size: 13px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.04em;
+    margin-top: 8px;
+  }
+  .vc-bottom {
+    display: flex; align-items: center; justify-content: space-between;
+    border-top: 1px solid #1A2640;
+    padding-top: 18px;
+  }
+  .vc-quote {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    font-size: 13px;
+    color: #8B95A8;
+    max-width: 520px;
+    line-height: 1.5;
+  }
+  .vc-quote-attr {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9.5px; font-weight: 700;
+    color: #C8CDD8;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin-top: 2px;
+    font-style: normal;
+  }
+  .vc-counters {
+    display: flex; gap: 24px;
+  }
+  .vc-counter-num {
+    font-size: 18px; font-weight: 800; color: #FFFFFF;
+    letter-spacing: -0.01em;
+    font-variant-numeric: tabular-nums;
+  }
+  .vc-counter-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; font-weight: 700;
+    color: #8B95A8;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  /* ═══════════════════════════════════════════════════════════ */
+  /* Comparativa                                                   */
+  /* ═══════════════════════════════════════════════════════════ */
+  .compare {
+    padding: 36px 40px;
+    background: #0A1628;
+    color: #FFFFFF;
+  }
+  .compare h3 { font-size: 16px; font-weight: 700; margin-bottom: 18px; letter-spacing: 0.04em; }
+  .compare table { width: 100%; max-width: 1100px; border-collapse: collapse; font-size: 12.5px; }
+  .compare th, .compare td { text-align: left; padding: 10px 14px; border-bottom: 1px solid #1A2640; vertical-align: top; }
+  .compare th { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #8B95A8; text-transform: uppercase; letter-spacing: 0.12em; font-weight: 600; }
+  .compare td.label { color: #C8CDD8; font-weight: 600; width: 22%; }
+  .compare td.val { color: #FFFFFF; }
+
+  .footnote {
+    padding: 22px 40px;
+    background: #F0F2F7;
+    color: #3D4A66;
+    font-size: 12px;
+    line-height: 1.55;
+    font-family: 'JetBrains Mono', monospace;
+  }
+</style>
+</head>
+<body>
+
+<nav class="toc">
+  <span class="toc-title">Iter 2.20 · Login portada</span>
+  <a href="#va">A · SPLIT 50/50</a>
+  <a href="#vb">B · BANDA HERO</a>
+  <a href="#vc">C · MISSION CONTROL</a>
+  <span class="toc-meta">2026-05-05 · paleta F NAVEGANTE · cero copy SKYPRO</span>
+</nav>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- A · SPLIT 50/50 WAR-ROOM                                   -->
+<!-- ════════════════════════════════════════════════════════ -->
+<section class="variant" id="va">
+  <div class="variant-banner">
+    <h2>A · SPLIT 50/50 WAR-ROOM</h2>
+    <div class="subtitle">izq panel navy con quote+counters · der form light</div>
+    <p class="rationale">
+      Mitad izquierda <strong>navy oscuro</strong>: wordmark gigante + tagline italic + quote canónico del owner ("InsiteIQ sirve para arreglar las cagadas...") + 3 counters live (proyectos / sites / técnicos). Mitad derecha <strong>light</strong>: form en card + chips demo. La portada tiene peso pero no compite con la acción de login. Vibe "war room briefing room" — entras y ves el ámbito de lo que controlas antes de loguear.
+    </p>
+  </div>
+  <div class="frame va-frame">
+    <div class="va-left">
+      <div>
+        <div class="va-brand-row">
+          <div class="va-compass">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" fill="currentColor"/></svg>
+          </div>
+          <span class="va-brand-text">SRS · Sistema operativo interno</span>
+        </div>
+        <div class="va-wordmark">InsiteIQ</div>
+        <div class="va-tagline">Field services IT · cobertura internacional · 25 años de operación.</div>
+        <div style="margin-top: 36px; max-width: 460px; display: flex; flex-direction: column; gap: 10px;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <span style="width: 4px; height: 4px; background: #C8CDD8; border-radius: 50%;"></span>
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #C8CDD8; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600;">Despacho · Ops · Survey · Migration · Rollout</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <span style="width: 4px; height: 4px; background: #C8CDD8; border-radius: 50%;"></span>
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #C8CDD8; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600;">Coordinación cross-tier · multi-país · multi-cliente</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <span style="width: 4px; height: 4px; background: #C8CDD8; border-radius: 50%;"></span>
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #C8CDD8; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600;">SLA · Shield · audit log inmutable</span>
+          </div>
+        </div>
+      </div>
+      <div class="va-counters">
+        <div>
+          <div class="va-counter-num">142</div>
+          <div class="va-counter-label">Sitios activos</div>
+        </div>
+        <div>
+          <div class="va-counter-num">23</div>
+          <div class="va-counter-label">Técnicos · pista</div>
+        </div>
+        <div>
+          <div class="va-counter-num">11</div>
+          <div class="va-counter-label">WO · live</div>
+        </div>
+      </div>
+    </div>
+    <div class="va-right">
+      <div class="form-card">
+        <div class="breadcrumb">InsiteIQ · v1 Foundation</div>
+        <h2>Iniciar sesión</h2>
+        <label>Email</label>
+        <input type="email" value="">
+        <label>Contraseña</label>
+        <input type="password" value="">
+        <button class="submit">Iniciar sesión</button>
+      </div>
+      <div class="demo-chips">
+        <div class="demo-label">Demo</div>
+        <div class="grid">
+          <button class="chip"><div class="chip-name">Admin SRS</div><div class="chip-sub">Owner · full</div></button>
+          <button class="chip"><div class="chip-name">Coord SRS</div><div class="chip-sub">Ops · Andros</div></button>
+          <button class="chip"><div class="chip-name">Finanzas SRS</div><div class="chip-sub">Adriana</div></button>
+          <button class="chip"><div class="chip-name">Cliente</div><div class="chip-sub">Fractalia · Rackel</div></button>
+          <button class="chip"><div class="chip-name">Tech plantilla</div><div class="chip-sub">Agustin</div></button>
+          <button class="chip"><div class="chip-name">Tech externo</div><div class="chip-sub">Arlindo · sub</div></button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- B · BANDA HERO ALTA                                        -->
+<!-- ════════════════════════════════════════════════════════ -->
+<section class="variant" id="vb">
+  <div class="variant-banner">
+    <h2>B · BANDA HERO ALTA</h2>
+    <div class="subtitle">top: banda navy con wordmark + counters · bottom: form centrado light</div>
+    <p class="rationale">
+      Top <strong>banda navy ~280px</strong> con wordmark + tagline italic + counters horizontales a la derecha. Border-bottom verde 4px (signature live). Bottom: form centrado en fondo light. Más sobrio que A, menos branding pero igual identidad. Vibe "dashboard ops top-band" — el shell habla, el body cumple.
+    </p>
+  </div>
+  <div class="frame vb-frame">
+    <div class="vb-hero">
+      <div class="vb-hero-row">
+        <div class="vb-hero-left">
+          <div class="vb-brand-meta">SRS · Sistema operativo interno · v1 Foundation</div>
+          <div class="vb-wordmark">InsiteIQ</div>
+          <div class="vb-tagline">Field services IT · 78 países · 25 años de cagadas convertidas en señal.</div>
+        </div>
+        <div class="vb-counters">
+          <div class="vb-counter">
+            <div class="vb-counter-num">142</div>
+            <div class="vb-counter-label">Sitios</div>
+          </div>
+          <div class="vb-counter">
+            <div class="vb-counter-num">23</div>
+            <div class="vb-counter-label">Técnicos</div>
+          </div>
+          <div class="vb-counter">
+            <div class="vb-counter-num">11</div>
+            <div class="vb-counter-label">WO · live</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="vb-body">
+      <div style="display:flex; flex-direction:column; align-items:center;">
+        <div class="form-card">
+          <div class="breadcrumb">Acceso operativo</div>
+          <h2>Iniciar sesión</h2>
+          <label>Email</label>
+          <input type="email" value="">
+          <label>Contraseña</label>
+          <input type="password" value="">
+          <button class="submit">Iniciar sesión</button>
+        </div>
+        <div class="demo-chips">
+          <div class="demo-label">Demo</div>
+          <div class="grid">
+            <button class="chip"><div class="chip-name">Admin SRS</div><div class="chip-sub">Owner · full</div></button>
+            <button class="chip"><div class="chip-name">Coord SRS</div><div class="chip-sub">Ops · Andros</div></button>
+            <button class="chip"><div class="chip-name">Cliente</div><div class="chip-sub">Fractalia · Rackel</div></button>
+            <button class="chip"><div class="chip-name">Tech plantilla</div><div class="chip-sub">Agustin</div></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- C · MISSION CONTROL DARK                                   -->
+<!-- ════════════════════════════════════════════════════════ -->
+<section class="variant" id="vc">
+  <div class="variant-banner">
+    <h2>C · MISSION CONTROL DARK</h2>
+    <div class="subtitle">pantalla completa navy radial · grid sutil · form en card light flotante</div>
+    <p class="rationale">
+      Fondo entero <strong>navy radial</strong> con grid de blueprint sutil (mascarado al borde). Wordmark + meta arriba izq, datetime arriba der. Form en card blanco flotante centro con shadow profundo. Quote del owner abajo izq, micro-counters abajo der. Vibe "mission control NASA / ops bunker" — más solemne, menos funcional, más "antes de entrar al teatro de operaciones".
+    </p>
+  </div>
+  <div class="frame">
+    <div class="vc-frame">
+      <div class="vc-top">
+        <div class="vc-brand">
+          <div class="vc-compass">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" fill="currentColor"/></svg>
+          </div>
+          <div class="vc-wordmark">InsiteIQ</div>
+        </div>
+        <div class="vc-meta">SRS · v1 Foundation · 2026-05-05 · 23:54 UTC+02</div>
+      </div>
+      <div class="vc-center">
+        <div class="vc-card">
+          <div class="breadcrumb">Acceso operativo</div>
+          <h2>Iniciar sesión</h2>
+          <label>Email</label>
+          <input type="email" value="">
+          <label>Contraseña</label>
+          <input type="password" value="">
+          <button class="submit">Iniciar sesión</button>
+        </div>
+      </div>
+      <div class="vc-bottom">
+        <div class="vc-quote">
+          "InsiteIQ sirve para arreglar las cagadas de cualquier compañía que nos hace sufrir."
+          <span class="vc-quote-attr">— JuanCho</span>
+        </div>
+        <div class="vc-counters">
+          <div>
+            <div class="vc-counter-num">142</div>
+            <div class="vc-counter-label">Sitios</div>
+          </div>
+          <div>
+            <div class="vc-counter-num">23</div>
+            <div class="vc-counter-label">Técnicos</div>
+          </div>
+          <div>
+            <div class="vc-counter-num">11</div>
+            <div class="vc-counter-label">WO · live</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<section class="compare">
+  <h3>Comparativa rápida</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Atributo</th>
+        <th>A · SPLIT 50/50</th>
+        <th>B · BANDA HERO</th>
+        <th>C · MISSION CONTROL</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="label">Distribución</td><td class="val">izq portada navy / der form light</td><td class="val">top banda navy / bottom form light</td><td class="val">pantalla navy / form card flotante</td></tr>
+      <tr><td class="label">Branding presence</td><td class="val">★★★ (wordmark 64px + quote)</td><td class="val">★★ (wordmark 48px + counters)</td><td class="val">★ (wordmark 22px discreto)</td></tr>
+      <tr><td class="label">Foco al loguear</td><td class="val">balanceado · 50/50</td><td class="val">muy claro · form domina lower 60%</td><td class="val">card flotante centra atención</td></tr>
+      <tr><td class="label">Drama / vibe</td><td class="val">war-room briefing</td><td class="val">dashboard ops band</td><td class="val">mission control bunker</td></tr>
+      <tr><td class="label">Riesgo</td><td class="val">si el viewport es estrecho, columna izq se come al form</td><td class="val">menos memorable visualmente · más "estándar"</td><td class="val">muy oscuro puede sentirse "demo de juego" si no se afina</td></tr>
+      <tr><td class="label">Anti-IA score</td><td class="val">★★★ (quote owner + tagline real)</td><td class="val">★★★ (banda navy + counters tabular)</td><td class="val">★★ (mission control vibe puede sonar genérico si no hay restraint)</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<div class="footnote">
+  · Las 3 mantienen paleta F NAVEGANTE intacta (#0A1628 navy + #FFFFFF + #C8CDD8 + Plus Jakarta + JetBrains Mono).<br>
+  · Quote del owner es canónica del Pain Log v1.0.<br>
+  · Counters mock (142/23/11) — al implementar pueden cargar live desde /api/insights/dashboard o quedar estáticos si rompe perf en login.<br>
+  · Cero copia SKYPRO/OverWatch/OpsManager. Identidad propia InsiteIQ via DS v2 + paleta F.<br>
+  · Si ninguna te llama del todo, dime cuál se acerca y qué pieza específica cambio (tagline, quote, counters, cambiar imagen, etc.).
+</div>
+
+</body>
+</html>
