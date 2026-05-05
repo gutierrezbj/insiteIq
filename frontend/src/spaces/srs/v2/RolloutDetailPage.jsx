@@ -1206,7 +1206,7 @@ function KanbanTab({ wos, sites, users, reload }) {
             <span className="label-caps-v2">{col.label}</span>
             <span className="font-mono text-[11px] text-cl-text">{wosByColumn[col.key].length}</span>
           </div>
-          <div className="p-3 space-y-2.5 overflow-y-auto flex-1">
+          <div className="p-3 space-y-2 overflow-y-auto flex-1">
             {wosByColumn[col.key].length === 0 && (
               <p className="text-[10px] text-cl-text-dim italic px-2 py-4">Vacía</p>
             )}
