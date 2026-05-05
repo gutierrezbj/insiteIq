@@ -1,17 +1,23 @@
 /**
- * SRS Admin — Users + Organizations + Audit log (Pasito N).
+ * SRS Admin · v2 paleta F (Iter 2.24).
  *
- * Fase 2 plumbing: visibility layer sobre lo que ya existe. Write ops
- * (crear user, crear org, enlazar partner_relationships) se hacen por
- * seed hoy. Admin UI de escritura llega con Fase 3 (Admin/Finance).
+ * Migración v1 amber legacy → v2 usando v2-shared. Pasito N · Users +
+ * Organizations + Audit log. CreateUserAction + CreateOrgAction
+ * preservados v1 — sprints propios.
  *
  * Audit log = "nuestro corazón guarda todo" (Principio #7). Solo SRS.
+ *
+ * Endpoints:
+ *   GET /api/users
+ *   GET /api/organizations
+ *   GET /api/audit-log?limit=200&action_prefix=&action=
  */
 import { useMemo, useState } from "react";
 import { useFetch } from "../../../lib/useFetch";
 import { formatAge } from "../../../components/ui/Badges";
 import CreateUserAction from "../../../components/admin/CreateUserAction";
 import CreateOrgAction from "../../../components/admin/CreateOrgAction";
+import { JAKARTA, MONO, MONO_CAPS } from "../../../components/v2-shared/typography";
 
 const TABS = [
   { key: "users", label: "Users" },
@@ -23,32 +29,77 @@ export default function AdminPage() {
   const [tab, setTab] = useState("users");
 
   return (
-    <div className="px-4 md:px-8 py-5 md:py-7 max-w-wide">
-      <div className="accent-bar pl-4 mb-6">
-        <div className="label-caps">Admin</div>
-        <h1 className="font-display text-2xl text-text-primary leading-tight">
+    <div style={{ padding: "32px 40px", maxWidth: 1400 }}>
+      {/* Header */}
+      <div style={{ paddingLeft: 16, borderLeft: "3px solid #0A1628", marginBottom: 22 }}>
+        <div style={{ ...MONO_CAPS, fontSize: 11, color: "#8B95A8", marginBottom: 6 }}>
+          Admin
+        </div>
+        <h1
+          style={{
+            fontFamily: JAKARTA,
+            fontSize: 28,
+            fontWeight: 800,
+            color: "#0A1628",
+            letterSpacing: "-0.02em",
+            lineHeight: 1.1,
+          }}
+        >
           Directorio operativo
         </h1>
-        <p className="font-body text-text-secondary text-sm mt-1">
+        <p style={{ fontFamily: JAKARTA, fontSize: 13, color: "#3D4A66", marginTop: 6, fontWeight: 500 }}>
           Fase 2 plumbing · lectura de users + orgs + audit. Write ops Fase 3.
         </p>
       </div>
 
-      <div className="flex gap-1 mb-4 bg-surface-raised accent-bar rounded-sm p-1">
-        {TABS.map((t) => (
-          <button
-            key={t.key}
-            type="button"
-            onClick={() => setTab(t.key)}
-            className={`px-4 py-2 rounded-sm font-mono text-2xs uppercase tracking-widest-srs transition-colors duration-fast ${
-              tab === t.key
-                ? "bg-surface-overlay text-text-primary"
-                : "text-text-tertiary hover:text-text-secondary hover:bg-surface-overlay/60"
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
+      {/* Tabs nav */}
+      <div
+        style={{
+          display: "inline-flex",
+          gap: 4,
+          padding: 4,
+          background: "#FFFFFF",
+          border: "1px solid #E2E5EC",
+          borderRadius: 8,
+          marginBottom: 16,
+        }}
+      >
+        {TABS.map((t) => {
+          const isActive = tab === t.key;
+          return (
+            <button
+              key={t.key}
+              type="button"
+              onClick={() => setTab(t.key)}
+              style={{
+                padding: "8px 16px",
+                ...MONO_CAPS,
+                fontSize: 10,
+                letterSpacing: "0.14em",
+                background: isActive ? "#0A1628" : "transparent",
+                color: isActive ? "#FFFFFF" : "#3D4A66",
+                border: "none",
+                borderRadius: 5,
+                cursor: "pointer",
+                transition: "all 160ms",
+              }}
+              onMouseEnter={(e) => {
+                if (!isActive) {
+                  e.currentTarget.style.background = "#F0F2F7";
+                  e.currentTarget.style.color = "#0A1628";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isActive) {
+                  e.currentTarget.style.background = "transparent";
+                  e.currentTarget.style.color = "#3D4A66";
+                }
+              }}
+            >
+              {t.label}
+            </button>
+          );
+        })}
       </div>
 
       {tab === "users" && <UsersTab />}
@@ -58,7 +109,7 @@ export default function AdminPage() {
   );
 }
 
-// -------------------- Users tab --------------------
+/* ─── Users tab ────────────────────────────────────────────────── */
 
 function UsersTab() {
   const { data: users, loading, reload } = useFetch("/users");
@@ -84,82 +135,135 @@ function UsersTab() {
   }, [list, query, spaceFilter]);
 
   return (
-    <section className="bg-surface-raised accent-bar rounded-sm">
-      <header className="px-4 py-3 border-b border-surface-border flex items-center gap-3 flex-wrap">
+    <section style={cardStyle}>
+      <header
+        style={{
+          padding: "12px 18px",
+          borderBottom: "1px solid #E2E5EC",
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+          flexWrap: "wrap",
+        }}
+      >
         <input
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="nombre, email…"
-          className="bg-surface-overlay border border-surface-border rounded-sm px-3 py-1.5 text-text-primary font-body text-sm focus:outline-none focus:border-primary focus:shadow-glow-primary transition-all duration-fast w-52"
+          style={{ ...inputStyle, width: 220 }}
+          onFocus={focusInput}
+          onBlur={blurInput}
         />
         <select
           value={spaceFilter}
           onChange={(e) => setSpaceFilter(e.target.value)}
-          className="bg-surface-overlay border border-surface-border rounded-sm px-3 py-1.5 text-text-primary font-body text-sm focus:outline-none focus:border-primary focus:shadow-glow-primary transition-all duration-fast"
+          style={selectStyle}
         >
           <option value="">todos los espacios</option>
           <option value="srs_coordinators">SRS coordinators</option>
           <option value="tech_field">Tech field</option>
           <option value="client_coordinator">Client coordinator</option>
         </select>
-        <div className="ml-auto flex items-center gap-3">
-          <span className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
-            {filtered.length} / {list.length}
+        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 14 }}>
+          <span
+            style={{
+              ...MONO_CAPS,
+              fontSize: 11,
+              color: "#0A1628",
+              letterSpacing: "0.14em",
+              fontVariantNumeric: "tabular-nums",
+            }}
+          >
+            <span style={{ fontWeight: 800 }}>{filtered.length}</span>{" "}
+            <span style={{ color: "#8B95A8" }}>/ {list.length}</span>
           </span>
           <CreateUserAction onCreated={() => reload()} />
         </div>
       </header>
 
-      <div className="grid grid-cols-12 gap-3 px-4 py-2 border-b border-surface-border text-text-tertiary">
-        <div className="col-span-3 label-caps">Name</div>
-        <div className="col-span-3 label-caps">Email</div>
-        <div className="col-span-2 label-caps">Type</div>
-        <div className="col-span-3 label-caps">Memberships</div>
-        <div className="col-span-1 label-caps text-right">Status</div>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "3fr 3fr 2fr 3fr 1fr",
+          gap: 12,
+          padding: "10px 18px",
+          background: "#F4F6F8",
+          borderBottom: "1px solid #E2E5EC",
+          ...MONO_CAPS,
+          fontSize: 9.5,
+          color: "#3D4A66",
+          letterSpacing: "0.14em",
+        }}
+      >
+        <div>Name</div>
+        <div>Email</div>
+        <div>Type</div>
+        <div>Memberships</div>
+        <div style={{ textAlign: "right" }}>Status</div>
       </div>
 
-      <div className="divide-y divide-surface-border max-h-[65vh] overflow-y-auto">
+      <div style={{ maxHeight: "65vh", overflowY: "auto" }}>
         {loading && <Empty text="cargando…" />}
         {!loading && filtered.length === 0 && <Empty text="— nada match —" />}
         {filtered.map((u) => (
           <div
             key={u.id}
-            className="grid grid-cols-12 gap-3 px-4 py-2.5 items-start"
+            style={{
+              display: "grid",
+              gridTemplateColumns: "3fr 3fr 2fr 3fr 1fr",
+              gap: 12,
+              padding: "12px 18px",
+              borderBottom: "1px solid #F0F2F7",
+              alignItems: "flex-start",
+            }}
           >
-            <div className="col-span-3 font-body text-sm text-text-primary truncate">
-              {u.full_name || <span className="text-text-tertiary">—</span>}
+            <div
+              style={{
+                fontFamily: JAKARTA,
+                fontSize: 13,
+                fontWeight: 600,
+                color: u.full_name ? "#0A1628" : "#8B95A8",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+              }}
+            >
+              {u.full_name || "—"}
             </div>
-            <div className="col-span-3 font-mono text-sm text-text-secondary truncate">
+            <div
+              style={{
+                fontFamily: MONO,
+                fontSize: 12,
+                color: "#3D4A66",
+                fontWeight: 500,
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+              }}
+            >
               {u.email}
             </div>
-            <div className="col-span-2 font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+            <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.14em" }}>
               {u.employment_type || "—"}
             </div>
-            <div className="col-span-3">
+            <div>
               {(u.memberships || []).map((m, i) => (
-                <div
-                  key={i}
-                  className="font-mono text-2xs uppercase tracking-widest-srs"
-                >
-                  <span className={m.active ? "text-primary-light" : "text-text-tertiary"}>
+                <div key={i} style={{ ...MONO_CAPS, fontSize: 9.5, letterSpacing: "0.12em", marginBottom: 2 }}>
+                  <span style={{ color: m.active ? "#0A1628" : "#8B95A8", fontWeight: 700 }}>
                     {m.space}
                   </span>
-                  {m.role && (
-                    <span className="ml-1 text-text-tertiary">· {m.role}</span>
-                  )}
+                  {m.role && <span style={{ marginLeft: 4, color: "#8B95A8" }}>· {m.role}</span>}
                   {m.authority_level && (
-                    <span className="ml-1 text-text-tertiary">
-                      · {m.authority_level}
-                    </span>
+                    <span style={{ marginLeft: 4, color: "#8B95A8" }}>· {m.authority_level}</span>
                   )}
                 </div>
               ))}
               {(u.memberships || []).length === 0 && (
-                <span className="font-body text-sm text-text-tertiary">—</span>
+                <span style={{ ...MONO_CAPS, fontSize: 9.5, color: "#8B95A8", letterSpacing: "0.14em" }}>—</span>
               )}
             </div>
-            <div className="col-span-1 text-right">
+            <div style={{ textAlign: "right" }}>
               <StatusDot active={u.is_active} />
             </div>
           </div>
@@ -169,7 +273,7 @@ function UsersTab() {
   );
 }
 
-// -------------------- Organizations tab --------------------
+/* ─── Organizations tab ────────────────────────────────────────── */
 
 function OrgsTab() {
   const { data: orgs, loading, reload } = useFetch("/organizations");
@@ -193,20 +297,27 @@ function OrgsTab() {
   }, [list, query, roleFilter]);
 
   return (
-    <section className="bg-surface-raised accent-bar rounded-sm">
-      <header className="px-4 py-3 border-b border-surface-border flex items-center gap-3 flex-wrap">
+    <section style={cardStyle}>
+      <header
+        style={{
+          padding: "12px 18px",
+          borderBottom: "1px solid #E2E5EC",
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+          flexWrap: "wrap",
+        }}
+      >
         <input
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="nombre, pais…"
-          className="bg-surface-overlay border border-surface-border rounded-sm px-3 py-1.5 text-text-primary font-body text-sm focus:outline-none focus:border-primary focus:shadow-glow-primary transition-all duration-fast w-52"
+          placeholder="nombre, país…"
+          style={{ ...inputStyle, width: 220 }}
+          onFocus={focusInput}
+          onBlur={blurInput}
         />
-        <select
-          value={roleFilter}
-          onChange={(e) => setRoleFilter(e.target.value)}
-          className="bg-surface-overlay border border-surface-border rounded-sm px-3 py-1.5 text-text-primary font-body text-sm focus:outline-none focus:border-primary focus:shadow-glow-primary transition-all duration-fast"
-        >
+        <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)} style={selectStyle}>
           <option value="">todos los roles</option>
           <option value="client">client</option>
           <option value="channel_partner">channel_partner</option>
@@ -217,20 +328,27 @@ function OrgsTab() {
           <option value="vendor_service">vendor_service</option>
           <option value="end_client_metadata">end_client_metadata</option>
         </select>
-        <div className="ml-auto flex items-center gap-3">
-          <span className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
-            {filtered.length} / {list.length}
+        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 14 }}>
+          <span
+            style={{
+              ...MONO_CAPS,
+              fontSize: 11,
+              color: "#0A1628",
+              letterSpacing: "0.14em",
+              fontVariantNumeric: "tabular-nums",
+            }}
+          >
+            <span style={{ fontWeight: 800 }}>{filtered.length}</span>{" "}
+            <span style={{ color: "#8B95A8" }}>/ {list.length}</span>
           </span>
           <CreateOrgAction onCreated={() => reload()} />
         </div>
       </header>
 
-      <div className="divide-y divide-surface-border max-h-[65vh] overflow-y-auto">
+      <div style={{ maxHeight: "65vh", overflowY: "auto" }}>
         {loading && <Empty text="cargando…" />}
         {!loading && filtered.length === 0 && <Empty text="— nada match —" />}
-        {filtered.map((o) => (
-          <OrgRow key={o.id} o={o} />
-        ))}
+        {filtered.map((o) => <OrgRow key={o.id} o={o} />)}
       </div>
     </section>
   );
@@ -238,20 +356,28 @@ function OrgsTab() {
 
 function OrgRow({ o }) {
   return (
-    <div className="px-4 py-3">
-      <div className="flex items-start justify-between gap-3 mb-1.5">
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-display text-base text-text-primary leading-tight">
+    <div style={{ padding: "14px 18px", borderBottom: "1px solid #F0F2F7" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 6 }}>
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+            <span
+              style={{
+                fontFamily: JAKARTA,
+                fontSize: 15,
+                fontWeight: 700,
+                color: "#0A1628",
+                lineHeight: 1.2,
+              }}
+            >
               {o.legal_name}
             </span>
             {o.display_name && o.display_name !== o.legal_name && (
-              <span className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+              <span style={{ ...MONO_CAPS, fontSize: 9.5, color: "#8B95A8", letterSpacing: "0.12em" }}>
                 · {o.display_name}
               </span>
             )}
             {o.country && (
-              <span className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+              <span style={{ ...MONO_CAPS, fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.14em" }}>
                 · {o.country}
               </span>
             )}
@@ -260,13 +386,20 @@ function OrgRow({ o }) {
         </div>
       </div>
 
-      {/* Roles */}
       {(o.active_roles || []).length > 0 && (
-        <div className="flex flex-wrap gap-1.5 mt-1">
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 6 }}>
           {o.active_roles.map((r) => (
             <span
               key={r}
-              className="bg-surface-base rounded-sm px-2 py-0.5 font-mono text-2xs uppercase tracking-widest-srs text-primary-light"
+              style={{
+                ...MONO_CAPS,
+                background: "#E8EDF5",
+                padding: "3px 8px",
+                borderRadius: 3,
+                fontSize: 9.5,
+                color: "#0A1628",
+                letterSpacing: "0.12em",
+              }}
             >
               {r}
             </span>
@@ -274,11 +407,21 @@ function OrgRow({ o }) {
         </div>
       )}
 
-      {/* Commission / revenue split hints */}
       {(o.partner_relationships || []).some(
         (r) => r.commission_rule || r.revenue_split_pct != null
       ) && (
-        <div className="mt-1.5 font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary flex flex-wrap gap-3">
+        <div
+          style={{
+            ...MONO_CAPS,
+            fontSize: 9,
+            color: "#8B95A8",
+            letterSpacing: "0.12em",
+            marginTop: 8,
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 12,
+          }}
+        >
           {o.partner_relationships
             .filter((r) => r.commission_rule)
             .map((r, i) => (
@@ -299,7 +442,7 @@ function OrgRow({ o }) {
   );
 }
 
-// -------------------- Audit log tab --------------------
+/* ─── Audit log tab ────────────────────────────────────────────── */
 
 function AuditTab() {
   const [actionFilter, setActionFilter] = useState("");
@@ -323,10 +466,22 @@ function AuditTab() {
   }, [users]);
 
   return (
-    <section className="bg-surface-raised accent-bar rounded-sm">
-      <header className="px-4 py-3 border-b border-surface-border flex items-center gap-3 flex-wrap">
+    <section style={cardStyle}>
+      <header
+        style={{
+          padding: "12px 18px",
+          borderBottom: "1px solid #E2E5EC",
+          display: "flex",
+          alignItems: "flex-end",
+          gap: 12,
+          flexWrap: "wrap",
+        }}
+      >
         <div>
-          <label className="label-caps block mb-0.5" htmlFor="af">
+          <label
+            htmlFor="af"
+            style={{ ...MONO_CAPS, display: "block", fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.14em", marginBottom: 4 }}
+          >
             Action exacta
           </label>
           <input
@@ -335,11 +490,16 @@ function AuditTab() {
             value={actionFilter}
             onChange={(e) => setActionFilter(e.target.value)}
             placeholder="work_order.advance.triage"
-            className="bg-surface-overlay border border-surface-border rounded-sm px-3 py-1.5 text-text-primary font-body text-sm focus:outline-none focus:border-primary focus:shadow-glow-primary transition-all duration-fast w-60"
+            style={{ ...inputStyle, width: 240 }}
+            onFocus={focusInput}
+            onBlur={blurInput}
           />
         </div>
         <div>
-          <label className="label-caps block mb-0.5" htmlFor="pref">
+          <label
+            htmlFor="pref"
+            style={{ ...MONO_CAPS, display: "block", fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.14em", marginBottom: 4 }}
+          >
             Prefix
           </label>
           <input
@@ -351,32 +511,67 @@ function AuditTab() {
               setActionFilter("");
             }}
             placeholder="work_order."
-            className="bg-surface-overlay border border-surface-border rounded-sm px-3 py-1.5 text-text-primary font-body text-sm focus:outline-none focus:border-primary focus:shadow-glow-primary transition-all duration-fast w-48"
+            style={{ ...inputStyle, width: 200 }}
+            onFocus={focusInput}
+            onBlur={blurInput}
           />
         </div>
         <button
           type="button"
           onClick={reload}
-          className="ml-auto font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary hover:text-primary-light border border-surface-border rounded-sm px-3 py-1.5 hover:border-primary transition-colors duration-fast self-end"
+          style={{
+            marginLeft: "auto",
+            ...MONO_CAPS,
+            fontSize: 10,
+            color: "#3D4A66",
+            letterSpacing: "0.14em",
+            border: "1px solid #C8CDD8",
+            borderRadius: 6,
+            padding: "8px 14px",
+            background: "#FFFFFF",
+            cursor: "pointer",
+            transition: "all 160ms",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.borderColor = "#0A1628";
+            e.currentTarget.style.color = "#0A1628";
+            e.currentTarget.style.background = "#F4F6F8";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.borderColor = "#C8CDD8";
+            e.currentTarget.style.color = "#3D4A66";
+            e.currentTarget.style.background = "#FFFFFF";
+          }}
         >
           Refresh
         </button>
       </header>
 
-      <div className="grid grid-cols-12 gap-3 px-4 py-2 border-b border-surface-border text-text-tertiary">
-        <div className="col-span-1 label-caps">Age</div>
-        <div className="col-span-4 label-caps">Action</div>
-        <div className="col-span-2 label-caps">Actor</div>
-        <div className="col-span-3 label-caps">Entity</div>
-        <div className="col-span-2 label-caps text-right">Method · IP</div>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 4fr 2fr 3fr 2fr",
+          gap: 12,
+          padding: "10px 18px",
+          background: "#F4F6F8",
+          borderBottom: "1px solid #E2E5EC",
+          ...MONO_CAPS,
+          fontSize: 9.5,
+          color: "#3D4A66",
+          letterSpacing: "0.14em",
+        }}
+      >
+        <div>Age</div>
+        <div>Action</div>
+        <div>Actor</div>
+        <div>Entity</div>
+        <div style={{ textAlign: "right" }}>Method · IP</div>
       </div>
 
-      <div className="divide-y divide-surface-border max-h-[65vh] overflow-y-auto">
+      <div style={{ maxHeight: "65vh", overflowY: "auto" }}>
         {loading && <Empty text="cargando…" />}
         {!loading && list.length === 0 && <Empty text="— nada registrado —" />}
-        {list.map((e) => (
-          <AuditRow key={e.id} e={e} usersById={usersById} />
-        ))}
+        {list.map((e) => <AuditRow key={e.id} e={e} usersById={usersById} />)}
       </div>
     </section>
   );
@@ -386,67 +581,170 @@ function AuditRow({ e, usersById }) {
   const actor = e.actor_user_id ? usersById.get(e.actor_user_id) : null;
   const actorLabel = actor?.full_name || (e.actor_user_id ? shortId(e.actor_user_id) : "system");
   const firstRef = (e.entity_refs || [])[0];
-  const actionTone = actionTint(e.action);
+  const actionColor = actionTint(e.action);
 
   return (
-    <div className="grid grid-cols-12 gap-3 px-4 py-2.5 items-start">
-      <div className="col-span-1 font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "1fr 4fr 2fr 3fr 2fr",
+        gap: 12,
+        padding: "12px 18px",
+        borderBottom: "1px solid #F0F2F7",
+        alignItems: "flex-start",
+      }}
+    >
+      <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#8B95A8", letterSpacing: "0.12em" }}>
         {e.ts ? formatAge(e.ts) : "—"}
       </div>
-      <div className="col-span-4 min-w-0">
-        <div className={`font-mono text-sm ${actionTone} truncate`}>
+      <div style={{ minWidth: 0 }}>
+        <div
+          style={{
+            fontFamily: MONO,
+            fontSize: 12.5,
+            color: actionColor,
+            fontWeight: 600,
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+        >
           {e.action}
         </div>
         {e.context_snapshot && Object.keys(e.context_snapshot).length > 0 && (
-          <div className="font-mono text-2xs text-text-tertiary truncate">
+          <div
+            style={{
+              fontFamily: MONO,
+              fontSize: 10,
+              color: "#8B95A8",
+              fontWeight: 500,
+              marginTop: 2,
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
             {summarizeContext(e.context_snapshot)}
           </div>
         )}
       </div>
-      <div className="col-span-2 font-body text-sm text-text-primary truncate">
+      <div
+        style={{
+          fontFamily: JAKARTA,
+          fontSize: 13,
+          fontWeight: 600,
+          color: "#0A1628",
+          whiteSpace: "nowrap",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+        }}
+      >
         {actorLabel}
       </div>
-      <div className="col-span-3 min-w-0">
+      <div style={{ minWidth: 0 }}>
         {firstRef ? (
           <>
-            <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+            <div style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.14em" }}>
               {firstRef.collection}
             </div>
-            <div className="font-body text-sm text-text-primary truncate">
+            <div
+              style={{
+                fontFamily: JAKARTA,
+                fontSize: 13,
+                fontWeight: 600,
+                color: "#0A1628",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                marginTop: 1,
+              }}
+            >
               {firstRef.label || shortId(firstRef.id)}
             </div>
           </>
         ) : (
-          <span className="text-text-tertiary">—</span>
+          <span style={{ ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em" }}>—</span>
         )}
       </div>
-      <div className="col-span-2 text-right">
-        <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+      <div style={{ textAlign: "right" }}>
+        <div style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.12em" }}>
           {e.method} {e.path ? shortPath(e.path) : ""}
         </div>
         {e.ip && (
-          <div className="font-mono text-2xs text-text-tertiary">{e.ip}</div>
+          <div style={{ fontFamily: MONO, fontSize: 10, color: "#8B95A8", marginTop: 1, fontWeight: 500 }}>
+            {e.ip}
+          </div>
         )}
       </div>
     </div>
   );
 }
 
-// -------------------- Helpers --------------------
+/* ─── Helpers + shared styles ─────────────────────────────────── */
+
+const cardStyle = {
+  background: "#FFFFFF",
+  border: "1px solid #E2E5EC",
+  borderLeft: "3px solid #0A1628",
+  borderRadius: 6,
+  overflow: "hidden",
+};
+
+const inputStyle = {
+  height: 32,
+  border: "1px solid #C8CDD8",
+  borderRadius: 6,
+  padding: "0 10px",
+  fontFamily: JAKARTA,
+  fontSize: 13,
+  fontWeight: 500,
+  color: "#0A1628",
+  outline: "none",
+  background: "#FFFFFF",
+  transition: "all 160ms",
+};
+
+const selectStyle = {
+  height: 32,
+  border: "1px solid #C8CDD8",
+  borderRadius: 6,
+  padding: "0 10px",
+  fontFamily: JAKARTA,
+  fontSize: 13,
+  fontWeight: 500,
+  color: "#0A1628",
+  background: "#FFFFFF",
+  outline: "none",
+  cursor: "pointer",
+};
+
+function focusInput(e) {
+  e.currentTarget.style.border = "1.5px solid #0A1628";
+  e.currentTarget.style.boxShadow = "0 0 0 3px rgba(10, 22, 40, 0.10)";
+}
+
+function blurInput(e) {
+  e.currentTarget.style.border = "1px solid #C8CDD8";
+  e.currentTarget.style.boxShadow = "none";
+}
 
 function StatusDot({ active }) {
   return (
     <span
-      className={`inline-block w-1.5 h-1.5 rounded-full ${
-        active ? "bg-success" : "bg-text-tertiary"
-      }`}
+      style={{
+        display: "inline-block",
+        width: 7,
+        height: 7,
+        borderRadius: "50%",
+        background: active ? "#16A34A" : "#C8CDD8",
+      }}
     />
   );
 }
 
 function Empty({ text }) {
   return (
-    <div className="px-4 py-6 font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+    <div style={{ padding: "24px 18px", ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em" }}>
       {text}
     </div>
   );
@@ -465,12 +763,12 @@ function shortPath(p) {
 }
 
 function actionTint(action) {
-  if (!action) return "text-text-secondary";
-  if (action.includes("cancel") || action.includes("reject")) return "text-danger";
-  if (action.includes("advance") || action.includes("approve")) return "text-success";
-  if (action.startsWith("auth.")) return "text-info";
-  if (action.includes("audit") || action.includes("internal")) return "text-warning";
-  return "text-text-primary";
+  if (!action) return "#3D4A66";
+  if (action.includes("cancel") || action.includes("reject")) return "#991B1B";
+  if (action.includes("advance") || action.includes("approve")) return "#0A6131";
+  if (action.startsWith("auth.")) return "#1E3A8A";
+  if (action.includes("audit") || action.includes("internal")) return "#7E5212";
+  return "#0A1628";
 }
 
 function summarizeContext(ctx) {
