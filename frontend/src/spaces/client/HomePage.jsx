@@ -1,16 +1,18 @@
 /**
- * Client Home — Fase 2 plumbing.
+ * Client Home · v2 paleta F (Iter 2.40).
+ *
  * Hotel 5 estrellas personality: clean, professional, zero internal noise.
- * No audit_log, no internal threads, no coordinator details. Only output.
+ * No audit_log, no internal threads, no coordinator details. Solo output.
  */
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { useFetch } from "../../lib/useFetch";
 import {
-  ProjectStatusBadge,
-  StatusBadge,
-} from "../../components/ui/Badges";
+  ProjectStatusPill,
+  WoStatusPill,
+} from "../../components/v2-shared/Pills";
+import { JAKARTA, MONO_CAPS } from "../../components/v2-shared/typography";
 
 export default function ClientHome() {
   const { user } = useAuth();
@@ -26,54 +28,109 @@ export default function ClientHome() {
   );
 
   return (
-    <div>
-      {/* Header */}
-      <div className="accent-bar pl-4 mb-8">
-        <div className="label-caps">Status</div>
-        <h1 className="font-display text-3xl text-text-primary leading-tight">
+    <div style={{ padding: "32px 40px", maxWidth: 1400 }}>
+      <div style={{ paddingLeft: 16, borderLeft: "3px solid #0A1628", marginBottom: 32 }}>
+        <div style={{ ...MONO_CAPS, fontSize: 11, color: "#8B95A8", marginBottom: 6 }}>
+          Status
+        </div>
+        <h1
+          style={{
+            fontFamily: JAKARTA,
+            fontSize: 32,
+            fontWeight: 800,
+            color: "#0A1628",
+            letterSpacing: "-0.02em",
+            lineHeight: 1.1,
+          }}
+        >
           {user?.full_name?.split(" ")[0] || "Cliente"}
         </h1>
-        <p className="font-body text-text-secondary mt-1">
+        <p
+          style={{
+            fontFamily: JAKARTA,
+            fontSize: 13.5,
+            color: "#3D4A66",
+            marginTop: 8,
+            fontWeight: 500,
+          }}
+        >
           Tus engagements con SRS · updates en tiempo real
         </p>
       </div>
 
-      {/* Active snapshot */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+          gap: 16,
+          marginBottom: 32,
+        }}
+      >
         <SnapshotCard label="Proyectos activos" value={projs.length} />
         <SnapshotCard label="Intervenciones activas" value={activeWOs.length} />
         <SnapshotCard
           label="Acciones pendientes"
           value={
-            wos.filter((w) => w.ball_in_court?.side === "client" && w.status === "resolved")
-              .length
+            wos.filter(
+              (w) => w.ball_in_court?.side === "client" && w.status === "resolved"
+            ).length
           }
           hint="esperando tu sign-off"
         />
       </div>
 
-      {/* Two columns */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))",
+          gap: 24,
+        }}
+      >
         <section>
-          <div className="label-caps mb-3">Proyectos</div>
-          <div className="bg-surface-raised rounded-md divide-y divide-surface-border">
+          <div style={{ ...MONO_CAPS, fontSize: 10, color: "#3D4A66", letterSpacing: "0.14em", marginBottom: 12 }}>
+            Proyectos
+          </div>
+          <div
+            style={{
+              background: "#FFFFFF",
+              border: "1px solid #E2E5EC",
+              borderRadius: 8,
+              overflow: "hidden",
+            }}
+          >
             {projs.length === 0 && (
-              <div className="px-4 py-6 font-body text-sm text-text-tertiary">
+              <div style={{ padding: "20px 16px", ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em" }}>
                 — sin proyectos activos —
               </div>
             )}
-            {projs.map((p) => (
-              <div key={p.id} className="px-4 py-3">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+            {projs.map((p, i) => (
+              <div
+                key={p.id}
+                style={{
+                  padding: "12px 16px",
+                  borderBottom: i < projs.length - 1 ? "1px solid #F0F2F7" : "none",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#8B95A8", letterSpacing: "0.12em" }}>
                       {p.code}
                     </div>
-                    <div className="font-body text-sm text-text-primary truncate">
+                    <div
+                      style={{
+                        fontFamily: JAKARTA,
+                        fontSize: 13,
+                        fontWeight: 600,
+                        color: "#0A1628",
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      }}
+                    >
                       {p.title}
                     </div>
                   </div>
-                  <ProjectStatusBadge status={p.status} />
+                  <ProjectStatusPill status={p.status} />
                 </div>
               </div>
             ))}
@@ -81,29 +138,56 @@ export default function ClientHome() {
         </section>
 
         <section>
-          <div className="label-caps mb-3">Intervenciones recientes</div>
-          <div className="bg-surface-raised rounded-md divide-y divide-surface-border">
+          <div style={{ ...MONO_CAPS, fontSize: 10, color: "#3D4A66", letterSpacing: "0.14em", marginBottom: 12 }}>
+            Intervenciones recientes
+          </div>
+          <div
+            style={{
+              background: "#FFFFFF",
+              border: "1px solid #E2E5EC",
+              borderRadius: 8,
+              overflow: "hidden",
+            }}
+          >
             {wos.length === 0 && (
-              <div className="px-4 py-6 font-body text-sm text-text-tertiary">
+              <div style={{ padding: "20px 16px", ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em" }}>
                 — ninguna registrada —
               </div>
             )}
-            {wos.slice(0, 10).map((w) => (
+            {wos.slice(0, 10).map((w, i, arr) => (
               <Link
                 key={w.id}
                 to={`/client/ops/${w.id}`}
-                className="block px-4 py-3 hover:bg-surface-overlay/60 transition-colors duration-fast"
+                style={{
+                  display: "block",
+                  padding: "12px 16px",
+                  borderBottom: i < arr.length - 1 ? "1px solid #F0F2F7" : "none",
+                  textDecoration: "none",
+                  transition: "background 160ms",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "#F7F8FA")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
               >
-                <div className="flex items-center justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#8B95A8", letterSpacing: "0.12em" }}>
                       {w.reference}
                     </div>
-                    <div className="font-body text-sm text-text-primary truncate">
+                    <div
+                      style={{
+                        fontFamily: JAKARTA,
+                        fontSize: 13,
+                        fontWeight: 600,
+                        color: "#0A1628",
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      }}
+                    >
                       {w.title}
                     </div>
                   </div>
-                  <StatusBadge status={w.status} />
+                  <WoStatusPill status={w.status} />
                 </div>
               </Link>
             ))}
@@ -111,8 +195,8 @@ export default function ClientHome() {
         </section>
       </div>
 
-      <p className="mt-8 text-text-tertiary font-mono text-2xs uppercase tracking-widest-srs">
-        Vista cliente · detalles operativos internos no se exponen aqui
+      <p style={{ marginTop: 32, ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em" }}>
+        Vista cliente · detalles operativos internos no se exponen acá
       </p>
     </div>
   );
@@ -120,13 +204,43 @@ export default function ClientHome() {
 
 function SnapshotCard({ label, value, hint }) {
   return (
-    <div className="bg-surface-raised rounded-md px-4 py-3">
-      <div className="label-caps mb-1">{label}</div>
-      <div className="font-display text-3xl text-text-primary leading-none">
+    <div
+      style={{
+        background: "#FFFFFF",
+        border: "1px solid #E2E5EC",
+        borderLeft: "3px solid #0A1628",
+        borderRadius: 8,
+        padding: "16px 20px",
+      }}
+    >
+      <div style={{ ...MONO_CAPS, fontSize: 10, color: "#3D4A66", letterSpacing: "0.14em", marginBottom: 8 }}>
+        {label}
+      </div>
+      <div
+        style={{
+          fontFamily: JAKARTA,
+          fontSize: 36,
+          fontWeight: 800,
+          color: "#0A1628",
+          letterSpacing: "-0.02em",
+          lineHeight: 1,
+          fontVariantNumeric: "tabular-nums",
+        }}
+      >
         {value}
       </div>
       {hint && (
-        <div className="font-body text-2xs text-text-tertiary mt-1.5">{hint}</div>
+        <div
+          style={{
+            fontFamily: JAKARTA,
+            fontSize: 12,
+            color: "#8B95A8",
+            marginTop: 8,
+            fontWeight: 500,
+          }}
+        >
+          {hint}
+        </div>
       )}
     </div>
   );

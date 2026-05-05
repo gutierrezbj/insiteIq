@@ -1,14 +1,17 @@
 /**
- * Tech Briefings today — vista consolidada de briefings de mis WOs activos.
- * Muestra estado por WO: no hay briefing / assembled (ack pendiente) /
- * acknowledged. Desde aqui el tech tapea y va al WO detail a leer + ack.
+ * Tech Briefings today · v2 paleta F (Iter 2.40).
+ *
+ * Vista consolidada: estado por WO activo (sin briefing / assembled-pendiente
+ * ack / acknowledged). Tap → WO detail para leer + ack.
  */
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { api } from "../../lib/api";
 import { useFetch } from "../../lib/useFetch";
-import { SeverityBadge, StatusBadge, formatAge } from "../../components/ui/Badges";
+import { formatAge } from "../../components/ui/Badges";
+import { WoStatusPill, SeverityPill } from "../../components/v2-shared/Pills";
+import { JAKARTA, MONO_CAPS } from "../../components/v2-shared/typography";
 
 export default function BriefingTodayPage() {
   const { user } = useAuth();
@@ -43,29 +46,39 @@ export default function BriefingTodayPage() {
       setBriefings(m);
       setLoadingBriefings(false);
     });
-    return () => {
-      alive = false;
-    };
+    return () => { alive = false; };
   }, [myActive]);
 
   return (
     <div>
-      <div className="accent-bar pl-3 mb-5">
-        <div className="label-caps text-text-secondary">Briefings</div>
-        <h1 className="font-display text-xl text-text-primary leading-tight">
-          Hoy · {myActive.length} activa{myActive.length === 1 ? "" : "s"}
+      <div style={{ paddingLeft: 12, borderLeft: "3px solid #0A1628", marginBottom: 20 }}>
+        <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#8B95A8", letterSpacing: "0.16em", marginBottom: 4 }}>
+          Briefings
+        </div>
+        <h1
+          style={{
+            fontFamily: JAKARTA,
+            fontSize: 22,
+            fontWeight: 800,
+            color: "#0A1628",
+            letterSpacing: "-0.015em",
+            lineHeight: 1.1,
+          }}
+        >
+          Hoy · {myActive.length}{" "}
+          <span style={{ color: "#3D4A66", fontWeight: 600 }}>
+            activa{myActive.length === 1 ? "" : "s"}
+          </span>
         </h1>
-        <p className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary mt-1">
+        <p style={{ ...MONO_CAPS, fontSize: 9.5, color: "#8B95A8", letterSpacing: "0.14em", marginTop: 6 }}>
           Leer antes de en_route · Decision #8
         </p>
       </div>
 
       {loading && <Empty text="cargando…" />}
-      {!loading && myActive.length === 0 && (
-        <Empty text="— sin trabajos activos —" />
-      )}
+      {!loading && myActive.length === 0 && <Empty text="— sin trabajos activos —" />}
 
-      <div className="space-y-3">
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         {myActive.map((w) => (
           <BriefingCard
             key={w.id}
@@ -84,68 +97,119 @@ function BriefingCard({ wo, briefing, loading }) {
   const acked = exists && briefing.status === "acknowledged";
   const assembled = exists && briefing.status === "assembled";
 
-  const statusPill = loading
-    ? { tint: "text-text-tertiary", bg: "bg-text-tertiary", label: "..." }
+  const statusStyle = loading
+    ? { dot: "#C8CDD8", color: "#8B95A8", label: "..." }
     : !exists
-    ? {
-        tint: "text-text-tertiary",
-        bg: "bg-text-tertiary",
-        label: "sin briefing",
-      }
+    ? { dot: "#C8CDD8", color: "#8B95A8", label: "sin briefing" }
     : acked
-    ? { tint: "text-success", bg: "bg-success", label: "acknowledged" }
-    : {
-        tint: "text-warning",
-        bg: "bg-warning",
-        label: "read + ack pendiente",
-      };
+    ? { dot: "#16A34A", color: "#0A6131", label: "acknowledged" }
+    : { dot: "#E8A33D", color: "#7E5212", label: "read + ack pendiente" };
 
   return (
     <Link
       to={`/tech/ops/${wo.id}`}
-      className="block bg-surface-raised accent-bar rounded-md p-4 hover:bg-surface-overlay/50 active:bg-surface-overlay/70 transition-colors duration-fast"
+      style={{
+        display: "block",
+        background: "#FFFFFF",
+        border: "1px solid #E2E5EC",
+        borderLeft: "3px solid #0A1628",
+        borderRadius: 8,
+        padding: 16,
+        textDecoration: "none",
+        transition: "background 160ms",
+      }}
+      onMouseEnter={(e) => (e.currentTarget.style.background = "#F7F8FA")}
+      onMouseLeave={(e) => (e.currentTarget.style.background = "#FFFFFF")}
     >
-      <div className="flex items-start justify-between gap-2 mb-2">
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, marginBottom: 8 }}>
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+            <span style={{ ...MONO_CAPS, fontSize: 9.5, color: "#8B95A8", letterSpacing: "0.12em" }}>
               {wo.reference}
             </span>
-            <SeverityBadge severity={wo.severity} />
+            <SeverityPill severity={wo.severity} />
           </div>
-          <div className="font-display text-base text-text-primary leading-tight">
+          <div
+            style={{
+              fontFamily: JAKARTA,
+              fontSize: 15,
+              fontWeight: 700,
+              color: "#0A1628",
+              lineHeight: 1.2,
+            }}
+          >
             {wo.title}
           </div>
         </div>
-        <span className="font-mono text-2xs uppercase tracking-widest-srs text-primary-light flex-shrink-0">
+        <span
+          style={{
+            ...MONO_CAPS,
+            fontSize: 12,
+            color: "#0A1628",
+            letterSpacing: "0.12em",
+            flexShrink: 0,
+            fontWeight: 800,
+          }}
+        >
           →
         </span>
       </div>
 
-      <div className="flex items-center gap-2 mt-2 flex-wrap">
-        <StatusBadge status={wo.status} />
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
+        <WoStatusPill status={wo.status} />
         <span
-          className={`flex items-center gap-1.5 font-mono text-2xs uppercase tracking-widest-srs ${statusPill.tint}`}
+          style={{
+            ...MONO_CAPS,
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            fontSize: 9.5,
+            color: statusStyle.color,
+            letterSpacing: "0.12em",
+            fontWeight: 800,
+          }}
         >
-          <span className={`w-1.5 h-1.5 rounded-full ${statusPill.bg}`} />
-          {statusPill.label}
+          <span style={{ width: 6, height: 6, borderRadius: "50%", background: statusStyle.dot }} />
+          {statusStyle.label}
         </span>
         {assembled && briefing.assembled_at && (
-          <span className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+          <span style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.12em" }}>
             · assembled {formatAge(briefing.assembled_at)} ago
           </span>
         )}
         {acked && briefing.acknowledged_at && (
-          <span className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+          <span style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.12em" }}>
             · acked {formatAge(briefing.acknowledged_at)} ago
           </span>
         )}
       </div>
 
       {assembled && briefing.coordinator_notes && (
-        <div className="mt-2 bg-surface-base rounded-sm px-3 py-2">
-          <div className="label-caps mb-0.5">Nota del coord</div>
-          <div className="font-body text-sm text-text-primary line-clamp-2">
+        <div
+          style={{
+            marginTop: 10,
+            background: "#F4F6F8",
+            border: "1px solid #E2E5EC",
+            borderRadius: 4,
+            padding: "8px 12px",
+          }}
+        >
+          <div style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.14em", marginBottom: 4 }}>
+            Nota del coord
+          </div>
+          <div
+            style={{
+              fontFamily: JAKARTA,
+              fontSize: 13,
+              color: "#0A1628",
+              fontWeight: 500,
+              lineHeight: 1.5,
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+            }}
+          >
             {briefing.coordinator_notes}
           </div>
         </div>
@@ -156,7 +220,19 @@ function BriefingCard({ wo, briefing, loading }) {
 
 function Empty({ text }) {
   return (
-    <div className="bg-surface-raised rounded-md p-5 font-body text-text-secondary text-center">
+    <div
+      style={{
+        background: "#FFFFFF",
+        border: "1px solid #E2E5EC",
+        borderRadius: 8,
+        padding: 20,
+        fontFamily: JAKARTA,
+        fontSize: 13.5,
+        color: "#3D4A66",
+        textAlign: "center",
+        fontWeight: 500,
+      }}
+    >
       {text}
     </div>
   );

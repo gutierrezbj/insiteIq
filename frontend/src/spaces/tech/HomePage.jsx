@@ -1,13 +1,14 @@
 /**
- * Tech Home — Fase 2 plumbing.
- * Cirujano de campo personality: alto contraste, grandes touch targets,
- * todo a la mano, estado claro por WO.
+ * Tech Home · v2 paleta F (Iter 2.40).
+ *
+ * PWA mobile-first. Lista de WOs asignadas activas + histórico reciente.
  */
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { useFetch } from "../../lib/useFetch";
-import { StatusBadge, SeverityBadge } from "../../components/ui/Badges";
+import { WoStatusPill, SeverityPill } from "../../components/v2-shared/Pills";
+import { JAKARTA, MONO_CAPS } from "../../components/v2-shared/typography";
 
 export default function TechHome() {
   const { user } = useAuth();
@@ -16,55 +17,94 @@ export default function TechHome() {
   const myWos = useMemo(() => {
     if (!wos) return { active: [], done: [] };
     const mine = wos.filter((w) => w.assigned_tech_user_id === user?.id);
-    const active = mine.filter(
-      (w) => !["closed", "cancelled"].includes(w.status)
-    );
-    const done = mine.filter((w) =>
-      ["closed", "cancelled"].includes(w.status)
-    );
+    const active = mine.filter((w) => !["closed", "cancelled"].includes(w.status));
+    const done = mine.filter((w) => ["closed", "cancelled"].includes(w.status));
     return { active, done };
   }, [wos, user]);
 
   return (
     <div>
-      {/* Header */}
-      <div className="accent-bar pl-3 mb-5">
-        <div className="label-caps text-text-secondary">Trabajos</div>
-        <h1 className="font-display text-xl text-text-primary leading-tight">
-          {myWos.active.length} activos
+      <div style={{ paddingLeft: 12, borderLeft: "3px solid #0A1628", marginBottom: 20 }}>
+        <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#8B95A8", letterSpacing: "0.16em", marginBottom: 4 }}>
+          Trabajos
+        </div>
+        <h1
+          style={{
+            fontFamily: JAKARTA,
+            fontSize: 22,
+            fontWeight: 800,
+            color: "#0A1628",
+            letterSpacing: "-0.015em",
+            lineHeight: 1.1,
+          }}
+        >
+          {myWos.active.length}{" "}
+          <span style={{ color: "#3D4A66", fontWeight: 600 }}>activos</span>
         </h1>
       </div>
 
-      {/* Active jobs — prominent */}
       {myWos.active.length === 0 && !loading && (
-        <div className="bg-surface-raised rounded-md p-5 font-body text-text-secondary">
+        <div
+          style={{
+            background: "#FFFFFF",
+            border: "1px solid #E2E5EC",
+            borderRadius: 8,
+            padding: "20px",
+            fontFamily: JAKARTA,
+            fontSize: 13.5,
+            color: "#3D4A66",
+            fontWeight: 500,
+          }}
+        >
           No tienes trabajos activos asignados ahora mismo.
         </div>
       )}
 
-      <div className="space-y-3 mb-6">
-        {myWos.active.map((w) => (
-          <ActiveJobCard key={w.id} wo={w} />
-        ))}
+      <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 24 }}>
+        {myWos.active.map((w) => <ActiveJobCard key={w.id} wo={w} />)}
       </div>
 
-      {/* Done recent */}
       {myWos.done.length > 0 && (
         <section>
-          <div className="label-caps mb-2">Historico reciente</div>
-          <div className="bg-surface-raised rounded-md divide-y divide-surface-border">
-            {myWos.done.slice(0, 5).map((w) => (
-              <div key={w.id} className="px-3 py-2.5">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="min-w-0">
-                    <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+          <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.14em", marginBottom: 8 }}>
+            Histórico reciente
+          </div>
+          <div
+            style={{
+              background: "#FFFFFF",
+              border: "1px solid #E2E5EC",
+              borderRadius: 8,
+              overflow: "hidden",
+            }}
+          >
+            {myWos.done.slice(0, 5).map((w, i, arr) => (
+              <div
+                key={w.id}
+                style={{
+                  padding: "10px 14px",
+                  borderBottom: i < arr.length - 1 ? "1px solid #F0F2F7" : "none",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#8B95A8", letterSpacing: "0.12em" }}>
                       {w.reference}
                     </div>
-                    <div className="font-body text-sm text-text-primary truncate">
+                    <div
+                      style={{
+                        fontFamily: JAKARTA,
+                        fontSize: 13,
+                        fontWeight: 600,
+                        color: "#0A1628",
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      }}
+                    >
                       {w.title}
                     </div>
                   </div>
-                  <StatusBadge status={w.status} />
+                  <WoStatusPill status={w.status} />
                 </div>
               </div>
             ))}
@@ -72,7 +112,7 @@ export default function TechHome() {
         </section>
       )}
 
-      <p className="mt-6 text-text-tertiary font-mono text-2xs uppercase tracking-widest-srs">
+      <p style={{ marginTop: 24, ...MONO_CAPS, fontSize: 9.5, color: "#8B95A8", letterSpacing: "0.14em" }}>
         PWA mode · actions pendientes Fase 4
       </p>
     </div>
@@ -83,28 +123,47 @@ function ActiveJobCard({ wo }) {
   return (
     <Link
       to={`/tech/ops/${wo.id}`}
-      className="block bg-surface-raised accent-bar rounded-md p-4 active:bg-surface-overlay/70 hover:bg-surface-overlay/50 transition-colors duration-fast"
+      style={{
+        display: "block",
+        background: "#FFFFFF",
+        border: "1px solid #E2E5EC",
+        borderLeft: "3px solid #0A1628",
+        borderRadius: 8,
+        padding: 16,
+        textDecoration: "none",
+        transition: "background 160ms",
+      }}
+      onMouseEnter={(e) => (e.currentTarget.style.background = "#F7F8FA")}
+      onMouseLeave={(e) => (e.currentTarget.style.background = "#FFFFFF")}
     >
-      <div className="flex items-start justify-between gap-2 mb-2">
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, marginBottom: 8 }}>
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+            <span style={{ ...MONO_CAPS, fontSize: 9.5, color: "#8B95A8", letterSpacing: "0.12em" }}>
               {wo.reference}
             </span>
-            <SeverityBadge severity={wo.severity} />
+            <SeverityPill severity={wo.severity} />
           </div>
-          <div className="font-display text-base text-text-primary leading-tight">
+          <div
+            style={{
+              fontFamily: JAKARTA,
+              fontSize: 15,
+              fontWeight: 700,
+              color: "#0A1628",
+              lineHeight: 1.2,
+            }}
+          >
             {wo.title}
           </div>
         </div>
-        <span className="font-mono text-2xs uppercase tracking-widest-srs text-primary-light flex-shrink-0">
+        <span style={{ ...MONO_CAPS, fontSize: 12, color: "#0A1628", letterSpacing: "0.12em", flexShrink: 0, fontWeight: 800 }}>
           →
         </span>
       </div>
-      <div className="flex items-center gap-2 mt-2">
-        <StatusBadge status={wo.status} />
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
+        <WoStatusPill status={wo.status} />
         {wo.deadline_resolve_at && (
-          <span className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+          <span style={{ ...MONO_CAPS, fontSize: 9.5, color: "#8B95A8", letterSpacing: "0.12em" }}>
             resolve in {formatDeadline(wo.deadline_resolve_at)}
           </span>
         )}

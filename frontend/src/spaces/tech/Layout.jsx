@@ -1,10 +1,19 @@
 /**
- * Tech Field PWA — Layout (mobile-first, offline-capable target)
- * Foundation placeholder. Track B will define the field personality
- * (high-contrast, large touch targets, Copilot briefing first).
+ * Tech Field PWA · Layout · v2 paleta F (Iter 2.40).
+ *
+ * Mobile-first. Header con brand + user · main con Outlet · bottom nav 4 tabs
+ * (Jobs/Briefing/Profile/Sign out). Touch targets generosos.
  */
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
+
+const JAKARTA = "'Plus Jakarta Sans', sans-serif";
+const MONO_CAPS = {
+  fontFamily: "'JetBrains Mono', monospace",
+  fontWeight: 700,
+  letterSpacing: "0.14em",
+  textTransform: "uppercase",
+};
 
 const nav = [
   { to: "/tech", label: "Jobs", end: true },
@@ -22,44 +31,113 @@ export default function TechLayout() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-surface-base safe-area-top safe-area-bottom">
-      <header className="px-5 py-4 bg-surface-raised border-b border-surface-border accent-bar flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="label-caps">InsiteIQ · Tech Field</div>
-          <div className="font-display text-base text-text-primary truncate">
+    <div
+      style={{
+        minHeight: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        background: "#F4F6F8",
+      }}
+      className="safe-area-top safe-area-bottom"
+    >
+      <header
+        style={{
+          padding: "16px 20px",
+          background: "#FFFFFF",
+          borderBottom: "1px solid #E2E5EC",
+          borderLeft: "3px solid #0A1628",
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
+          gap: 12,
+        }}
+      >
+        <div style={{ minWidth: 0 }}>
+          <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#8B95A8", letterSpacing: "0.16em", marginBottom: 4 }}>
+            InsiteIQ · Tech Field
+          </div>
+          <div
+            style={{
+              fontFamily: JAKARTA,
+              fontSize: 16,
+              fontWeight: 700,
+              color: "#0A1628",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
             {user?.full_name || "Technician"}
           </div>
         </div>
         <button
           onClick={() => navigate("/change-password")}
-          className="label-caps text-text-tertiary hover:text-primary whitespace-nowrap"
+          style={{
+            ...MONO_CAPS,
+            fontSize: 9.5,
+            color: "#3D4A66",
+            background: "transparent",
+            border: "none",
+            padding: "4px 0",
+            cursor: "pointer",
+            whiteSpace: "nowrap",
+            transition: "color 160ms",
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.color = "#0A1628")}
+          onMouseLeave={(e) => (e.currentTarget.style.color = "#3D4A66")}
         >
           Rotar pwd
         </button>
       </header>
 
-      <main className="flex-1 overflow-auto px-5 py-5">
+      <main style={{ flex: 1, overflow: "auto", padding: "20px" }}>
         <Outlet />
       </main>
 
-      <nav className="border-t border-surface-border bg-surface-raised grid grid-cols-4">
+      <nav
+        style={{
+          borderTop: "1px solid #E2E5EC",
+          background: "#FFFFFF",
+          display: "grid",
+          gridTemplateColumns: "repeat(4, 1fr)",
+        }}
+      >
         {nav.map((n) => (
           <NavLink
             key={n.to}
             to={n.to}
             end={n.end}
-            className={({ isActive }) =>
-              `py-3 text-center label-caps transition-colors duration-fast ${
-                isActive ? "text-primary" : "text-text-tertiary"
-              }`
-            }
+            style={({ isActive }) => ({
+              padding: "14px 4px",
+              textAlign: "center",
+              ...MONO_CAPS,
+              fontSize: 10,
+              color: isActive ? "#0A1628" : "#8B95A8",
+              textDecoration: "none",
+              borderTop: isActive ? "2px solid #0A1628" : "2px solid transparent",
+              fontWeight: isActive ? 800 : 700,
+              transition: "color 160ms, border-color 160ms",
+            })}
           >
             {n.label}
           </NavLink>
         ))}
         <button
           onClick={handleLogout}
-          className="py-3 text-center label-caps text-text-tertiary hover:text-primary"
+          style={{
+            padding: "14px 4px",
+            textAlign: "center",
+            ...MONO_CAPS,
+            fontSize: 10,
+            color: "#8B95A8",
+            background: "transparent",
+            border: "none",
+            borderTop: "2px solid transparent",
+            cursor: "pointer",
+            transition: "color 160ms",
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.color = "#991B1B")}
+          onMouseLeave={(e) => (e.currentTarget.style.color = "#8B95A8")}
         >
           Sign out
         </button>
