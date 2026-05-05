@@ -100,7 +100,7 @@ export default function CreateSubscriptionAction({ onCreated }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="font-mono font-semibold uppercase tracking-widest-srs text-2xs px-3 py-2 rounded-sm bg-primary text-text-inverse hover:bg-primary-light hover:shadow-glow-primary transition-all duration-fast ease-out-expo"
+        className="btn-trigger-v2"
       >
         + Subscription
       </button>

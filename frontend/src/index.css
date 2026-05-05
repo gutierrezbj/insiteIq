@@ -126,6 +126,35 @@
     background: #FFFFFF;
   }
 
+  /* Trigger button v2 (Iter 2.28 · Action chips · paleta F NAVEGANTE)
+     Usado por GenerateInvoiceAction, CreateSubscriptionAction,
+     CreateVendorInvoiceAction, CreateUserAction, CreateOrgAction,
+     CreateSiteAction y cualquier futuro chip "+ Add foo" que abre modal. */
+  .btn-trigger-v2 {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-size: 11px;
+    padding: 8px 14px;
+    background: #0A1628;
+    color: #FFFFFF;
+    border: 1.5px solid #0A1628;
+    border-radius: 6px;
+    cursor: pointer;
+    box-shadow: 0 2px 6px -1px rgba(10, 22, 40, 0.32);
+    transition: background 160ms, border-color 160ms, box-shadow 160ms;
+  }
+  .btn-trigger-v2:hover {
+    background: #1A2640;
+    border-color: #1A2640;
+    box-shadow: 0 4px 12px -2px rgba(10, 22, 40, 0.42);
+  }
+  .btn-trigger-v2:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
   /* WO marker pill · War Room (Mapbox / Leaflet markers) */
   .wo-pill {
     display: inline-flex;
