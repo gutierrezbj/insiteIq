@@ -10,6 +10,7 @@ import { api } from "../../lib/api";
 import ActionDialog, {
   DialogInput,
   DialogLabel,
+  DialogPanel,
   DialogTextarea,
 } from "../ui/ActionDialog";
 
@@ -75,7 +76,30 @@ export default function CostSnapshotAction({ wo, reload }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="font-mono font-semibold uppercase tracking-widest-srs text-2xs px-3 py-2 rounded-sm bg-surface-overlay text-text-secondary border border-surface-border hover:text-text-primary hover:border-primary transition-colors duration-fast"
+        style={{
+          fontFamily: "'JetBrains Mono', monospace",
+          fontWeight: 700,
+          letterSpacing: "0.14em",
+          textTransform: "uppercase",
+          fontSize: 11,
+          padding: "8px 14px",
+          background: "#FFFFFF",
+          color: "#3D4A66",
+          border: "1.5px solid #C8CDD8",
+          borderRadius: 6,
+          cursor: "pointer",
+          transition: "all 160ms",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.color = "#0A1628";
+          e.currentTarget.style.borderColor = "#0A1628";
+          e.currentTarget.style.background = "#F4F6F8";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.color = "#3D4A66";
+          e.currentTarget.style.borderColor = "#C8CDD8";
+          e.currentTarget.style.background = "#FFFFFF";
+        }}
       >
         {wo.cost_snapshot ? "Editar costo" : "Registrar costo"}
       </button>
@@ -144,9 +168,17 @@ export default function CostSnapshotAction({ wo, reload }) {
           </div>
         </div>
 
-        <div className="bg-surface-base rounded-sm p-3">
-          <div className="label-caps mb-2">Proxy coordination (opcional)</div>
-          <p className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary mb-2">
+        <DialogPanel label="Proxy coordination (opcional)">
+          <p
+            style={{
+              fontFamily: "'JetBrains Mono', monospace",
+              fontWeight: 700,
+              letterSpacing: "0.14em",
+              textTransform: "uppercase",
+              fontSize: 9.5,
+              color: "#8B95A8",
+            }}
+          >
             Horas de SRS coord absorbidas (no facturadas) — Principio #3
           </p>
           <div className="grid grid-cols-2 gap-2">
@@ -178,7 +210,7 @@ export default function CostSnapshotAction({ wo, reload }) {
               />
             </div>
           </div>
-        </div>
+        </DialogPanel>
 
         <div>
           <DialogLabel htmlFor="cs-cur" optional>
@@ -206,20 +238,66 @@ export default function CostSnapshotAction({ wo, reload }) {
         </div>
 
         {/* Totals preview */}
-        <div className="bg-surface-base rounded-sm p-3 border-l-2 border-primary">
-          <div className="grid grid-cols-2 gap-2 text-sm">
-            <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+        <div
+          style={{
+            background: "#F4F6F8",
+            border: "1px solid #E2E5EC",
+            borderLeft: "3px solid #0A1628",
+            borderRadius: 4,
+            padding: "10px 14px",
+          }}
+        >
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+            <div
+              style={{
+                fontFamily: "'JetBrains Mono', monospace",
+                fontWeight: 700,
+                letterSpacing: "0.14em",
+                textTransform: "uppercase",
+                fontSize: 9.5,
+                color: "#3D4A66",
+                alignSelf: "center",
+              }}
+            >
               Cost directo
             </div>
-            <div className="text-right font-display text-lg text-text-primary">
+            <div
+              style={{
+                textAlign: "right",
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
+                fontSize: 18,
+                fontWeight: 800,
+                color: "#0A1628",
+                fontVariantNumeric: "tabular-nums",
+              }}
+            >
               {directCost.toFixed(2)} {currency}
             </div>
             {coordN > 0 && (
               <>
-                <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+                <div
+                  style={{
+                    fontFamily: "'JetBrains Mono', monospace",
+                    fontWeight: 700,
+                    letterSpacing: "0.14em",
+                    textTransform: "uppercase",
+                    fontSize: 9.5,
+                    color: "#3D4A66",
+                    alignSelf: "center",
+                  }}
+                >
                   + Coord absorbido
                 </div>
-                <div className="text-right font-mono text-sm text-warning">
+                <div
+                  style={{
+                    textAlign: "right",
+                    fontFamily: "'JetBrains Mono', monospace",
+                    fontSize: 13,
+                    color: "#7E5212",
+                    fontWeight: 700,
+                    fontVariantNumeric: "tabular-nums",
+                  }}
+                >
                   {coordN.toFixed(2)} {currency}
                 </div>
               </>

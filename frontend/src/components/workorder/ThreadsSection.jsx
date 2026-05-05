@@ -1,27 +1,22 @@
 /**
- * ThreadsSection — Shared + Internal threads por WO (Decision #6/7 Modo 1).
+ * ThreadsSection · v2 paleta F (Iter 2.37).
  *
- * Decision #8 "WhatsApp kill from day 1" vive aqui. Todo lo que hoy va por
- * WhatsApp/email pasa por estos threads trackeados + sealable.
- *
- * Tabs:
- *   - Shared   → SRS + tech asignado + cliente (NOC/resident). Todos ven.
- *   - Internal → solo SRS coordinators. Nunca sale al cliente.
- *
- * Lazy creation en backend: el thread no existe hasta que alguien postea.
- * Sealing automatico al cerrar/cancelar el WO — thread inmutable.
+ * Shared + Internal threads por WO (Decision #6/7/8 Modo 1 · WhatsApp kill).
+ * Tabs: Shared (SRS+tech+cliente) / Internal (solo SRS). Lazy creation +
+ * sealed automatico al cerrar/cancelar.
  */
 import { useMemo, useState } from "react";
 import { api } from "../../lib/api";
 import { useFetch } from "../../lib/useFetch";
 import { useAuth } from "../../contexts/AuthContext";
 import { formatAge } from "../ui/Badges";
+import SectionCard, { SectionTitle } from "../v2-shared/SectionCard";
+import { JAKARTA, MONO, MONO_CAPS } from "../v2-shared/typography";
 
 export default function ThreadsSection({ wo, isSrs, isClient, isAssignedTech }) {
   const canSeeInternal = isSrs;
   const [tab, setTab] = useState("shared");
 
-  // Users directory for name resolution. Backend narrows scope for non-SRS.
   const { data: users } = useFetch("/users");
   const usersById = useMemo(() => {
     const m = new Map();
@@ -32,10 +27,19 @@ export default function ThreadsSection({ wo, isSrs, isClient, isAssignedTech }) 
   const activeTab = canSeeInternal ? tab : "shared";
 
   return (
-    <section className="bg-surface-raised accent-bar rounded-sm mt-4">
-      <header className="px-4 py-3 border-b border-surface-border">
-        <div className="label-caps mb-2">Threads · WhatsApp kill</div>
-        <div className="flex gap-1">
+    <SectionCard padding={0} style={{ marginTop: 16 }}>
+      <header style={{ padding: "14px 18px", borderBottom: "1px solid #E2E5EC" }}>
+        <SectionTitle marginBottom={10}>Threads · WhatsApp kill</SectionTitle>
+        <div
+          style={{
+            display: "inline-flex",
+            gap: 4,
+            padding: 4,
+            background: "#F4F6F8",
+            border: "1px solid #E2E5EC",
+            borderRadius: 6,
+          }}
+        >
           <TabButton
             active={activeTab === "shared"}
             onClick={() => setTab("shared")}
@@ -65,7 +69,7 @@ export default function ThreadsSection({ wo, isSrs, isClient, isAssignedTech }) 
               !["closed", "cancelled"].includes(wo.status)
         }
       />
-    </section>
+    </SectionCard>
   );
 }
 
@@ -74,21 +78,46 @@ function TabButton({ active, onClick, label, hint }) {
     <button
       type="button"
       onClick={onClick}
-      className={`px-3 py-2 rounded-sm font-mono text-2xs uppercase tracking-widest-srs transition-colors duration-fast ${
-        active
-          ? "bg-surface-overlay text-text-primary"
-          : "text-text-tertiary hover:text-text-secondary hover:bg-surface-overlay/60"
-      }`}
+      style={{
+        ...MONO_CAPS,
+        padding: "6px 12px",
+        fontSize: 10,
+        letterSpacing: "0.14em",
+        background: active ? "#0A1628" : "transparent",
+        color: active ? "#FFFFFF" : "#3D4A66",
+        border: "none",
+        borderRadius: 4,
+        cursor: "pointer",
+        transition: "all 160ms",
+      }}
+      onMouseEnter={(e) => {
+        if (!active) {
+          e.currentTarget.style.background = "#FFFFFF";
+          e.currentTarget.style.color = "#0A1628";
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (!active) {
+          e.currentTarget.style.background = "transparent";
+          e.currentTarget.style.color = "#3D4A66";
+        }
+      }}
     >
       {label}
-      <span className="ml-2 normal-case tracking-normal text-text-tertiary">
+      <span
+        style={{
+          marginLeft: 6,
+          textTransform: "none",
+          letterSpacing: "0.02em",
+          color: active ? "#C8CDD8" : "#8B95A8",
+          fontWeight: 500,
+        }}
+      >
         · {hint}
       </span>
     </button>
   );
 }
-
-// -------------------- Thread (messages + composer) --------------------
 
 function ThreadView({ wo, kind, usersById, canPost }) {
   const { data: thread } = useFetch(`/work-orders/${wo.id}/threads/${kind}`, {
@@ -104,45 +133,83 @@ function ThreadView({ wo, kind, usersById, canPost }) {
 
   return (
     <div>
-      <div className="px-4 py-3 border-b border-surface-border flex items-center justify-between gap-3 text-text-secondary">
-        <div className="font-mono text-2xs uppercase tracking-widest-srs">
+      <div
+        style={{
+          padding: "12px 18px",
+          borderBottom: "1px solid #E2E5EC",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 10,
+        }}
+      >
+        <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.14em" }}>
           {list.length} mensaje{list.length === 1 ? "" : "s"} ·{" "}
           {(thread?.participants?.length || 0)} participant
           {thread?.participants?.length === 1 ? "e" : "es"}
         </div>
         {sealed && (
-          <span className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+          <span style={{ ...MONO_CAPS, fontSize: 9.5, color: "#8B95A8", letterSpacing: "0.12em" }}>
             · sealed {formatAge(thread.sealed_at)} ago
           </span>
         )}
       </div>
 
-      {/* Messages list */}
-      <div className="px-4 py-3 space-y-2 max-h-[50vh] overflow-y-auto">
+      <div
+        style={{
+          padding: "12px 18px",
+          display: "flex",
+          flexDirection: "column",
+          gap: 8,
+          maxHeight: "50vh",
+          overflowY: "auto",
+        }}
+      >
         {list.length === 0 && (
-          <div className="font-body text-sm text-text-tertiary py-4">
-            — sin mensajes aun —
+          <div
+            style={{
+              fontFamily: JAKARTA,
+              fontSize: 13,
+              color: "#8B95A8",
+              padding: "16px 0",
+              fontWeight: 500,
+            }}
+          >
+            — sin mensajes aún —
           </div>
         )}
-        {list.map((m) => (
-          <MessageRow key={m.id} m={m} usersById={usersById} />
-        ))}
+        {list.map((m) => <MessageRow key={m.id} m={m} usersById={usersById} />)}
       </div>
 
-      {/* Composer */}
-      {!sealed && canPost && (
-        <Composer wo={wo} kind={kind} onPosted={reload} />
-      )}
+      {!sealed && canPost && <Composer wo={wo} kind={kind} onPosted={reload} />}
       {sealed && (
-        <div className="px-4 py-3 border-t border-surface-border font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+        <div
+          style={{
+            padding: "12px 18px",
+            borderTop: "1px solid #E2E5EC",
+            ...MONO_CAPS,
+            fontSize: 9.5,
+            color: "#8B95A8",
+            letterSpacing: "0.14em",
+          }}
+        >
           Thread sealed · no se aceptan mensajes nuevos
         </div>
       )}
       {!sealed && !canPost && (
-        <div className="px-4 py-3 border-t border-surface-border font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+        <div
+          style={{
+            padding: "12px 18px",
+            borderTop: "1px solid #E2E5EC",
+            ...MONO_CAPS,
+            fontSize: 9.5,
+            color: "#8B95A8",
+            letterSpacing: "0.14em",
+          }}
+        >
           {["closed", "cancelled"].includes(wo.status)
             ? "WO terminal · threads inmutables"
-            : "No tienes permiso para postear aqui"}
+            : "No tienes permiso para postear aquí"}
         </div>
       )}
     </div>
@@ -157,44 +224,88 @@ function MessageRow({ m, usersById }) {
 
   if (isSystem) {
     return (
-      <div className="flex items-center gap-2 font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary py-1">
-        <span className="w-1 h-1 rounded-full bg-text-tertiary" />
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          ...MONO_CAPS,
+          fontSize: 9.5,
+          color: "#8B95A8",
+          letterSpacing: "0.12em",
+          padding: "4px 0",
+        }}
+      >
+        <span style={{ width: 4, height: 4, borderRadius: "50%", background: "#8B95A8" }} />
         <span>{m.text}</span>
-        <span className="ml-auto">
-          {m.ts ? formatAge(m.ts) + " ago" : ""}
-        </span>
+        <span style={{ marginLeft: "auto" }}>{m.ts ? formatAge(m.ts) + " ago" : ""}</span>
       </div>
     );
   }
 
   return (
-    <div className="bg-surface-base rounded-sm p-3">
-      <div className="flex items-center justify-between gap-2 mb-1">
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="font-body text-sm text-text-primary font-semibold truncate">
+    <div
+      style={{
+        background: "#F4F6F8",
+        border: "1px solid #E2E5EC",
+        borderRadius: 4,
+        padding: "10px 12px",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 4 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+          <span
+            style={{
+              fontFamily: JAKARTA,
+              fontSize: 13,
+              color: "#0A1628",
+              fontWeight: 700,
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
             {actorName}
           </span>
           {isEvidence && (
-            <span className="font-mono text-2xs uppercase tracking-widest-srs text-primary-light">
+            <span style={{ ...MONO_CAPS, fontSize: 9.5, color: "#0A1628", letterSpacing: "0.12em", fontWeight: 800 }}>
               · evidence
             </span>
           )}
         </div>
-        <span className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary flex-shrink-0">
+        <span style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.12em", flexShrink: 0 }}>
           {m.ts ? formatAge(m.ts) + " ago" : ""}
         </span>
       </div>
       {m.text && (
-        <div className="font-body text-sm text-text-primary whitespace-pre-line">
+        <div
+          style={{
+            fontFamily: JAKARTA,
+            fontSize: 13,
+            color: "#0A1628",
+            whiteSpace: "pre-line",
+            fontWeight: 500,
+            lineHeight: 1.55,
+          }}
+        >
           {m.text}
         </div>
       )}
       {(m.attachments?.length || 0) > 0 && (
-        <div className="mt-2 flex flex-wrap gap-1.5">
+        <div style={{ marginTop: 8, display: "flex", flexWrap: "wrap", gap: 6 }}>
           {m.attachments.map((a, i) => (
             <span
               key={i}
-              className="bg-surface-overlay rounded-sm px-2 py-1 font-mono text-2xs text-text-secondary"
+              style={{
+                background: "#FFFFFF",
+                border: "1px solid #E2E5EC",
+                borderRadius: 3,
+                padding: "3px 8px",
+                fontFamily: MONO,
+                fontSize: 10,
+                color: "#3D4A66",
+                fontWeight: 600,
+              }}
             >
               {a.filename || a.url || `attach ${i + 1}`}
             </span>
@@ -232,11 +343,8 @@ function Composer({ wo, kind, onPosted }) {
   }
 
   return (
-    <form
-      onSubmit={submit}
-      className="px-4 py-3 border-t border-surface-border"
-    >
-      <div className="flex items-start gap-2">
+    <form onSubmit={submit} style={{ padding: "12px 18px", borderTop: "1px solid #E2E5EC" }}>
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
         <textarea
           rows={2}
           value={text}
@@ -249,26 +357,71 @@ function Composer({ wo, kind, onPosted }) {
               ? "Nota interna (no visible al cliente)…"
               : "Mensaje visible a todo el shared thread…"
           }
-          className="flex-1 bg-surface-overlay border border-surface-border rounded-sm px-3 py-2 text-text-primary font-body text-sm focus:outline-none focus:border-primary focus:shadow-glow-primary transition-all duration-fast ease-out-expo resize-y"
+          style={{
+            flex: 1,
+            background: "#FFFFFF",
+            border: "1px solid #C8CDD8",
+            borderRadius: 6,
+            padding: "8px 12px",
+            fontFamily: JAKARTA,
+            fontSize: 13,
+            color: "#0A1628",
+            fontWeight: 500,
+            outline: "none",
+            resize: "vertical",
+            transition: "all 160ms",
+            lineHeight: 1.5,
+          }}
+          onFocus={(e) => {
+            e.currentTarget.style.border = "1.5px solid #0A1628";
+            e.currentTarget.style.boxShadow = "0 0 0 3px rgba(10, 22, 40, 0.10)";
+          }}
+          onBlur={(e) => {
+            e.currentTarget.style.border = "1px solid #C8CDD8";
+            e.currentTarget.style.boxShadow = "none";
+          }}
         />
         <button
           type="submit"
           disabled={busy || !text.trim()}
-          className="font-mono font-semibold uppercase tracking-widest-srs text-2xs px-3 py-2.5 rounded-sm bg-primary text-text-inverse hover:bg-primary-light hover:shadow-glow-primary disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-fast ease-out-expo flex-shrink-0"
+          style={{
+            ...MONO_CAPS,
+            fontSize: 11,
+            letterSpacing: "0.14em",
+            padding: "10px 14px",
+            background: busy || !text.trim() ? "#C8CDD8" : "#0A1628",
+            color: "#FFFFFF",
+            border: `1.5px solid ${busy || !text.trim() ? "#C8CDD8" : "#0A1628"}`,
+            borderRadius: 6,
+            cursor: busy || !text.trim() ? "not-allowed" : "pointer",
+            opacity: busy || !text.trim() ? 0.5 : 1,
+            boxShadow: "0 2px 6px -1px rgba(10, 22, 40, 0.32)",
+            transition: "all 160ms",
+            flexShrink: 0,
+          }}
         >
           {busy ? "…" : "Enviar"}
         </button>
       </div>
-      <div className="mt-1.5 flex items-center justify-between">
-        <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
-          {kind === "internal" ? "interno · solo SRS" : "shared · todo el equipo"}
-        </div>
-        <div className="font-mono text-2xs text-text-tertiary">
-          ⌘/ctrl + enter
-        </div>
+      <div
+        style={{
+          marginTop: 6,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          ...MONO_CAPS,
+          fontSize: 9,
+          color: "#8B95A8",
+          letterSpacing: "0.12em",
+        }}
+      >
+        <div>{kind === "internal" ? "interno · solo SRS" : "shared · todo el equipo"}</div>
+        <div style={{ fontFamily: MONO, textTransform: "none", letterSpacing: 0 }}>⌘/ctrl + enter</div>
       </div>
       {error && (
-        <div className="mt-2 text-sm text-danger font-body">{error}</div>
+        <div style={{ marginTop: 8, fontFamily: JAKARTA, fontSize: 13, color: "#991B1B", fontWeight: 500 }}>
+          {error}
+        </div>
       )}
     </form>
   );
