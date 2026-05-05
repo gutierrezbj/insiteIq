@@ -41,10 +41,10 @@ function TechCard({ techName }) {
       <div className="relative flex-shrink-0">
         <Icon icon={ICONS.user} size={18} color="#3D4A66" />
         <span
-          className={`absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full${isPulse ? " animate-pulse" : ""}`}
+          className={`absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full${isPulse ? " animate-pulse" : ""}`}
           style={{
             background: dotColor,
-            boxShadow: `0 0 0 2px #FFFFFF, 0 0 0 3px ${dotColor}`,
+            boxShadow: `0 0 0 1.5px #FFFFFF, 0 0 0 2.5px ${dotColor}88`,
           }}
         />
       </div>
