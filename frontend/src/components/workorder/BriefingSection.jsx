@@ -1,13 +1,9 @@
 /**
- * BriefingSection — Copilot Briefing per WO (Domain 10.5).
+ * BriefingSection · v2 paleta F (Iter 2.35).
  *
- * Cierra el UX roto donde el tech tenia "Acknowledge briefing" sin poder
- * leer nada. Ahora:
- *   - SRS: assemble / refresh + coordinator_notes + ve estado del ack
- *   - Tech: lee el briefing completo + ack button inline con seguimiento
- *
- * Fase 1 minimal assembly (site summary + history). Fase 5 sumara
- * Site Bible + Device Bible + known_issues con confidence workflow.
+ * Copilot Briefing per WO (Domain 10.5). SRS assembla / edita coordinator_
+ * notes. Tech lee + acknowledge inline. AI summary (Y-c) + Site Bible +
+ * History + Similar cases (Y-a) + Site metrics. Cliente no lo ve.
  */
 import { useEffect, useState } from "react";
 import { api } from "../../lib/api";
@@ -17,6 +13,8 @@ import ActionDialog, {
   DialogLabel,
   DialogTextarea,
 } from "../ui/ActionDialog";
+import SectionCard, { SectionTitle } from "../v2-shared/SectionCard";
+import { JAKARTA, MONO, MONO_CAPS } from "../v2-shared/typography";
 
 export default function BriefingSection({ wo, isSrs, isAssignedTech }) {
   const { data, loading, error, reload } = useFetch(
@@ -24,61 +22,56 @@ export default function BriefingSection({ wo, isSrs, isAssignedTech }) {
     { deps: [wo.id] }
   );
 
-  // Clients don't see briefing at all (backend 403s). Hide section.
   if (!isSrs && !isAssignedTech) return null;
 
   if (loading) {
     return (
-      <Section label="Copilot Briefing">
-        <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+      <SectionWrapper>
+        <div style={{ padding: "20px 18px", ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em" }}>
           cargando…
         </div>
-      </Section>
+      </SectionWrapper>
     );
   }
-
-  // data shape: {exists: bool, ...} or error
-  const exists = data?.exists;
 
   if (error) {
     return (
-      <Section label="Copilot Briefing">
-        <div className="font-body text-sm text-danger">
+      <SectionWrapper>
+        <div style={{ padding: "20px 18px", fontFamily: JAKARTA, fontSize: 13, color: "#991B1B", fontWeight: 500 }}>
           error · {error.message}
         </div>
-      </Section>
+      </SectionWrapper>
     );
   }
 
+  const exists = data?.exists;
+
   if (!exists) {
     return (
-      <Section label="Copilot Briefing">
-        <div className="px-4 py-5 font-body text-sm text-text-secondary">
-          Aun no hay briefing ensamblado.
-          {isSrs && (
-            <>
-              {" "}
-              <span className="text-text-tertiary">
-                El briefing compila Site Bible + historial + device bible.
-                Tech debe ACK antes de en_route (o emergency override).
-              </span>
-            </>
-          )}
-          {!isSrs && (
-            <>
-              {" "}
-              <span className="text-text-tertiary">
-                Pedile a SRS que lo prepare antes de salir.
-              </span>
-            </>
-          )}
+      <SectionWrapper>
+        <div
+          style={{
+            padding: "20px 18px",
+            fontFamily: JAKARTA,
+            fontSize: 13,
+            color: "#3D4A66",
+            lineHeight: 1.55,
+            fontWeight: 500,
+          }}
+        >
+          Aún no hay briefing ensamblado.{" "}
+          <span style={{ color: "#8B95A8" }}>
+            {isSrs
+              ? "El briefing compila Site Bible + historial + device bible. Tech debe ACK antes de en_route (o emergency override)."
+              : "Pedile a SRS que lo prepare antes de salir."}
+          </span>
         </div>
         {isSrs && (
-          <div className="px-4 pb-4">
+          <div style={{ padding: "0 18px 18px" }}>
             <AssembleAction wo={wo} reload={reload} firstTime />
           </div>
         )}
-      </Section>
+      </SectionWrapper>
     );
   }
 
@@ -86,91 +79,129 @@ export default function BriefingSection({ wo, isSrs, isAssignedTech }) {
   const acked = briefing.status === "acknowledged";
 
   return (
-    <Section label="Copilot Briefing">
-      {/* Status header */}
-      <div className="px-4 py-3 border-b border-surface-border flex items-start justify-between gap-3 flex-wrap">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
+    <SectionWrapper>
+      <div
+        style={{
+          padding: "12px 18px",
+          borderBottom: "1px solid #E2E5EC",
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
+          gap: 12,
+          flexWrap: "wrap",
+        }}
+      >
+        <div style={{ minWidth: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
             <span
-              className={`flex items-center gap-1.5 font-mono text-2xs uppercase tracking-widest-srs ${
-                acked ? "text-success" : "text-warning"
-              }`}
+              style={{
+                ...MONO_CAPS,
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                fontSize: 9.5,
+                color: acked ? "#0A6131" : "#7E5212",
+                letterSpacing: "0.12em",
+              }}
             >
               <span
-                className={`w-1.5 h-1.5 rounded-full ${
-                  acked ? "bg-success" : "bg-warning"
-                }`}
+                style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: "50%",
+                  background: acked ? "#16A34A" : "#E8A33D",
+                }}
               />
               {briefing.status}
             </span>
-            <span className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+            <span style={{ ...MONO_CAPS, fontSize: 9.5, color: "#8B95A8", letterSpacing: "0.12em" }}>
               · assembled {formatAge(briefing.assembled_at)} ago
             </span>
             {acked && (
-              <span className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+              <span style={{ ...MONO_CAPS, fontSize: 9.5, color: "#8B95A8", letterSpacing: "0.12em" }}>
                 · acked {formatAge(briefing.acknowledged_at)} ago
               </span>
             )}
           </div>
           {briefing.supersedes_id && (
-            <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary mt-0.5">
+            <div style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.12em", marginTop: 4 }}>
               supersedes previous version
             </div>
           )}
         </div>
-        <div className="flex gap-2 flex-wrap">
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           {isSrs && <AssembleAction wo={wo} reload={reload} />}
           {isSrs && <EditNotesAction wo={wo} briefing={briefing} reload={reload} />}
-          {isAssignedTech && !acked && (
-            <AckInlineAction wo={wo} reload={reload} />
-          )}
+          {isAssignedTech && !acked && <AckInlineAction wo={wo} reload={reload} />}
         </div>
       </div>
 
-      {/* Body */}
-      <div className="px-4 py-3 space-y-4">
-        {/* AI Summary · Y-c · el sistema aprende */}
+      <div style={{ padding: "14px 18px", display: "flex", flexDirection: "column", gap: 18 }}>
         <AiSummaryBlock briefing={briefing} />
-
         <SiteBible s={briefing.site_bible_summary} />
-
         {briefing.coordinator_notes && (
           <div>
-            <div className="label-caps mb-1.5">Notas del coordinator</div>
-            <div className="bg-surface-base rounded-sm p-3 font-body text-sm text-text-primary whitespace-pre-line">
+            <Label>Notas del coordinator</Label>
+            <div
+              style={{
+                background: "#F4F6F8",
+                border: "1px solid #E2E5EC",
+                borderRadius: 4,
+                padding: "10px 12px",
+                fontFamily: JAKARTA,
+                fontSize: 13,
+                color: "#0A1628",
+                whiteSpace: "pre-line",
+                fontWeight: 500,
+                lineHeight: 1.55,
+              }}
+            >
               {briefing.coordinator_notes}
             </div>
           </div>
         )}
-
         <History history={briefing.history || []} />
-
         <SimilarCrossSite list={briefing.similar_cross_site || []} />
-
         <SiteMetrics m={briefing.site_metrics} />
-
         {(briefing.device_bible?.length || 0) === 0 &&
           (briefing.parts_estimate?.length || 0) === 0 && (
-            <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary border-t border-surface-border pt-3">
+            <div
+              style={{
+                ...MONO_CAPS,
+                fontSize: 9.5,
+                color: "#8B95A8",
+                letterSpacing: "0.14em",
+                borderTop: "1px solid #E2E5EC",
+                paddingTop: 12,
+              }}
+            >
               Device Bible + parts_estimate · placeholder Fase 5 (Domain 10 Knowledge)
             </div>
           )}
       </div>
-    </Section>
+    </SectionWrapper>
   );
 }
 
-function Section({ label, children }) {
+function SectionWrapper({ children }) {
   return (
-    <section className="bg-surface-raised accent-bar rounded-sm mt-4">
-      <div className="px-4 py-3 border-b border-surface-border">
-        <div className="label-caps">{label}</div>
-        <h2 className="font-display text-base text-text-primary leading-tight">
+    <SectionCard padding={0} style={{ marginTop: 16 }}>
+      <header style={{ padding: "14px 18px", borderBottom: "1px solid #E2E5EC" }}>
+        <SectionTitle marginBottom={4}>Copilot Briefing</SectionTitle>
+        <div style={{ fontFamily: JAKARTA, fontSize: 14, fontWeight: 700, color: "#0A1628" }}>
           Tech lee antes de salir — Decision #8 WhatsApp kill
-        </h2>
-      </div>
+        </div>
+      </header>
       {children}
-    </section>
+    </SectionCard>
+  );
+}
+
+function Label({ children }) {
+  return (
+    <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.14em", marginBottom: 6 }}>
+      {children}
+    </div>
   );
 }
 
@@ -182,41 +213,57 @@ function AiSummaryBlock({ briefing }) {
   const tokensIn = briefing.ai_summary_tokens_in;
   const tokensOut = briefing.ai_summary_tokens_out;
 
-  // Sin provider o sin generar: no mostramos nada (silencioso)
   if (!text && !error) return null;
 
   return (
-    <div className="bg-surface-base rounded-md p-4 border-l-2 border-primary">
-      <div className="flex items-center gap-2 mb-2 flex-wrap">
-        <span className="font-mono text-2xs uppercase tracking-widest-srs text-primary-light">
+    <div
+      style={{
+        background: "#F4F6F8",
+        border: "1px solid #E2E5EC",
+        borderLeft: "3px solid #0A1628",
+        borderRadius: 6,
+        padding: 14,
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
+        <span style={{ ...MONO_CAPS, fontSize: 10, color: "#0A1628", letterSpacing: "0.16em" }}>
           SRS Copilot · AI brief
         </span>
         {model && (
-          <span className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+          <span style={{ ...MONO_CAPS, fontSize: 9.5, color: "#8B95A8", letterSpacing: "0.12em" }}>
             · {model}
           </span>
         )}
         {tokensIn != null && tokensOut != null && (
-          <span className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+          <span style={{ ...MONO_CAPS, fontSize: 9.5, color: "#8B95A8", letterSpacing: "0.12em" }}>
             · {tokensIn}→{tokensOut} tok
           </span>
         )}
         {generatedAt && (
-          <span className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+          <span style={{ ...MONO_CAPS, fontSize: 9.5, color: "#8B95A8", letterSpacing: "0.12em" }}>
             · {formatAge(generatedAt)} ago
           </span>
         )}
       </div>
       {text ? (
-        <p className="font-body text-sm text-text-primary whitespace-pre-line leading-relaxed">
+        <p
+          style={{
+            fontFamily: JAKARTA,
+            fontSize: 13.5,
+            color: "#0A1628",
+            whiteSpace: "pre-line",
+            fontWeight: 500,
+            lineHeight: 1.6,
+          }}
+        >
           {text}
         </p>
       ) : (
-        <p className="font-mono text-2xs uppercase tracking-widest-srs text-danger">
+        <p style={{ ...MONO_CAPS, fontSize: 10, color: "#991B1B", letterSpacing: "0.14em" }}>
           error: {error}
         </p>
       )}
-      <p className="mt-2 font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+      <p style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.14em", marginTop: 8 }}>
         Y-c Fase 1 · basado en site history + similar cases + metrics · el sistema aprende
       </p>
     </div>
@@ -226,89 +273,139 @@ function AiSummaryBlock({ briefing }) {
 function SiteBible({ s }) {
   if (!s || Object.keys(s).length === 0) {
     return (
-      <div className="font-body text-sm text-text-tertiary">
+      <div style={{ ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em" }}>
         — sin site bible resumen —
       </div>
     );
   }
   return (
     <div>
-      <div className="label-caps mb-2">Site bible · resumen</div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <div className="bg-surface-base rounded-sm p-3">
-          <div className="font-display text-base text-text-primary leading-tight">
+      <Label>Site bible · resumen</Label>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+          gap: 12,
+        }}
+      >
+        <div
+          style={{
+            background: "#F4F6F8",
+            border: "1px solid #E2E5EC",
+            borderRadius: 4,
+            padding: "10px 12px",
+          }}
+        >
+          <div
+            style={{
+              fontFamily: JAKARTA,
+              fontSize: 14,
+              fontWeight: 700,
+              color: "#0A1628",
+              lineHeight: 1.2,
+            }}
+          >
             {s.site_name || "—"}
           </div>
           {s.address && (
-            <div className="font-body text-sm text-text-secondary mt-1">
+            <div style={{ fontFamily: JAKARTA, fontSize: 13, color: "#3D4A66", marginTop: 4, fontWeight: 500 }}>
               {s.address}
               {s.city && <>, {s.city}</>}
             </div>
           )}
-          <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary mt-1">
+          <div style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.12em", marginTop: 4 }}>
             {s.country || "—"}
             {s.timezone && <> · {s.timezone}</>}
           </div>
-          <div className="mt-2 font-mono text-2xs uppercase tracking-widest-srs">
+          <div style={{ ...MONO_CAPS, fontSize: 9.5, letterSpacing: "0.12em", marginTop: 8 }}>
             {s.has_physical_resident ? (
-              <span className="text-info">· residente fisico</span>
+              <span style={{ color: "#1E40AF", fontWeight: 800 }}>· residente físico</span>
             ) : (
-              <span className="text-text-tertiary">NOC remoto</span>
+              <span style={{ color: "#8B95A8" }}>NOC remoto</span>
             )}
             {s.confidence && (
-              <span className="ml-2 text-text-tertiary">
-                · confidence {s.confidence}
-              </span>
+              <span style={{ marginLeft: 8, color: "#8B95A8" }}>· confidence {s.confidence}</span>
             )}
           </div>
         </div>
 
-        <div className="bg-surface-base rounded-sm p-3">
-          <div className="label-caps mb-1">Contacto onsite</div>
+        <div
+          style={{
+            background: "#F4F6F8",
+            border: "1px solid #E2E5EC",
+            borderRadius: 4,
+            padding: "10px 12px",
+          }}
+        >
+          <Label>Contacto onsite</Label>
           {s.onsite_contact ? (
-            <div className="font-body text-sm">
-              <div className="text-text-primary">
+            <div>
+              <div style={{ fontFamily: JAKARTA, fontSize: 13, color: "#0A1628", fontWeight: 600 }}>
                 {s.onsite_contact.name}
                 {s.onsite_contact.role && (
-                  <span className="ml-2 font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+                  <span style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.12em", marginLeft: 8 }}>
                     · {s.onsite_contact.role}
                   </span>
                 )}
               </div>
               {s.onsite_contact.phone && (
-                <div className="font-mono text-sm text-text-primary">
+                <div style={{ fontFamily: MONO, fontSize: 13, color: "#0A1628", fontWeight: 600, marginTop: 2 }}>
                   {s.onsite_contact.phone}
                 </div>
               )}
               {s.onsite_contact.email && (
-                <div className="text-text-secondary">{s.onsite_contact.email}</div>
+                <div style={{ fontFamily: JAKARTA, fontSize: 13, color: "#3D4A66", fontWeight: 500 }}>
+                  {s.onsite_contact.email}
+                </div>
               )}
             </div>
           ) : (
-            <div className="font-body text-sm text-text-tertiary">
+            <div style={{ ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em" }}>
               — sin contacto —
             </div>
           )}
 
-          <div className="label-caps mt-3 mb-1">Access notes</div>
-          {s.access_notes ? (
-            <div className="font-body text-sm text-text-primary whitespace-pre-line">
-              {s.access_notes}
-            </div>
-          ) : (
-            <div className="font-body text-sm text-text-tertiary">
-              — sin notas —
-            </div>
-          )}
+          <div style={{ marginTop: 12 }}>
+            <Label>Access notes</Label>
+            {s.access_notes ? (
+              <div
+                style={{
+                  fontFamily: JAKARTA,
+                  fontSize: 13,
+                  color: "#0A1628",
+                  whiteSpace: "pre-line",
+                  fontWeight: 500,
+                  lineHeight: 1.5,
+                }}
+              >
+                {s.access_notes}
+              </div>
+            ) : (
+              <div style={{ ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em" }}>
+                — sin notas —
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
       {(s.known_issues?.length || 0) > 0 && (
-        <div className="mt-3">
-          <div className="label-caps mb-1">Known issues</div>
-          <ul className="space-y-1 font-body text-sm text-text-primary">
+        <div style={{ marginTop: 14 }}>
+          <Label>Known issues</Label>
+          <ul style={{ display: "flex", flexDirection: "column", gap: 4, listStyle: "none", padding: 0 }}>
             {s.known_issues.map((issue, i) => (
-              <li key={i}>· {issue}</li>
+              <li
+                key={i}
+                style={{
+                  fontFamily: JAKARTA,
+                  fontSize: 13,
+                  color: "#0A1628",
+                  fontWeight: 500,
+                  lineHeight: 1.5,
+                }}
+              >
+                · {issue}
+              </li>
             ))}
           </ul>
         </div>
@@ -320,18 +417,14 @@ function SiteBible({ s }) {
 function History({ history }) {
   return (
     <div>
-      <div className="label-caps mb-2">
-        Historico · ultimas {history.length} intervenciones mismo site
-      </div>
+      <Label>Histórico · últimas {history.length} intervenciones mismo site</Label>
       {history.length === 0 && (
-        <div className="font-body text-sm text-text-tertiary">
-          — sin historial previo aqui —
+        <div style={{ ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em" }}>
+          — sin historial previo aquí —
         </div>
       )}
-      <div className="space-y-2">
-        {history.map((h) => (
-          <HistoryRow key={h.work_order_id} h={h} />
-        ))}
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {history.map((h) => <HistoryRow key={h.work_order_id} h={h} />)}
       </div>
     </div>
   );
@@ -340,49 +433,68 @@ function History({ history }) {
 function HistoryRow({ h }) {
   const hasCapture = h.what_found_snippet || h.what_did_snippet;
   return (
-    <div className="bg-surface-base rounded-sm px-3 py-2">
-      <div className="flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+    <div
+      style={{
+        background: "#F4F6F8",
+        border: "1px solid #E2E5EC",
+        borderRadius: 4,
+        padding: "10px 12px",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#8B95A8", letterSpacing: "0.12em" }}>
             {h.reference}
-            {h.status && (
-              <span className="ml-2 text-text-secondary">· {h.status}</span>
-            )}
-            {h.after_hours && (
-              <span className="ml-2 text-warning">· after-hours</span>
-            )}
+            {h.status && <span style={{ marginLeft: 8, color: "#3D4A66", fontWeight: 700 }}>· {h.status}</span>}
+            {h.after_hours && <span style={{ marginLeft: 8, color: "#7E5212", fontWeight: 800 }}>· after-hours</span>}
             {h.time_on_site_minutes != null && (
-              <span className="ml-2 text-text-secondary">
+              <span style={{ marginLeft: 8, color: "#3D4A66", fontWeight: 700 }}>
                 · {h.time_on_site_minutes}min on site
               </span>
             )}
           </div>
-          <div className="font-body text-sm text-text-primary truncate">
+          <div
+            style={{
+              fontFamily: JAKARTA,
+              fontSize: 13,
+              fontWeight: 600,
+              color: "#0A1628",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              marginTop: 2,
+            }}
+          >
             {h.title}
           </div>
         </div>
-        <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary flex-shrink-0">
+        <div style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.12em", flexShrink: 0 }}>
           {h.closed_at ? formatAge(h.closed_at) + " ago" : "—"}
         </div>
       </div>
       {hasCapture && (
-        <div className="mt-2 text-2xs space-y-0.5 pl-2 border-l border-surface-border">
+        <div
+          style={{
+            marginTop: 8,
+            paddingLeft: 10,
+            borderLeft: "1px solid #E2E5EC",
+            display: "flex",
+            flexDirection: "column",
+            gap: 4,
+          }}
+        >
           {h.what_found_snippet && (
             <div>
-              <span className="font-mono uppercase tracking-widest-srs text-text-tertiary">
-                found:
-              </span>{" "}
-              <span className="font-body text-sm text-text-primary">
+              <span style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.12em" }}>found:</span>{" "}
+              <span style={{ fontFamily: JAKARTA, fontSize: 12.5, color: "#0A1628", fontWeight: 500 }}>
                 {h.what_found_snippet}
               </span>
             </div>
           )}
           {h.what_did_snippet && (
             <div>
-              <span className="font-mono uppercase tracking-widest-srs text-text-tertiary">
-                did:
-              </span>{" "}
-              <span className="font-body text-sm text-text-primary">
+              <span style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.12em" }}>did:</span>{" "}
+              <span style={{ fontFamily: JAKARTA, fontSize: 12.5, color: "#0A1628", fontWeight: 500 }}>
                 {h.what_did_snippet}
               </span>
             </div>
@@ -397,50 +509,75 @@ function SimilarCrossSite({ list }) {
   if (!list || list.length === 0) return null;
   return (
     <div>
-      <div className="label-caps mb-2 flex items-center gap-2">
-        Similar cases · mismo cliente otros sites
-        <span className="font-mono text-2xs uppercase tracking-widest-srs text-primary-light normal-case">
+      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 6 }}>
+        <Label>Similar cases · mismo cliente otros sites</Label>
+        <span style={{ ...MONO_CAPS, fontSize: 9.5, color: "#0A1628", letterSpacing: "0.12em", textTransform: "none", fontWeight: 700 }}>
           · Y-a · sistema que aprende
         </span>
       </div>
-      <p className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary mb-2">
-        Keyword overlap · usa lo que ya se hizo antes antes de improvisar
+      <p style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.14em", marginBottom: 8 }}>
+        Keyword overlap · usá lo que ya se hizo antes antes de improvisar
       </p>
-      <div className="space-y-2">
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         {list.map((s) => (
           <div
             key={s.work_order_id}
-            className="bg-surface-base rounded-sm px-3 py-2"
+            style={{
+              background: "#F4F6F8",
+              border: "1px solid #E2E5EC",
+              borderRadius: 4,
+              padding: "10px 12px",
+            }}
           >
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-mono text-2xs uppercase tracking-widest-srs text-primary-light">
+            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10 }}>
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                  <span style={{ ...MONO_CAPS, fontSize: 9.5, color: "#0A1628", letterSpacing: "0.12em", fontWeight: 800 }}>
                     score {s.match_score}
                   </span>
-                  <span className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+                  <span style={{ ...MONO_CAPS, fontSize: 9.5, color: "#8B95A8", letterSpacing: "0.12em" }}>
                     {s.reference}
                   </span>
                   {s.site_name && (
-                    <span className="font-mono text-2xs uppercase tracking-widest-srs text-text-secondary">
+                    <span style={{ ...MONO_CAPS, fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.12em" }}>
                       @ {s.site_name}
                     </span>
                   )}
                   {s.severity && (
-                    <span className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+                    <span style={{ ...MONO_CAPS, fontSize: 9.5, color: "#8B95A8", letterSpacing: "0.12em" }}>
                       · {s.severity}
                     </span>
                   )}
                 </div>
-                <div className="font-body text-sm text-text-primary truncate mt-0.5">
+                <div
+                  style={{
+                    fontFamily: JAKARTA,
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: "#0A1628",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    marginTop: 2,
+                  }}
+                >
                   {s.title}
                 </div>
                 {s.matched_terms && s.matched_terms.length > 0 && (
-                  <div className="mt-1 flex flex-wrap gap-1">
+                  <div style={{ marginTop: 6, display: "flex", flexWrap: "wrap", gap: 4 }}>
                     {s.matched_terms.map((t) => (
                       <span
                         key={t}
-                        className="bg-surface-overlay rounded-sm px-1.5 py-0.5 font-mono text-2xs uppercase tracking-widest-srs text-primary-light"
+                        style={{
+                          ...MONO_CAPS,
+                          background: "#E8EDF5",
+                          padding: "2px 6px",
+                          borderRadius: 3,
+                          fontSize: 9,
+                          color: "#0A1628",
+                          letterSpacing: "0.12em",
+                          fontWeight: 800,
+                        }}
                       >
                         {t}
                       </span>
@@ -448,31 +585,43 @@ function SimilarCrossSite({ list }) {
                   </div>
                 )}
               </div>
-              <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary flex-shrink-0 text-right">
+              <div
+                style={{
+                  ...MONO_CAPS,
+                  fontSize: 9,
+                  color: "#8B95A8",
+                  letterSpacing: "0.12em",
+                  textAlign: "right",
+                  flexShrink: 0,
+                }}
+              >
                 {s.closed_at ? formatAge(s.closed_at) + " ago" : "—"}
-                {s.time_on_site_minutes != null && (
-                  <div>{s.time_on_site_minutes}min</div>
-                )}
+                {s.time_on_site_minutes != null && <div>{s.time_on_site_minutes}min</div>}
               </div>
             </div>
             {(s.what_found_snippet || s.what_did_snippet) && (
-              <div className="mt-2 text-2xs space-y-0.5 pl-2 border-l border-primary/40">
+              <div
+                style={{
+                  marginTop: 8,
+                  paddingLeft: 10,
+                  borderLeft: "2px solid #0A1628",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 4,
+                }}
+              >
                 {s.what_found_snippet && (
                   <div>
-                    <span className="font-mono uppercase tracking-widest-srs text-text-tertiary">
-                      found:
-                    </span>{" "}
-                    <span className="font-body text-sm text-text-primary">
+                    <span style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.12em" }}>found:</span>{" "}
+                    <span style={{ fontFamily: JAKARTA, fontSize: 12.5, color: "#0A1628", fontWeight: 500 }}>
                       {s.what_found_snippet}
                     </span>
                   </div>
                 )}
                 {s.what_did_snippet && (
                   <div>
-                    <span className="font-mono uppercase tracking-widest-srs text-text-tertiary">
-                      did:
-                    </span>{" "}
-                    <span className="font-body text-sm text-text-primary">
+                    <span style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.12em" }}>did:</span>{" "}
+                    <span style={{ fontFamily: JAKARTA, fontSize: 12.5, color: "#0A1628", fontWeight: 500 }}>
                       {s.what_did_snippet}
                     </span>
                   </div>
@@ -491,22 +640,18 @@ function SiteMetrics({ m }) {
   const warning = (m.after_hours_pct ?? 0) >= 30 || (m.repeat_count_30d ?? 0) >= 3;
   return (
     <div>
-      <div className="label-caps mb-2">
-        Site metrics · ultimos {m.window_days}d
-      </div>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-        <MetricCard
-          label="WOs"
-          value={m.wo_count_90d ?? 0}
-          hint="en 90d"
-        />
+      <Label>Site metrics · últimos {m.window_days}d</Label>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
+          gap: 8,
+        }}
+      >
+        <MetricCard label="WOs" value={m.wo_count_90d ?? 0} hint="en 90d" />
         <MetricCard
           label="Avg resolve"
-          value={
-            m.avg_resolution_minutes != null
-              ? formatMin(m.avg_resolution_minutes)
-              : "—"
-          }
+          value={m.avg_resolution_minutes != null ? formatMin(m.avg_resolution_minutes) : "—"}
           hint="closed → created"
         />
         <MetricCard
@@ -523,8 +668,8 @@ function SiteMetrics({ m }) {
         />
       </div>
       {warning && (
-        <div className="mt-2 font-mono text-2xs uppercase tracking-widest-srs text-warning">
-          · señal: site con patron anormal — revisar root cause o scheduling
+        <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#7E5212", letterSpacing: "0.14em", marginTop: 8, fontWeight: 800 }}>
+          · señal: site con patrón anormal — revisar root cause o scheduling
         </div>
       )}
     </div>
@@ -532,20 +677,33 @@ function SiteMetrics({ m }) {
 }
 
 function MetricCard({ label, value, hint, tone = "default" }) {
-  const tint =
-    tone === "warning"
-      ? "text-warning"
-      : tone === "danger"
-      ? "text-danger"
-      : "text-text-primary";
+  const valueColor = tone === "warning" ? "#7E5212" : tone === "danger" ? "#991B1B" : "#0A1628";
   return (
-    <div className="bg-surface-base rounded-sm p-3">
-      <div className="label-caps mb-0.5">{label}</div>
-      <div className={`font-display text-lg leading-none ${tint}`}>
+    <div
+      style={{
+        background: "#FFFFFF",
+        border: "1px solid #E2E5EC",
+        borderRadius: 4,
+        padding: "10px 12px",
+      }}
+    >
+      <div style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.14em", marginBottom: 4 }}>
+        {label}
+      </div>
+      <div
+        style={{
+          fontFamily: JAKARTA,
+          fontSize: 18,
+          fontWeight: 800,
+          color: valueColor,
+          fontVariantNumeric: "tabular-nums",
+          lineHeight: 1,
+        }}
+      >
         {value}
       </div>
       {hint && (
-        <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary mt-1">
+        <div style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.14em", marginTop: 4 }}>
           {hint}
         </div>
       )}
@@ -561,7 +719,54 @@ function formatMin(m) {
   return `${(h / 24).toFixed(1)}d`;
 }
 
-// -------------------- Actions --------------------
+/* ─── Actions ──────────────────────────────────────────────────── */
+
+function ActionBtn({ onClick, label, tone = "default" }) {
+  const styles = {
+    default: { bg: "#FFFFFF", color: "#3D4A66", border: "#C8CDD8", hoverColor: "#0A1628", hoverBorder: "#0A1628", hoverBg: "#F4F6F8" },
+    primary: { bg: "#0A1628", color: "#FFFFFF", border: "#0A1628", hoverBg: "#1A2640", shadow: "rgba(10, 22, 40, 0.32)" },
+  };
+  const s = styles[tone] || styles.default;
+  const isPrimary = tone === "primary";
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        ...MONO_CAPS,
+        fontSize: 11,
+        letterSpacing: "0.14em",
+        padding: "8px 14px",
+        background: s.bg,
+        color: s.color,
+        border: `1.5px solid ${s.border}`,
+        borderRadius: 6,
+        cursor: "pointer",
+        boxShadow: isPrimary ? `0 2px 6px -1px ${s.shadow}` : "none",
+        transition: "all 160ms",
+      }}
+      onMouseEnter={(e) => {
+        if (isPrimary) {
+          e.currentTarget.style.background = s.hoverBg;
+          e.currentTarget.style.borderColor = s.hoverBg;
+          e.currentTarget.style.boxShadow = `0 4px 12px -2px ${s.shadow}`;
+        } else {
+          e.currentTarget.style.color = s.hoverColor;
+          e.currentTarget.style.borderColor = s.hoverBorder;
+          e.currentTarget.style.background = s.hoverBg;
+        }
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = s.bg;
+        e.currentTarget.style.color = s.color;
+        e.currentTarget.style.borderColor = s.border;
+        if (isPrimary) e.currentTarget.style.boxShadow = `0 2px 6px -1px ${s.shadow}`;
+      }}
+    >
+      {label}
+    </button>
+  );
+}
 
 function AssembleAction({ wo, reload, firstTime }) {
   const [open, setOpen] = useState(false);
@@ -573,17 +778,11 @@ function AssembleAction({ wo, reload, firstTime }) {
 
   return (
     <>
-      <button
-        type="button"
+      <ActionBtn
         onClick={() => setOpen(true)}
-        className={`font-mono font-semibold uppercase tracking-widest-srs text-2xs px-3 py-2 rounded-sm transition-all duration-fast ease-out-expo ${
-          firstTime
-            ? "bg-primary text-text-inverse hover:bg-primary-light hover:shadow-glow-primary"
-            : "bg-surface-overlay text-text-secondary border border-surface-border hover:text-text-primary hover:border-primary"
-        }`}
-      >
-        {firstTime ? "Assemble briefing" : "Re-assemble"}
-      </button>
+        label={firstTime ? "Assemble briefing" : "Re-assemble"}
+        tone={firstTime ? "primary" : "default"}
+      />
       <ActionDialog
         open={open}
         onClose={() => setOpen(false)}
@@ -591,14 +790,14 @@ function AssembleAction({ wo, reload, firstTime }) {
         subtitle={
           firstTime
             ? "Genera briefing con site summary + historial. Tech recibe para leer antes de en_route."
-            : "Supersede la version actual. Util si cambio el contexto del site o hay nueva info."
+            : "Supersede la versión actual. Útil si cambió el contexto del site o hay nueva info."
         }
         submitLabel={firstTime ? "Assemble" : "Re-assemble"}
         onSubmit={submit}
       >
-        <p className="font-body text-sm text-text-secondary">
-          La version actual (si existe) queda marcada superseded y el ack
-          previo pierde validez — el tech tiene que leer y confirmar de nuevo.
+        <p style={{ fontFamily: JAKARTA, fontSize: 13, color: "#3D4A66", lineHeight: 1.55, fontWeight: 500 }}>
+          La versión actual (si existe) queda marcada superseded y el ack previo pierde validez —
+          el tech tiene que leer y confirmar de nuevo.
         </p>
       </ActionDialog>
     </>
@@ -609,7 +808,6 @@ function EditNotesAction({ wo, briefing, reload }) {
   const [open, setOpen] = useState(false);
   const [notes, setNotes] = useState(briefing.coordinator_notes || "");
 
-  // Refresh local state if the briefing reloads with different notes
   useEffect(() => {
     setNotes(briefing.coordinator_notes || "");
   }, [briefing.coordinator_notes]);
@@ -623,13 +821,10 @@ function EditNotesAction({ wo, briefing, reload }) {
 
   return (
     <>
-      <button
-        type="button"
+      <ActionBtn
         onClick={() => setOpen(true)}
-        className="font-mono font-semibold uppercase tracking-widest-srs text-2xs px-3 py-2 rounded-sm bg-surface-overlay text-text-secondary border border-surface-border hover:text-text-primary hover:border-primary transition-colors duration-fast"
-      >
-        {briefing.coordinator_notes ? "Editar notas" : "+ notas"}
-      </button>
+        label={briefing.coordinator_notes ? "Editar notas" : "+ notas"}
+      />
       <ActionDialog
         open={open}
         onClose={() => setOpen(false)}
@@ -647,7 +842,7 @@ function EditNotesAction({ wo, briefing, reload }) {
             rows={5}
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="Cliente pidió específicamente X · OJO con el acceso sabado · confirmar badge el dia antes…"
+            placeholder="Cliente pidió específicamente X · OJO con el acceso sábado · confirmar badge el día antes…"
           />
         </div>
       </ActionDialog>
@@ -665,13 +860,7 @@ function AckInlineAction({ wo, reload }) {
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="font-mono font-semibold uppercase tracking-widest-srs text-2xs px-3 py-2 rounded-sm bg-primary text-text-inverse hover:bg-primary-light hover:shadow-glow-primary transition-all duration-fast ease-out-expo"
-      >
-        Acknowledge
-      </button>
+      <ActionBtn onClick={() => setOpen(true)} label="Acknowledge" tone="primary" />
       <ActionDialog
         open={open}
         onClose={() => setOpen(false)}
@@ -680,9 +869,9 @@ function AckInlineAction({ wo, reload }) {
         submitLabel="Confirmar"
         onSubmit={submit}
       >
-        <p className="font-body text-sm text-text-secondary">
-          Queda registrado con tu user_id + timestamp en audit_log. Si el
-          SRS re-assembla con cambios, el ack vuelve a pedirse.
+        <p style={{ fontFamily: JAKARTA, fontSize: 13, color: "#3D4A66", lineHeight: 1.55, fontWeight: 500 }}>
+          Queda registrado con tu user_id + timestamp en audit_log. Si el SRS re-assembla con cambios,
+          el ack vuelve a pedirse.
         </p>
       </ActionDialog>
     </>
