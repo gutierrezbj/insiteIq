@@ -1,8 +1,8 @@
 /**
- * RateCardSection — display + edit del rate_card del agreement (X-a).
- * Render gated dentro del AgreementDetailPage.
+ * RateCardSection · v2 paleta F (Iter 2.31).
  *
- * Cubre los 3 patrones de cotizacion:
+ * Display + edit del rate_card del agreement (X-a). Render gated dentro
+ * del AgreementDetailPage. Cubre los 3 patrones de cotización:
  *   - break-fix reactivo: base_price_per_wo
  *   - hourly engagement: hourly_rate
  *   - recurring: monthly_fee / quarterly_fee
@@ -18,39 +18,66 @@ import ActionDialog, {
   DialogLabel,
   DialogTextarea,
 } from "../ui/ActionDialog";
+import SectionCard, { SectionTitle } from "../v2-shared/SectionCard";
+import { JAKARTA, MONO, MONO_CAPS } from "../v2-shared/typography";
 
 export default function RateCardSection({ agreement, isSrs, reload }) {
   const rc = agreement.rate_card;
   const currency = agreement.currency || "USD";
 
   return (
-    <section className="bg-surface-raised accent-bar rounded-sm mt-4">
-      <header className="px-4 py-3 border-b border-surface-border flex items-start justify-between gap-3 flex-wrap">
+    <SectionCard padding={0} style={{ marginTop: 16 }}>
+      <header
+        style={{
+          padding: "14px 18px",
+          borderBottom: "1px solid #E2E5EC",
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
+          gap: 12,
+          flexWrap: "wrap",
+        }}
+      >
         <div>
-          <div className="label-caps">Rate card</div>
-          <h2 className="font-display text-base text-text-primary leading-tight">
+          <SectionTitle marginBottom={2}>Rate card</SectionTitle>
+          <div style={{ fontFamily: JAKARTA, fontSize: 14, fontWeight: 700, color: "#0A1628" }}>
             Tarifas del contrato
-          </h2>
+          </div>
         </div>
         {isSrs && <EditRatesAction agreement={agreement} reload={reload} />}
       </header>
 
       {!rc && (
-        <div className="px-4 py-6 font-body text-sm text-text-secondary">
-          Sin rate card cargada. {isSrs ? (
-            <span className="text-text-tertiary">
-              Cargala con el boton de arriba — necesaria para pre-invoice y P&L.
-            </span>
-          ) : (
-            <span className="text-text-tertiary">Pendiente de carga por SRS.</span>
-          )}
+        <div
+          style={{
+            padding: "20px 18px",
+            fontFamily: JAKARTA,
+            fontSize: 13,
+            color: "#3D4A66",
+            fontWeight: 500,
+            lineHeight: 1.55,
+          }}
+        >
+          Sin rate card cargada.{" "}
+          <span style={{ color: "#8B95A8" }}>
+            {isSrs
+              ? "Cárgala con el botón de arriba — necesaria para pre-invoice y P&L."
+              : "Pendiente de carga por SRS."}
+          </span>
         </div>
       )}
 
       {rc && (
-        <div className="px-4 py-4">
+        <div style={{ padding: 18 }}>
           {/* Primary pricing row */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+              gap: 12,
+              marginBottom: 16,
+            }}
+          >
             {rc.base_price_per_wo != null && (
               <PriceCard
                 label="Per work order"
@@ -86,7 +113,13 @@ export default function RateCardSection({ agreement, isSrs, reload }) {
           </div>
 
           {/* Modifiers row */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+              gap: 16,
+            }}
+          >
             <Stat
               label="Parts markup"
               value={`${rc.parts_markup_pct}%`}
@@ -124,9 +157,28 @@ export default function RateCardSection({ agreement, isSrs, reload }) {
           </div>
 
           {rc.notes && (
-            <div className="mt-4 bg-surface-base rounded-sm p-3">
-              <div className="label-caps mb-1">Notas</div>
-              <p className="font-body text-sm text-text-primary whitespace-pre-line">
+            <div
+              style={{
+                marginTop: 16,
+                background: "#F4F6F8",
+                border: "1px solid #E2E5EC",
+                borderRadius: 4,
+                padding: "12px 14px",
+              }}
+            >
+              <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.14em", marginBottom: 6 }}>
+                Notas
+              </div>
+              <p
+                style={{
+                  fontFamily: JAKARTA,
+                  fontSize: 13,
+                  color: "#0A1628",
+                  whiteSpace: "pre-line",
+                  fontWeight: 500,
+                  lineHeight: 1.55,
+                }}
+              >
                 {rc.notes}
               </p>
             </div>
@@ -135,27 +187,56 @@ export default function RateCardSection({ agreement, isSrs, reload }) {
       )}
 
       {rc && (
-        <div className="px-4 py-2 border-t border-surface-border font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+        <div
+          style={{
+            padding: "10px 18px",
+            borderTop: "1px solid #E2E5EC",
+            ...MONO_CAPS,
+            fontSize: 9.5,
+            color: "#8B95A8",
+            letterSpacing: "0.14em",
+          }}
+        >
           X-a · Fase 3 Admin/Finance · invoice auto-gen en X-b
         </div>
       )}
-    </section>
+    </SectionCard>
   );
 }
 
 function PriceCard({ label, value, currency, suffix }) {
   return (
-    <div className="bg-surface-base rounded-sm p-3">
-      <div className="label-caps mb-1">{label}</div>
-      <div className="flex items-baseline gap-1">
-        <span className="font-display text-2xl text-text-primary leading-none">
+    <div
+      style={{
+        background: "#FFFFFF",
+        border: "1px solid #E2E5EC",
+        borderLeft: "3px solid #0A1628",
+        borderRadius: 6,
+        padding: "12px 14px",
+      }}
+    >
+      <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.14em", marginBottom: 6 }}>
+        {label}
+      </div>
+      <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+        <span
+          style={{
+            fontFamily: JAKARTA,
+            fontSize: 24,
+            fontWeight: 800,
+            color: "#0A1628",
+            letterSpacing: "-0.01em",
+            fontVariantNumeric: "tabular-nums",
+            lineHeight: 1,
+          }}
+        >
           {value.toFixed(2)}
         </span>
-        <span className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+        <span style={{ ...MONO_CAPS, fontSize: 9.5, color: "#8B95A8", letterSpacing: "0.14em" }}>
           {currency}
         </span>
       </div>
-      <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary mt-1">
+      <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#8B95A8", letterSpacing: "0.14em", marginTop: 6 }}>
         {suffix}
       </div>
     </div>
@@ -165,10 +246,14 @@ function PriceCard({ label, value, currency, suffix }) {
 function Stat({ label, value, hint }) {
   return (
     <div>
-      <div className="label-caps mb-0.5">{label}</div>
-      <div className="font-body text-sm text-text-primary">{value}</div>
+      <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.14em", marginBottom: 4 }}>
+        {label}
+      </div>
+      <div style={{ fontFamily: JAKARTA, fontSize: 14, fontWeight: 700, color: "#0A1628" }}>
+        {value}
+      </div>
       {hint && (
-        <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary mt-0.5">
+        <div style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.12em", marginTop: 2, fontWeight: 600 }}>
           {hint}
         </div>
       )}
@@ -176,7 +261,7 @@ function Stat({ label, value, hint }) {
   );
 }
 
-// -------------------- Edit action --------------------
+/* ─── Edit action ──────────────────────────────────────────────── */
 
 function EditRatesAction({ agreement, reload }) {
   const [open, setOpen] = useState(false);
@@ -187,23 +272,14 @@ function EditRatesAction({ agreement, reload }) {
   const [monthlyFee, setMonthlyFee] = useState(rc.monthly_fee ?? "");
   const [quarterlyFee, setQuarterlyFee] = useState(rc.quarterly_fee ?? "");
   const [partsMarkup, setPartsMarkup] = useState(rc.parts_markup_pct ?? 60);
-  const [partsPassThrough, setPartsPassThrough] = useState(
-    rc.parts_pass_through ?? false
-  );
-  const [travelIncluded, setTravelIncluded] = useState(
-    rc.travel_included ?? true
-  );
+  const [partsPassThrough, setPartsPassThrough] = useState(rc.parts_pass_through ?? false);
+  const [travelIncluded, setTravelIncluded] = useState(rc.travel_included ?? true);
   const [travelFlat, setTravelFlat] = useState(rc.travel_flat_fee ?? "");
   const [mileage, setMileage] = useState(rc.mileage_rate_per_km ?? "");
-  const [afterHoursMult, setAfterHoursMult] = useState(
-    rc.after_hours_multiplier ?? ""
-  );
+  const [afterHoursMult, setAfterHoursMult] = useState(rc.after_hours_multiplier ?? "");
   const [notes, setNotes] = useState(rc.notes ?? "");
-  const [threshold, setThreshold] = useState(
-    agreement.parts_approval_threshold_usd ?? ""
-  );
+  const [threshold, setThreshold] = useState(agreement.parts_approval_threshold_usd ?? "");
 
-  // Re-sync if agreement changes underneath
   useEffect(() => {
     const next = agreement.rate_card || {};
     setBasePrice(next.base_price_per_wo ?? "");
@@ -250,11 +326,7 @@ function EditRatesAction({ agreement, reload }) {
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="font-mono font-semibold uppercase tracking-widest-srs text-2xs px-3 py-2 rounded-sm bg-primary text-text-inverse hover:bg-primary-light hover:shadow-glow-primary transition-all duration-fast ease-out-expo"
-      >
+      <button type="button" onClick={() => setOpen(true)} className="btn-trigger-v2">
         {agreement.rate_card ? "Editar tarifas" : "+ Cargar tarifas"}
       </button>
 
@@ -267,12 +339,8 @@ function EditRatesAction({ agreement, reload }) {
         submitDisabled={!anyPrimary}
         onSubmit={submit}
       >
-        <div className="bg-surface-base rounded-sm p-3 space-y-2">
-          <div className="label-caps">Precios primarios</div>
-          <p className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
-            Completa el que aplique. Al menos uno requerido.
-          </p>
-          <div className="grid grid-cols-2 gap-2">
+        <FieldGroup label="Precios primarios" hint="Completa el que aplique. Al menos uno requerido.">
+          <Grid2>
             <div>
               <DialogLabel htmlFor="rc-base" optional>
                 Per WO ({agreement.currency || "USD"})
@@ -326,15 +394,14 @@ function EditRatesAction({ agreement, reload }) {
                 min="0"
                 value={quarterlyFee}
                 onChange={(e) => setQuarterlyFee(e.target.value)}
-                placeholder="menos comun"
+                placeholder="menos común"
               />
             </div>
-          </div>
-        </div>
+          </Grid2>
+        </FieldGroup>
 
-        <div className="bg-surface-base rounded-sm p-3 space-y-2">
-          <div className="label-caps">Partes y materiales</div>
-          <div className="grid grid-cols-2 gap-2">
+        <FieldGroup label="Partes y materiales">
+          <Grid2>
             <div>
               <DialogLabel htmlFor="rc-pm">Markup % (default 60)</DialogLabel>
               <DialogInput
@@ -358,17 +425,16 @@ function EditRatesAction({ agreement, reload }) {
                 placeholder="200"
               />
             </div>
-          </div>
+          </Grid2>
           <DialogCheckbox
             id="rc-pass"
             label="Parts pass-through (cliente provee, SRS no markup)"
             checked={partsPassThrough}
             onChange={setPartsPassThrough}
           />
-        </div>
+        </FieldGroup>
 
-        <div className="bg-surface-base rounded-sm p-3 space-y-2">
-          <div className="label-caps">Travel</div>
+        <FieldGroup label="Travel">
           <DialogCheckbox
             id="rc-tinc"
             label="Travel incluido en tarifa base"
@@ -376,7 +442,7 @@ function EditRatesAction({ agreement, reload }) {
             onChange={setTravelIncluded}
           />
           {!travelIncluded && (
-            <div className="grid grid-cols-2 gap-2">
+            <Grid2>
               <div>
                 <DialogLabel htmlFor="rc-tflat" optional>
                   Flat por visita
@@ -403,9 +469,9 @@ function EditRatesAction({ agreement, reload }) {
                   onChange={(e) => setMileage(e.target.value)}
                 />
               </div>
-            </div>
+            </Grid2>
           )}
-        </div>
+        </FieldGroup>
 
         <div>
           <DialogLabel htmlFor="rc-ah" optional>
@@ -431,11 +497,45 @@ function EditRatesAction({ agreement, reload }) {
             rows={3}
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="Cobertura geografica · items incluidos/excluidos · cap facturacion · caveats"
+            placeholder="Cobertura geográfica · items incluidos/excluidos · cap facturación · caveats"
           />
         </div>
       </ActionDialog>
     </>
+  );
+}
+
+function FieldGroup({ label, hint, children }) {
+  return (
+    <div
+      style={{
+        background: "#F4F6F8",
+        border: "1px solid #E2E5EC",
+        borderRadius: 6,
+        padding: 14,
+        display: "flex",
+        flexDirection: "column",
+        gap: 10,
+      }}
+    >
+      <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.14em" }}>
+        {label}
+      </div>
+      {hint && (
+        <p style={{ ...MONO_CAPS, fontSize: 9.5, color: "#8B95A8", letterSpacing: "0.14em", fontWeight: 600 }}>
+          {hint}
+        </p>
+      )}
+      {children}
+    </div>
+  );
+}
+
+function Grid2({ children }) {
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+      {children}
+    </div>
   );
 }
 
