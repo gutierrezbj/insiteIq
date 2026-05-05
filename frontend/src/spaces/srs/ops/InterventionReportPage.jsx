@@ -1,26 +1,27 @@
 /**
- * Intervention Report viewer — Principle #1 (emit outward).
+ * Intervention Report viewer · v2 paleta F (Iter 2.38).
  *
- * Cierra el loop visualmente: cuando una WO se cierra, el backend
- * auto-ensambla el report con 5 canales emit (JSON/HTML/CSV/email/webhook).
- * Esta pagina lo renderiza + permite dispatch manual y regenerate.
+ * Principle #1 (emit outward). Cierra loop visual: cuando una WO cierra,
+ * backend auto-ensambla report con 5 canales emit (JSON/HTML/CSV/email/
+ * webhook). Esta página renderiza + dispatch manual + regenerate.
  *
  * Scoping: backend ya devuelve vista scoped por rol (client NO ve
- * internal_message_count). La UI es agnostica.
+ * internal_message_count). UI agnóstica.
  */
 import { useState } from "react";
-import { Link, useLocation, useParams } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 import { useFetch } from "../../../lib/useFetch";
 import { api } from "../../../lib/api";
 import { useAuth } from "../../../contexts/AuthContext";
-import BackLink from "../../../components/ui/BackLink";
 import ActionDialog, {
   DialogCheckbox,
   DialogInput,
   DialogLabel,
-  DialogTextarea,
 } from "../../../components/ui/ActionDialog";
 import { formatAge } from "../../../components/ui/Badges";
+import BackLinkV2 from "../../../components/v2-shared/BackLinkV2";
+import SectionCard, { SectionTitle } from "../../../components/v2-shared/SectionCard";
+import { JAKARTA, MONO, MONO_CAPS } from "../../../components/v2-shared/typography";
 
 export default function InterventionReportPage() {
   const { wo_id } = useParams();
@@ -44,20 +45,38 @@ export default function InterventionReportPage() {
   if (error) {
     const is404 = error.status === 404;
     return (
-      <div className="px-4 md:px-8 py-5 md:py-7 max-w-wide">
-        <BackLink to={backHref} label="Work order" />
-        <div className="accent-bar bg-surface-raised p-5 rounded-md">
-          <div className="label-caps mb-1">Intervention report</div>
-          <h1 className="font-display text-xl text-text-primary leading-tight mb-2">
-            {is404 ? "Aun no ensamblado" : "Error"}
+      <div style={{ padding: "32px 40px", maxWidth: 1400 }}>
+        <BackLinkV2 to={backHref} label="Work order" />
+        <SectionCard>
+          <SectionTitle marginBottom={6}>Intervention report</SectionTitle>
+          <h1
+            style={{
+              fontFamily: JAKARTA,
+              fontSize: 22,
+              fontWeight: 800,
+              color: "#0A1628",
+              letterSpacing: "-0.015em",
+              marginBottom: 8,
+            }}
+          >
+            {is404 ? "Aún no ensamblado" : "Error"}
           </h1>
-          <p className="font-body text-text-secondary mb-4">
+          <p
+            style={{
+              fontFamily: JAKARTA,
+              fontSize: 13,
+              color: "#3D4A66",
+              fontWeight: 500,
+              lineHeight: 1.55,
+              marginBottom: 14,
+            }}
+          >
             {is404
               ? "El report se auto-ensambla al cerrar el WO. Si querés forzar, podés usar regenerate."
               : error.message}
           </p>
           {isSrs && <RegenerateAction wo_id={wo_id} reload={reload} />}
-        </div>
+        </SectionCard>
       </div>
     );
   }
@@ -72,81 +91,78 @@ export default function InterventionReportPage() {
   const deliveries = report.deliveries || [];
 
   return (
-    <div className="px-4 md:px-8 py-5 md:py-7 max-w-wide">
-      <BackLink to={backHref} label="Work order" />
+    <div style={{ padding: "32px 40px", maxWidth: 1400 }}>
+      <BackLinkV2 to={backHref} label="Work order" />
 
-      {/* Header */}
-      <div className="accent-bar pl-4 mb-6">
-        <div className="flex items-center gap-3 mb-1 flex-wrap">
-          <span className="label-caps">Intervention report</span>
-          <span className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+      <div style={{ paddingLeft: 16, borderLeft: "3px solid #0A1628", marginBottom: 22 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6, flexWrap: "wrap" }}>
+          <span style={{ ...MONO_CAPS, fontSize: 10, color: "#0A1628", letterSpacing: "0.16em" }}>
+            Intervention report
+          </span>
+          <span style={{ ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.12em" }}>
             {h.work_order_reference}
           </span>
-          <span className="font-mono text-2xs uppercase tracking-widest-srs text-primary-light">
+          <span style={{ ...MONO_CAPS, fontSize: 10, color: "#0A1628", letterSpacing: "0.12em", fontWeight: 800 }}>
             · v{report.version}
           </span>
           {report.status !== "final" && (
-            <span className="font-mono text-2xs uppercase tracking-widest-srs text-warning">
+            <span style={{ ...MONO_CAPS, fontSize: 10, color: "#7E5212", letterSpacing: "0.12em", fontWeight: 800 }}>
               · {report.status}
             </span>
           )}
         </div>
-        <h1 className="font-display text-2xl text-text-primary leading-tight">
+        <h1
+          style={{
+            fontFamily: JAKARTA,
+            fontSize: 28,
+            fontWeight: 800,
+            color: "#0A1628",
+            letterSpacing: "-0.02em",
+            lineHeight: 1.15,
+          }}
+        >
           {h.title}
         </h1>
-        <p className="font-body text-text-secondary text-sm mt-1">
+        <p style={{ fontFamily: JAKARTA, fontSize: 13.5, color: "#3D4A66", marginTop: 8, fontWeight: 500 }}>
           {h.client_name} · {h.site_name}
           {h.site_country && <> · {h.site_country}</>}
           {h.site_city && <>, {h.site_city}</>}
         </p>
       </div>
 
-      {/* Dispatch bar */}
       {isSrs && (
-        <section className="bg-surface-raised accent-bar rounded-sm p-4 mb-5">
-          <div className="label-caps mb-3">Emit outward — 5 canales</div>
-          <div className="flex flex-wrap gap-2">
-            <a
-              href={`/api/work-orders/${wo_id}/report.html`}
-              target="_blank"
-              rel="noreferrer"
-              className="font-mono font-semibold uppercase tracking-widest-srs text-2xs px-3 py-2 rounded-sm bg-surface-overlay text-text-secondary border border-surface-border hover:text-text-primary hover:border-primary transition-colors duration-fast"
-            >
-              HTML ↗
-            </a>
-            <a
-              href={`/api/work-orders/${wo_id}/report.csv`}
-              className="font-mono font-semibold uppercase tracking-widest-srs text-2xs px-3 py-2 rounded-sm bg-surface-overlay text-text-secondary border border-surface-border hover:text-text-primary hover:border-primary transition-colors duration-fast"
-            >
-              CSV ↓
-            </a>
+        <SectionCard style={{ marginBottom: 16 }}>
+          <SectionTitle>Emit outward — 5 canales</SectionTitle>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            <ChannelLink href={`/api/work-orders/${wo_id}/report.html`} label="HTML ↗" external />
+            <ChannelLink href={`/api/work-orders/${wo_id}/report.csv`} label="CSV ↓" />
             <DispatchEmailAction wo_id={wo_id} reload={reload} />
             <DispatchWebhookAction wo_id={wo_id} reload={reload} />
             <RegenerateAction wo_id={wo_id} reload={reload} />
           </div>
-        </section>
+        </SectionCard>
       )}
 
-      {/* Stamp */}
-      <section className="bg-surface-raised accent-bar rounded-sm p-4 mb-5 flex flex-wrap gap-5">
-        <Stat
-          label="Abierto"
-          value={h.opened_at ? new Date(h.opened_at).toLocaleString() : "—"}
-        />
-        <Stat
-          label="Cerrado"
-          value={h.closed_at ? new Date(h.closed_at).toLocaleString() : "—"}
-        />
-        <Stat label="Severity" value={h.severity || "—"} />
-        <Stat label="Shield" value={h.shield_level || "—"} />
-        <Stat label="Tech" value={h.tech_name || "—"} />
-        <Stat label="SRS coord" value={h.srs_coordinator_name || "—"} />
-      </section>
+      <SectionCard style={{ marginBottom: 16 }}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 24 }}>
+          <Stat label="Abierto" value={h.opened_at ? new Date(h.opened_at).toLocaleString() : "—"} />
+          <Stat label="Cerrado" value={h.closed_at ? new Date(h.closed_at).toLocaleString() : "—"} />
+          <Stat label="Severity" value={h.severity || "—"} />
+          <Stat label="Shield" value={h.shield_level || "—"} />
+          <Stat label="Tech" value={h.tech_name || "—"} />
+          <Stat label="SRS coord" value={h.srs_coordinator_name || "—"} />
+        </div>
+      </SectionCard>
 
-      {/* SLA */}
-      <section className="bg-surface-raised accent-bar rounded-sm p-4 mb-5">
-        <div className="label-caps mb-3">SLA</div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 font-body text-sm">
+      <SectionCard style={{ marginBottom: 16 }}>
+        <SectionTitle>SLA</SectionTitle>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+            gap: 12,
+          }}
+        >
           <SlaMetric
             label="Receive"
             ok={sla.received_within_sla}
@@ -162,33 +178,40 @@ export default function InterventionReportPage() {
             marginMinutes={sla.resolve_margin_minutes}
           />
         </div>
-      </section>
+      </SectionCard>
 
-      {/* Main grid: timeline + capture */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <section className="bg-surface-raised accent-bar rounded-sm p-4">
-          <div className="label-caps mb-3">Timeline · {timeline.length} eventos</div>
-          <div className="space-y-2">
-            {timeline.map((t, i) => (
-              <TimelineRow key={i} t={t} />
-            ))}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))",
+          gap: 16,
+        }}
+      >
+        <SectionCard>
+          <SectionTitle>Timeline · {timeline.length} eventos</SectionTitle>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {timeline.map((t, i) => <TimelineRow key={i} t={t} />)}
           </div>
-        </section>
+        </SectionCard>
 
-        <section className="bg-surface-raised accent-bar rounded-sm p-4">
-          <div className="label-caps mb-3">Tech capture</div>
+        <SectionCard>
+          <SectionTitle>Tech capture</SectionTitle>
           {capture ? (
-            <div className="space-y-3">
-              <Block label="Que encontró">
-                {capture.what_found || "—"}
-              </Block>
-              <Block label="Que hizo">{capture.what_did || "—"}</Block>
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              <Block label="Qué encontró">{capture.what_found || "—"}</Block>
+              <Block label="Qué hizo">{capture.what_did || "—"}</Block>
               {capture.anything_new_about_site && (
-                <Block label="Nuevo sobre el site">
-                  {capture.anything_new_about_site}
-                </Block>
+                <Block label="Nuevo sobre el site">{capture.anything_new_about_site}</Block>
               )}
-              <div className="grid grid-cols-3 gap-2 pt-2 border-t border-surface-border">
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(3, 1fr)",
+                  gap: 8,
+                  paddingTop: 6,
+                  borderTop: "1px solid #E2E5EC",
+                }}
+              >
                 <MiniStat
                   label="Time on site"
                   value={
@@ -197,50 +220,52 @@ export default function InterventionReportPage() {
                       : "—"
                   }
                 />
-                <MiniStat
-                  label="Devices"
-                  value={(capture.devices_touched || []).length}
-                />
-                <MiniStat
-                  label="Photos"
-                  value={capture.photos_count ?? 0}
-                />
+                <MiniStat label="Devices" value={(capture.devices_touched || []).length} />
+                <MiniStat label="Photos" value={capture.photos_count ?? 0} />
               </div>
               {capture.follow_up_needed && (
-                <div className="mt-2 bg-warning-muted rounded-sm px-3 py-2 font-mono text-2xs uppercase tracking-widest-srs text-warning">
+                <div
+                  style={{
+                    background: "#FCF1DC",
+                    border: "1px solid #E8A33D",
+                    borderRadius: 4,
+                    padding: "8px 12px",
+                    ...MONO_CAPS,
+                    fontSize: 9.5,
+                    color: "#7E5212",
+                    letterSpacing: "0.14em",
+                    fontWeight: 800,
+                  }}
+                >
                   · follow-up required
                 </div>
               )}
             </div>
           ) : (
-            <p className="font-body text-sm text-text-tertiary">
+            <p style={{ ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em" }}>
               — sin capture registrado —
             </p>
           )}
-        </section>
+        </SectionCard>
       </div>
 
-      {/* Ball timeline */}
-      <section className="bg-surface-raised accent-bar rounded-sm p-4 mt-4">
-        <div className="label-caps mb-3">
-          Ball-in-court log · {ballTimeline.length} transitions
-        </div>
-        <div className="space-y-1.5 font-body text-sm">
+      <SectionCard style={{ marginTop: 16 }}>
+        <SectionTitle>Ball-in-court log · {ballTimeline.length} transitions</SectionTitle>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           {ballTimeline.length === 0 && (
-            <div className="text-text-tertiary">— sin historial —</div>
+            <div style={{ ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em" }}>
+              — sin historial —
+            </div>
           )}
-          {ballTimeline.map((b, i) => (
-            <BallRow key={i} b={b} />
-          ))}
+          {ballTimeline.map((b, i) => <BallRow key={i} b={b} />)}
         </div>
-      </section>
+      </SectionCard>
 
-      {/* Threads counts */}
       {(threads.shared_message_count != null ||
         threads.internal_message_count != null) && (
-        <section className="bg-surface-raised accent-bar rounded-sm p-4 mt-4">
-          <div className="label-caps mb-3">Comunicacion</div>
-          <div className="flex gap-5 flex-wrap">
+        <SectionCard style={{ marginTop: 16 }}>
+          <SectionTitle>Comunicación</SectionTitle>
+          <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
             <Stat label="Shared thread" value={threads.shared_message_count ?? 0} />
             {threads.internal_message_count != null && (
               <Stat
@@ -250,46 +275,84 @@ export default function InterventionReportPage() {
               />
             )}
           </div>
-        </section>
+        </SectionCard>
       )}
 
-      {/* Deliveries log */}
-      <section className="bg-surface-raised accent-bar rounded-sm mt-4">
-        <header className="px-4 py-3 border-b border-surface-border">
-          <div className="label-caps">Deliveries log</div>
-          <h2 className="font-display text-base text-text-primary">
-            {deliveries.length} registrada{deliveries.length === 1 ? "" : "s"}
-          </h2>
+      <SectionCard padding={0} style={{ marginTop: 16 }}>
+        <header style={{ padding: "14px 18px", borderBottom: "1px solid #E2E5EC" }}>
+          <SectionTitle marginBottom={4}>Deliveries log</SectionTitle>
+          <div style={{ fontFamily: JAKARTA, fontSize: 14, fontWeight: 700, color: "#0A1628" }}>
+            {deliveries.length}{" "}
+            <span style={{ color: "#3D4A66", fontWeight: 500 }}>
+              registrada{deliveries.length === 1 ? "" : "s"}
+            </span>
+          </div>
         </header>
-        <div className="divide-y divide-surface-border">
+        <div>
           {deliveries.length === 0 && (
-            <div className="px-4 py-4 font-body text-sm text-text-tertiary">
-              — sin entregas aun —
+            <div style={{ padding: "16px 18px", ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em" }}>
+              — sin entregas aún —
             </div>
           )}
-          {deliveries.map((d, i) => (
-            <DeliveryRow key={i} d={d} />
-          ))}
+          {deliveries.map((d, i) => <DeliveryRow key={i} d={d} />)}
         </div>
-      </section>
+      </SectionCard>
 
-      <p className="mt-6 text-text-tertiary font-mono text-2xs uppercase tracking-widest-srs">
-        v{report.version} · generado {formatAge(report.generated_at)} ago ·
-        supersedes {report.supersedes_id ? "v previa" : "—"}
+      <p style={{ marginTop: 24, ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em" }}>
+        v{report.version} · generado {formatAge(report.generated_at)} ago · supersedes{" "}
+        {report.supersedes_id ? "v previa" : "—"}
       </p>
     </div>
   );
 }
 
-// -------------------- Building blocks --------------------
+/* ─── Building blocks ──────────────────────────────────────────── */
+
+function ChannelLink({ href, label, external }) {
+  return (
+    <a
+      href={href}
+      target={external ? "_blank" : undefined}
+      rel={external ? "noreferrer" : undefined}
+      style={{
+        ...MONO_CAPS,
+        fontSize: 11,
+        letterSpacing: "0.14em",
+        padding: "8px 14px",
+        background: "#FFFFFF",
+        color: "#3D4A66",
+        border: "1.5px solid #C8CDD8",
+        borderRadius: 6,
+        textDecoration: "none",
+        transition: "all 160ms",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.color = "#0A1628";
+        e.currentTarget.style.borderColor = "#0A1628";
+        e.currentTarget.style.background = "#F4F6F8";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.color = "#3D4A66";
+        e.currentTarget.style.borderColor = "#C8CDD8";
+        e.currentTarget.style.background = "#FFFFFF";
+      }}
+    >
+      {label}
+    </a>
+  );
+}
 
 function Stat({ label, value, hint }) {
   return (
     <div>
-      <div className="label-caps mb-1">{label}</div>
-      <div className="font-body text-sm text-text-primary">{value}</div>
+      <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.14em", marginBottom: 4 }}>
+        {label}
+      </div>
+      <div style={{ fontFamily: JAKARTA, fontSize: 13, color: "#0A1628", fontWeight: 600 }}>{value}</div>
       {hint && (
-        <div className="font-body text-2xs text-text-tertiary mt-0.5">{hint}</div>
+        <div style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.14em", marginTop: 2 }}>
+          {hint}
+        </div>
       )}
     </div>
   );
@@ -298,8 +361,19 @@ function Stat({ label, value, hint }) {
 function MiniStat({ label, value }) {
   return (
     <div>
-      <div className="label-caps mb-0.5">{label}</div>
-      <div className="font-display text-base text-text-primary leading-none">
+      <div style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.14em", marginBottom: 4 }}>
+        {label}
+      </div>
+      <div
+        style={{
+          fontFamily: JAKARTA,
+          fontSize: 16,
+          fontWeight: 800,
+          color: "#0A1628",
+          fontVariantNumeric: "tabular-nums",
+          lineHeight: 1,
+        }}
+      >
         {value}
       </div>
     </div>
@@ -309,8 +383,19 @@ function MiniStat({ label, value }) {
 function Block({ label, children }) {
   return (
     <div>
-      <div className="label-caps mb-1">{label}</div>
-      <p className="font-body text-sm text-text-primary whitespace-pre-line">
+      <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.14em", marginBottom: 4 }}>
+        {label}
+      </div>
+      <p
+        style={{
+          fontFamily: JAKARTA,
+          fontSize: 13,
+          color: "#0A1628",
+          whiteSpace: "pre-line",
+          fontWeight: 500,
+          lineHeight: 1.55,
+        }}
+      >
         {children}
       </p>
     </div>
@@ -319,32 +404,43 @@ function Block({ label, children }) {
 
 function SlaMetric({ label, ok, deadlineIso, actualIso, marginMinutes }) {
   const hasData = deadlineIso || actualIso;
+  const dotColor = ok === true ? "#16A34A" : ok === false ? "#DC2626" : "#C8CDD8";
   return (
-    <div className="bg-surface-base rounded-sm p-3">
-      <div className="flex items-center gap-1.5 mb-1">
-        <span
-          className={`w-2 h-2 rounded-full ${
-            ok === true ? "bg-success" : ok === false ? "bg-danger" : "bg-text-tertiary"
-          }`}
-        />
-        <span className="label-caps">{label}</span>
+    <div
+      style={{
+        background: "#F4F6F8",
+        border: "1px solid #E2E5EC",
+        borderRadius: 4,
+        padding: "10px 12px",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+        <span style={{ width: 8, height: 8, borderRadius: "50%", background: dotColor }} />
+        <span style={{ ...MONO_CAPS, fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.14em" }}>{label}</span>
       </div>
-      {!hasData && <div className="font-body text-sm text-text-tertiary">—</div>}
+      {!hasData && (
+        <div style={{ ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em" }}>—</div>
+      )}
       {deadlineIso && (
-        <div className="font-mono text-2xs text-text-tertiary">
+        <div style={{ fontFamily: MONO, fontSize: 11, color: "#8B95A8", fontWeight: 500 }}>
           deadline · {new Date(deadlineIso).toLocaleString()}
         </div>
       )}
       {actualIso && (
-        <div className="font-mono text-2xs text-text-primary">
+        <div style={{ fontFamily: MONO, fontSize: 11, color: "#0A1628", fontWeight: 600 }}>
           actual · {new Date(actualIso).toLocaleString()}
         </div>
       )}
       {marginMinutes != null && (
         <div
-          className={`font-mono text-2xs uppercase tracking-widest-srs mt-1 ${
-            marginMinutes >= 0 ? "text-success" : "text-danger"
-          }`}
+          style={{
+            ...MONO_CAPS,
+            fontSize: 9.5,
+            letterSpacing: "0.14em",
+            marginTop: 4,
+            color: marginMinutes >= 0 ? "#0A6131" : "#991B1B",
+            fontWeight: 800,
+          }}
         >
           margin {marginMinutes >= 0 ? "+" : ""}
           {marginMinutes}min
@@ -356,32 +452,51 @@ function SlaMetric({ label, ok, deadlineIso, actualIso, marginMinutes }) {
 
 function TimelineRow({ t }) {
   return (
-    <div className="flex items-start gap-3 bg-surface-base rounded-sm px-3 py-2">
-      <div className="w-1 flex-shrink-0 self-stretch bg-primary rounded-full mt-1" />
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="font-mono text-2xs uppercase tracking-widest-srs text-primary-light">
+    <div
+      style={{
+        display: "flex",
+        alignItems: "flex-start",
+        gap: 10,
+        background: "#F4F6F8",
+        border: "1px solid #E2E5EC",
+        borderRadius: 4,
+        padding: "8px 12px",
+      }}
+    >
+      <div
+        style={{
+          width: 3,
+          flexShrink: 0,
+          alignSelf: "stretch",
+          background: "#0A1628",
+          borderRadius: 2,
+          marginTop: 2,
+        }}
+      />
+      <div style={{ minWidth: 0, flex: 1 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          <span style={{ ...MONO_CAPS, fontSize: 9.5, color: "#0A1628", letterSpacing: "0.12em", fontWeight: 800 }}>
             {t.label || t.kind}
           </span>
           {t.from_status && t.to_status && (
-            <span className="font-mono text-2xs text-text-tertiary">
+            <span style={{ fontFamily: MONO, fontSize: 10, color: "#8B95A8", fontWeight: 600 }}>
               {t.from_status} → {t.to_status}
             </span>
           )}
           {t.ball_side && (
-            <span className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+            <span style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.12em" }}>
               · ball {t.ball_side}
             </span>
           )}
         </div>
-        <div className="flex items-center gap-2 mt-0.5">
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 2, flexWrap: "wrap" }}>
           {t.actor_name && (
-            <span className="font-body text-sm text-text-secondary">
+            <span style={{ fontFamily: JAKARTA, fontSize: 12, color: "#3D4A66", fontWeight: 600 }}>
               {t.actor_name}
             </span>
           )}
           {t.ts && (
-            <span className="font-mono text-2xs text-text-tertiary">
+            <span style={{ fontFamily: MONO, fontSize: 10, color: "#8B95A8", fontWeight: 500 }}>
               {new Date(t.ts).toLocaleString()}
             </span>
           )}
@@ -392,25 +507,29 @@ function TimelineRow({ t }) {
 }
 
 function BallRow({ b }) {
+  const sideColor = b.side === "client" ? "#7E5212" : b.side === "tech" ? "#1E40AF" : "#3D4A66";
   return (
-    <div className="flex items-center justify-between gap-3 bg-surface-base rounded-sm px-3 py-1.5">
-      <div className="flex items-center gap-2">
-        <span
-          className={`font-mono text-2xs uppercase tracking-widest-srs ${
-            b.side === "client"
-              ? "text-warning"
-              : b.side === "tech"
-              ? "text-info"
-              : "text-text-secondary"
-          }`}
-        >
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 10,
+        background: "#F4F6F8",
+        border: "1px solid #E2E5EC",
+        borderRadius: 4,
+        padding: "6px 12px",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <span style={{ ...MONO_CAPS, fontSize: 9.5, color: sideColor, letterSpacing: "0.12em", fontWeight: 800 }}>
           {b.side}
         </span>
         {b.reason && (
-          <span className="font-body text-sm text-text-secondary">{b.reason}</span>
+          <span style={{ fontFamily: JAKARTA, fontSize: 12.5, color: "#3D4A66", fontWeight: 500 }}>{b.reason}</span>
         )}
       </div>
-      <span className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+      <span style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.12em" }}>
         {b.since ? new Date(b.since).toLocaleString() : ""}
         {b.duration_minutes != null && <> · {b.duration_minutes}min</>}
       </span>
@@ -419,35 +538,54 @@ function BallRow({ b }) {
 }
 
 function DeliveryRow({ d }) {
-  const statusTone =
+  const statusColor =
     d.status === "delivered"
-      ? "text-success"
+      ? "#0A6131"
       : d.status === "failed"
-      ? "text-danger"
+      ? "#991B1B"
       : d.status === "queued"
-      ? "text-warning"
-      : "text-text-secondary";
+      ? "#7E5212"
+      : "#3D4A66";
   return (
-    <div className="px-4 py-2.5 flex items-center justify-between gap-3">
-      <div className="min-w-0">
-        <div className="flex items-center gap-2 mb-0.5">
-          <span className="font-mono text-2xs uppercase tracking-widest-srs text-primary-light">
+    <div
+      style={{
+        padding: "10px 18px",
+        borderBottom: "1px solid #F0F2F7",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 10,
+      }}
+    >
+      <div style={{ minWidth: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 2 }}>
+          <span style={{ ...MONO_CAPS, fontSize: 9.5, color: "#0A1628", letterSpacing: "0.12em", fontWeight: 800 }}>
             {d.channel}
           </span>
-          <span className={`font-mono text-2xs uppercase tracking-widest-srs ${statusTone}`}>
+          <span style={{ ...MONO_CAPS, fontSize: 9.5, color: statusColor, letterSpacing: "0.12em", fontWeight: 800 }}>
             · {d.status}
           </span>
           {d.attempts != null && (
-            <span className="font-mono text-2xs text-text-tertiary">
+            <span style={{ fontFamily: MONO, fontSize: 10, color: "#8B95A8", fontWeight: 600 }}>
               · attempts {d.attempts}
             </span>
           )}
         </div>
-        <div className="font-body text-sm text-text-primary truncate">
+        <div
+          style={{
+            fontFamily: JAKARTA,
+            fontSize: 13,
+            color: "#0A1628",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            fontWeight: 600,
+          }}
+        >
           {d.target}
         </div>
       </div>
-      <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary flex-shrink-0">
+      <div style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.12em", flexShrink: 0 }}>
         {d.enqueued_at ? formatAge(d.enqueued_at) + " ago" : "—"}
       </div>
     </div>
@@ -456,13 +594,55 @@ function DeliveryRow({ d }) {
 
 function Centered({ text }) {
   return (
-    <div className="px-8 py-16 text-center font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+    <div
+      style={{
+        padding: "60px 32px",
+        textAlign: "center",
+        ...MONO_CAPS,
+        fontSize: 11,
+        color: "#8B95A8",
+        letterSpacing: "0.14em",
+      }}
+    >
       {text}
     </div>
   );
 }
 
-// -------------------- Actions --------------------
+/* ─── Actions ──────────────────────────────────────────────────── */
+
+function GhostBtn({ onClick, label }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        ...MONO_CAPS,
+        fontSize: 11,
+        letterSpacing: "0.14em",
+        padding: "8px 14px",
+        background: "#FFFFFF",
+        color: "#3D4A66",
+        border: "1.5px solid #C8CDD8",
+        borderRadius: 6,
+        cursor: "pointer",
+        transition: "all 160ms",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.color = "#0A1628";
+        e.currentTarget.style.borderColor = "#0A1628";
+        e.currentTarget.style.background = "#F4F6F8";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.color = "#3D4A66";
+        e.currentTarget.style.borderColor = "#C8CDD8";
+        e.currentTarget.style.background = "#FFFFFF";
+      }}
+    >
+      {label}
+    </button>
+  );
+}
 
 function RegenerateAction({ wo_id, reload }) {
   const [open, setOpen] = useState(false);
@@ -474,24 +654,18 @@ function RegenerateAction({ wo_id, reload }) {
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="font-mono font-semibold uppercase tracking-widest-srs text-2xs px-3 py-2 rounded-sm bg-surface-overlay text-text-secondary border border-surface-border hover:text-text-primary hover:border-primary transition-colors duration-fast"
-      >
-        Regenerate
-      </button>
+      <GhostBtn onClick={() => setOpen(true)} label="Regenerate" />
       <ActionDialog
         open={open}
         onClose={() => setOpen(false)}
         title="Regenerate intervention report"
-        subtitle="Re-ensambla y supersede la version vigente. Util si se reabrio el WO o hay correcciones."
+        subtitle="Re-ensambla y supersede la versión vigente. Útil si se reabrió el WO o hay correcciones."
         submitLabel="Regenerate"
         onSubmit={submit}
       >
-        <p className="font-body text-sm text-text-secondary">
-          La version actual queda marcada como superseded. La nueva version
-          hereda el numero siguiente y queda auditada.
+        <p style={{ fontFamily: JAKARTA, fontSize: 13, color: "#3D4A66", lineHeight: 1.55, fontWeight: 500 }}>
+          La versión actual queda marcada como superseded. La nueva versión hereda el número
+          siguiente y queda auditada.
         </p>
       </ActionDialog>
     </>
@@ -507,10 +681,7 @@ function DispatchEmailAction({ wo_id, reload }) {
   async function submit() {
     const body = {
       to: to.trim(),
-      cc: cc
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean),
+      cc: cc.split(",").map((s) => s.trim()).filter(Boolean),
       subject: subject || null,
     };
     await api.post(`/work-orders/${wo_id}/report/dispatch/email`, body);
@@ -522,11 +693,7 @@ function DispatchEmailAction({ wo_id, reload }) {
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="font-mono font-semibold uppercase tracking-widest-srs text-2xs px-3 py-2 rounded-sm bg-primary text-text-inverse hover:bg-primary-light hover:shadow-glow-primary transition-all duration-fast ease-out-expo"
-      >
+      <button type="button" onClick={() => setOpen(true)} className="btn-trigger-v2">
         Dispatch email
       </button>
       <ActionDialog
@@ -568,7 +735,7 @@ function DispatchEmailAction({ wo_id, reload }) {
             id="em-subj"
             value={subject}
             onChange={(e) => setSubject(e.target.value)}
-            placeholder="(auto-generado si vacio)"
+            placeholder="(auto-generado si vacío)"
           />
         </div>
       </ActionDialog>
@@ -593,11 +760,7 @@ function DispatchWebhookAction({ wo_id, reload }) {
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="font-mono font-semibold uppercase tracking-widest-srs text-2xs px-3 py-2 rounded-sm bg-primary text-text-inverse hover:bg-primary-light hover:shadow-glow-primary transition-all duration-fast ease-out-expo"
-      >
+      <button type="button" onClick={() => setOpen(true)} className="btn-trigger-v2">
         Dispatch webhook
       </button>
       <ActionDialog
