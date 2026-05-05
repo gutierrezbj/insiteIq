@@ -327,8 +327,11 @@ export default function InterventionsKanbanPage({ scope = "srs" }) {
   /* ─────────────────────── Render ─────────────────────── */
   return (
     <div className="px-6 py-4 flex flex-col" style={{ minHeight: "calc(100vh - 200px)" }}>
-      {/* Filter bar */}
-      <section className="flex items-center gap-3 mb-4 flex-shrink-0 flex-wrap">
+      {/* Filter bar · z-20 para que dropdowns flotem encima del kanban main */}
+      <section
+        className="flex items-center gap-3 mb-4 flex-shrink-0 flex-wrap"
+        style={{ position: "relative", zIndex: 20 }}
+      >
         {/* Search */}
         <div className="relative">
           <Icon
