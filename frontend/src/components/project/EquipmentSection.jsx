@@ -1,12 +1,13 @@
 /**
- * EquipmentSection — Plan vs Scan reconciliation por project (Modo 2 Decision #4).
+ * EquipmentSection · v2 paleta F (Iter 2.32).
  *
- * Resuelve el caos upstream (Excel cliente / email / portal / scan tech)
- * corriendolo contra la realidad scaneada on-site. 5 estatus de cierre:
+ * Plan vs Scan reconciliation por project (Modo 2 Decision #4). Resuelve
+ * el caos upstream (Excel cliente / email / portal / scan tech) corriéndolo
+ * contra la realidad scaneada on-site. 5 estatus de cierre:
  *
  *   match        planned serial scaneado en el site correcto
- *   substituted  planned no encontrado, pero equivalente make+model scaneado
- *   missing      planned pero nadie lo escaneo
+ *   substituted  planned no encontrado, equivalente make+model scaneado
+ *   missing      planned pero nadie lo escaneó
  *   sin_plan     scaneado sin plan (bonus / equipamiento no declarado)
  *   conflicto    planned para site A, scaneado en site B
  */
@@ -15,38 +16,16 @@ import { api } from "../../lib/api";
 import { useFetch } from "../../lib/useFetch";
 import ActionDialog from "../ui/ActionDialog";
 import { formatAge } from "../ui/Badges";
+import SectionCard, { SectionTitle } from "../v2-shared/SectionCard";
+import { JAKARTA, MONO, MONO_CAPS } from "../v2-shared/typography";
 
-const STATUS_LOOK = {
-  planned: {
-    dot: "bg-text-tertiary",
-    text: "text-text-tertiary",
-    label: "planned",
-  },
-  match: {
-    dot: "bg-success",
-    text: "text-success",
-    label: "match",
-  },
-  substituted: {
-    dot: "bg-info",
-    text: "text-info",
-    label: "substituted",
-  },
-  missing: {
-    dot: "bg-warning",
-    text: "text-warning",
-    label: "missing",
-  },
-  sin_plan: {
-    dot: "bg-primary",
-    text: "text-primary-light",
-    label: "sin plan",
-  },
-  conflicto: {
-    dot: "bg-danger",
-    text: "text-danger",
-    label: "conflicto",
-  },
+const STATUS_STYLES = {
+  planned:     { dot: "#C8CDD8", color: "#8B95A8", label: "planned" },
+  match:       { dot: "#16A34A", color: "#0A6131", label: "match" },
+  substituted: { dot: "#1E3A8A", color: "#1E40AF", label: "substituted" },
+  missing:     { dot: "#E8A33D", color: "#7E5212", label: "missing" },
+  sin_plan:    { dot: "#0A1628", color: "#0A1628", label: "sin plan" },
+  conflicto:   { dot: "#DC2626", color: "#991B1B", label: "conflicto" },
 };
 
 const COUNT_ORDER = ["match", "substituted", "missing", "conflicto", "sin_plan", "planned"];
@@ -57,12 +36,9 @@ export default function EquipmentSection({ project, isSrs }) {
     { deps: [project.id] }
   );
 
-  // Nothing to show for non-rollout projects without plan entries
   const planEntries = data?.plan_entries || [];
   const counts = data?.counts || {};
   const isRollout = project.type === "rollout";
-
-  if (!isRollout && planEntries.length === 0) return null;
 
   const lastReconciledAt = useMemo(() => {
     if (!planEntries.length) return null;
@@ -76,32 +52,54 @@ export default function EquipmentSection({ project, isSrs }) {
     return max ? new Date(max).toISOString() : null;
   }, [planEntries]);
 
+  if (!isRollout && planEntries.length === 0) return null;
+
   return (
-    <section className="bg-surface-raised accent-bar rounded-sm">
-      <header className="px-4 py-3 border-b border-surface-border flex items-start justify-between gap-3 flex-wrap">
+    <SectionCard padding={0}>
+      <header
+        style={{
+          padding: "14px 18px",
+          borderBottom: "1px solid #E2E5EC",
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
+          gap: 12,
+          flexWrap: "wrap",
+        }}
+      >
         <div>
-          <div className="label-caps">Equipment · plan vs scan</div>
-          <h2 className="font-display text-base text-text-primary leading-tight">
-            {planEntries.length} item{planEntries.length === 1 ? "" : "s"} planeado
-            {planEntries.length === 1 ? "" : "s"}
+          <SectionTitle marginBottom={4}>Equipment · plan vs scan</SectionTitle>
+          <div style={{ fontFamily: JAKARTA, fontSize: 14, fontWeight: 700, color: "#0A1628" }}>
+            {planEntries.length}{" "}
+            <span style={{ color: "#3D4A66", fontWeight: 500 }}>
+              item{planEntries.length === 1 ? "" : "s"} planeado{planEntries.length === 1 ? "" : "s"}
+            </span>
             {lastReconciledAt && (
-              <span className="ml-2 font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+              <span style={{ ...MONO_CAPS, fontSize: 9.5, color: "#8B95A8", letterSpacing: "0.12em", marginLeft: 10 }}>
                 · reconciled {formatAge(lastReconciledAt)} ago
               </span>
             )}
-          </h2>
+          </div>
         </div>
         {isSrs && <ReconcileAction project={project} reload={reload} />}
       </header>
 
       {/* Counts strip */}
-      <div className="px-4 py-3 border-b border-surface-border flex flex-wrap gap-3">
+      <div
+        style={{
+          padding: "14px 18px",
+          borderBottom: "1px solid #E2E5EC",
+          display: "flex",
+          flexWrap: "wrap",
+          gap: 10,
+        }}
+      >
         {COUNT_ORDER.filter((k) => (counts[k] || 0) > 0).map((k) => (
           <CountPill key={k} status={k} count={counts[k]} />
         ))}
         {Object.keys(counts).length === 0 && (
-          <div className="font-body text-sm text-text-tertiary">
-            — sin plan entries todavia —
+          <div style={{ ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em" }}>
+            — sin plan entries todavía —
           </div>
         )}
       </div>
@@ -109,45 +107,76 @@ export default function EquipmentSection({ project, isSrs }) {
       {/* Table */}
       {planEntries.length > 0 && (
         <div>
-          <div className="grid grid-cols-12 gap-3 px-4 py-2 border-b border-surface-border text-text-tertiary">
-            <div className="col-span-2 label-caps">Status</div>
-            <div className="col-span-3 label-caps">Serial</div>
-            <div className="col-span-3 label-caps">Make / Model</div>
-            <div className="col-span-2 label-caps">Site</div>
-            <div className="col-span-2 label-caps text-right">Source</div>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "2fr 3fr 3fr 2fr 2fr",
+              gap: 12,
+              padding: "10px 18px",
+              background: "#F4F6F8",
+              borderBottom: "1px solid #E2E5EC",
+              ...MONO_CAPS,
+              fontSize: 9.5,
+              color: "#3D4A66",
+              letterSpacing: "0.14em",
+            }}
+          >
+            <div>Status</div>
+            <div>Serial</div>
+            <div>Make / Model</div>
+            <div>Site</div>
+            <div style={{ textAlign: "right" }}>Source</div>
           </div>
-          <div className="divide-y divide-surface-border max-h-[60vh] overflow-y-auto">
-            {planEntries.map((pe) => (
-              <PlanRow key={pe.id} pe={pe} />
-            ))}
+          <div style={{ maxHeight: "60vh", overflowY: "auto" }}>
+            {planEntries.map((pe) => <PlanRow key={pe.id} pe={pe} />)}
           </div>
         </div>
       )}
 
       {loading && (
-        <div className="px-4 py-3 font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+        <div style={{ padding: "12px 18px", ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em" }}>
           cargando…
         </div>
       )}
       {error && (
-        <div className="px-4 py-3 font-body text-sm text-danger">
+        <div style={{ padding: "12px 18px", fontFamily: JAKARTA, fontSize: 13, color: "#991B1B", fontWeight: 500 }}>
           error · {error.message}
         </div>
       )}
-    </section>
+    </SectionCard>
   );
 }
 
 function CountPill({ status, count }) {
-  const look = STATUS_LOOK[status] || STATUS_LOOK.planned;
+  const s = STATUS_STYLES[status] || STATUS_STYLES.planned;
   return (
-    <div className="bg-surface-base rounded-sm px-3 py-2 flex items-center gap-2">
-      <span className={`w-2 h-2 rounded-full ${look.dot}`} />
+    <div
+      style={{
+        background: "#FFFFFF",
+        border: "1px solid #E2E5EC",
+        borderRadius: 4,
+        padding: "8px 12px",
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+      }}
+    >
+      <span style={{ width: 8, height: 8, borderRadius: "50%", background: s.dot }} />
       <div>
-        <div className={`font-mono text-2xs uppercase tracking-widest-srs ${look.text}`}>
-          {look.label}
+        <div style={{ ...MONO_CAPS, fontSize: 9.5, color: s.color, letterSpacing: "0.12em" }}>
+          {s.label}
         </div>
-        <div className="font-display text-base text-text-primary leading-none">
+        <div
+          style={{
+            fontFamily: JAKARTA,
+            fontSize: 16,
+            fontWeight: 800,
+            color: "#0A1628",
+            fontVariantNumeric: "tabular-nums",
+            lineHeight: 1.1,
+            marginTop: 2,
+          }}
+        >
           {count}
         </div>
       </div>
@@ -156,52 +185,121 @@ function CountPill({ status, count }) {
 }
 
 function PlanRow({ pe }) {
-  const look = STATUS_LOOK[pe.status] || STATUS_LOOK.planned;
+  const s = STATUS_STYLES[pe.status] || STATUS_STYLES.planned;
   const makeModel = [pe.make, pe.model].filter(Boolean).join(" · ") || "—";
   return (
-    <div className="grid grid-cols-12 gap-3 px-4 py-2.5 items-start">
-      <div className="col-span-2 flex items-center gap-1.5 min-w-0">
-        <span className={`w-1.5 h-1.5 rounded-full ${look.dot}`} />
-        <span className={`font-mono text-2xs uppercase tracking-widest-srs ${look.text} truncate`}>
-          {look.label}
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "2fr 3fr 3fr 2fr 2fr",
+        gap: 12,
+        padding: "12px 18px",
+        borderBottom: "1px solid #F0F2F7",
+        alignItems: "flex-start",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
+        <span style={{ width: 6, height: 6, borderRadius: "50%", background: s.dot }} />
+        <span
+          style={{
+            ...MONO_CAPS,
+            fontSize: 9.5,
+            color: s.color,
+            letterSpacing: "0.12em",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+        >
+          {s.label}
         </span>
       </div>
-      <div className="col-span-3 min-w-0">
-        <div className="font-mono text-sm text-text-primary truncate">
-          {pe.serial_number || <span className="text-text-tertiary">—</span>}
+      <div style={{ minWidth: 0 }}>
+        <div
+          style={{
+            fontFamily: MONO,
+            fontSize: 12.5,
+            color: pe.serial_number ? "#0A1628" : "#8B95A8",
+            fontWeight: 600,
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+        >
+          {pe.serial_number || "—"}
         </div>
         {pe.asset_tag && (
-          <div className="font-mono text-2xs text-text-tertiary truncate">
+          <div
+            style={{
+              fontFamily: MONO,
+              fontSize: 9.5,
+              color: "#8B95A8",
+              fontWeight: 500,
+              marginTop: 1,
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
             tag {pe.asset_tag}
           </div>
         )}
       </div>
-      <div className="col-span-3 min-w-0">
-        <div className="font-body text-sm text-text-primary truncate">
+      <div style={{ minWidth: 0 }}>
+        <div
+          style={{
+            fontFamily: JAKARTA,
+            fontSize: 13,
+            color: "#0A1628",
+            fontWeight: 600,
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+        >
           {makeModel}
         </div>
         {pe.category && (
-          <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+          <div style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.12em", marginTop: 1 }}>
             {pe.category}
           </div>
         )}
       </div>
-      <div className="col-span-2 min-w-0">
-        <div className="font-mono text-2xs text-text-secondary truncate">
-          {pe.site_id ? shortId(pe.site_id) : <span className="text-text-tertiary">—</span>}
+      <div style={{ minWidth: 0 }}>
+        <div
+          style={{
+            fontFamily: MONO,
+            fontSize: 11,
+            color: pe.site_id ? "#3D4A66" : "#8B95A8",
+            fontWeight: 500,
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+        >
+          {pe.site_id ? shortId(pe.site_id) : "—"}
         </div>
         {pe.reconciled_at && (
-          <div className="font-mono text-2xs text-text-tertiary">
+          <div style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.12em" }}>
             {formatAge(pe.reconciled_at)} ago
           </div>
         )}
       </div>
-      <div className="col-span-2 text-right min-w-0">
-        <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+      <div style={{ textAlign: "right", minWidth: 0 }}>
+        <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.12em" }}>
           {pe.source || "—"}
         </div>
         {pe.reconciliation_note && (
-          <div className="font-body text-2xs text-text-tertiary mt-0.5">
+          <div
+            style={{
+              fontFamily: JAKARTA,
+              fontSize: 11,
+              color: "#8B95A8",
+              fontWeight: 500,
+              marginTop: 2,
+              lineHeight: 1.4,
+            }}
+          >
             {pe.reconciliation_note}
           </div>
         )}
@@ -227,11 +325,7 @@ function ReconcileAction({ project, reload }) {
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="font-mono font-semibold uppercase tracking-widest-srs text-2xs px-3 py-2 rounded-sm bg-primary text-text-inverse hover:bg-primary-light hover:shadow-glow-primary transition-all duration-fast ease-out-expo"
-      >
+      <button type="button" onClick={() => setOpen(true)} className="btn-trigger-v2">
         Run reconcile
       </button>
       <ActionDialog
@@ -243,26 +337,24 @@ function ReconcileAction({ project, reload }) {
         onSubmit={result ? close : submit}
       >
         {!result && (
-          <p className="font-body text-sm text-text-secondary">
-            Este calculo no es destructivo: actualiza status + reconciled_with
-            en cada plan entry. Corre tantas veces como quieras conforme
-            el tech va haciendo scans.
+          <p style={{ fontFamily: JAKARTA, fontSize: 13, color: "#3D4A66", lineHeight: 1.55, fontWeight: 500 }}>
+            Este cálculo no es destructivo: actualiza status + reconciled_with en cada plan entry.
+            Corre tantas veces como quieras conforme el tech va haciendo scans.
           </p>
         )}
         {result && (
-          <div className="space-y-3">
-            <div className="font-body text-sm text-text-primary">
-              Reconciliation completada con {result.plan_count} planned ·{" "}
-              {result.scan_count} scanned.
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <div style={{ fontFamily: JAKARTA, fontSize: 13, color: "#0A1628", fontWeight: 500 }}>
+              Reconciliation completada con {result.plan_count} planned · {result.scan_count} scanned.
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
               {COUNT_ORDER.filter((k) => (result.counts?.[k] || 0) > 0).map((k) => (
                 <CountPill key={k} status={k} count={result.counts[k]} />
               ))}
             </div>
-            <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
-              {result.sin_plan_asset_ids?.length || 0} asset{(result.sin_plan_asset_ids?.length || 0) === 1 ? "" : "s"} sin_plan
-              registrados
+            <div style={{ ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em" }}>
+              {result.sin_plan_asset_ids?.length || 0} asset
+              {(result.sin_plan_asset_ids?.length || 0) === 1 ? "" : "s"} sin_plan registrados
             </div>
           </div>
         )}
