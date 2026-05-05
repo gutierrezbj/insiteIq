@@ -1199,16 +1199,16 @@ function KanbanTab({ wos, sites, users, reload }) {
           key={col.key}
           onDragOver={onDragOver}
           onDrop={(e) => onDrop(e, col)}
-          className="flex-shrink-0 w-[260px] bg-cl-surface/40 border border-cl-border rounded-sm flex flex-col"
+          className="flex-shrink-0 w-[280px] bg-cl-surface/40 border border-cl-border rounded-sm flex flex-col"
           style={{ minHeight: 200 }}
         >
-          <div className="px-3 py-2 border-b border-cl-border flex items-center justify-between">
+          <div className="px-4 py-2.5 border-b border-cl-border flex items-center justify-between">
             <span className="label-caps-v2">{col.label}</span>
             <span className="font-mono text-[11px] text-cl-text">{wosByColumn[col.key].length}</span>
           </div>
-          <div className="p-2 space-y-2 overflow-y-auto flex-1">
+          <div className="p-3 space-y-2.5 overflow-y-auto flex-1">
             {wosByColumn[col.key].length === 0 && (
-              <p className="text-[10px] text-cl-text-dim italic px-2 py-3">Vacía</p>
+              <p className="text-[10px] text-cl-text-dim italic px-2 py-4">Vacía</p>
             )}
             {wosByColumn[col.key].map((wo) => {
               const site = sites[wo.site_id];
@@ -1219,14 +1219,14 @@ function KanbanTab({ wos, sites, users, reload }) {
                   key={wo.id}
                   draggable
                   onDragStart={(e) => onDragStart(e, wo.id)}
-                  className="bg-cl-bg border border-cl-border rounded-sm p-2.5 cursor-grab"
+                  className="bg-cl-bg border border-cl-border rounded-sm p-3.5 cursor-grab"
                   style={{ borderLeftWidth: 2, borderLeftColor: FLAG_COLORS[flag] }}
                 >
-                  <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center justify-between mb-2">
                     <span className="font-mono text-[10px] text-cl-text-dim">{formatWoCode(wo)}</span>
                     <span className="text-[9px]" style={{ color: FLAG_COLORS[flag] }}>● {flag}</span>
                   </div>
-                  <div className="text-[12px] text-cl-text font-medium leading-tight mb-1 truncate">
+                  <div className="text-[12px] text-cl-text font-medium leading-tight mb-1.5 truncate">
                     {site?.name || wo.title || "—"}
                   </div>
                   <div className="text-[10px] text-cl-text-mid truncate">
