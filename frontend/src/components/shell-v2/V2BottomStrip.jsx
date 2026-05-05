@@ -28,20 +28,16 @@ function TechCard({ item }) {
 
   return (
     <div
-      className="flex items-center gap-2.5 px-3 py-2 bg-cl-surface border border-cl-border rounded-md flex-shrink-0 hover:border-cl-border-strong transition"
+      className="relative flex items-center gap-2.5 pl-3.5 pr-3 py-2 bg-cl-surface border border-cl-border rounded-md flex-shrink-0 hover:border-cl-border-strong transition overflow-hidden"
       title={`${item.techName} · ${dot.label} · ${item.siteName} · ${item.woCode}${item.woReference ? ` · ${item.woReference}` : ""}`}
     >
-      {/* Avatar with presence dot */}
-      <div className="relative flex-shrink-0">
-        <Icon icon={ICONS.user} size={18} color="#3D4A66" />
-        <span
-          className={`absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full${dot.pulse ? " animate-pulse" : ""}`}
-          style={{
-            background: dot.color,
-            boxShadow: `0 0 0 1.5px #FFFFFF, 0 0 0 2.5px ${dot.color}88`,
-          }}
-        />
-      </div>
+      {/* Status: barra vertical de color a la izquierda del card */}
+      <span
+        className={`absolute left-0 top-0 bottom-0 w-1${dot.pulse ? " animate-pulse" : ""}`}
+        style={{ background: dot.color }}
+        aria-label={dot.label}
+      />
+      <Icon icon={ICONS.user} size={18} color="#3D4A66" className="flex-shrink-0" />
       <div className="leading-tight min-w-0">
         <p className="text-[12px] font-jakarta font-semibold text-cl-text truncate max-w-[160px]">
           {item.techName}
