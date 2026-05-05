@@ -34,27 +34,34 @@ function TeamCard({ name }) {
       className="flex items-center gap-2.5 px-3 py-2 bg-cl-surface border border-cl-border rounded-md flex-shrink-0 hover:border-cl-border-strong transition"
       title={`${name} · ${info.label} · ${info.tzLabel} ${info.techTime} · ${info.offsetText}`}
     >
-      {/* Avatar 24x24 con dot status en ESQUINA SUPERIOR DERECHA · contenido · estilo inline */}
+      {/* Avatar wrapper 28x28: ícono anclado abajo-izquierda, dot anclado arriba-derecha.
+          Esto garantiza que dot y silueta del ícono Solar NO se solapen visualmente. */}
       <div
         style={{
           position: "relative",
-          width: 24,
-          height: 24,
+          width: 28,
+          height: 28,
           flexShrink: 0,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
         }}
       >
-        <Icon icon={ICONS.user} size={18} color="#3D4A66" />
+        <span
+          style={{
+            position: "absolute",
+            left: 0,
+            bottom: 0,
+            lineHeight: 0,
+          }}
+        >
+          <Icon icon={ICONS.user} size={18} color="#3D4A66" />
+        </span>
         <span
           className={pulse ? "animate-pulse" : ""}
           style={{
             position: "absolute",
             top: 0,
             right: 0,
-            width: 9,
-            height: 9,
+            width: 10,
+            height: 10,
             borderRadius: "50%",
             background: dotColor,
             boxShadow: "0 0 0 1.5px #FFFFFF",
