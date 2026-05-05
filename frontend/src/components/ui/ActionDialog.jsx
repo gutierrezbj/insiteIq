@@ -1,21 +1,32 @@
 /**
- * ActionDialog — generic war-room modal for any WO action.
+ * ActionDialog · v2 paleta F (Iter 2.27).
+ *
+ * Wrapper modal compartido por TODOS los action dialogs del sistema:
+ * GenerateInvoice, CreateSubscription, CreateVendorInvoice, Create*
+ * (User/Org/Site), PartsSection, RateCardSection, BriefingSection,
+ * CostSnapshotAction, EquipmentSection, IntakeWorkOrderAction.
+ *
+ * API preservada (props + exports DialogLabel/DialogInput/DialogTextarea/
+ * DialogCheckbox) — cero cambios en consumers.
  *
  * Render-prop style: parent passes the form fields as children. Handles
  * backdrop, ESC, focus trap lite, submit wiring, error display.
  *
- * Usage:
- *   <ActionDialog
- *     open={open}
- *     onClose={() => setOpen(false)}
- *     title="Advance to triage"
- *     submitLabel="Advance"
- *     onSubmit={async () => { await api.post(...); reload(); }}
- *   >
- *     <textarea ... />
- *   </ActionDialog>
+ * Owner roast 2026-05-05: "Validado por Adriana, salvo generate invoice
+ * que tiene el formato antiguo" — fix wrapper sirve a 13+ modales en
+ * cadena.
  */
 import { useEffect, useRef, useState } from "react";
+
+const JAKARTA = "'Plus Jakarta Sans', sans-serif";
+const MONO = "'JetBrains Mono', monospace";
+
+const MONO_CAPS = {
+  fontFamily: MONO,
+  fontWeight: 700,
+  letterSpacing: "0.14em",
+  textTransform: "uppercase",
+};
 
 export default function ActionDialog({
   open,
@@ -38,12 +49,10 @@ export default function ActionDialog({
       setError(null);
       return;
     }
-    // ESC to close
     function onKey(e) {
       if (e.key === "Escape" && !busy) onClose?.();
     }
     window.addEventListener("keydown", onKey);
-    // Autofocus the dialog so focusable content inside gets keyboard routing
     dialogRef.current?.focus();
     return () => window.removeEventListener("keydown", onKey);
   }, [open, busy, onClose]);
@@ -57,18 +66,31 @@ export default function ActionDialog({
     setError(null);
     try {
       await onSubmit?.();
-      // Parent is expected to close on success; safety net
       onClose?.();
     } catch (err) {
-      setError(err?.message || "Accion fallo");
+      setError(err?.message || "Acción falló");
     } finally {
       setBusy(false);
     }
   }
 
+  const submitColors = destructive
+    ? { bg: "#DC2626", border: "#DC2626", hoverBg: "#991B1B", shadow: "rgba(220, 38, 38, 0.32)" }
+    : { bg: "#0A1628", border: "#0A1628", hoverBg: "#1A2640", shadow: "rgba(10, 22, 40, 0.32)" };
+
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center px-4 py-8 bg-black/70 backdrop-blur-sm"
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 50,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "32px 16px",
+        background: "rgba(10, 22, 40, 0.55)",
+        backdropFilter: "blur(4px)",
+      }}
       onClick={() => !busy && onClose?.()}
     >
       <form
@@ -76,43 +98,120 @@ export default function ActionDialog({
         tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
         onSubmit={handleSubmit}
-        className="w-full max-w-md bg-surface-raised accent-bar rounded-md shadow-2xl p-5 outline-none"
+        style={{
+          width: "100%",
+          maxWidth: 480,
+          background: "#FFFFFF",
+          border: "1px solid #E2E5EC",
+          borderLeft: "3px solid #0A1628",
+          borderRadius: 8,
+          padding: "24px 26px",
+          boxShadow: "0 24px 48px -8px rgba(10, 22, 40, 0.32), 0 12px 24px -6px rgba(10, 22, 40, 0.16)",
+          outline: "none",
+        }}
       >
-        <div className="label-caps mb-1.5">
-          {destructive ? "Accion destructiva" : "Accion"}
+        <div
+          style={{
+            ...MONO_CAPS,
+            fontSize: 10,
+            color: destructive ? "#991B1B" : "#8B95A8",
+            letterSpacing: "0.16em",
+            marginBottom: 6,
+          }}
+        >
+          {destructive ? "Acción destructiva" : "Acción"}
         </div>
-        <h2 className="font-display text-xl text-text-primary leading-tight mb-1">
+        <h2
+          style={{
+            fontFamily: JAKARTA,
+            fontSize: 22,
+            fontWeight: 800,
+            color: "#0A1628",
+            letterSpacing: "-0.015em",
+            lineHeight: 1.2,
+            marginBottom: subtitle ? 6 : 16,
+          }}
+        >
           {title}
         </h2>
         {subtitle && (
-          <p className="font-body text-sm text-text-secondary mb-4">{subtitle}</p>
+          <p style={{ fontFamily: JAKARTA, fontSize: 13, color: "#3D4A66", lineHeight: 1.5, marginBottom: 18, fontWeight: 500 }}>
+            {subtitle}
+          </p>
         )}
 
-        <div className="mt-4 space-y-3">{children}</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>{children}</div>
 
         {error && (
-          <div className="accent-bar-danger bg-surface-base text-danger text-sm px-3 py-2 mt-4 rounded-sm">
+          <div
+            style={{
+              background: "#FEF2F2",
+              border: "1px solid #FCA5A5",
+              borderLeft: "3px solid #DC2626",
+              color: "#991B1B",
+              fontFamily: JAKARTA,
+              fontSize: 13,
+              fontWeight: 600,
+              padding: "10px 14px",
+              borderRadius: 4,
+              marginTop: 14,
+            }}
+          >
             {error}
           </div>
         )}
 
-        <div className="mt-5 flex items-center gap-2 justify-end">
+        <div style={{ marginTop: 22, display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 8 }}>
           <button
             type="button"
             disabled={busy}
             onClick={onClose}
-            className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary hover:text-text-primary px-3 py-2 disabled:opacity-50"
+            style={{
+              ...MONO_CAPS,
+              fontSize: 10,
+              letterSpacing: "0.14em",
+              padding: "10px 16px",
+              background: "transparent",
+              color: "#3D4A66",
+              border: "none",
+              cursor: busy ? "not-allowed" : "pointer",
+              opacity: busy ? 0.5 : 1,
+              transition: "color 160ms",
+            }}
+            onMouseEnter={(e) => { if (!busy) e.currentTarget.style.color = "#0A1628"; }}
+            onMouseLeave={(e) => { if (!busy) e.currentTarget.style.color = "#3D4A66"; }}
           >
             Cancelar
           </button>
           <button
             type="submit"
             disabled={busy || submitDisabled}
-            className={`font-mono font-semibold uppercase tracking-widest-srs text-xs px-4 py-2.5 rounded-sm transition-all duration-fast ease-out-expo disabled:opacity-50 disabled:cursor-not-allowed ${
-              destructive
-                ? "bg-danger text-text-inverse hover:bg-danger/90 hover:shadow-glow-danger"
-                : "bg-primary text-text-inverse hover:bg-primary-light hover:shadow-glow-primary"
-            }`}
+            style={{
+              ...MONO_CAPS,
+              fontSize: 11,
+              letterSpacing: "0.14em",
+              padding: "10px 18px",
+              background: submitColors.bg,
+              color: "#FFFFFF",
+              border: `1.5px solid ${submitColors.border}`,
+              borderRadius: 6,
+              cursor: busy || submitDisabled ? "not-allowed" : "pointer",
+              opacity: busy || submitDisabled ? 0.5 : 1,
+              boxShadow: `0 2px 6px -1px ${submitColors.shadow}`,
+              transition: "all 160ms",
+            }}
+            onMouseEnter={(e) => {
+              if (busy || submitDisabled) return;
+              e.currentTarget.style.background = submitColors.hoverBg;
+              e.currentTarget.style.borderColor = submitColors.hoverBg;
+              e.currentTarget.style.boxShadow = `0 4px 12px -2px ${submitColors.shadow}`;
+            }}
+            onMouseLeave={(e) => {
+              if (busy || submitDisabled) return;
+              e.currentTarget.style.background = submitColors.bg;
+              e.currentTarget.style.borderColor = submitColors.border;
+              e.currentTarget.style.boxShadow = `0 2px 6px -1px ${submitColors.shadow}`;
+            }}
           >
             {busy ? "Ejecutando…" : submitLabel}
           </button>
@@ -122,14 +221,32 @@ export default function ActionDialog({
   );
 }
 
-// Reusable inputs so action forms stay consistent ----------
+/* ─── Reusable inputs (paleta F · API preservada) ────────────── */
 
 export function DialogLabel({ htmlFor, children, optional }) {
   return (
-    <label htmlFor={htmlFor} className="label-caps block mb-1.5">
+    <label
+      htmlFor={htmlFor}
+      style={{
+        ...MONO_CAPS,
+        display: "block",
+        fontSize: 9.5,
+        color: "#3D4A66",
+        letterSpacing: "0.14em",
+        marginBottom: 6,
+      }}
+    >
       {children}
       {optional && (
-        <span className="ml-2 text-text-tertiary normal-case tracking-normal">
+        <span
+          style={{
+            marginLeft: 6,
+            color: "#8B95A8",
+            textTransform: "none",
+            letterSpacing: "0.02em",
+            fontWeight: 500,
+          }}
+        >
           (opcional)
         </span>
       )}
@@ -137,12 +254,39 @@ export function DialogLabel({ htmlFor, children, optional }) {
   );
 }
 
+const inputBaseStyle = {
+  width: "100%",
+  height: 38,
+  border: "1px solid #C8CDD8",
+  borderRadius: 6,
+  padding: "0 12px",
+  fontFamily: JAKARTA,
+  fontSize: 13.5,
+  fontWeight: 500,
+  color: "#0A1628",
+  background: "#FFFFFF",
+  outline: "none",
+  transition: "all 160ms",
+};
+
+const focusInputStyle = (e) => {
+  e.currentTarget.style.border = "1.5px solid #0A1628";
+  e.currentTarget.style.boxShadow = "0 0 0 3px rgba(10, 22, 40, 0.10)";
+};
+
+const blurInputStyle = (e) => {
+  e.currentTarget.style.border = "1px solid #C8CDD8";
+  e.currentTarget.style.boxShadow = "none";
+};
+
 export function DialogInput({ id, ...props }) {
   return (
     <input
       id={id}
       {...props}
-      className="w-full bg-surface-overlay border border-surface-border rounded-sm px-3 py-2 text-text-primary font-body focus:outline-none focus:border-primary focus:shadow-glow-primary transition-all duration-fast ease-out-expo"
+      style={inputBaseStyle}
+      onFocus={focusInputStyle}
+      onBlur={blurInputStyle}
     />
   );
 }
@@ -153,7 +297,15 @@ export function DialogTextarea({ id, rows = 3, ...props }) {
       id={id}
       rows={rows}
       {...props}
-      className="w-full bg-surface-overlay border border-surface-border rounded-sm px-3 py-2 text-text-primary font-body focus:outline-none focus:border-primary focus:shadow-glow-primary transition-all duration-fast ease-out-expo resize-y"
+      style={{
+        ...inputBaseStyle,
+        height: "auto",
+        padding: "10px 12px",
+        resize: "vertical",
+        lineHeight: 1.5,
+      }}
+      onFocus={focusInputStyle}
+      onBlur={blurInputStyle}
     />
   );
 }
@@ -162,9 +314,17 @@ export function DialogCheckbox({ id, label, checked, onChange, disabled }) {
   return (
     <label
       htmlFor={id}
-      className={`flex items-center gap-2 font-body text-sm cursor-pointer ${
-        disabled ? "opacity-50 cursor-not-allowed" : ""
-      }`}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        fontFamily: JAKARTA,
+        fontSize: 13.5,
+        color: "#0A1628",
+        fontWeight: 500,
+        cursor: disabled ? "not-allowed" : "pointer",
+        opacity: disabled ? 0.5 : 1,
+      }}
     >
       <input
         id={id}
@@ -172,9 +332,9 @@ export function DialogCheckbox({ id, label, checked, onChange, disabled }) {
         checked={checked}
         disabled={disabled}
         onChange={(e) => onChange?.(e.target.checked)}
-        className="accent-primary w-4 h-4"
+        style={{ width: 16, height: 16, accentColor: "#0A1628" }}
       />
-      <span className="text-text-primary">{label}</span>
+      <span>{label}</span>
     </label>
   );
 }
