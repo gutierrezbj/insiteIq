@@ -227,7 +227,7 @@ export default function RolloutDetailPage() {
     <div className="h-full flex flex-col">
       {/* Header sticky · bg blanco con border-bottom strong para presencia */}
       <header className="bg-cl-bg flex-shrink-0" style={{ borderBottom: "1px solid #C8CDD8" }}>
-        <div className="px-6 py-4 flex items-start justify-between gap-4">
+        <div className="px-10 py-4 flex items-start justify-between gap-4">
           <div className="min-w-0">
             <div className="flex items-center gap-2.5 mb-1 flex-wrap">
               <p className="label-caps-v2" style={{ color: "#0A1628", fontWeight: 800 }}>Rollout</p>
@@ -282,7 +282,7 @@ export default function RolloutDetailPage() {
         </div>
 
         {/* Tabs nav · activo navy strong + bottom-border-3px navy + bold */}
-        <nav className="px-6 flex items-center gap-0">
+        <nav className="px-10 flex items-center gap-0">
           {TABS.map((t) => {
             const isActive = activeTab === t.key;
             return (
@@ -1192,7 +1192,7 @@ function KanbanTab({ wos, sites, users, reload }) {
   }
 
   return (
-    <div className="px-4 py-4 h-full flex gap-3 overflow-x-auto wr-scroll">
+    <div className="px-10 py-4 h-full flex gap-3 overflow-x-auto wr-scroll">
       {KANBAN_COLUMNS.map((col) => (
         <div
           key={col.key}
@@ -1247,7 +1247,7 @@ function DashboardTab({ dashboard, counts, totalSites, progressPct }) {
   const wo = dashboard?.work_orders || {};
 
   return (
-    <div className="px-6 py-6 space-y-6">
+    <div className="px-10 py-6 space-y-6">
       {/* Hero metric · navy strong + border-strong para autoridad */}
       <div className="rounded-sm px-6 py-6" style={{ background: "#FFFFFF", border: "1px solid #C8CDD8", borderLeft: "4px solid #0A1628" }}>
         <p className="label-caps-v2 mb-2" style={{ color: "#0A1628", fontWeight: 800 }}>Avance del rollout</p>
