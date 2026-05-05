@@ -1,24 +1,34 @@
 /**
- * SRS Finance — pre-invoice staging + channel partners + collections ball
- * (Pasito S / Fase 2 scaffold).
+ * SRS Finance · v2 paleta F (Iter 2.26).
  *
- * Sin entidad invoice real (Fase 3), pero útil desde ya:
- *   - Pre-invoice: closed WOs agrupadas por client org sin billing_line_id
- *   - Channel partners: orgs con commission_rule o revenue_split_pct visibles
- *   - Collections ball-in-court: resolved-but-not-closed (cliente dilata sign-off)
+ * Migración v1 amber legacy → v2 usando v2-shared. Pasito S + X-c + X-d.
+ * 6 tabs:
+ *   - Invoices (AR)
+ *   - Vendor payables (AP) con aging buckets
+ *   - Recurring (subscriptions con run/pause/resume/cancel)
+ *   - Pre-invoice (closed WOs sin billing_line)
+ *   - Channel partners (commission rules · Principio #3)
+ *   - Collections ball (donde se duerme el dinero)
  *
- * Precios reales + PDF factura + outbox AP aterrizan Fase 3 (Admin/Finance).
+ * Action components (Generate/Create/ActionDialog) preservados v1 — sprint
+ * propio. Detail pages (InvoiceDetail / VendorInvoiceDetail) tambien v1.
+ *
+ * Endpoints:
+ *   GET /api/invoices?status_filter=&limit=200
+ *   GET /api/vendor-invoices?status_filter=&limit=200
+ *   GET /api/vendor-invoices/aging/summary
+ *   GET /api/subscriptions
+ *   GET /api/work-orders?limit=500
+ *   GET /api/organizations
+ *   GET /api/service-agreements
+ *   POST /api/subscriptions/{id}/{run-now|pause|resume|cancel}
  */
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../../contexts/AuthContext";
 import { useFetch } from "../../../lib/useFetch";
 import { api } from "../../../lib/api";
-import {
-  BallBadge,
-  StatusBadge,
-  formatAge,
-} from "../../../components/ui/Badges";
+import { formatAge } from "../../../components/ui/Badges";
 import GenerateInvoiceAction from "../../../components/finance/GenerateInvoiceAction";
 import CreateSubscriptionAction from "../../../components/finance/CreateSubscriptionAction";
 import CreateVendorInvoiceAction from "../../../components/finance/CreateVendorInvoiceAction";
@@ -26,6 +36,10 @@ import ActionDialog, {
   DialogTextarea,
   DialogLabel,
 } from "../../../components/ui/ActionDialog";
+import { WoStatusPill, BallPill } from "../../../components/v2-shared/Pills";
+import KpiTile from "../../../components/v2-shared/KpiTile";
+import SectionCard, { SectionTitle } from "../../../components/v2-shared/SectionCard";
+import { JAKARTA, MONO, MONO_CAPS } from "../../../components/v2-shared/typography";
 
 const TABS = [
   { key: "invoices", label: "Invoices (AR)" },
@@ -36,22 +50,58 @@ const TABS = [
   { key: "collections", label: "Collections ball" },
 ];
 
-const STATUS_LOOK = {
-  draft: { bg: "bg-text-tertiary", text: "text-text-tertiary", label: "draft" },
-  sent: { bg: "bg-warning", text: "text-warning", label: "sent" },
-  paid: { bg: "bg-success", text: "text-success", label: "paid" },
-  overdue: { bg: "bg-danger", text: "text-danger", label: "overdue" },
-  void: { bg: "bg-text-tertiary", text: "text-text-tertiary", label: "void" },
+/* ─── Status pills inline ──────────────────────────────────────── */
+
+const INVOICE_STATUS = {
+  draft:   { dot: "#8B95A8", color: "#3D4A66" },
+  sent:    { dot: "#E8A33D", color: "#7E5212" },
+  paid:    { dot: "#16A34A", color: "#0A6131" },
+  overdue: { dot: "#DC2626", color: "#991B1B" },
+  void:    { dot: "#C8CDD8", color: "#8B95A8" },
 };
+
+const SUB_STATUS = {
+  active:    { dot: "#16A34A", color: "#0A6131" },
+  paused:    { dot: "#E8A33D", color: "#7E5212" },
+  cancelled: { dot: "#C8CDD8", color: "#8B95A8" },
+};
+
+const VI_STATUS = {
+  received: { dot: "#8B95A8", color: "#3D4A66" },
+  matched:  { dot: "#1E3A8A", color: "#1E40AF" },
+  approved: { dot: "#E8A33D", color: "#7E5212" },
+  paid:     { dot: "#16A34A", color: "#0A6131" },
+  disputed: { dot: "#DC2626", color: "#991B1B" },
+  rejected: { dot: "#C8CDD8", color: "#8B95A8" },
+};
+
+function StatusPillDot({ map, status }) {
+  const s = map[status] || Object.values(map)[0];
+  return (
+    <span
+      style={{
+        ...MONO_CAPS,
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 6,
+        fontSize: 9.5,
+        color: s.color,
+        letterSpacing: "0.12em",
+      }}
+    >
+      <span style={{ width: 6, height: 6, borderRadius: "50%", background: s.dot }} />
+      {status || "—"}
+    </span>
+  );
+}
+
+/* ─── Page ─────────────────────────────────────────────────────── */
 
 export default function FinancePage() {
   const [tab, setTab] = useState("invoices");
   const { user } = useAuth();
-  const srsMem = user?.memberships?.find(
-    (m) => m.space === "srs_coordinators"
-  );
-  const isSrsAdmin =
-    !!srsMem && ["owner", "director"].includes(srsMem.authority_level);
+  const srsMem = user?.memberships?.find((m) => m.space === "srs_coordinators");
+  const isSrsAdmin = !!srsMem && ["owner", "director"].includes(srsMem.authority_level);
 
   const { data: wos } = useFetch("/work-orders?limit=500");
   const { data: orgs } = useFetch("/organizations");
@@ -70,72 +120,105 @@ export default function FinancePage() {
   }, [agreements]);
 
   return (
-    <div className="px-4 md:px-8 py-5 md:py-7 max-w-wide">
-      <div className="accent-bar pl-4 mb-6">
-        <div className="label-caps">Finance</div>
-        <h1 className="font-display text-2xl text-text-primary leading-tight">
+    <div style={{ padding: "32px 40px", maxWidth: 1400 }}>
+      {/* Header */}
+      <div style={{ paddingLeft: 16, borderLeft: "3px solid #0A1628", marginBottom: 22 }}>
+        <div style={{ ...MONO_CAPS, fontSize: 11, color: "#8B95A8", marginBottom: 6 }}>
+          Finance
+        </div>
+        <h1
+          style={{
+            fontFamily: JAKARTA,
+            fontSize: 28,
+            fontWeight: 800,
+            color: "#0A1628",
+            letterSpacing: "-0.02em",
+            lineHeight: 1.1,
+          }}
+        >
           Pre-invoice · channel splits · collections
         </h1>
-        <p className="font-body text-text-secondary text-sm mt-1">
-          Fase 2 scaffold · entidad invoice + rates + AP layer aterrizan Fase 3
-          (Admin/Finance). Hoy expone lo cobrable y donde se duerme el dinero.
+        <p style={{ fontFamily: JAKARTA, fontSize: 13, color: "#3D4A66", marginTop: 6, fontWeight: 500 }}>
+          Fase 2 scaffold · entidad invoice + rates + AP layer aterrizan Fase 3 (Admin/Finance).
+          Hoy expone lo cobrable y dónde se duerme el dinero.
         </p>
       </div>
 
-      <div className="flex gap-1 mb-4 bg-surface-raised accent-bar rounded-sm p-1">
-        {TABS.map((t) => (
-          <button
-            key={t.key}
-            type="button"
-            onClick={() => setTab(t.key)}
-            className={`px-4 py-2 rounded-sm font-mono text-2xs uppercase tracking-widest-srs transition-colors duration-fast ${
-              tab === t.key
-                ? "bg-surface-overlay text-text-primary"
-                : "text-text-tertiary hover:text-text-secondary hover:bg-surface-overlay/60"
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
+      {/* Tabs nav */}
+      <div
+        style={{
+          display: "inline-flex",
+          gap: 4,
+          padding: 4,
+          background: "#FFFFFF",
+          border: "1px solid #E2E5EC",
+          borderRadius: 8,
+          marginBottom: 16,
+          flexWrap: "wrap",
+        }}
+      >
+        {TABS.map((t) => {
+          const isActive = tab === t.key;
+          return (
+            <button
+              key={t.key}
+              type="button"
+              onClick={() => setTab(t.key)}
+              style={{
+                padding: "8px 14px",
+                ...MONO_CAPS,
+                fontSize: 10,
+                letterSpacing: "0.14em",
+                background: isActive ? "#0A1628" : "transparent",
+                color: isActive ? "#FFFFFF" : "#3D4A66",
+                border: "none",
+                borderRadius: 5,
+                cursor: "pointer",
+                transition: "all 160ms",
+              }}
+              onMouseEnter={(e) => {
+                if (!isActive) {
+                  e.currentTarget.style.background = "#F0F2F7";
+                  e.currentTarget.style.color = "#0A1628";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isActive) {
+                  e.currentTarget.style.background = "transparent";
+                  e.currentTarget.style.color = "#3D4A66";
+                }
+              }}
+            >
+              {t.label}
+            </button>
+          );
+        })}
       </div>
 
-      {tab === "invoices" && (
-        <InvoicesTab orgById={orgById} isSrsAdmin={isSrsAdmin} />
-      )}
-      {tab === "vendor_payables" && (
-        <VendorPayablesTab orgById={orgById} isSrsAdmin={isSrsAdmin} />
-      )}
-      {tab === "recurring" && (
-        <RecurringTab orgById={orgById} isSrsAdmin={isSrsAdmin} />
-      )}
+      {tab === "invoices" && <InvoicesTab orgById={orgById} isSrsAdmin={isSrsAdmin} />}
+      {tab === "vendor_payables" && <VendorPayablesTab orgById={orgById} isSrsAdmin={isSrsAdmin} />}
+      {tab === "recurring" && <RecurringTab orgById={orgById} isSrsAdmin={isSrsAdmin} />}
       {tab === "preinvoice" && (
         <PreInvoiceTab
           wos={wos || []}
           orgById={orgById}
           agreementById={agreementById}
-          isSrsAdmin={isSrsAdmin}
         />
       )}
-      {tab === "channels" && (
-        <ChannelsTab orgs={orgs || []} wos={wos || []} orgById={orgById} />
-      )}
-      {tab === "collections" && (
-        <CollectionsTab wos={wos || []} orgById={orgById} />
-      )}
+      {tab === "channels" && <ChannelsTab orgs={orgs || []} />}
+      {tab === "collections" && <CollectionsTab wos={wos || []} orgById={orgById} />}
     </div>
   );
 }
 
-// -------------------- Invoices tab --------------------
+/* ─── Invoices tab (AR) ───────────────────────────────────────── */
 
 function InvoicesTab({ orgById, isSrsAdmin }) {
   const [statusFilter, setStatusFilter] = useState("");
   const path = statusFilter
     ? `/invoices?status_filter=${statusFilter}&limit=200`
     : "/invoices?limit=200";
-  const { data: invoices, loading, reload } = useFetch(path, {
-    deps: [statusFilter],
-  });
+  const { data: invoices, loading, reload } = useFetch(path, { deps: [statusFilter] });
 
   const list = invoices || [];
   const totals = useMemo(() => {
@@ -145,30 +228,45 @@ function InvoicesTab({ orgById, isSrsAdmin }) {
   }, [list]);
 
   return (
-    <div className="space-y-4">
-      <section className="bg-surface-raised accent-bar rounded-sm p-4">
-        <div className="flex items-start justify-between gap-3 flex-wrap">
+    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      <SectionCard>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
           <div>
-            <div className="label-caps mb-1">Invoices generadas</div>
-            <h2 className="font-display text-base text-text-primary">
-              {list.length} · draft {totals.draft} · sent {totals.sent} · paid {totals.paid}
-              {totals.overdue ? ` · overdue ${totals.overdue}` : ""}
-            </h2>
+            <SectionTitle marginBottom={4}>Invoices generadas</SectionTitle>
+            <div style={{ fontFamily: JAKARTA, fontSize: 16, fontWeight: 700, color: "#0A1628" }}>
+              {list.length}{" "}
+              <span style={{ color: "#3D4A66", fontWeight: 500 }}>
+                · draft {totals.draft} · sent {totals.sent} · paid {totals.paid}
+                {totals.overdue ? ` · overdue ${totals.overdue}` : ""}
+              </span>
+            </div>
           </div>
           {isSrsAdmin && <GenerateInvoiceAction onGenerated={() => reload()} />}
         </div>
-      </section>
+      </SectionCard>
 
-      <section className="bg-surface-raised accent-bar rounded-sm">
-        <header className="px-4 py-3 border-b border-surface-border flex items-center gap-3 flex-wrap">
-          <label htmlFor="inv-status" className="label-caps">
+      <SectionCard padding={0}>
+        <header
+          style={{
+            padding: "12px 18px",
+            borderBottom: "1px solid #E2E5EC",
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            flexWrap: "wrap",
+          }}
+        >
+          <label
+            htmlFor="inv-status"
+            style={{ ...MONO_CAPS, fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.14em" }}
+          >
             Status
           </label>
           <select
             id="inv-status"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="bg-surface-overlay border border-surface-border rounded-sm px-3 py-1.5 text-text-primary font-body text-sm focus:outline-none focus:border-primary focus:shadow-glow-primary transition-all duration-fast"
+            style={selectStyle}
           >
             <option value="">todos</option>
             <option value="draft">draft</option>
@@ -177,94 +275,145 @@ function InvoicesTab({ orgById, isSrsAdmin }) {
             <option value="overdue">overdue</option>
             <option value="void">void</option>
           </select>
-          <div className="ml-auto font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+          <div
+            style={{
+              marginLeft: "auto",
+              ...MONO_CAPS,
+              fontSize: 11,
+              color: "#0A1628",
+              letterSpacing: "0.14em",
+              fontVariantNumeric: "tabular-nums",
+              fontWeight: 800,
+            }}
+          >
             {list.length}
           </div>
         </header>
 
-        <div className="grid grid-cols-12 gap-3 px-4 py-2 border-b border-surface-border text-text-tertiary">
-          <div className="col-span-3 label-caps">Invoice #</div>
-          <div className="col-span-3 label-caps">Cliente</div>
-          <div className="col-span-2 label-caps">Periodo</div>
-          <div className="col-span-1 label-caps text-right">WOs</div>
-          <div className="col-span-2 label-caps text-right">Total</div>
-          <div className="col-span-1 label-caps text-right">Status</div>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "3fr 3fr 2fr 1fr 2fr 1fr",
+            gap: 12,
+            padding: "10px 18px",
+            background: "#F4F6F8",
+            borderBottom: "1px solid #E2E5EC",
+            ...MONO_CAPS,
+            fontSize: 9.5,
+            color: "#3D4A66",
+            letterSpacing: "0.14em",
+          }}
+        >
+          <div>Invoice #</div>
+          <div>Cliente</div>
+          <div>Periodo</div>
+          <div style={{ textAlign: "right" }}>WOs</div>
+          <div style={{ textAlign: "right" }}>Total</div>
+          <div style={{ textAlign: "right" }}>Status</div>
         </div>
 
-        <div className="divide-y divide-surface-border max-h-[65vh] overflow-y-auto">
-          {loading && <EmptyRow text="cargando…" />}
-          {!loading && list.length === 0 && <EmptyRow text="— sin invoices —" />}
+        <div style={{ maxHeight: "65vh", overflowY: "auto" }}>
+          {loading && <Empty text="cargando…" />}
+          {!loading && list.length === 0 && <Empty text="— sin invoices —" />}
           {list.map((inv) => (
             <Link
               key={inv.id}
               to={`/srs/finance/invoices/${inv.id}`}
-              className="grid grid-cols-12 gap-3 px-4 py-2.5 items-center hover:bg-surface-overlay/60 transition-colors duration-fast"
+              style={tableRowStyle("3fr 3fr 2fr 1fr 2fr 1fr")}
+              onMouseEnter={hoverRow}
+              onMouseLeave={leaveRow}
             >
-              <div className="col-span-3 min-w-0">
-                <div className="font-mono text-sm text-text-primary truncate">
+              <div style={{ minWidth: 0 }}>
+                <div
+                  style={{
+                    fontFamily: MONO,
+                    fontSize: 13,
+                    color: "#0A1628",
+                    fontWeight: 600,
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
                   {inv.invoice_number}
                 </div>
                 {inv.client_ref && (
-                  <div className="font-mono text-2xs text-text-tertiary truncate">
+                  <div
+                    style={{
+                      fontFamily: MONO,
+                      fontSize: 10,
+                      color: "#8B95A8",
+                      marginTop: 1,
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                    }}
+                  >
                     ref {inv.client_ref}
                   </div>
                 )}
               </div>
-              <div className="col-span-3 font-body text-sm text-text-secondary truncate">
-                {orgById.get(inv.organization_id)?.legal_name || inv.organization_id.slice(-6)}
+              <div
+                style={{
+                  fontFamily: JAKARTA,
+                  fontSize: 13,
+                  color: "#3D4A66",
+                  fontWeight: 500,
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+              >
+                {orgById.get(inv.organization_id)?.legal_name ||
+                  inv.organization_id.slice(-6)}
               </div>
-              <div className="col-span-2 font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+              <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.14em" }}>
                 {new Date(inv.period_start).toISOString().slice(0, 7)}
               </div>
-              <div className="col-span-1 text-right font-mono text-sm text-text-primary">
+              <div
+                style={{
+                  textAlign: "right",
+                  fontFamily: MONO,
+                  fontSize: 13,
+                  color: "#0A1628",
+                  fontWeight: 600,
+                  fontVariantNumeric: "tabular-nums",
+                }}
+              >
                 {inv.generated_from_wo_count}
               </div>
-              <div className="col-span-2 text-right">
-                <div className="font-display text-base text-text-primary leading-none">
+              <div style={{ textAlign: "right" }}>
+                <div
+                  style={{
+                    fontFamily: JAKARTA,
+                    fontSize: 14,
+                    color: "#0A1628",
+                    fontWeight: 700,
+                    fontVariantNumeric: "tabular-nums",
+                    lineHeight: 1.1,
+                  }}
+                >
                   {inv.total.toFixed(2)}
                 </div>
-                <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+                <div style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.14em" }}>
                   {inv.currency}
                 </div>
               </div>
-              <div className="col-span-1 text-right">
-                <StatusPill status={inv.status} />
+              <div style={{ textAlign: "right" }}>
+                <StatusPillDot map={INVOICE_STATUS} status={inv.status} />
               </div>
             </Link>
           ))}
         </div>
-      </section>
+      </SectionCard>
     </div>
   );
 }
 
-function StatusPill({ status }) {
-  const look = STATUS_LOOK[status] || STATUS_LOOK.draft;
-  return (
-    <span
-      className={`inline-flex items-center gap-1 font-mono text-2xs uppercase tracking-widest-srs ${look.text}`}
-    >
-      <span className={`w-1.5 h-1.5 rounded-full ${look.bg}`} />
-      {look.label}
-    </span>
-  );
-}
-
-function EmptyRow({ text }) {
-  return (
-    <div className="px-4 py-6 font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
-      {text}
-    </div>
-  );
-}
-
-// -------------------- Pre-invoice tab --------------------
+/* ─── Pre-invoice tab ──────────────────────────────────────────── */
 
 function PreInvoiceTab({ wos, orgById, agreementById }) {
-  // Group closed WOs without billing_line_id by org
-  const billable = wos.filter(
-    (w) => w.status === "closed" && !w.billing_line_id
-  );
+  const billable = wos.filter((w) => w.status === "closed" && !w.billing_line_id);
 
   const byOrg = useMemo(() => {
     const m = new Map();
@@ -278,40 +427,38 @@ function PreInvoiceTab({ wos, orgById, agreementById }) {
 
   const byShield = useMemo(() => {
     const c = {};
-    for (const w of billable) {
-      c[w.shield_level] = (c[w.shield_level] || 0) + 1;
-    }
+    for (const w of billable) c[w.shield_level] = (c[w.shield_level] || 0) + 1;
     return c;
   }, [billable]);
 
   return (
-    <div className="space-y-4">
-      <section className="bg-surface-raised accent-bar rounded-sm p-4">
-        <div className="label-caps mb-3">Resumen facturable</div>
-        <div className="flex flex-wrap gap-5">
-          <Stat
-            label="WOs pendientes"
-            value={billable.length}
-            hint="closed sin billing_line"
-          />
-          <Stat label="Clientes" value={byOrg.length} />
+    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      <SectionCard>
+        <SectionTitle>Resumen facturable</SectionTitle>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+            gap: 12,
+          }}
+        >
+          <KpiTile label="WOs pendientes" value={billable.length} hint="closed sin billing_line" tone="primary" />
+          <KpiTile label="Clientes" value={byOrg.length} />
           {Object.entries(byShield).map(([shield, count]) => (
-            <Stat key={shield} label={`shield ${shield}`} value={count} />
+            <KpiTile key={shield} label={`shield ${shield}`} value={count} />
           ))}
         </div>
-      </section>
+      </SectionCard>
 
-      <section className="bg-surface-raised accent-bar rounded-sm">
-        <header className="px-4 py-3 border-b border-surface-border">
-          <div className="label-caps">Por cliente</div>
-          <h2 className="font-display text-base text-text-primary">
-            {byOrg.length} orgs con WOs listas
-          </h2>
+      <SectionCard padding={0}>
+        <header style={{ padding: "14px 18px", borderBottom: "1px solid #E2E5EC" }}>
+          <SectionTitle marginBottom={2}>Por cliente</SectionTitle>
+          <div style={{ fontFamily: JAKARTA, fontSize: 16, fontWeight: 700, color: "#0A1628" }}>
+            {byOrg.length} <span style={{ color: "#3D4A66", fontWeight: 500 }}>orgs con WOs listas</span>
+          </div>
         </header>
-        <div className="divide-y divide-surface-border">
-          {byOrg.length === 0 && (
-            <Empty text="— nada listo para facturar —" />
-          )}
+        <div>
+          {byOrg.length === 0 && <Empty text="— nada listo para facturar —" />}
           {byOrg.map(([orgId, wos]) => (
             <OrgBillableRow
               key={orgId}
@@ -322,9 +469,9 @@ function PreInvoiceTab({ wos, orgById, agreementById }) {
             />
           ))}
         </div>
-      </section>
+      </SectionCard>
 
-      <p className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+      <p style={{ ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em" }}>
         Rates por shield + moneda + SR entity facturadora · Fase 3.
       </p>
     </div>
@@ -334,64 +481,111 @@ function PreInvoiceTab({ wos, orgById, agreementById }) {
 function OrgBillableRow({ org, orgId, wos, agreementById }) {
   const [expanded, setExpanded] = useState(false);
   return (
-    <div className="px-4 py-3">
+    <div style={{ padding: "14px 18px", borderBottom: "1px solid #F0F2F7" }}>
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
-        className="w-full flex items-start justify-between gap-3 text-left"
+        style={{
+          width: "100%",
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
+          gap: 12,
+          textAlign: "left",
+          background: "transparent",
+          border: "none",
+          padding: 0,
+          cursor: "pointer",
+        }}
       >
-        <div className="min-w-0">
-          <div className="font-display text-base text-text-primary leading-tight">
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontFamily: JAKARTA, fontSize: 15, fontWeight: 700, color: "#0A1628", lineHeight: 1.2 }}>
             {org?.legal_name || orgId.slice(-6)}
           </div>
-          <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+          <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#8B95A8", letterSpacing: "0.12em", marginTop: 2 }}>
             {org?.country || "—"} · {(org?.active_roles || []).join(" · ") || "—"}
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="text-right">
-            <div className="font-display text-xl text-text-primary leading-none">
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ textAlign: "right" }}>
+            <div
+              style={{
+                fontFamily: JAKARTA,
+                fontSize: 22,
+                fontWeight: 800,
+                color: "#0A1628",
+                fontVariantNumeric: "tabular-nums",
+                lineHeight: 1,
+              }}
+            >
               {wos.length}
             </div>
-            <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
-              WOs
-            </div>
+            <div style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.14em" }}>WOs</div>
           </div>
-          <span className="font-mono text-2xs text-text-tertiary">
+          <span style={{ fontFamily: MONO, fontSize: 11, color: "#3D4A66", fontWeight: 700 }}>
             {expanded ? "▼" : "▶"}
           </span>
         </div>
       </button>
       {expanded && (
-        <div className="mt-3 space-y-1.5">
+        <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 6 }}>
           {wos.map((w) => {
             const ag = agreementById.get(w.service_agreement_id);
             return (
               <Link
                 key={w.id}
                 to={`/srs/ops/${w.id}`}
-                className="block bg-surface-base rounded-sm px-3 py-2 hover:bg-surface-overlay/80 transition-colors duration-fast"
+                style={{
+                  display: "block",
+                  background: "#F4F6F8",
+                  border: "1px solid #E2E5EC",
+                  borderRadius: 4,
+                  padding: "8px 12px",
+                  textDecoration: "none",
+                  transition: "background 160ms",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "#E8EDF5")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "#F4F6F8")}
               >
-                <div className="flex items-center justify-between gap-3">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ ...MONO_CAPS, fontSize: 9.5, color: "#8B95A8", letterSpacing: "0.12em" }}>
                         {w.reference}
                       </span>
-                      <span className="font-mono text-2xs uppercase tracking-widest-srs text-text-secondary">
+                      <span style={{ ...MONO_CAPS, fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.12em" }}>
                         · shield {w.shield_level}
                       </span>
                       {ag && (
-                        <span className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+                        <span style={{ ...MONO_CAPS, fontSize: 9.5, color: "#8B95A8", letterSpacing: "0.12em" }}>
                           · {ag.currency}
                         </span>
                       )}
                     </div>
-                    <div className="font-body text-sm text-text-primary truncate">
+                    <div
+                      style={{
+                        fontFamily: JAKARTA,
+                        fontSize: 13,
+                        fontWeight: 600,
+                        color: "#0A1628",
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        marginTop: 2,
+                      }}
+                    >
                       {w.title}
                     </div>
                   </div>
-                  <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary flex-shrink-0">
+                  <div
+                    style={{
+                      ...MONO_CAPS,
+                      fontSize: 9.5,
+                      color: "#8B95A8",
+                      letterSpacing: "0.12em",
+                      flexShrink: 0,
+                    }}
+                  >
                     closed {w.closed_at ? formatAge(w.closed_at) + " ago" : "—"}
                   </div>
                 </div>
@@ -404,9 +598,9 @@ function OrgBillableRow({ org, orgId, wos, agreementById }) {
   );
 }
 
-// -------------------- Channels tab --------------------
+/* ─── Channels tab ─────────────────────────────────────────────── */
 
-function ChannelsTab({ orgs, wos, orgById }) {
+function ChannelsTab({ orgs }) {
   const partnerOrgs = useMemo(
     () =>
       orgs.filter((o) =>
@@ -422,28 +616,23 @@ function ChannelsTab({ orgs, wos, orgById }) {
   );
 
   return (
-    <div className="space-y-4">
-      <section className="bg-surface-raised accent-bar rounded-sm p-4">
-        <div className="label-caps mb-2">
+    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      <SectionCard>
+        <SectionTitle>
           Channel + JV + prime partners · {partnerOrgs.length} registrados
-        </div>
-        <p className="font-body text-sm text-text-secondary">
-          Commission rules y revenue splits expuestos para que Finance sepa a
-          quien le debe qué porcentaje. Monetización = Principio #3 Proxy
-          Coordination (medida y monetizable).
+        </SectionTitle>
+        <p style={{ fontFamily: JAKARTA, fontSize: 13, color: "#3D4A66", lineHeight: 1.55, fontWeight: 500 }}>
+          Commission rules y revenue splits expuestos para que Finance sepa a quién le debe qué porcentaje.
+          Monetización = Principio #3 Proxy Coordination (medida y monetizable).
         </p>
-      </section>
+      </SectionCard>
 
-      <section className="bg-surface-raised accent-bar rounded-sm">
-        <div className="divide-y divide-surface-border">
-          {partnerOrgs.length === 0 && (
-            <Empty text="— sin channel partners registrados —" />
-          )}
-          {partnerOrgs.map((o) => (
-            <ChannelRow key={o.id} org={o} />
-          ))}
+      <SectionCard padding={0}>
+        <div>
+          {partnerOrgs.length === 0 && <Empty text="— sin channel partners registrados —" />}
+          {partnerOrgs.map((o) => <ChannelRow key={o.id} org={o} />)}
         </div>
-      </section>
+      </SectionCard>
     </div>
   );
 }
@@ -458,51 +647,58 @@ function ChannelRow({ org }) {
   );
 
   return (
-    <div className="px-4 py-3">
-      <div className="flex items-start justify-between gap-3 mb-2">
-        <div className="min-w-0">
-          <div className="font-display text-base text-text-primary leading-tight">
-            {org.legal_name}
-          </div>
-          <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
-            {org.country || "—"} · {(org.active_roles || []).join(" · ")}
-          </div>
+    <div style={{ padding: "14px 18px", borderBottom: "1px solid #F0F2F7" }}>
+      <div style={{ marginBottom: 8 }}>
+        <div style={{ fontFamily: JAKARTA, fontSize: 15, fontWeight: 700, color: "#0A1628", lineHeight: 1.2 }}>
+          {org.legal_name}
+        </div>
+        <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#8B95A8", letterSpacing: "0.12em", marginTop: 2 }}>
+          {org.country || "—"} · {(org.active_roles || []).join(" · ")}
         </div>
       </div>
-      <div className="space-y-2">
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         {partnerRels.map((r, i) => (
           <div
             key={i}
-            className="bg-surface-base rounded-sm px-3 py-2 flex items-center justify-between gap-3"
+            style={{
+              background: "#F4F6F8",
+              border: "1px solid #E2E5EC",
+              borderRadius: 4,
+              padding: "10px 12px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 12,
+            }}
           >
-            <div>
-              <div className="font-mono text-2xs uppercase tracking-widest-srs text-primary-light">
+            <div style={{ minWidth: 0 }}>
+              <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#0A1628", letterSpacing: "0.14em" }}>
                 {r.type}
               </div>
               {r.contract_ref && (
-                <div className="font-mono text-2xs text-text-tertiary mt-0.5">
+                <div style={{ fontFamily: MONO, fontSize: 10, color: "#8B95A8", marginTop: 2, fontWeight: 500 }}>
                   {r.contract_ref}
                 </div>
               )}
               {r.notes && (
-                <div className="font-body text-sm text-text-primary mt-1">
+                <div style={{ fontFamily: JAKARTA, fontSize: 13, color: "#0A1628", marginTop: 4, fontWeight: 500 }}>
                   {r.notes}
                 </div>
               )}
             </div>
-            <div className="text-right font-mono text-2xs uppercase tracking-widest-srs">
+            <div style={{ textAlign: "right", display: "flex", flexDirection: "column", gap: 2, flexShrink: 0 }}>
               {r.commission_rule && (
-                <div className="text-success">
+                <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#0A6131", letterSpacing: "0.12em" }}>
                   commission · {formatCommission(r.commission_rule)}
                 </div>
               )}
               {r.revenue_split_pct != null && (
-                <div className="text-info">
+                <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#1E40AF", letterSpacing: "0.12em" }}>
                   rev split {r.revenue_split_pct}%
                 </div>
               )}
               {r.cost_split_pct != null && (
-                <div className="text-warning">
+                <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#7E5212", letterSpacing: "0.12em" }}>
                   cost split {r.cost_split_pct}%
                 </div>
               )}
@@ -514,11 +710,19 @@ function ChannelRow({ org }) {
   );
 }
 
-// -------------------- Collections tab --------------------
+function formatCommission(rule) {
+  if (!rule || typeof rule !== "object") return String(rule);
+  const parts = [];
+  if (rule.base_pct != null) parts.push(`${rule.base_pct}%`);
+  if (rule.scope) parts.push(rule.scope);
+  if (rule.floor_usd != null) parts.push(`floor $${rule.floor_usd}`);
+  if (rule.cap_usd != null) parts.push(`cap $${rule.cap_usd}`);
+  return parts.length ? parts.join(" · ") : JSON.stringify(rule);
+}
+
+/* ─── Collections tab ──────────────────────────────────────────── */
 
 function CollectionsTab({ wos, orgById }) {
-  // WOs where the ball is stuck on client for sign-off (resolved state)
-  // OR WOs closed > 30 days ago without billing_line (money idle).
   const now = Date.now();
   const stuck = wos.filter((w) => {
     if (w.status === "resolved" && w.ball_in_court?.side === "client") return true;
@@ -543,60 +747,83 @@ function CollectionsTab({ wos, orgById }) {
   }, [stuck]);
 
   return (
-    <div className="space-y-4">
-      <section className="bg-surface-raised accent-bar rounded-sm p-4">
-        <div className="label-caps mb-2">Donde se duerme el dinero</div>
-        <p className="font-body text-sm text-text-secondary">
-          WOs <span className="font-mono text-warning">resolved</span> con ball
-          en el cliente (esperando sign-off) + WOs{" "}
-          <span className="font-mono text-text-tertiary">closed</span> sin
-          billing_line hace mas de 30 dias. Este dashboard se alimentara en Fase
-          3 con invoice_outbox + aging buckets reales.
+    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      <SectionCard>
+        <SectionTitle>Donde se duerme el dinero</SectionTitle>
+        <p style={{ fontFamily: JAKARTA, fontSize: 13, color: "#3D4A66", lineHeight: 1.55, fontWeight: 500 }}>
+          WOs <span style={{ color: "#7E5212", fontWeight: 700 }}>resolved</span> con ball
+          en el cliente (esperando sign-off) +{" "}
+          <span style={{ color: "#3D4A66", fontWeight: 700 }}>closed</span> sin billing_line hace más de 30 días.
+          Se alimentará en Fase 3 con invoice_outbox + aging buckets reales.
         </p>
-      </section>
+      </SectionCard>
 
-      <section className="bg-surface-raised accent-bar rounded-sm">
-        <header className="px-4 py-3 border-b border-surface-border">
-          <div className="label-caps">Atascos actuales</div>
-          <h2 className="font-display text-base text-text-primary">
-            {stuck.length} WO{stuck.length === 1 ? "" : "s"} · {byOrg.length} org
-            {byOrg.length === 1 ? "" : "s"}
-          </h2>
+      <SectionCard padding={0}>
+        <header style={{ padding: "14px 18px", borderBottom: "1px solid #E2E5EC" }}>
+          <SectionTitle marginBottom={2}>Atascos actuales</SectionTitle>
+          <div style={{ fontFamily: JAKARTA, fontSize: 16, fontWeight: 700, color: "#0A1628" }}>
+            {stuck.length} <span style={{ color: "#3D4A66", fontWeight: 500 }}>WO{stuck.length === 1 ? "" : "s"} · {byOrg.length} org{byOrg.length === 1 ? "" : "s"}</span>
+          </div>
         </header>
-        <div className="divide-y divide-surface-border">
+        <div>
           {stuck.length === 0 && <Empty text="— sin atascos, todo fluye —" />}
           {byOrg.map(([orgId, list]) => (
-            <div key={orgId} className="px-4 py-3">
-              <div className="font-display text-sm text-text-primary mb-2">
+            <div key={orgId} style={{ padding: "14px 18px", borderBottom: "1px solid #F0F2F7" }}>
+              <div
+                style={{
+                  fontFamily: JAKARTA,
+                  fontSize: 14,
+                  fontWeight: 700,
+                  color: "#0A1628",
+                  marginBottom: 8,
+                }}
+              >
                 {orgById.get(orgId)?.legal_name || orgId.slice(-6)}
-                <span className="ml-2 font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+                <span style={{ ...MONO_CAPS, fontSize: 9.5, color: "#8B95A8", letterSpacing: "0.12em", marginLeft: 10, fontWeight: 700 }}>
                   · {list.length} WO{list.length === 1 ? "" : "s"}
                 </span>
               </div>
-              <div className="space-y-1.5">
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 {list.map((w) => (
                   <Link
                     key={w.id}
                     to={`/srs/ops/${w.id}`}
-                    className="block bg-surface-base rounded-sm px-3 py-2 hover:bg-surface-overlay/80 transition-colors duration-fast"
+                    style={{
+                      display: "block",
+                      background: "#F4F6F8",
+                      border: "1px solid #E2E5EC",
+                      borderRadius: 4,
+                      padding: "8px 12px",
+                      textDecoration: "none",
+                      transition: "background 160ms",
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "#E8EDF5")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "#F4F6F8")}
                   >
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2 mb-0.5">
-                          <span className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 2 }}>
+                          <span style={{ ...MONO_CAPS, fontSize: 9.5, color: "#8B95A8", letterSpacing: "0.12em" }}>
                             {w.reference}
                           </span>
-                          <StatusBadge status={w.status} />
+                          <WoStatusPill status={w.status} />
                         </div>
-                        <div className="font-body text-sm text-text-primary truncate">
+                        <div
+                          style={{
+                            fontFamily: JAKARTA,
+                            fontSize: 13,
+                            fontWeight: 600,
+                            color: "#0A1628",
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                          }}
+                        >
                           {w.title}
                         </div>
                       </div>
-                      <div className="flex-shrink-0">
-                        <BallBadge
-                          side={w.ball_in_court?.side}
-                          sinceIso={w.ball_in_court?.since}
-                        />
+                      <div style={{ flexShrink: 0 }}>
+                        <BallPill side={w.ball_in_court?.side} />
                       </div>
                     </div>
                   </Link>
@@ -605,58 +832,12 @@ function CollectionsTab({ wos, orgById }) {
             </div>
           ))}
         </div>
-      </section>
+      </SectionCard>
     </div>
   );
 }
 
-// -------------------- Helpers --------------------
-
-function Stat({ label, value, hint }) {
-  return (
-    <div>
-      <div className="label-caps mb-0.5">{label}</div>
-      <div className="font-display text-2xl text-text-primary leading-none">
-        {value}
-      </div>
-      {hint && (
-        <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary mt-1">
-          {hint}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function Empty({ text }) {
-  return (
-    <div className="px-4 py-6 font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
-      {text}
-    </div>
-  );
-}
-
-function formatCommission(rule) {
-  if (!rule || typeof rule !== "object") return String(rule);
-  const parts = [];
-  if (rule.base_pct != null) parts.push(`${rule.base_pct}%`);
-  if (rule.scope) parts.push(rule.scope);
-  if (rule.floor_usd != null) parts.push(`floor $${rule.floor_usd}`);
-  if (rule.cap_usd != null) parts.push(`cap $${rule.cap_usd}`);
-  return parts.length ? parts.join(" · ") : JSON.stringify(rule);
-}
-
-// -------------------- Recurring tab (X-c) --------------------
-
-const SUB_STATUS_LOOK = {
-  active: { bg: "bg-success", text: "text-success", label: "active" },
-  paused: { bg: "bg-warning", text: "text-warning", label: "paused" },
-  cancelled: {
-    bg: "bg-text-tertiary",
-    text: "text-text-tertiary",
-    label: "cancelled",
-  },
-};
+/* ─── Recurring tab (X-c) ──────────────────────────────────────── */
 
 function RecurringTab({ orgById, isSrsAdmin }) {
   const { data: subs, loading, reload } = useFetch("/subscriptions");
@@ -679,18 +860,20 @@ function RecurringTab({ orgById, isSrsAdmin }) {
   }, [list]);
 
   return (
-    <div className="space-y-4">
-      <section className="bg-surface-raised accent-bar rounded-sm p-4">
-        <div className="flex items-start justify-between gap-3 flex-wrap">
+    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      <SectionCard>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
           <div>
-            <div className="label-caps mb-1">Recurring streams</div>
-            <h2 className="font-display text-base text-text-primary">
-              {list.filter((s) => s.status === "active").length} activos ·{" "}
-              {list.filter((s) => s.status === "paused").length} paused ·{" "}
-              {list.filter((s) => s.status === "cancelled").length} cancelled
-            </h2>
+            <SectionTitle marginBottom={4}>Recurring streams</SectionTitle>
+            <div style={{ fontFamily: JAKARTA, fontSize: 16, fontWeight: 700, color: "#0A1628" }}>
+              {list.filter((s) => s.status === "active").length}{" "}
+              <span style={{ color: "#3D4A66", fontWeight: 500 }}>
+                activos · {list.filter((s) => s.status === "paused").length} paused ·{" "}
+                {list.filter((s) => s.status === "cancelled").length} cancelled
+              </span>
+            </div>
             {monthlyRunRate > 0 && (
-              <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary mt-1">
+              <div style={{ ...MONO_CAPS, fontSize: 10, color: "#0A1628", letterSpacing: "0.14em", marginTop: 6, fontWeight: 700 }}>
                 run-rate ≈ {monthlyRunRate.toFixed(0)} /mo{" "}
                 {currencyMix.length === 1 ? currencyMix[0] : `(mix: ${currencyMix.join(", ")})`}
               </div>
@@ -698,24 +881,35 @@ function RecurringTab({ orgById, isSrsAdmin }) {
           </div>
           {isSrsAdmin && <CreateSubscriptionAction onCreated={() => reload()} />}
         </div>
-      </section>
+      </SectionCard>
 
-      <section className="bg-surface-raised accent-bar rounded-sm">
-        <div className="grid grid-cols-12 gap-3 px-4 py-2 border-b border-surface-border text-text-tertiary">
-          <div className="col-span-3 label-caps">Titulo</div>
-          <div className="col-span-2 label-caps">Cliente</div>
-          <div className="col-span-2 label-caps text-right">Amount</div>
-          <div className="col-span-1 label-caps">Cadence</div>
-          <div className="col-span-2 label-caps">Next run</div>
-          <div className="col-span-1 label-caps text-right">Status</div>
-          <div className="col-span-1 label-caps text-right">Acciones</div>
+      <SectionCard padding={0}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "3fr 2fr 2fr 1fr 2fr 1fr 1fr",
+            gap: 10,
+            padding: "10px 18px",
+            background: "#F4F6F8",
+            borderBottom: "1px solid #E2E5EC",
+            ...MONO_CAPS,
+            fontSize: 9.5,
+            color: "#3D4A66",
+            letterSpacing: "0.14em",
+          }}
+        >
+          <div>Título</div>
+          <div>Cliente</div>
+          <div style={{ textAlign: "right" }}>Amount</div>
+          <div>Cadence</div>
+          <div>Next run</div>
+          <div style={{ textAlign: "right" }}>Status</div>
+          <div style={{ textAlign: "right" }}>Acciones</div>
         </div>
 
-        <div className="divide-y divide-surface-border">
+        <div>
           {loading && <Empty text="cargando…" />}
-          {!loading && list.length === 0 && (
-            <Empty text="— sin subscriptions · crea la primera —" />
-          )}
+          {!loading && list.length === 0 && <Empty text="— sin subscriptions · crea la primera —" />}
           {list.map((s) => (
             <SubscriptionRow
               key={s.id}
@@ -726,9 +920,9 @@ function RecurringTab({ orgById, isSrsAdmin }) {
             />
           ))}
         </div>
-      </section>
+      </SectionCard>
 
-      <p className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+      <p style={{ ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em" }}>
         X-c · run-now manual hoy · cron worker aterriza Horizonte 3
       </p>
     </div>
@@ -736,22 +930,39 @@ function RecurringTab({ orgById, isSrsAdmin }) {
 }
 
 function SubscriptionRow({ sub, orgById, isSrsAdmin, reload }) {
-  const look = SUB_STATUS_LOOK[sub.status] || SUB_STATUS_LOOK.active;
-
   return (
-    <div className="grid grid-cols-12 gap-3 px-4 py-2.5 items-center">
-      <div className="col-span-3 min-w-0">
-        <div className="font-body text-sm text-text-primary truncate">
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "3fr 2fr 2fr 1fr 2fr 1fr 1fr",
+        gap: 10,
+        padding: "12px 18px",
+        borderBottom: "1px solid #F0F2F7",
+        alignItems: "center",
+      }}
+    >
+      <div style={{ minWidth: 0 }}>
+        <div
+          style={{
+            fontFamily: JAKARTA,
+            fontSize: 13,
+            fontWeight: 600,
+            color: "#0A1628",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+        >
           {sub.title}
         </div>
-        <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+        <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#8B95A8", letterSpacing: "0.12em", marginTop: 2 }}>
           runs {sub.runs_count}
           {sub.last_invoice_id && (
             <>
               {" · "}
               <Link
                 to={`/srs/finance/invoices/${sub.last_invoice_id}`}
-                className="text-primary-light hover:text-primary"
+                style={{ color: "#0A1628", textDecoration: "underline", textDecorationStyle: "dotted", fontWeight: 800 }}
               >
                 last invoice ↗
               </Link>
@@ -759,33 +970,47 @@ function SubscriptionRow({ sub, orgById, isSrsAdmin, reload }) {
           )}
         </div>
       </div>
-      <div className="col-span-2 font-body text-sm text-text-secondary truncate">
+      <div
+        style={{
+          fontFamily: JAKARTA,
+          fontSize: 13,
+          color: "#3D4A66",
+          fontWeight: 500,
+          whiteSpace: "nowrap",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+        }}
+      >
         {orgById.get(sub.organization_id)?.legal_name || sub.organization_id.slice(-6)}
       </div>
-      <div className="col-span-2 text-right">
-        <div className="font-display text-base text-text-primary leading-none">
+      <div style={{ textAlign: "right" }}>
+        <div
+          style={{
+            fontFamily: JAKARTA,
+            fontSize: 14,
+            color: "#0A1628",
+            fontWeight: 700,
+            fontVariantNumeric: "tabular-nums",
+            lineHeight: 1.1,
+          }}
+        >
           {sub.amount.toFixed(2)}
         </div>
-        <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+        <div style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.14em" }}>
           {sub.currency}
           {sub.tax_rate_pct > 0 && ` +${sub.tax_rate_pct}%`}
         </div>
       </div>
-      <div className="col-span-1 font-mono text-2xs uppercase tracking-widest-srs text-text-secondary">
+      <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.14em" }}>
         {sub.cadence}
       </div>
-      <div className="col-span-2 font-mono text-2xs uppercase tracking-widest-srs text-text-secondary">
+      <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.14em" }}>
         {new Date(sub.next_run).toISOString().slice(0, 10)}
       </div>
-      <div className="col-span-1 text-right">
-        <span
-          className={`inline-flex items-center gap-1 font-mono text-2xs uppercase tracking-widest-srs ${look.text}`}
-        >
-          <span className={`w-1.5 h-1.5 rounded-full ${look.bg}`} />
-          {look.label}
-        </span>
+      <div style={{ textAlign: "right" }}>
+        <StatusPillDot map={SUB_STATUS} status={sub.status} />
       </div>
-      <div className="col-span-1 text-right">
+      <div style={{ textAlign: "right" }}>
         {isSrsAdmin && <SubActions sub={sub} reload={reload} />}
       </div>
     </div>
@@ -797,10 +1022,10 @@ function SubActions({ sub, reload }) {
   const [cancelOpen, setCancelOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
 
-  async function run(path, body = {}) {
+  async function run(path) {
     setBusy(true);
     try {
-      await api.post(path, body);
+      await api.post(path, {});
       reload();
     } catch (e) {
       alert(e.message || "error");
@@ -810,48 +1035,21 @@ function SubActions({ sub, reload }) {
   }
 
   if (sub.status === "cancelled") {
-    return (
-      <span className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
-        —
-      </span>
-    );
+    return <span style={{ ...MONO_CAPS, fontSize: 9.5, color: "#8B95A8", letterSpacing: "0.14em" }}>—</span>;
   }
 
   return (
-    <div className="flex items-center gap-1 justify-end">
+    <div style={{ display: "flex", alignItems: "center", gap: 4, justifyContent: "flex-end" }}>
       {sub.status === "active" && (
         <>
-          <IconButton
-            label="run"
-            title="Run now (genera invoice)"
-            onClick={() => run(`/subscriptions/${sub.id}/run-now`)}
-            disabled={busy}
-            tone="primary"
-          />
-          <IconButton
-            label="||"
-            title="Pausar"
-            onClick={() => run(`/subscriptions/${sub.id}/pause`)}
-            disabled={busy}
-          />
+          <IconBtn label="run" title="Run now" onClick={() => run(`/subscriptions/${sub.id}/run-now`)} disabled={busy} tone="primary" />
+          <IconBtn label="||" title="Pausar" onClick={() => run(`/subscriptions/${sub.id}/pause`)} disabled={busy} />
         </>
       )}
       {sub.status === "paused" && (
-        <IconButton
-          label="▶"
-          title="Resume"
-          onClick={() => run(`/subscriptions/${sub.id}/resume`)}
-          disabled={busy}
-          tone="success"
-        />
+        <IconBtn label="▶" title="Resume" onClick={() => run(`/subscriptions/${sub.id}/resume`)} disabled={busy} tone="success" />
       )}
-      <IconButton
-        label="×"
-        title="Cancel"
-        onClick={() => setCancelOpen(true)}
-        disabled={busy}
-        tone="danger"
-      />
+      <IconBtn label="×" title="Cancel" onClick={() => setCancelOpen(true)} disabled={busy} tone="danger" />
       <ActionDialog
         open={cancelOpen}
         onClose={() => setCancelOpen(false)}
@@ -861,22 +1059,20 @@ function SubActions({ sub, reload }) {
         destructive
         submitDisabled={!cancelReason.trim()}
         onSubmit={async () => {
-          await api.post(`/subscriptions/${sub.id}/cancel`, {
-            reason: cancelReason.trim(),
-          });
+          await api.post(`/subscriptions/${sub.id}/cancel`, { reason: cancelReason.trim() });
           setCancelOpen(false);
           setCancelReason("");
           reload();
         }}
       >
         <div>
-          <DialogLabel htmlFor="sc-reason">Razon</DialogLabel>
+          <DialogLabel htmlFor="sc-reason">Razón</DialogLabel>
           <DialogTextarea
             id="sc-reason"
             rows={3}
             value={cancelReason}
             onChange={(e) => setCancelReason(e.target.value)}
-            placeholder="Cliente cambio plan · scope reducido · fin contrato…"
+            placeholder="Cliente cambió plan · scope reducido · fin contrato…"
             required
           />
         </div>
@@ -885,47 +1081,59 @@ function SubActions({ sub, reload }) {
   );
 }
 
-function IconButton({ label, title, onClick, disabled, tone = "default" }) {
-  const toneClass =
-    tone === "primary"
-      ? "text-primary-light border-primary/40 hover:bg-primary hover:text-text-inverse"
-      : tone === "success"
-      ? "text-success border-success/40 hover:bg-success hover:text-text-inverse"
-      : tone === "danger"
-      ? "text-text-tertiary border-surface-border hover:text-danger hover:border-danger"
-      : "text-text-secondary border-surface-border hover:text-text-primary hover:border-primary";
+function IconBtn({ label, title, onClick, disabled, tone = "default" }) {
+  const colors = {
+    default: { color: "#3D4A66", border: "#C8CDD8", hoverBg: "#0A1628", hoverColor: "#FFFFFF", hoverBorder: "#0A1628" },
+    primary: { color: "#0A1628", border: "#0A1628", hoverBg: "#0A1628", hoverColor: "#FFFFFF", hoverBorder: "#0A1628" },
+    success: { color: "#0A6131", border: "#16A34A", hoverBg: "#16A34A", hoverColor: "#FFFFFF", hoverBorder: "#16A34A" },
+    danger:  { color: "#991B1B", border: "#FCA5A5", hoverBg: "#DC2626", hoverColor: "#FFFFFF", hoverBorder: "#DC2626" },
+  };
+  const c = colors[tone] || colors.default;
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
       title={title}
-      className={`font-mono text-2xs uppercase tracking-widest-srs px-2 py-1 rounded-sm border transition-colors duration-fast disabled:opacity-50 ${toneClass}`}
+      style={{
+        ...MONO_CAPS,
+        fontSize: 9.5,
+        letterSpacing: "0.14em",
+        padding: "4px 8px",
+        background: "#FFFFFF",
+        color: c.color,
+        border: `1px solid ${c.border}`,
+        borderRadius: 4,
+        cursor: disabled ? "not-allowed" : "pointer",
+        opacity: disabled ? 0.5 : 1,
+        transition: "all 160ms",
+      }}
+      onMouseEnter={(e) => {
+        if (disabled) return;
+        e.currentTarget.style.background = c.hoverBg;
+        e.currentTarget.style.color = c.hoverColor;
+        e.currentTarget.style.borderColor = c.hoverBorder;
+      }}
+      onMouseLeave={(e) => {
+        if (disabled) return;
+        e.currentTarget.style.background = "#FFFFFF";
+        e.currentTarget.style.color = c.color;
+        e.currentTarget.style.borderColor = c.border;
+      }}
     >
       {label}
     </button>
   );
 }
 
-// -------------------- Vendor payables tab (X-d AP) --------------------
-
-const VI_STATUS_LOOK = {
-  received: { bg: "bg-text-tertiary", text: "text-text-tertiary", label: "received" },
-  matched: { bg: "bg-info", text: "text-info", label: "matched" },
-  approved: { bg: "bg-warning", text: "text-warning", label: "approved" },
-  paid: { bg: "bg-success", text: "text-success", label: "paid" },
-  disputed: { bg: "bg-danger", text: "text-danger", label: "disputed" },
-  rejected: { bg: "bg-text-tertiary", text: "text-text-tertiary", label: "rejected" },
-};
+/* ─── Vendor payables tab (X-d AP) ─────────────────────────────── */
 
 function VendorPayablesTab({ orgById, isSrsAdmin }) {
   const [statusFilter, setStatusFilter] = useState("");
   const path = statusFilter
     ? `/vendor-invoices?status_filter=${statusFilter}&limit=200`
     : "/vendor-invoices?limit=200";
-  const { data: vendorInvoices, loading, reload } = useFetch(path, {
-    deps: [statusFilter],
-  });
+  const { data: vendorInvoices, loading, reload } = useFetch(path, { deps: [statusFilter] });
   const { data: aging } = useFetch("/vendor-invoices/aging/summary");
 
   const list = vendorInvoices || [];
@@ -936,58 +1144,57 @@ function VendorPayablesTab({ orgById, isSrsAdmin }) {
   }, [list]);
 
   return (
-    <div className="space-y-4">
-      <section className="bg-surface-raised accent-bar rounded-sm p-4">
-        <div className="flex items-start justify-between gap-3 flex-wrap mb-3">
+    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      <SectionCard>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginBottom: 12 }}>
           <div>
-            <div className="label-caps mb-1">Deudas con proveedores · AP</div>
-            <h2 className="font-display text-base text-text-primary">
-              {list.length} facturas · recibidas {counts.received} · approved {counts.approved}
-              {counts.disputed ? ` · disputed ${counts.disputed}` : ""}
-            </h2>
+            <SectionTitle marginBottom={4}>Deudas con proveedores · AP</SectionTitle>
+            <div style={{ fontFamily: JAKARTA, fontSize: 16, fontWeight: 700, color: "#0A1628" }}>
+              {list.length}{" "}
+              <span style={{ color: "#3D4A66", fontWeight: 500 }}>
+                facturas · recibidas {counts.received} · approved {counts.approved}
+                {counts.disputed ? ` · disputed ${counts.disputed}` : ""}
+              </span>
+            </div>
           </div>
           {isSrsAdmin && <CreateVendorInvoiceAction onCreated={() => reload()} />}
         </div>
         {aging && aging.buckets && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2">
-            <AgingCard
-              label="Current (0-30d)"
-              count={aging.buckets.current.count}
-              total={aging.buckets.current.total}
-              tone="default"
-            />
-            <AgingCard
-              label="30-60d"
-              count={aging.buckets["30_60"].count}
-              total={aging.buckets["30_60"].total}
-              tone="warning"
-            />
-            <AgingCard
-              label="60-90d"
-              count={aging.buckets["60_90"].count}
-              total={aging.buckets["60_90"].total}
-              tone="warning"
-            />
-            <AgingCard
-              label="90d+"
-              count={aging.buckets.over_90.count}
-              total={aging.buckets.over_90.total}
-              tone="danger"
-            />
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+              gap: 10,
+              marginTop: 8,
+            }}
+          >
+            <KpiTile label="Current (0-30d)" value={aging.buckets.current.total.toFixed(2)} hint={`${aging.buckets.current.count} factura${aging.buckets.current.count === 1 ? "" : "s"}`} />
+            <KpiTile label="30-60d" value={aging.buckets["30_60"].total.toFixed(2)} hint={`${aging.buckets["30_60"].count} factura${aging.buckets["30_60"].count === 1 ? "" : "s"}`} tone="warning" />
+            <KpiTile label="60-90d" value={aging.buckets["60_90"].total.toFixed(2)} hint={`${aging.buckets["60_90"].count} factura${aging.buckets["60_90"].count === 1 ? "" : "s"}`} tone="warning" />
+            <KpiTile label="90d+" value={aging.buckets.over_90.total.toFixed(2)} hint={`${aging.buckets.over_90.count} factura${aging.buckets.over_90.count === 1 ? "" : "s"}`} tone="danger" />
           </div>
         )}
-      </section>
+      </SectionCard>
 
-      <section className="bg-surface-raised accent-bar rounded-sm">
-        <header className="px-4 py-3 border-b border-surface-border flex items-center gap-3 flex-wrap">
-          <label htmlFor="vi-status" className="label-caps">
+      <SectionCard padding={0}>
+        <header
+          style={{
+            padding: "12px 18px",
+            borderBottom: "1px solid #E2E5EC",
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            flexWrap: "wrap",
+          }}
+        >
+          <label htmlFor="vi-status" style={{ ...MONO_CAPS, fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.14em" }}>
             Status
           </label>
           <select
             id="vi-status"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="bg-surface-overlay border border-surface-border rounded-sm px-3 py-1.5 text-text-primary font-body text-sm focus:outline-none focus:border-primary focus:shadow-glow-primary transition-all duration-fast"
+            style={selectStyle}
           >
             <option value="">todos</option>
             <option value="received">received</option>
@@ -997,32 +1204,53 @@ function VendorPayablesTab({ orgById, isSrsAdmin }) {
             <option value="disputed">disputed</option>
             <option value="rejected">rejected</option>
           </select>
-          <div className="ml-auto font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+          <div
+            style={{
+              marginLeft: "auto",
+              ...MONO_CAPS,
+              fontSize: 11,
+              color: "#0A1628",
+              letterSpacing: "0.14em",
+              fontVariantNumeric: "tabular-nums",
+              fontWeight: 800,
+            }}
+          >
             {list.length}
           </div>
         </header>
 
-        <div className="grid grid-cols-12 gap-3 px-4 py-2 border-b border-surface-border text-text-tertiary">
-          <div className="col-span-3 label-caps">Vendor invoice #</div>
-          <div className="col-span-3 label-caps">Vendor</div>
-          <div className="col-span-2 label-caps">Received</div>
-          <div className="col-span-2 label-caps text-right">Total</div>
-          <div className="col-span-1 label-caps text-right">Match</div>
-          <div className="col-span-1 label-caps text-right">Status</div>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "3fr 3fr 2fr 2fr 1fr 1fr",
+            gap: 10,
+            padding: "10px 18px",
+            background: "#F4F6F8",
+            borderBottom: "1px solid #E2E5EC",
+            ...MONO_CAPS,
+            fontSize: 9.5,
+            color: "#3D4A66",
+            letterSpacing: "0.14em",
+          }}
+        >
+          <div>Vendor invoice #</div>
+          <div>Vendor</div>
+          <div>Received</div>
+          <div style={{ textAlign: "right" }}>Total</div>
+          <div style={{ textAlign: "right" }}>Match</div>
+          <div style={{ textAlign: "right" }}>Status</div>
         </div>
 
-        <div className="divide-y divide-surface-border max-h-[65vh] overflow-y-auto">
+        <div style={{ maxHeight: "65vh", overflowY: "auto" }}>
           {loading && <Empty text="cargando…" />}
           {!loading && list.length === 0 && (
             <Empty text="— sin vendor invoices · registra la primera —" />
           )}
-          {list.map((v) => (
-            <VendorInvoiceRow key={v.id} vi={v} orgById={orgById} />
-          ))}
+          {list.map((v) => <VendorInvoiceRow key={v.id} vi={v} orgById={orgById} />)}
         </div>
-      </section>
+      </SectionCard>
 
-      <p className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+      <p style={{ ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em" }}>
         X-d · AP con three-way match · paid tracking · aging
       </p>
     </div>
@@ -1030,86 +1258,133 @@ function VendorPayablesTab({ orgById, isSrsAdmin }) {
 }
 
 function VendorInvoiceRow({ vi, orgById }) {
-  const look = VI_STATUS_LOOK[vi.status] || VI_STATUS_LOOK.received;
   const match = vi.match_report;
   const matchLabel = match
     ? match.result === "match"
-      ? { t: "text-success", l: "MATCH" }
+      ? { color: "#0A6131", l: "MATCH" }
       : match.result === "partial_match"
-      ? { t: "text-warning", l: "PARTIAL" }
+      ? { color: "#7E5212", l: "PARTIAL" }
       : match.result === "mismatch"
-      ? { t: "text-danger", l: "MISMATCH" }
-      : { t: "text-text-tertiary", l: "NO PO" }
+      ? { color: "#991B1B", l: "MISMATCH" }
+      : { color: "#8B95A8", l: "NO PO" }
     : null;
 
   return (
     <Link
       to={`/srs/finance/vendor-invoices/${vi.id}`}
-      className="grid grid-cols-12 gap-3 px-4 py-2.5 items-center hover:bg-surface-overlay/60 transition-colors duration-fast"
+      style={tableRowStyle("3fr 3fr 2fr 2fr 1fr 1fr")}
+      onMouseEnter={hoverRow}
+      onMouseLeave={leaveRow}
     >
-      <div className="col-span-3 min-w-0">
-        <div className="font-mono text-sm text-text-primary truncate">
+      <div style={{ minWidth: 0 }}>
+        <div
+          style={{
+            fontFamily: MONO,
+            fontSize: 13,
+            fontWeight: 600,
+            color: "#0A1628",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+        >
           {vi.vendor_invoice_number}
         </div>
-        <div className="font-mono text-2xs text-text-tertiary">
+        <div style={{ fontFamily: MONO, fontSize: 10, color: "#8B95A8", marginTop: 1, fontWeight: 500 }}>
           {(vi.linked_work_order_ids || []).length} WOs ·{" "}
           {(vi.linked_budget_approval_ids || []).length} POs
         </div>
       </div>
-      <div className="col-span-3 font-body text-sm text-text-secondary truncate">
-        {orgById.get(vi.vendor_organization_id)?.legal_name ||
-          vi.vendor_organization_id.slice(-6)}
+      <div
+        style={{
+          fontFamily: JAKARTA,
+          fontSize: 13,
+          color: "#3D4A66",
+          fontWeight: 500,
+          whiteSpace: "nowrap",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+        }}
+      >
+        {orgById.get(vi.vendor_organization_id)?.legal_name || vi.vendor_organization_id.slice(-6)}
       </div>
-      <div className="col-span-2 font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+      <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.14em" }}>
         {vi.received_at ? formatAge(vi.received_at) + " ago" : "—"}
       </div>
-      <div className="col-span-2 text-right">
-        <div className="font-display text-base text-warning leading-none">
+      <div style={{ textAlign: "right" }}>
+        <div
+          style={{
+            fontFamily: JAKARTA,
+            fontSize: 14,
+            color: "#7E5212",
+            fontWeight: 700,
+            fontVariantNumeric: "tabular-nums",
+            lineHeight: 1.1,
+          }}
+        >
           {vi.total.toFixed(2)}
         </div>
-        <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+        <div style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.14em" }}>
           {vi.currency}
         </div>
       </div>
-      <div className="col-span-1 text-right">
+      <div style={{ textAlign: "right" }}>
         {matchLabel ? (
-          <span
-            className={`font-mono text-2xs uppercase tracking-widest-srs ${matchLabel.t}`}
-          >
+          <span style={{ ...MONO_CAPS, fontSize: 9.5, color: matchLabel.color, letterSpacing: "0.12em", fontWeight: 800 }}>
             {matchLabel.l}
           </span>
         ) : (
-          <span className="font-mono text-2xs text-text-tertiary">—</span>
+          <span style={{ ...MONO_CAPS, fontSize: 9.5, color: "#8B95A8", letterSpacing: "0.14em" }}>—</span>
         )}
       </div>
-      <div className="col-span-1 text-right">
-        <span
-          className={`inline-flex items-center gap-1 font-mono text-2xs uppercase tracking-widest-srs ${look.text}`}
-        >
-          <span className={`w-1.5 h-1.5 rounded-full ${look.bg}`} />
-          {look.label}
-        </span>
+      <div style={{ textAlign: "right" }}>
+        <StatusPillDot map={VI_STATUS} status={vi.status} />
       </div>
     </Link>
   );
 }
 
-function AgingCard({ label, count, total, tone }) {
-  const tint =
-    tone === "danger"
-      ? "text-danger"
-      : tone === "warning"
-      ? "text-warning"
-      : "text-text-primary";
+/* ─── Helpers + shared styles ─────────────────────────────────── */
+
+const selectStyle = {
+  height: 30,
+  border: "1px solid #C8CDD8",
+  borderRadius: 6,
+  padding: "0 10px",
+  fontFamily: JAKARTA,
+  fontSize: 12.5,
+  fontWeight: 500,
+  color: "#0A1628",
+  background: "#FFFFFF",
+  outline: "none",
+  cursor: "pointer",
+};
+
+function tableRowStyle(cols) {
+  return {
+    display: "grid",
+    gridTemplateColumns: cols,
+    gap: 12,
+    padding: "12px 18px",
+    borderBottom: "1px solid #F0F2F7",
+    alignItems: "center",
+    textDecoration: "none",
+    transition: "background 160ms",
+  };
+}
+
+function hoverRow(e) {
+  e.currentTarget.style.background = "#F7F8FA";
+}
+
+function leaveRow(e) {
+  e.currentTarget.style.background = "transparent";
+}
+
+function Empty({ text }) {
   return (
-    <div className="bg-surface-base rounded-sm p-3">
-      <div className="label-caps mb-0.5">{label}</div>
-      <div className={`font-display text-xl leading-none ${tint}`}>
-        {total.toFixed(2)}
-      </div>
-      <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary mt-1">
-        {count} factura{count === 1 ? "" : "s"}
-      </div>
+    <div style={{ padding: "24px 18px", ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em" }}>
+      {text}
     </div>
   );
 }
