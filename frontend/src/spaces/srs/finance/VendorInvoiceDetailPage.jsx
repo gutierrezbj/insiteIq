@@ -1,46 +1,72 @@
 /**
- * Vendor Invoice detail — lifecycle: received → matched → approved → paid
- * (o disputed / rejected). Todas las acciones SRS admin only.
- * SRS-internal: client 403.
+ * Vendor Invoice detail · v2 paleta F (Iter 2.30).
+ *
+ * Migración v1 amber legacy → v2 usando v2-shared. Lifecycle:
+ *   received → matched → approved → paid (o disputed/rejected)
+ * Todas las acciones SRS admin only. SRS-internal: client 403.
+ *
+ * Endpoints:
+ *   GET /api/vendor-invoices/{id}
+ *   POST /api/vendor-invoices/{id}/{match|approve|paid|dispute|reject}
  */
 import { useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { api } from "../../../lib/api";
 import { useAuth } from "../../../contexts/AuthContext";
 import { useFetch } from "../../../lib/useFetch";
-import BackLink from "../../../components/ui/BackLink";
+import { formatAge } from "../../../components/ui/Badges";
 import ActionDialog, {
   DialogInput,
   DialogLabel,
   DialogTextarea,
   DialogCheckbox,
 } from "../../../components/ui/ActionDialog";
-import { formatAge } from "../../../components/ui/Badges";
+import BackLinkV2 from "../../../components/v2-shared/BackLinkV2";
+import SectionCard, { SectionTitle } from "../../../components/v2-shared/SectionCard";
+import MetaRow from "../../../components/v2-shared/MetaRow";
+import { JAKARTA, MONO, MONO_CAPS } from "../../../components/v2-shared/typography";
 
-const STATUS_LOOK = {
-  received: { bg: "bg-text-tertiary", text: "text-text-tertiary", label: "received" },
-  matched: { bg: "bg-info", text: "text-info", label: "matched" },
-  approved: { bg: "bg-warning", text: "text-warning", label: "approved · ready to pay" },
-  paid: { bg: "bg-success", text: "text-success", label: "paid" },
-  disputed: { bg: "bg-danger", text: "text-danger", label: "disputed" },
-  rejected: { bg: "bg-text-tertiary", text: "text-text-tertiary", label: "rejected" },
+const VI_STATUS = {
+  received: { dot: "#8B95A8", color: "#3D4A66", label: "received" },
+  matched:  { dot: "#1E3A8A", color: "#1E40AF", label: "matched" },
+  approved: { dot: "#E8A33D", color: "#7E5212", label: "approved · ready to pay" },
+  paid:     { dot: "#16A34A", color: "#0A6131", label: "paid" },
+  disputed: { dot: "#DC2626", color: "#991B1B", label: "disputed" },
+  rejected: { dot: "#C8CDD8", color: "#8B95A8", label: "rejected" },
 };
 
 const MATCH_LOOK = {
-  match: { text: "text-success", label: "MATCH" },
-  partial_match: { text: "text-warning", label: "PARTIAL" },
-  mismatch: { text: "text-danger", label: "MISMATCH" },
-  no_po: { text: "text-text-tertiary", label: "NO PO" },
+  match:         { color: "#0A6131", label: "MATCH" },
+  partial_match: { color: "#7E5212", label: "PARTIAL" },
+  mismatch:      { color: "#991B1B", label: "MISMATCH" },
+  no_po:         { color: "#8B95A8", label: "NO PO" },
 };
+
+function StatusPill({ status }) {
+  const s = VI_STATUS[status] || VI_STATUS.received;
+  return (
+    <span
+      style={{
+        ...MONO_CAPS,
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 6,
+        fontSize: 9.5,
+        color: s.color,
+        letterSpacing: "0.12em",
+      }}
+    >
+      <span style={{ width: 6, height: 6, borderRadius: "50%", background: s.dot }} />
+      {s.label}
+    </span>
+  );
+}
 
 export default function VendorInvoiceDetailPage() {
   const { vi_id } = useParams();
   const { user } = useAuth();
-  const srsMem = user?.memberships?.find(
-    (m) => m.space === "srs_coordinators"
-  );
-  const isSrsAdmin =
-    !!srsMem && ["owner", "director"].includes(srsMem.authority_level);
+  const srsMem = user?.memberships?.find((m) => m.space === "srs_coordinators");
+  const isSrsAdmin = !!srsMem && ["owner", "director"].includes(srsMem.authority_level);
 
   const { data: vi, loading, error, reload } = useFetch(
     `/vendor-invoices/${vi_id}`,
@@ -54,34 +80,38 @@ export default function VendorInvoiceDetailPage() {
   }, [vi, orgs]);
 
   if (loading) return <Centered text="cargando…" />;
-  if (error)
-    return <Centered text={`error · ${error.message}`} />;
+  if (error) return <Centered text={`error · ${error.message}`} />;
   if (!vi) return <Centered text="—" />;
 
-  const look = STATUS_LOOK[vi.status] || STATUS_LOOK.received;
   const match = vi.match_report;
 
   return (
-    <div className="px-4 md:px-8 py-5 md:py-7 max-w-wide">
-      <BackLink to="/srs/finance" label="Finance" />
+    <div style={{ padding: "32px 40px", maxWidth: 1400 }}>
+      <BackLinkV2 to="/srs/finance" label="Finance" />
 
-      <div className="accent-bar pl-4 mb-6">
-        <div className="flex items-center gap-3 mb-1 flex-wrap">
-          <span className="label-caps">Vendor invoice · AP</span>
-          <span className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+      <div style={{ paddingLeft: 16, borderLeft: "3px solid #0A1628", marginBottom: 22 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6, flexWrap: "wrap" }}>
+          <span style={{ ...MONO_CAPS, fontSize: 10, color: "#0A1628", letterSpacing: "0.16em" }}>
+            Vendor invoice · AP
+          </span>
+          <span style={{ ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.12em" }}>
             {vi.vendor_invoice_number}
           </span>
-          <span
-            className={`flex items-center gap-1.5 font-mono text-2xs uppercase tracking-widest-srs ${look.text}`}
-          >
-            <span className={`w-1.5 h-1.5 rounded-full ${look.bg}`} />
-            {look.label}
-          </span>
+          <StatusPill status={vi.status} />
         </div>
-        <h1 className="font-display text-2xl text-text-primary leading-tight">
+        <h1
+          style={{
+            fontFamily: JAKARTA,
+            fontSize: 28,
+            fontWeight: 800,
+            color: "#0A1628",
+            letterSpacing: "-0.02em",
+            lineHeight: 1.15,
+          }}
+        >
           {vendor?.legal_name || vi.vendor_organization_id}
         </h1>
-        <p className="font-body text-text-secondary text-sm mt-1">
+        <p style={{ fontFamily: JAKARTA, fontSize: 13.5, color: "#3D4A66", marginTop: 8, fontWeight: 500 }}>
           Received {shortDate(vi.received_at)}
           {vi.issued_at && ` · issued ${shortDate(vi.issued_at)}`}
           {vi.due_date && ` · due ${shortDate(vi.due_date)}`}
@@ -89,124 +119,134 @@ export default function VendorInvoiceDetailPage() {
       </div>
 
       {/* Totals + actions */}
-      <section className="bg-surface-raised accent-bar rounded-sm p-4 mb-5 flex flex-wrap gap-6">
-        <Stat
-          label="Subtotal"
-          value={`${vi.subtotal.toFixed(2)} ${vi.currency}`}
-        />
-        <Stat
-          label={`Tax (${vi.tax_rate_pct}%)`}
-          value={`${vi.tax_amount.toFixed(2)} ${vi.currency}`}
-        />
-        <div>
-          <div className="label-caps mb-1">Total a pagar</div>
-          <div className="font-display text-3xl text-warning leading-none">
-            {vi.total.toFixed(2)} {vi.currency}
+      <SectionCard style={{ marginBottom: 16 }}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 24, alignItems: "flex-end" }}>
+          <Stat label="Subtotal" value={`${vi.subtotal.toFixed(2)} ${vi.currency}`} />
+          <Stat label={`Tax (${vi.tax_rate_pct}%)`} value={`${vi.tax_amount.toFixed(2)} ${vi.currency}`} />
+          <div>
+            <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.14em", marginBottom: 4 }}>
+              Total a pagar
+            </div>
+            <div
+              style={{
+                fontFamily: JAKARTA,
+                fontSize: 32,
+                fontWeight: 800,
+                color: "#7E5212",
+                letterSpacing: "-0.02em",
+                lineHeight: 1,
+                fontVariantNumeric: "tabular-nums",
+              }}
+            >
+              {vi.total.toFixed(2)} <span style={{ fontSize: 18, color: "#3D4A66", fontWeight: 700 }}>{vi.currency}</span>
+            </div>
           </div>
-        </div>
-        <div className="ml-auto flex gap-2 flex-wrap self-end">
-          {isSrsAdmin && ["received", "matched"].includes(vi.status) && (
-            <MatchAction vi={vi} reload={reload} />
-          )}
-          {isSrsAdmin &&
-            ["received", "matched", "disputed"].includes(vi.status) && (
+          <div style={{ marginLeft: "auto", display: "flex", gap: 8, alignItems: "flex-end", flexWrap: "wrap" }}>
+            {isSrsAdmin && ["received", "matched"].includes(vi.status) && (
+              <MatchAction vi={vi} reload={reload} />
+            )}
+            {isSrsAdmin && ["received", "matched", "disputed"].includes(vi.status) && (
               <ApproveAction vi={vi} reload={reload} />
             )}
-          {isSrsAdmin && vi.status === "approved" && (
-            <PaidAction vi={vi} reload={reload} />
-          )}
-          {isSrsAdmin && !["paid", "rejected"].includes(vi.status) && (
-            <DisputeAction vi={vi} reload={reload} />
-          )}
-          {isSrsAdmin && !["paid", "rejected"].includes(vi.status) && (
-            <RejectAction vi={vi} reload={reload} />
-          )}
+            {isSrsAdmin && vi.status === "approved" && <PaidAction vi={vi} reload={reload} />}
+            {isSrsAdmin && !["paid", "rejected"].includes(vi.status) && (
+              <DisputeAction vi={vi} reload={reload} />
+            )}
+            {isSrsAdmin && !["paid", "rejected"].includes(vi.status) && (
+              <RejectAction vi={vi} reload={reload} />
+            )}
+          </div>
         </div>
-      </section>
+      </SectionCard>
 
       {/* Three-way match */}
-      <section className="bg-surface-raised accent-bar rounded-sm p-4 mb-5">
-        <div className="label-caps mb-3">Three-way match</div>
+      <SectionCard style={{ marginBottom: 16 }}>
+        <SectionTitle>Three-way match</SectionTitle>
         {!match ? (
-          <p className="font-body text-sm text-text-secondary">
-            Aun no corrido. El match compara PO (budget_approval totals) ↔
-            vendor invoice ↔ receipts (tech_captures.parts_used). Corre cuando
-            tengas al menos un linked_budget_approval_id.
+          <p style={{ fontFamily: JAKARTA, fontSize: 13, color: "#3D4A66", lineHeight: 1.55, fontWeight: 500 }}>
+            Aún no corrido. El match compara PO (budget_approval totals) ↔ vendor invoice ↔ receipts
+            (tech_captures.parts_used). Corre cuando tengas al menos un linked_budget_approval_id.
           </p>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
+              gap: 12,
+            }}
+          >
             <div>
-              <div className="label-caps mb-0.5">Resultado</div>
+              <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.14em", marginBottom: 4 }}>
+                Resultado
+              </div>
               <div
-                className={`font-display text-xl ${
-                  MATCH_LOOK[match.result]?.text || "text-text-tertiary"
-                }`}
+                style={{
+                  fontFamily: JAKARTA,
+                  fontSize: 18,
+                  fontWeight: 800,
+                  color: MATCH_LOOK[match.result]?.color || "#8B95A8",
+                  letterSpacing: "-0.01em",
+                }}
               >
                 {MATCH_LOOK[match.result]?.label || match.result}
               </div>
             </div>
-            <div>
-              <div className="label-caps mb-0.5">PO total</div>
-              <div className="font-mono text-text-primary">
-                {match.po_total.toFixed(2)} {vi.currency}
-              </div>
-            </div>
-            <div>
-              <div className="label-caps mb-0.5">Invoice</div>
-              <div className="font-mono text-text-primary">
-                {match.invoice_total.toFixed(2)} {vi.currency}
-              </div>
-            </div>
-            <div>
-              <div className="label-caps mb-0.5">Variance</div>
-              <div
-                className={`font-mono ${
-                  Math.abs(match.variance_pct) > 5
-                    ? "text-warning"
-                    : "text-text-primary"
-                }`}
-              >
-                {match.variance >= 0 ? "+" : ""}
-                {match.variance.toFixed(2)} ({match.variance_pct.toFixed(1)}%)
-              </div>
-            </div>
-            <div>
-              <div className="label-caps mb-0.5">Receipts</div>
-              <div className="font-mono text-text-primary">
-                {match.receipt_matched_items} items
-              </div>
-            </div>
+            <MatchStat label="PO total" value={`${match.po_total.toFixed(2)} ${vi.currency}`} />
+            <MatchStat label="Invoice" value={`${match.invoice_total.toFixed(2)} ${vi.currency}`} />
+            <MatchStat
+              label="Variance"
+              value={`${match.variance >= 0 ? "+" : ""}${match.variance.toFixed(2)} (${match.variance_pct.toFixed(1)}%)`}
+              valueColor={Math.abs(match.variance_pct) > 5 ? "#7E5212" : "#0A1628"}
+            />
+            <MatchStat label="Receipts" value={`${match.receipt_matched_items} items`} />
           </div>
         )}
-      </section>
+      </SectionCard>
 
-      {/* Links + lifecycle + lines */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <section className="bg-surface-raised accent-bar rounded-sm p-4">
-          <div className="label-caps mb-3">Trazabilidad</div>
-          <dl className="font-body text-sm divide-y divide-surface-border">
-            <Row label="Vendor" value={vendor?.legal_name || vi.vendor_organization_id} />
-            <Row label="SRS entity" value={vi.srs_entity_id || "—"} />
-            <Row label="Vendor ref" value={vi.vendor_invoice_number} />
-            <Row
-              label="Linked WOs"
-              value={(vi.linked_work_order_ids || []).length}
-            />
-            <Row
-              label="Linked POs"
-              value={(vi.linked_budget_approval_ids || []).length}
-            />
+      {/* Trazabilidad + Lifecycle */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))",
+          gap: 16,
+        }}
+      >
+        <SectionCard>
+          <SectionTitle>Trazabilidad</SectionTitle>
+          <dl style={{ display: "flex", flexDirection: "column" }}>
+            <MetaRow label="Vendor" value={vendor?.legal_name || vi.vendor_organization_id} />
+            <MetaRow label="SRS entity" value={vi.srs_entity_id || "—"} />
+            <MetaRow label="Vendor ref" value={vi.vendor_invoice_number} />
+            <MetaRow label="Linked WOs" value={(vi.linked_work_order_ids || []).length} />
+            <MetaRow label="Linked POs" value={(vi.linked_budget_approval_ids || []).length} />
           </dl>
 
           {(vi.linked_work_order_ids || []).length > 0 && (
-            <div className="mt-3">
-              <div className="label-caps mb-1.5">WOs vinculadas</div>
-              <div className="space-y-1">
+            <div style={{ marginTop: 14 }}>
+              <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.14em", marginBottom: 8 }}>
+                WOs vinculadas
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                 {vi.linked_work_order_ids.map((woId) => (
                   <Link
                     key={woId}
                     to={`/srs/ops/${woId}`}
-                    className="block font-mono text-2xs uppercase tracking-widest-srs text-primary-light hover:text-primary bg-surface-base rounded-sm px-2 py-1"
+                    style={{
+                      display: "block",
+                      background: "#F4F6F8",
+                      border: "1px solid #E2E5EC",
+                      borderRadius: 4,
+                      padding: "6px 10px",
+                      ...MONO_CAPS,
+                      fontSize: 9.5,
+                      color: "#0A1628",
+                      letterSpacing: "0.12em",
+                      fontWeight: 700,
+                      textDecoration: "none",
+                      transition: "background 160ms",
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "#E8EDF5")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "#F4F6F8")}
                   >
                     {woId.slice(-6)} ↗
                   </Link>
@@ -214,106 +254,133 @@ export default function VendorInvoiceDetailPage() {
               </div>
             </div>
           )}
-        </section>
+        </SectionCard>
 
-        <section className="bg-surface-raised accent-bar rounded-sm p-4">
-          <div className="label-caps mb-3">Lifecycle</div>
-          <div className="grid grid-cols-2 gap-3">
+        <SectionCard>
+          <SectionTitle>Lifecycle</SectionTitle>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
             <TimelineStat label="Received" iso={vi.received_at} />
-            <TimelineStat
-              label="Approved"
-              iso={vi.approved_at}
-              by={vi.approved_by}
-            />
+            <TimelineStat label="Approved" iso={vi.approved_at} by={vi.approved_by} />
             <TimelineStat
               label={vi.status === "disputed" ? "Disputed" : "Paid"}
               iso={vi.paid_at || vi.disputed_at}
               by={vi.paid_by}
               tone={vi.status === "disputed" ? "danger" : "success"}
             />
-            <TimelineStat
-              label="Rejected"
-              iso={vi.rejected_at}
-              tone="danger"
-            />
+            <TimelineStat label="Rejected" iso={vi.rejected_at} tone="danger" />
           </div>
           {vi.wire_ref && (
-            <div className="mt-3 bg-surface-base rounded-sm p-3">
-              <div className="label-caps mb-0.5">Wire ref</div>
-              <div className="font-mono text-sm text-success">
+            <div
+              style={{
+                marginTop: 14,
+                background: "#F4F6F8",
+                border: "1px solid #E2E5EC",
+                borderRadius: 4,
+                padding: "10px 12px",
+              }}
+            >
+              <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.14em", marginBottom: 4 }}>
+                Wire ref
+              </div>
+              <div style={{ fontFamily: MONO, fontSize: 13, color: "#0A6131", fontWeight: 700 }}>
                 {vi.wire_ref}
               </div>
             </div>
           )}
           {vi.dispute_reason && (
-            <div className="mt-3 bg-surface-base rounded-sm p-3 border-l-2 border-danger">
-              <div className="label-caps mb-0.5 text-danger">Dispute reason</div>
-              <div className="font-body text-sm text-text-primary">
-                {vi.dispute_reason}
-              </div>
-            </div>
+            <CalloutBox tone="danger" label="Dispute reason" text={vi.dispute_reason} />
           )}
           {vi.reject_reason && (
-            <div className="mt-3 bg-surface-base rounded-sm p-3 border-l-2 border-text-tertiary">
-              <div className="label-caps mb-0.5">Reject reason</div>
-              <div className="font-body text-sm text-text-primary">
-                {vi.reject_reason}
-              </div>
-            </div>
+            <CalloutBox tone="muted" label="Reject reason" text={vi.reject_reason} />
           )}
-        </section>
+        </SectionCard>
       </div>
 
       {(vi.lines || []).length > 0 && (
-        <section className="bg-surface-raised accent-bar rounded-sm mt-4">
-          <header className="px-4 py-3 border-b border-surface-border">
-            <div className="label-caps">Invoice lines · {vi.lines.length}</div>
+        <SectionCard padding={0} style={{ marginTop: 16 }}>
+          <header style={{ padding: "14px 18px", borderBottom: "1px solid #E2E5EC" }}>
+            <SectionTitle marginBottom={0}>Invoice lines · {vi.lines.length}</SectionTitle>
           </header>
-          <div className="divide-y divide-surface-border">
+          <div>
             {vi.lines.map((l, i) => (
               <div
                 key={i}
-                className="px-4 py-2.5 flex items-center justify-between gap-3"
+                style={{
+                  padding: "12px 18px",
+                  borderBottom: "1px solid #F0F2F7",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: 12,
+                }}
               >
-                <div className="min-w-0">
-                  <div className="font-body text-sm text-text-primary truncate">
+                <div style={{ minWidth: 0 }}>
+                  <div
+                    style={{
+                      fontFamily: JAKARTA,
+                      fontSize: 13,
+                      fontWeight: 600,
+                      color: "#0A1628",
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                    }}
+                  >
                     {l.description}
                   </div>
-                  <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+                  <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#8B95A8", letterSpacing: "0.12em", marginTop: 2 }}>
                     {l.category}
                   </div>
                 </div>
-                <div className="text-right font-mono">
-                  <div className="text-sm text-text-primary">
+                <div style={{ textAlign: "right", flexShrink: 0 }}>
+                  <div
+                    style={{
+                      fontFamily: JAKARTA,
+                      fontSize: 14,
+                      fontWeight: 700,
+                      color: "#0A1628",
+                      fontVariantNumeric: "tabular-nums",
+                      lineHeight: 1.1,
+                    }}
+                  >
                     {l.subtotal.toFixed(2)}
                   </div>
-                  <div className="text-2xs text-text-tertiary">
+                  <div style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.14em" }}>
                     {l.quantity} × {l.unit_price.toFixed(2)}
                   </div>
                 </div>
               </div>
             ))}
           </div>
-        </section>
+        </SectionCard>
       )}
 
       {vi.notes && (
-        <section className="bg-surface-raised accent-bar rounded-sm p-4 mt-4">
-          <div className="label-caps mb-1.5">Notas</div>
-          <p className="font-body text-sm text-text-primary whitespace-pre-line">
+        <SectionCard style={{ marginTop: 16 }}>
+          <SectionTitle marginBottom={6}>Notas</SectionTitle>
+          <p
+            style={{
+              fontFamily: JAKARTA,
+              fontSize: 13,
+              color: "#0A1628",
+              whiteSpace: "pre-line",
+              lineHeight: 1.55,
+              fontWeight: 500,
+            }}
+          >
             {vi.notes}
           </p>
-        </section>
+        </SectionCard>
       )}
 
-      <p className="mt-6 text-text-tertiary font-mono text-2xs uppercase tracking-widest-srs">
-        X-d AP · trazabilidad deudas con proveedores · audit log graba todo
+      <p style={{ marginTop: 24, ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em" }}>
+        Iter 2.30 · X-d AP · trazabilidad deudas con proveedores · audit log graba todo
       </p>
     </div>
   );
 }
 
-// -------------------- Actions --------------------
+/* ─── Actions ──────────────────────────────────────────────────── */
 
 function MatchAction({ vi, reload }) {
   const [busy, setBusy] = useState(false);
@@ -331,7 +398,31 @@ function MatchAction({ vi, reload }) {
       type="button"
       onClick={run}
       disabled={busy}
-      className="font-mono font-semibold uppercase tracking-widest-srs text-2xs px-3 py-2 rounded-sm bg-surface-overlay text-text-secondary border border-surface-border hover:text-text-primary hover:border-primary transition-colors duration-fast disabled:opacity-50"
+      style={{
+        ...MONO_CAPS,
+        fontSize: 11,
+        letterSpacing: "0.14em",
+        padding: "8px 14px",
+        background: "#FFFFFF",
+        color: "#3D4A66",
+        border: "1.5px solid #C8CDD8",
+        borderRadius: 6,
+        cursor: busy ? "not-allowed" : "pointer",
+        opacity: busy ? 0.5 : 1,
+        transition: "all 160ms",
+      }}
+      onMouseEnter={(e) => {
+        if (busy) return;
+        e.currentTarget.style.borderColor = "#0A1628";
+        e.currentTarget.style.color = "#0A1628";
+        e.currentTarget.style.background = "#F4F6F8";
+      }}
+      onMouseLeave={(e) => {
+        if (busy) return;
+        e.currentTarget.style.borderColor = "#C8CDD8";
+        e.currentTarget.style.color = "#3D4A66";
+        e.currentTarget.style.background = "#FFFFFF";
+      }}
     >
       {busy ? "matching…" : "Run match"}
     </button>
@@ -353,11 +444,7 @@ function ApproveAction({ vi, reload }) {
   }
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="font-mono font-semibold uppercase tracking-widest-srs text-2xs px-3 py-2 rounded-sm bg-primary text-text-inverse hover:bg-primary-light hover:shadow-glow-primary transition-all duration-fast ease-out-expo"
-      >
+      <button type="button" onClick={() => setOpen(true)} className="btn-trigger-v2">
         Aprobar
       </button>
       <ActionDialog
@@ -370,14 +457,24 @@ function ApproveAction({ vi, reload }) {
         onSubmit={submit}
       >
         {mismatch && (
-          <div className="bg-surface-base rounded-sm p-3 border-l-2 border-danger">
-            <div className="label-caps mb-1 text-danger">⚠ Match reporta MISMATCH</div>
-            <p className="font-body text-sm text-text-primary">
+          <div
+            style={{
+              background: "#FEF2F2",
+              border: "1px solid #FCA5A5",
+              borderLeft: "3px solid #DC2626",
+              borderRadius: 4,
+              padding: "10px 14px",
+            }}
+          >
+            <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#991B1B", letterSpacing: "0.14em", marginBottom: 6 }}>
+              ⚠ Match reporta MISMATCH
+            </div>
+            <p style={{ fontFamily: JAKARTA, fontSize: 13, color: "#0A1628", fontWeight: 500, lineHeight: 1.5 }}>
               Variance {vi.match_report?.variance_pct?.toFixed(1)}% entre PO
               (${vi.match_report?.po_total?.toFixed(2)}) e invoice
               (${vi.match_report?.invoice_total?.toFixed(2)}).
             </p>
-            <div className="mt-2">
+            <div style={{ marginTop: 10 }}>
               <DialogCheckbox
                 id="vi-ovr"
                 label="Override mismatch (queda audited)"
@@ -421,7 +518,29 @@ function PaidAction({ vi, reload }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="font-mono font-semibold uppercase tracking-widest-srs text-2xs px-3 py-2 rounded-sm bg-success text-text-inverse hover:bg-success/90 hover:shadow-glow-success transition-all duration-fast ease-out-expo"
+        style={{
+          ...MONO_CAPS,
+          fontSize: 11,
+          letterSpacing: "0.14em",
+          padding: "8px 14px",
+          background: "#16A34A",
+          color: "#FFFFFF",
+          border: "1.5px solid #16A34A",
+          borderRadius: 6,
+          cursor: "pointer",
+          boxShadow: "0 2px 6px -1px rgba(22, 163, 74, 0.32)",
+          transition: "all 160ms",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = "#0A6131";
+          e.currentTarget.style.borderColor = "#0A6131";
+          e.currentTarget.style.boxShadow = "0 4px 12px -2px rgba(22, 163, 74, 0.42)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = "#16A34A";
+          e.currentTarget.style.borderColor = "#16A34A";
+          e.currentTarget.style.boxShadow = "0 2px 6px -1px rgba(22, 163, 74, 0.32)";
+        }}
       >
         Pagar
       </button>
@@ -480,13 +599,7 @@ function DisputeAction({ vi, reload }) {
   }
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="font-mono font-semibold uppercase tracking-widest-srs text-2xs px-3 py-2 rounded-sm bg-surface-overlay text-text-tertiary border border-surface-border hover:text-danger hover:border-danger transition-colors duration-fast"
-      >
-        Disputar
-      </button>
+      <GhostBtn onClick={() => setOpen(true)}>Disputar</GhostBtn>
       <ActionDialog
         open={open}
         onClose={() => setOpen(false)}
@@ -498,7 +611,7 @@ function DisputeAction({ vi, reload }) {
         onSubmit={submit}
       >
         <div>
-          <DialogLabel htmlFor="vi-dr">Razon</DialogLabel>
+          <DialogLabel htmlFor="vi-dr">Razón</DialogLabel>
           <DialogTextarea
             id="vi-dr"
             rows={3}
@@ -522,13 +635,7 @@ function RejectAction({ vi, reload }) {
   }
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="font-mono font-semibold uppercase tracking-widest-srs text-2xs px-3 py-2 rounded-sm bg-surface-overlay text-text-tertiary border border-surface-border hover:text-danger hover:border-danger transition-colors duration-fast"
-      >
-        Rechazar
-      </button>
+      <GhostBtn onClick={() => setOpen(true)}>Rechazar</GhostBtn>
       <ActionDialog
         open={open}
         onClose={() => setOpen(false)}
@@ -540,7 +647,7 @@ function RejectAction({ vi, reload }) {
         onSubmit={submit}
       >
         <div>
-          <DialogLabel htmlFor="vi-rr">Razon</DialogLabel>
+          <DialogLabel htmlFor="vi-rr">Razón</DialogLabel>
           <DialogTextarea
             id="vi-rr"
             rows={3}
@@ -555,26 +662,78 @@ function RejectAction({ vi, reload }) {
   );
 }
 
-// -------------------- Blocks --------------------
+/* ─── Blocks ───────────────────────────────────────────────────── */
 
-function Row({ label, value }) {
+function GhostBtn({ onClick, children }) {
   return (
-    <div className="flex items-center justify-between gap-3 py-1.5">
-      <span className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary flex-shrink-0">
-        {label}
-      </span>
-      <span className="font-body text-sm text-text-primary truncate max-w-[60%] text-right">
-        {value}
-      </span>
-    </div>
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        ...MONO_CAPS,
+        fontSize: 11,
+        letterSpacing: "0.14em",
+        padding: "8px 14px",
+        background: "#FFFFFF",
+        color: "#3D4A66",
+        border: "1.5px solid #C8CDD8",
+        borderRadius: 6,
+        cursor: "pointer",
+        transition: "all 160ms",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.color = "#991B1B";
+        e.currentTarget.style.borderColor = "#DC2626";
+        e.currentTarget.style.background = "#FEF2F2";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.color = "#3D4A66";
+        e.currentTarget.style.borderColor = "#C8CDD8";
+        e.currentTarget.style.background = "#FFFFFF";
+      }}
+    >
+      {children}
+    </button>
   );
 }
 
 function Stat({ label, value }) {
   return (
     <div>
-      <div className="label-caps mb-1">{label}</div>
-      <div className="font-display text-xl text-text-primary leading-none">
+      <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.14em", marginBottom: 4 }}>
+        {label}
+      </div>
+      <div
+        style={{
+          fontFamily: JAKARTA,
+          fontSize: 20,
+          fontWeight: 700,
+          color: "#0A1628",
+          fontVariantNumeric: "tabular-nums",
+          lineHeight: 1.1,
+        }}
+      >
+        {value}
+      </div>
+    </div>
+  );
+}
+
+function MatchStat({ label, value, valueColor = "#0A1628" }) {
+  return (
+    <div>
+      <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.14em", marginBottom: 4 }}>
+        {label}
+      </div>
+      <div
+        style={{
+          fontFamily: MONO,
+          fontSize: 14,
+          fontWeight: 700,
+          color: valueColor,
+          fontVariantNumeric: "tabular-nums",
+        }}
+      >
         {value}
       </div>
     </div>
@@ -582,20 +741,25 @@ function Stat({ label, value }) {
 }
 
 function TimelineStat({ label, iso, by, tone = "neutral" }) {
-  const tint =
-    tone === "success"
-      ? "text-success"
-      : tone === "danger"
-      ? "text-danger"
-      : "text-text-primary";
+  const valueColor =
+    tone === "success" ? "#0A6131" : tone === "danger" ? "#991B1B" : "#0A1628";
   return (
-    <div className="bg-surface-base rounded-sm p-3">
-      <div className="label-caps mb-0.5">{label}</div>
-      <div className={`font-body text-sm ${tint}`}>
+    <div
+      style={{
+        background: "#F4F6F8",
+        border: "1px solid #E2E5EC",
+        borderRadius: 4,
+        padding: "10px 12px",
+      }}
+    >
+      <div style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.14em", marginBottom: 4 }}>
+        {label}
+      </div>
+      <div style={{ fontFamily: JAKARTA, fontSize: 13, color: valueColor, fontWeight: 600 }}>
         {iso ? shortDate(iso) : "—"}
       </div>
       {iso && (
-        <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary mt-0.5">
+        <div style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.14em", marginTop: 2 }}>
           {formatAge(iso)} ago{by && ` · ${by.slice(-6)}`}
         </div>
       )}
@@ -603,9 +767,43 @@ function TimelineStat({ label, iso, by, tone = "neutral" }) {
   );
 }
 
+function CalloutBox({ tone, label, text }) {
+  const colors = tone === "danger"
+    ? { bg: "#FEF2F2", border: "#FCA5A5", left: "#DC2626", labelColor: "#991B1B" }
+    : { bg: "#F4F6F8", border: "#E2E5EC", left: "#C8CDD8", labelColor: "#3D4A66" };
+  return (
+    <div
+      style={{
+        marginTop: 14,
+        background: colors.bg,
+        border: `1px solid ${colors.border}`,
+        borderLeft: `3px solid ${colors.left}`,
+        borderRadius: 4,
+        padding: "10px 14px",
+      }}
+    >
+      <div style={{ ...MONO_CAPS, fontSize: 9.5, color: colors.labelColor, letterSpacing: "0.14em", marginBottom: 4 }}>
+        {label}
+      </div>
+      <div style={{ fontFamily: JAKARTA, fontSize: 13, color: "#0A1628", fontWeight: 500, lineHeight: 1.5 }}>
+        {text}
+      </div>
+    </div>
+  );
+}
+
 function Centered({ text }) {
   return (
-    <div className="px-8 py-16 text-center font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+    <div
+      style={{
+        padding: "60px 32px",
+        textAlign: "center",
+        ...MONO_CAPS,
+        fontSize: 11,
+        color: "#8B95A8",
+        letterSpacing: "0.14em",
+      }}
+    >
       {text}
     </div>
   );
