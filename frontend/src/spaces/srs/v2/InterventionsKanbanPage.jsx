@@ -24,6 +24,38 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+
+/* Persist Set state (multi-select filters) across page reloads. */
+function useLocalStorageSet(key) {
+  const [state, setState] = useState(() => {
+    try {
+      const s = localStorage.getItem(key);
+      if (s !== null) return new Set(JSON.parse(s));
+    } catch { /* ignore */ }
+    return new Set();
+  });
+  useEffect(() => {
+    try { localStorage.setItem(key, JSON.stringify([...state])); }
+    catch { /* ignore quota */ }
+  }, [key, state]);
+  return [state, setState];
+}
+
+/* Persist boolean state across page reloads. */
+function useLocalStorageBool(key, defaultValue) {
+  const [state, setState] = useState(() => {
+    try {
+      const s = localStorage.getItem(key);
+      if (s !== null) return JSON.parse(s);
+    } catch { /* ignore */ }
+    return defaultValue;
+  });
+  useEffect(() => {
+    try { localStorage.setItem(key, JSON.stringify(state)); }
+    catch { /* ignore quota */ }
+  }, [key, state]);
+  return [state, setState];
+}
 import { api } from "../../../lib/api";
 import { useRefresh } from "../../../contexts/RefreshContext";
 import { useAuth } from "../../../contexts/AuthContext";
@@ -91,12 +123,12 @@ export default function InterventionsKanbanPage({ scope = "srs" }) {
   );
   const [orgs, setOrgs] = useState([]);
   const [users, setUsers] = useState([]);
-  const [showCancelled, setShowCancelled] = useState(false);
+  const [showCancelled, setShowCancelled] = useLocalStorageBool("kanban-v2-show-cancelled", false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterPrio, setFilterPrio] = useState(new Set());
-  const [filterClient, setFilterClient] = useState(new Set());
-  const [filterShield, setFilterShield] = useState(new Set());
-  const [filterTech, setFilterTech] = useState(new Set());
+  const [filterPrio, setFilterPrio] = useLocalStorageSet("kanban-v2-filter-prio");
+  const [filterClient, setFilterClient] = useLocalStorageSet("kanban-v2-filter-client");
+  const [filterShield, setFilterShield] = useLocalStorageSet("kanban-v2-filter-shield");
+  const [filterTech, setFilterTech] = useLocalStorageSet("kanban-v2-filter-tech");
   const [modalWoId, setModalWoId] = useState(null);
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const draggedRef = useRef(null);
