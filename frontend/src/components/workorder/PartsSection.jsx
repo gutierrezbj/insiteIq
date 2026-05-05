@@ -1,17 +1,11 @@
 /**
- * PartsSection — Budget Approval Requests por WO (Decision #5 Modo 1).
+ * PartsSection · v2 paleta F (Iter 2.36).
  *
- * Renderiza la lista de parts requests de la WO + acciones inline segun
- * role y status del request.
- *
- * Backend flow snapshot:
- *   draft            -> send_to_client (SRS) | auto-purchase (SRS)
- *   sent_to_client   -> client_approve | client_reject (client o SRS-on-behalf)
- *   approved         -> terminal, auto-purchase todavia posible
- *   rejected         -> terminal
- *   expired          -> timeout sin respuesta
- *   superseded       -> re-cotizado
- *
+ * Budget Approval Requests por WO (Decision #5 Modo 1). Lista de parts
+ * requests + acciones inline según role y status. Backend flow:
+ *   draft → send_to_client (SRS) | auto-purchase (SRS)
+ *   sent_to_client → client_approve | client_reject (client o SRS-on-behalf)
+ *   approved/rejected/expired/superseded → terminal
  * Below-threshold: auto-approved al crear, ball nunca sale de SRS.
  */
 import { useState } from "react";
@@ -21,48 +15,42 @@ import ActionDialog, {
   DialogCheckbox,
   DialogInput,
   DialogLabel,
+  DialogPanel,
   DialogTextarea,
 } from "../ui/ActionDialog";
 import { formatAge } from "../ui/Badges";
+import SectionCard, { SectionTitle } from "../v2-shared/SectionCard";
+import { JAKARTA, MONO, MONO_CAPS } from "../v2-shared/typography";
 
-// Status chrome: tiny bar + dot + caps label — matches global language
-const STATUS_LOOK = {
-  draft: {
-    dot: "bg-text-tertiary",
-    text: "text-text-secondary",
-    label: "draft",
-  },
-  sent_to_client: {
-    dot: "bg-warning",
-    text: "text-warning",
-    label: "sent to client",
-  },
-  client_responded: {
-    dot: "bg-info",
-    text: "text-info",
-    label: "client responded",
-  },
-  approved: {
-    dot: "bg-success",
-    text: "text-success",
-    label: "approved",
-  },
-  rejected: {
-    dot: "bg-danger",
-    text: "text-danger",
-    label: "rejected",
-  },
-  expired: {
-    dot: "bg-danger",
-    text: "text-danger",
-    label: "expired",
-  },
-  superseded: {
-    dot: "bg-text-tertiary",
-    text: "text-text-tertiary",
-    label: "superseded",
-  },
+const STATUS_STYLES = {
+  draft:            { dot: "#8B95A8", color: "#3D4A66", label: "draft" },
+  sent_to_client:   { dot: "#E8A33D", color: "#7E5212", label: "sent to client" },
+  client_responded: { dot: "#1E3A8A", color: "#1E40AF", label: "client responded" },
+  approved:         { dot: "#16A34A", color: "#0A6131", label: "approved" },
+  rejected:         { dot: "#DC2626", color: "#991B1B", label: "rejected" },
+  expired:          { dot: "#DC2626", color: "#991B1B", label: "expired" },
+  superseded:       { dot: "#C8CDD8", color: "#8B95A8", label: "superseded" },
 };
+
+function StatusPill({ status }) {
+  const s = STATUS_STYLES[status] || STATUS_STYLES.draft;
+  return (
+    <span
+      style={{
+        ...MONO_CAPS,
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 6,
+        fontSize: 9.5,
+        color: s.color,
+        letterSpacing: "0.12em",
+      }}
+    >
+      <span style={{ width: 6, height: 6, borderRadius: "50%", background: s.dot }} />
+      {s.label}
+    </span>
+  );
+}
 
 export default function PartsSection({ wo, isSrs, isClient }) {
   const { data: requests, loading, reload } = useFetch(
@@ -74,100 +62,117 @@ export default function PartsSection({ wo, isSrs, isClient }) {
   const canCreate = isSrs;
 
   return (
-    <section className="bg-surface-raised accent-bar rounded-sm mt-4">
-      <header className="px-4 py-3 border-b border-surface-border flex items-center justify-between gap-3">
+    <SectionCard padding={0} style={{ marginTop: 16 }}>
+      <header
+        style={{
+          padding: "14px 18px",
+          borderBottom: "1px solid #E2E5EC",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 12,
+          flexWrap: "wrap",
+        }}
+      >
         <div>
-          <div className="label-caps">Parts / Budget approvals</div>
-          <h2 className="font-display text-base text-text-primary leading-tight">
+          <SectionTitle marginBottom={4}>Parts / Budget approvals</SectionTitle>
+          <div style={{ fontFamily: JAKARTA, fontSize: 14, fontWeight: 700, color: "#0A1628" }}>
             {list.length === 0
               ? "— sin requests —"
               : `${list.length} request${list.length > 1 ? "s" : ""}`}
-          </h2>
+          </div>
         </div>
         {canCreate && <CreateRequestAction wo={wo} reload={reload} />}
       </header>
 
-      <div className="divide-y divide-surface-border">
+      <div>
         {loading && (
-          <div className="px-4 py-6 font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+          <div style={{ padding: "20px 18px", ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em" }}>
             cargando…
           </div>
         )}
         {!loading && list.length === 0 && (
-          <div className="px-4 py-6 font-body text-sm text-text-secondary">
-            No hay requests todavia. Si el tech necesita partes fuera de kit,
-            SRS coord abre un request para dejar todo trackeado: threshold,
-            ball-in-court, exchanges y cierre con factura.
+          <div
+            style={{
+              padding: "20px 18px",
+              fontFamily: JAKARTA,
+              fontSize: 13,
+              color: "#3D4A66",
+              lineHeight: 1.55,
+              fontWeight: 500,
+            }}
+          >
+            No hay requests todavía. Si el tech necesita partes fuera de kit, SRS coord abre un
+            request para dejar todo trackeado: threshold, ball-in-court, exchanges y cierre con factura.
           </div>
         )}
         {list.map((r) => (
-          <RequestRow
-            key={r.id}
-            req={r}
-            isSrs={isSrs}
-            isClient={isClient}
-            reload={reload}
-          />
+          <RequestRow key={r.id} req={r} isSrs={isSrs} isClient={isClient} reload={reload} />
         ))}
       </div>
-    </section>
+    </SectionCard>
   );
 }
 
-// -------------------- Request row --------------------
+/* ─── Request row ──────────────────────────────────────────────── */
 
 function RequestRow({ req, isSrs, isClient, reload }) {
-  const look = STATUS_LOOK[req.status] || STATUS_LOOK.draft;
-  const isOpen = !["approved", "rejected", "expired", "superseded"].includes(
-    req.status
-  );
+  const isOpen = !["approved", "rejected", "expired", "superseded"].includes(req.status);
   const ballSide = req.ball_in_court?.side;
 
-  // Who can act on this request now?
   const canSend = isSrs && (req.status === "draft" || req.status === "client_responded");
   const canAutoPurchase = isSrs && !req.auto_purchased && isOpen;
   const canDecide = (isClient || isSrs) && req.status === "sent_to_client";
 
   return (
-    <div className="px-4 py-3">
-      <div className="flex items-start justify-between gap-3 mb-2">
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <span className={`flex items-center gap-1.5 font-mono text-2xs uppercase tracking-widest-srs ${look.text}`}>
-              <span className={`w-1.5 h-1.5 rounded-full ${look.dot}`} />
-              {look.label}
-            </span>
-            <span className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+    <div style={{ padding: "14px 18px", borderBottom: "1px solid #F0F2F7" }}>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 10 }}>
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, flexWrap: "wrap" }}>
+            <StatusPill status={req.status} />
+            <span style={{ ...MONO_CAPS, fontSize: 9.5, color: "#8B95A8", letterSpacing: "0.12em" }}>
               · {req.parts?.length || 0} item{req.parts?.length === 1 ? "" : "s"}
             </span>
             {req.below_threshold && (
-              <span className="font-mono text-2xs uppercase tracking-widest-srs text-success">
+              <span style={{ ...MONO_CAPS, fontSize: 9.5, color: "#0A6131", letterSpacing: "0.12em", fontWeight: 800 }}>
                 · auto-approved
               </span>
             )}
             {req.auto_purchased && (
-              <span className="font-mono text-2xs uppercase tracking-widest-srs text-primary-light">
+              <span style={{ ...MONO_CAPS, fontSize: 9.5, color: "#0A1628", letterSpacing: "0.12em", fontWeight: 800 }}>
                 · auto-purchased
               </span>
             )}
             {ballSide && isOpen && (
               <span
-                className={`font-mono text-2xs uppercase tracking-widest-srs ${
-                  ballSide === "client" ? "text-warning" : "text-text-secondary"
-                }`}
+                style={{
+                  ...MONO_CAPS,
+                  fontSize: 9.5,
+                  letterSpacing: "0.12em",
+                  color: ballSide === "client" ? "#7E5212" : "#3D4A66",
+                  fontWeight: 800,
+                }}
               >
                 · ball {ballSide}
-                {req.ball_in_court?.since
-                  ? ` · ${formatAge(req.ball_in_court.since)} ago`
-                  : ""}
+                {req.ball_in_court?.since ? ` · ${formatAge(req.ball_in_court.since)} ago` : ""}
               </span>
             )}
           </div>
-          <div className="flex items-baseline gap-2">
-            <div className="font-display text-xl text-text-primary leading-none">
+          <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+            <div
+              style={{
+                fontFamily: JAKARTA,
+                fontSize: 22,
+                fontWeight: 800,
+                color: "#0A1628",
+                letterSpacing: "-0.01em",
+                lineHeight: 1,
+                fontVariantNumeric: "tabular-nums",
+              }}
+            >
               ${req.total_amount_usd?.toFixed(2)}
             </div>
-            <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+            <div style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.14em" }}>
               usd · threshold ${req.threshold_applied_usd?.toFixed(2)}
               {req.currency_native !== "USD" && req.total_amount_native != null && (
                 <> · {req.currency_native} {req.total_amount_native.toFixed(2)}</>
@@ -178,26 +183,48 @@ function RequestRow({ req, isSrs, isClient, reload }) {
       </div>
 
       {/* Parts list */}
-      <div className="mb-3 bg-surface-base rounded-sm p-3 space-y-1.5">
+      <div
+        style={{
+          marginBottom: 12,
+          background: "#F4F6F8",
+          border: "1px solid #E2E5EC",
+          borderRadius: 4,
+          padding: "10px 12px",
+          display: "flex",
+          flexDirection: "column",
+          gap: 6,
+        }}
+      >
         {(req.parts || []).map((p, i) => (
           <div
             key={i}
-            className="flex items-center justify-between gap-3 font-body text-sm"
+            style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}
           >
-            <div className="min-w-0">
-              <span className="text-text-primary">{p.name}</span>
+            <div style={{ minWidth: 0 }}>
+              <span style={{ fontFamily: JAKARTA, fontSize: 13, color: "#0A1628", fontWeight: 600 }}>
+                {p.name}
+              </span>
               {p.part_number && (
-                <span className="ml-2 font-mono text-2xs text-text-tertiary">
+                <span style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.12em", marginLeft: 8 }}>
                   {p.part_number}
                 </span>
               )}
               {p.vendor && (
-                <span className="ml-2 font-mono text-2xs text-text-tertiary">
+                <span style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.12em", marginLeft: 8 }}>
                   via {p.vendor}
                 </span>
               )}
             </div>
-            <div className="font-mono text-2xs text-text-secondary whitespace-nowrap">
+            <div
+              style={{
+                fontFamily: MONO,
+                fontSize: 12,
+                color: "#3D4A66",
+                fontWeight: 600,
+                whiteSpace: "nowrap",
+                fontVariantNumeric: "tabular-nums",
+              }}
+            >
               {p.quantity} × ${p.unit_price_usd?.toFixed(2)} = ${p.total_price_usd?.toFixed(2)}
             </div>
           </div>
@@ -206,20 +233,30 @@ function RequestRow({ req, isSrs, isClient, reload }) {
 
       {/* Exchanges */}
       {(req.exchanges?.length || 0) > 0 && (
-        <div className="mb-3">
-          <div className="label-caps mb-1.5">Exchanges ({req.exchanges.length})</div>
-          <div className="space-y-1.5">
-            {req.exchanges.map((ex, i) => (
-              <ExchangeRow key={i} ex={ex} />
-            ))}
+        <div style={{ marginBottom: 12 }}>
+          <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.14em", marginBottom: 6 }}>
+            Exchanges ({req.exchanges.length})
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {req.exchanges.map((ex, i) => <ExchangeRow key={i} ex={ex} />)}
           </div>
         </div>
       )}
 
       {req.auto_purchase_reason && (
-        <div className="mb-3 bg-surface-base rounded-sm p-2.5 border border-surface-border">
-          <div className="label-caps mb-0.5">Auto-purchase reason</div>
-          <div className="font-body text-sm text-text-primary">
+        <div
+          style={{
+            marginBottom: 12,
+            background: "#F4F6F8",
+            border: "1px solid #E2E5EC",
+            borderRadius: 4,
+            padding: "10px 12px",
+          }}
+        >
+          <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.14em", marginBottom: 4 }}>
+            Auto-purchase reason
+          </div>
+          <div style={{ fontFamily: JAKARTA, fontSize: 13, color: "#0A1628", fontWeight: 500 }}>
             {req.auto_purchase_reason}
           </div>
         </div>
@@ -227,26 +264,12 @@ function RequestRow({ req, isSrs, isClient, reload }) {
 
       {/* Actions */}
       {(canSend || canAutoPurchase || canDecide) && (
-        <div className="flex flex-wrap gap-2 mt-2">
-          {canSend && (
-            <SendToClientAction req={req} reload={reload} />
-          )}
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 8 }}>
+          {canSend && <SendToClientAction req={req} reload={reload} />}
           {canDecide && isClient && (
             <>
-              <ClientDecisionAction
-                req={req}
-                reload={reload}
-                approve
-                label="Aprobar"
-                tone="success"
-              />
-              <ClientDecisionAction
-                req={req}
-                reload={reload}
-                approve={false}
-                label="Rechazar"
-                tone="destructive"
-              />
+              <ClientDecisionAction req={req} reload={reload} approve label="Aprobar" tone="success" />
+              <ClientDecisionAction req={req} reload={reload} approve={false} label="Rechazar" tone="destructive" />
             </>
           )}
           {canDecide && !isClient && isSrs && (
@@ -269,47 +292,46 @@ function RequestRow({ req, isSrs, isClient, reload }) {
               />
             </>
           )}
-          {canAutoPurchase && (
-            <AutoPurchaseAction req={req} reload={reload} />
-          )}
+          {canAutoPurchase && <AutoPurchaseAction req={req} reload={reload} />}
         </div>
       )}
     </div>
   );
 }
 
+const EXCHANGE_KIND = {
+  quote_sent:        { color: "#3D4A66", label: "quote sent" },
+  client_question:   { color: "#3D4A66", label: "client question" },
+  srs_answer:        { color: "#3D4A66", label: "srs answer" },
+  approval:          { color: "#0A6131", label: "approval" },
+  rejection:         { color: "#991B1B", label: "rejection" },
+  auto_purchase:     { color: "#0A1628", label: "auto-purchase" },
+  srs_revision:      { color: "#3D4A66", label: "srs revision" },
+  timeout_noted:     { color: "#7E5212", label: "timeout noted" },
+};
+
 function ExchangeRow({ ex }) {
-  const KIND_LABELS = {
-    quote_sent: "quote sent",
-    client_question: "client question",
-    srs_answer: "srs answer",
-    approval: "approval",
-    rejection: "rejection",
-    auto_purchase: "auto-purchase",
-    srs_revision: "srs revision",
-    timeout_noted: "timeout noted",
-  };
-  const toneClass =
-    ex.kind === "approval"
-      ? "text-success"
-      : ex.kind === "rejection"
-      ? "text-danger"
-      : ex.kind === "auto_purchase"
-      ? "text-primary-light"
-      : "text-text-secondary";
+  const k = EXCHANGE_KIND[ex.kind] || { color: "#3D4A66", label: ex.kind };
   return (
-    <div className="bg-surface-base rounded-sm px-2.5 py-1.5">
-      <div className="flex items-center justify-between gap-2">
-        <span className={`font-mono text-2xs uppercase tracking-widest-srs ${toneClass}`}>
-          {KIND_LABELS[ex.kind] || ex.kind}
+    <div
+      style={{
+        background: "#F4F6F8",
+        border: "1px solid #E2E5EC",
+        borderRadius: 4,
+        padding: "8px 10px",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+        <span style={{ ...MONO_CAPS, fontSize: 9.5, color: k.color, letterSpacing: "0.12em", fontWeight: 800 }}>
+          {k.label}
         </span>
-        <span className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+        <span style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.12em" }}>
           {ex.ts ? formatAge(ex.ts) + " ago" : "—"}
           {ex.ball_side_after && <> · ball {ex.ball_side_after}</>}
         </span>
       </div>
       {ex.notes && (
-        <div className="font-body text-sm text-text-primary mt-0.5">
+        <div style={{ fontFamily: JAKARTA, fontSize: 13, color: "#0A1628", marginTop: 4, fontWeight: 500 }}>
           {ex.notes}
         </div>
       )}
@@ -317,22 +339,47 @@ function ExchangeRow({ ex }) {
   );
 }
 
-// -------------------- Action buttons --------------------
+/* ─── Action buttons ───────────────────────────────────────────── */
 
 function TinyButton({ onClick, label, tone = "default" }) {
-  const toneClass =
-    tone === "destructive"
-      ? "bg-danger text-text-inverse hover:bg-danger/90 hover:shadow-glow-danger"
-      : tone === "success"
-      ? "bg-success text-text-inverse hover:bg-success/90 hover:shadow-glow-success"
-      : tone === "soft"
-      ? "bg-surface-overlay text-text-secondary border border-surface-border hover:text-text-primary hover:border-primary"
-      : "bg-primary text-text-inverse hover:bg-primary-light hover:shadow-glow-primary";
+  const styles = {
+    default: { bg: "#0A1628", color: "#FFFFFF", border: "#0A1628", hoverBg: "#1A2640", shadow: "rgba(10, 22, 40, 0.32)" },
+    success: { bg: "#16A34A", color: "#FFFFFF", border: "#16A34A", hoverBg: "#0A6131", shadow: "rgba(22, 163, 74, 0.32)" },
+    destructive: { bg: "#DC2626", color: "#FFFFFF", border: "#DC2626", hoverBg: "#991B1B", shadow: "rgba(220, 38, 38, 0.32)" },
+    soft: { bg: "#FFFFFF", color: "#3D4A66", border: "#C8CDD8", hoverBg: "#F4F6F8", hoverColor: "#0A1628", hoverBorder: "#0A1628" },
+  };
+  const s = styles[tone] || styles.default;
+  const isSoft = tone === "soft";
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`font-mono font-semibold uppercase tracking-widest-srs text-2xs px-3 py-2 rounded-sm transition-all duration-fast ease-out-expo ${toneClass}`}
+      style={{
+        ...MONO_CAPS,
+        fontSize: 11,
+        letterSpacing: "0.14em",
+        padding: "8px 14px",
+        background: s.bg,
+        color: s.color,
+        border: `1.5px solid ${s.border}`,
+        borderRadius: 6,
+        cursor: "pointer",
+        boxShadow: isSoft ? "none" : `0 2px 6px -1px ${s.shadow}`,
+        transition: "all 160ms",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.background = s.hoverBg;
+        if (s.hoverColor) e.currentTarget.style.color = s.hoverColor;
+        if (s.hoverBorder) e.currentTarget.style.borderColor = s.hoverBorder;
+        else if (!isSoft) e.currentTarget.style.borderColor = s.hoverBg;
+        if (!isSoft) e.currentTarget.style.boxShadow = `0 4px 12px -2px ${s.shadow}`;
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = s.bg;
+        e.currentTarget.style.color = s.color;
+        e.currentTarget.style.borderColor = s.border;
+        if (!isSoft) e.currentTarget.style.boxShadow = `0 2px 6px -1px ${s.shadow}`;
+      }}
     >
       {label}
     </button>
@@ -357,7 +404,7 @@ function SendToClientAction({ req, reload }) {
       <ActionDialog
         open={open}
         onClose={() => setOpen(false)}
-        title="Enviar cotizacion al cliente"
+        title="Enviar cotización al cliente"
         subtitle={`$${req.total_amount_usd?.toFixed(2)} USD · ball pasa a cliente`}
         submitLabel="Enviar"
         onSubmit={submit}
@@ -400,7 +447,7 @@ function ClientDecisionAction({ req, reload, approve, onBehalf, label, tone }) {
         title={approve ? "Aprobar request" : "Rechazar request"}
         subtitle={
           onBehalf
-            ? "SRS registrando decision del cliente (acting-on-behalf, queda audit)"
+            ? "SRS registrando decisión del cliente (acting-on-behalf, queda audit)"
             : `$${req.total_amount_usd?.toFixed(2)} USD · ball vuelve a SRS`
         }
         submitLabel={approve ? "Aprobar" : "Rechazar"}
@@ -418,7 +465,7 @@ function ClientDecisionAction({ req, reload, approve, onBehalf, label, tone }) {
             onChange={(e) => setNotes(e.target.value)}
             placeholder={
               approve
-                ? "Cualquier condicion o comentario"
+                ? "Cualquier condición o comentario"
                 : "Motivo del rechazo (importante para audit)"
             }
           />
@@ -441,11 +488,7 @@ function AutoPurchaseAction({ req, reload }) {
 
   return (
     <>
-      <TinyButton
-        onClick={() => setOpen(true)}
-        label="Auto-purchase"
-        tone="soft"
-      />
+      <TinyButton onClick={() => setOpen(true)} label="Auto-purchase" tone="soft" />
       <ActionDialog
         open={open}
         onClose={() => setOpen(false)}
@@ -456,13 +499,13 @@ function AutoPurchaseAction({ req, reload }) {
         onSubmit={submit}
       >
         <div>
-          <DialogLabel htmlFor="ap-reason">Razon</DialogLabel>
+          <DialogLabel htmlFor="ap-reason">Razón</DialogLabel>
           <DialogTextarea
             id="ap-reason"
             rows={3}
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            placeholder="Por que no esperamos — down-time critico, deadline, safety"
+            placeholder="Por qué no esperamos — down-time crítico, deadline, safety"
             required
           />
         </div>
@@ -471,7 +514,7 @@ function AutoPurchaseAction({ req, reload }) {
   );
 }
 
-// -------------------- Create request (multi-part form) --------------------
+/* ─── Create request (multi-part form) ─────────────────────────── */
 
 const BLANK_PART = {
   name: "",
@@ -540,7 +583,6 @@ function CreateRequestAction({ wo, reload }) {
       auto_purchase_reason: autoNow ? autoReason : null,
     };
     await api.post(`/work-orders/${wo.id}/parts`, body);
-    // reset form for next open
     setParts([{ ...BLANK_PART }]);
     setCurrency("USD");
     setTotalNative("");
@@ -550,60 +592,62 @@ function CreateRequestAction({ wo, reload }) {
     reload();
   }
 
-  function handleClose() {
-    setOpen(false);
-  }
-
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="font-mono font-semibold uppercase tracking-widest-srs text-2xs px-3 py-2 rounded-sm bg-primary text-text-inverse hover:bg-primary-light hover:shadow-glow-primary transition-all duration-fast ease-out-expo"
-      >
+      <button type="button" onClick={() => setOpen(true)} className="btn-trigger-v2">
         Nuevo request
       </button>
 
       <ActionDialog
         open={open}
-        onClose={handleClose}
+        onClose={() => setOpen(false)}
         title="Nuevo parts request"
         subtitle={`WO ${wo.reference} · threshold snapshot viene del agreement`}
         submitLabel="Crear request"
         submitDisabled={!canSubmit}
         onSubmit={submit}
       >
-        {/* Parts list */}
-        <div className="space-y-3">
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {parts.map((p, i) => (
-            <div
+            <DialogPanel
               key={i}
-              className="bg-surface-base rounded-sm p-3 border border-surface-border space-y-2"
+              label={
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                  <span>Item #{i + 1}</span>
+                  {parts.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removePart(i)}
+                      style={{
+                        ...MONO_CAPS,
+                        fontSize: 9.5,
+                        letterSpacing: "0.14em",
+                        color: "#8B95A8",
+                        background: "transparent",
+                        border: "none",
+                        cursor: "pointer",
+                        padding: 0,
+                        textTransform: "uppercase",
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.color = "#991B1B")}
+                      onMouseLeave={(e) => (e.currentTarget.style.color = "#8B95A8")}
+                    >
+                      Quitar
+                    </button>
+                  )}
+                </div>
+              }
             >
-              <div className="flex items-center justify-between">
-                <div className="label-caps">Item #{i + 1}</div>
-                {parts.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => removePart(i)}
-                    className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary hover:text-danger"
-                  >
-                    Quitar
-                  </button>
-                )}
-              </div>
-
               <div>
                 <DialogLabel htmlFor={`p-name-${i}`}>Nombre</DialogLabel>
                 <DialogInput
                   id={`p-name-${i}`}
                   value={p.name}
                   onChange={(e) => update(i, "name", e.target.value)}
-                  placeholder="SFP 10G SR, bateria UPS, cable fibra…"
+                  placeholder="SFP 10G SR, batería UPS, cable fibra…"
                   required
                 />
               </div>
-
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <DialogLabel htmlFor={`p-pn-${i}`} optional>
@@ -626,7 +670,6 @@ function CreateRequestAction({ wo, reload }) {
                   />
                 </div>
               </div>
-
               <div className="grid grid-cols-3 gap-2">
                 <div>
                   <DialogLabel htmlFor={`p-qty-${i}`}>Cantidad</DialogLabel>
@@ -662,27 +705,66 @@ function CreateRequestAction({ wo, reload }) {
                   />
                 </div>
               </div>
-            </div>
+            </DialogPanel>
           ))}
 
           <button
             type="button"
             onClick={addPart}
-            className="w-full font-mono text-2xs uppercase tracking-widest-srs text-text-secondary border border-dashed border-surface-border py-2.5 rounded-sm hover:border-primary hover:text-primary-light transition-colors duration-fast"
+            style={{
+              ...MONO_CAPS,
+              fontSize: 10,
+              letterSpacing: "0.14em",
+              color: "#3D4A66",
+              border: "1.5px dashed #C8CDD8",
+              padding: "10px 12px",
+              borderRadius: 6,
+              background: "#FFFFFF",
+              cursor: "pointer",
+              transition: "all 160ms",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = "#0A1628";
+              e.currentTarget.style.color = "#0A1628";
+              e.currentTarget.style.background = "#F4F6F8";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = "#C8CDD8";
+              e.currentTarget.style.color = "#3D4A66";
+              e.currentTarget.style.background = "#FFFFFF";
+            }}
           >
             + agregar otro item
           </button>
 
-          <div className="flex items-center justify-between font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary pt-1">
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              ...MONO_CAPS,
+              fontSize: 10,
+              color: "#3D4A66",
+              letterSpacing: "0.14em",
+              paddingTop: 4,
+            }}
+          >
             <span>total</span>
-            <span className="font-display text-xl text-text-primary">
+            <span
+              style={{
+                fontFamily: JAKARTA,
+                fontSize: 22,
+                fontWeight: 800,
+                color: "#0A1628",
+                fontVariantNumeric: "tabular-nums",
+              }}
+            >
               ${totalUsd.toFixed(2)} USD
             </span>
           </div>
         </div>
 
-        {/* Meta */}
-        <div className="grid grid-cols-3 gap-2 pt-2 border-t border-surface-border">
+        <div className="grid grid-cols-3 gap-2" style={{ paddingTop: 10, borderTop: "1px solid #E2E5EC" }}>
           <div>
             <DialogLabel htmlFor="cur" optional>
               Moneda local
@@ -720,7 +802,7 @@ function CreateRequestAction({ wo, reload }) {
           </div>
         </div>
 
-        <div className="pt-2 border-t border-surface-border">
+        <div style={{ paddingTop: 10, borderTop: "1px solid #E2E5EC" }}>
           <DialogCheckbox
             id="auto-now"
             label="Marcar auto-purchase al crear (urgent ops)"
@@ -728,14 +810,14 @@ function CreateRequestAction({ wo, reload }) {
             onChange={setAutoNow}
           />
           {autoNow && (
-            <div className="mt-2">
-              <DialogLabel htmlFor="auto-reason">Razon auto-purchase</DialogLabel>
+            <div style={{ marginTop: 10 }}>
+              <DialogLabel htmlFor="auto-reason">Razón auto-purchase</DialogLabel>
               <DialogTextarea
                 id="auto-reason"
                 rows={2}
                 value={autoReason}
                 onChange={(e) => setAutoReason(e.target.value)}
-                placeholder="Down-time critico, deadline, safety"
+                placeholder="Down-time crítico, deadline, safety"
                 required
               />
             </div>
