@@ -1192,7 +1192,8 @@ function KanbanTab({ wos, sites, users, reload }) {
   }
 
   return (
-    <div className="px-10 py-4 h-full flex gap-3 overflow-x-auto wr-scroll">
+    <div className="px-10 h-full flex flex-col">
+      <div className="flex gap-3 overflow-x-auto wr-scroll py-4" style={{ minWidth: 0 }}>
       {KANBAN_COLUMNS.map((col) => (
         <div
           key={col.key}
@@ -1237,6 +1238,7 @@ function KanbanTab({ wos, sites, users, reload }) {
           </div>
         </div>
       ))}
+      </div>
     </div>
   );
 }
@@ -1419,7 +1421,7 @@ function TimelineTab({ wos, sites }) {
   const todayLabel = new Date().toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "numeric" });
 
   return (
-    <div className="px-6 py-6 h-full overflow-auto wr-scroll">
+    <div className="px-10 py-6 h-full overflow-auto wr-scroll">
       {/* Header con selector de rango */}
       <div className="mb-4 flex items-end justify-between gap-3 flex-wrap">
         <div>
