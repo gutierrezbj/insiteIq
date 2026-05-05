@@ -310,6 +310,61 @@ export function DialogTextarea({ id, rows = 3, ...props }) {
   );
 }
 
+export function DialogSelect({ id, value, onChange, options, required, ...props }) {
+  return (
+    <select
+      id={id}
+      value={value}
+      onChange={(e) => onChange?.(e.target.value)}
+      required={required}
+      {...props}
+      style={{ ...inputBaseStyle, cursor: "pointer" }}
+      onFocus={focusInputStyle}
+      onBlur={blurInputStyle}
+    >
+      {options.map((o) =>
+        typeof o === "string" ? (
+          <option key={o} value={o}>{o}</option>
+        ) : (
+          <option key={o.v ?? o.value} value={o.v ?? o.value}>
+            {o.l ?? o.label}
+          </option>
+        )
+      )}
+    </select>
+  );
+}
+
+export function DialogPanel({ label, children, padding = 14 }) {
+  return (
+    <div
+      style={{
+        background: "#F4F6F8",
+        border: "1px solid #E2E5EC",
+        borderRadius: 6,
+        padding,
+        display: "flex",
+        flexDirection: "column",
+        gap: 10,
+      }}
+    >
+      {label && (
+        <div
+          style={{
+            ...MONO_CAPS,
+            fontSize: 9.5,
+            color: "#3D4A66",
+            letterSpacing: "0.14em",
+          }}
+        >
+          {label}
+        </div>
+      )}
+      {children}
+    </div>
+  );
+}
+
 export function DialogCheckbox({ id, label, checked, onChange, disabled }) {
   return (
     <label

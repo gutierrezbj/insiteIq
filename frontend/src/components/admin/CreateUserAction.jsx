@@ -12,6 +12,8 @@ import ActionDialog, {
   DialogCheckbox,
   DialogInput,
   DialogLabel,
+  DialogPanel,
+  DialogSelect,
 } from "../ui/ActionDialog";
 
 const AUTHORITY_OPTIONS = [
@@ -196,7 +198,7 @@ export default function CreateUserAction({ onCreated }) {
             </div>
             <div>
               <DialogLabel htmlFor="cu-emp">Employment type</DialogLabel>
-              <Select
+              <DialogSelect
                 id="cu-emp"
                 value={employmentType}
                 onChange={setEmploymentType}
@@ -212,11 +214,10 @@ export default function CreateUserAction({ onCreated }) {
               />
             )}
 
-            <div className="bg-surface-base rounded-sm p-3 space-y-2">
-              <div className="label-caps">Membership</div>
+            <DialogPanel label="Membership">
               <div>
                 <DialogLabel htmlFor="cu-space">Space</DialogLabel>
-                <Select
+                <DialogSelect
                   id="cu-space"
                   value={space}
                   onChange={setSpace}
@@ -240,7 +241,7 @@ export default function CreateUserAction({ onCreated }) {
                 </div>
                 <div>
                   <DialogLabel htmlFor="cu-auth">Authority level</DialogLabel>
-                  <Select
+                  <DialogSelect
                     id="cu-auth"
                     value={authority}
                     onChange={setAuthority}
@@ -250,8 +251,8 @@ export default function CreateUserAction({ onCreated }) {
               </div>
               {needsOrg && (
                 <div>
-                  <DialogLabel htmlFor="cu-org">Organizacion (requerida)</DialogLabel>
-                  <Select
+                  <DialogLabel htmlFor="cu-org">Organización (requerida)</DialogLabel>
+                  <DialogSelect
                     id="cu-org"
                     value={orgId}
                     onChange={setOrgId}
@@ -266,34 +267,97 @@ export default function CreateUserAction({ onCreated }) {
                   />
                 </div>
               )}
-            </div>
+            </DialogPanel>
           </>
         )}
 
         {created && (
           <div className="space-y-3">
-            <div className="bg-surface-base rounded-sm p-3">
-              <div className="label-caps mb-1">Email</div>
-              <div className="font-body text-sm text-text-primary">
+            <DialogPanel label="Email">
+              <div
+                style={{
+                  fontFamily: "'Plus Jakarta Sans', sans-serif",
+                  fontSize: 13,
+                  color: "#0A1628",
+                  fontWeight: 600,
+                }}
+              >
                 {created.email}
               </div>
-              <div className="label-caps mt-3 mb-1">Temp password</div>
-              <div className="flex items-center gap-2">
-                <code className="flex-1 bg-surface-overlay rounded-sm px-3 py-2 font-mono text-sm text-primary-light select-all">
+              <div
+                style={{
+                  fontFamily: "'JetBrains Mono', monospace",
+                  fontSize: 9.5,
+                  color: "#3D4A66",
+                  fontWeight: 700,
+                  letterSpacing: "0.14em",
+                  textTransform: "uppercase",
+                  marginTop: 6,
+                }}
+              >
+                Temp password
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <code
+                  style={{
+                    flex: 1,
+                    background: "#FFFFFF",
+                    border: "1px solid #C8CDD8",
+                    borderRadius: 6,
+                    padding: "8px 12px",
+                    fontFamily: "'JetBrains Mono', monospace",
+                    fontSize: 13,
+                    color: "#0A1628",
+                    fontWeight: 700,
+                    userSelect: "all",
+                  }}
+                >
                   {created.temp_password}
                 </code>
                 <button
                   type="button"
                   onClick={copyTemp}
-                  className="font-mono text-2xs uppercase tracking-widest-srs px-3 py-2 rounded-sm bg-surface-overlay border border-surface-border text-text-secondary hover:text-text-primary hover:border-primary transition-colors duration-fast"
+                  style={{
+                    fontFamily: "'JetBrains Mono', monospace",
+                    fontSize: 10,
+                    fontWeight: 700,
+                    letterSpacing: "0.14em",
+                    textTransform: "uppercase",
+                    padding: "8px 12px",
+                    background: "#FFFFFF",
+                    color: "#3D4A66",
+                    border: "1.5px solid #C8CDD8",
+                    borderRadius: 6,
+                    cursor: "pointer",
+                    transition: "all 160ms",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.color = "#0A1628";
+                    e.currentTarget.style.borderColor = "#0A1628";
+                    e.currentTarget.style.background = "#F4F6F8";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.color = "#3D4A66";
+                    e.currentTarget.style.borderColor = "#C8CDD8";
+                    e.currentTarget.style.background = "#FFFFFF";
+                  }}
                 >
                   {copyFeedback || "copy"}
                 </button>
               </div>
-              <p className="mt-2 font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+              <p
+                style={{
+                  fontFamily: "'JetBrains Mono', monospace",
+                  fontSize: 9.5,
+                  color: "#8B95A8",
+                  fontWeight: 700,
+                  letterSpacing: "0.14em",
+                  textTransform: "uppercase",
+                }}
+              >
                 forced rotation on first login
               </p>
-            </div>
+            </DialogPanel>
           </div>
         )}
       </ActionDialog>
@@ -301,20 +365,4 @@ export default function CreateUserAction({ onCreated }) {
   );
 }
 
-function Select({ id, value, onChange, options, required }) {
-  return (
-    <select
-      id={id}
-      value={value}
-      onChange={(e) => onChange?.(e.target.value)}
-      required={required}
-      className="w-full bg-surface-overlay border border-surface-border rounded-sm px-3 py-2 text-text-primary font-body text-sm focus:outline-none focus:border-primary focus:shadow-glow-primary transition-all duration-fast ease-out-expo"
-    >
-      {options.map((o) => (
-        <option key={o.v} value={o.v}>
-          {o.l}
-        </option>
-      ))}
-    </select>
-  );
-}
+// Local Select removed in Iter 2.34 — use DialogSelect from ActionDialog.

@@ -9,6 +9,8 @@ import { useFetch } from "../../lib/useFetch";
 import ActionDialog, {
   DialogInput,
   DialogLabel,
+  DialogPanel,
+  DialogSelect,
   DialogTextarea,
 } from "../ui/ActionDialog";
 
@@ -146,7 +148,7 @@ export default function CreateVendorInvoiceAction({ onCreated }) {
       >
         <div>
           <DialogLabel htmlFor="cv-vendor">Vendor</DialogLabel>
-          <Select
+          <DialogSelect
             id="cv-vendor"
             value={vendorId}
             onChange={setVendorId}
@@ -228,7 +230,20 @@ export default function CreateVendorInvoiceAction({ onCreated }) {
           </div>
           <div>
             <DialogLabel>Total</DialogLabel>
-            <div className="w-full bg-surface-overlay border border-surface-border rounded-sm px-3 py-2 font-display text-base text-primary-light">
+            <div
+              style={{
+                width: "100%",
+                background: "#F4F6F8",
+                border: "1px solid #C8CDD8",
+                borderRadius: 6,
+                padding: "8px 12px",
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
+                fontSize: 16,
+                fontWeight: 800,
+                color: "#0A1628",
+                fontVariantNumeric: "tabular-nums",
+              }}
+            >
               {total.toFixed(2)}
             </div>
           </div>
@@ -282,19 +297,4 @@ export default function CreateVendorInvoiceAction({ onCreated }) {
   );
 }
 
-function Select({ id, value, onChange, options }) {
-  return (
-    <select
-      id={id}
-      value={value}
-      onChange={(e) => onChange?.(e.target.value)}
-      className="w-full bg-surface-overlay border border-surface-border rounded-sm px-3 py-2 text-text-primary font-body text-sm focus:outline-none focus:border-primary focus:shadow-glow-primary transition-all duration-fast ease-out-expo"
-    >
-      {options.map((o) => (
-        <option key={o.v} value={o.v}>
-          {o.l}
-        </option>
-      ))}
-    </select>
-  );
-}
+// Local Select removed in Iter 2.34 — use DialogSelect from ActionDialog.

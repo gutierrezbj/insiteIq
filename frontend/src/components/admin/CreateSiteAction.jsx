@@ -10,6 +10,8 @@ import ActionDialog, {
   DialogCheckbox,
   DialogInput,
   DialogLabel,
+  DialogPanel,
+  DialogSelect,
   DialogTextarea,
 } from "../ui/ActionDialog";
 
@@ -118,8 +120,8 @@ export default function CreateSiteAction({ onCreated }) {
         onSubmit={submit}
       >
         <div>
-          <DialogLabel htmlFor="cs-org">Organizacion</DialogLabel>
-          <Select
+          <DialogLabel htmlFor="cs-org">Organización</DialogLabel>
+          <DialogSelect
             id="cs-org"
             value={orgId}
             onChange={setOrgId}
@@ -195,8 +197,7 @@ export default function CreateSiteAction({ onCreated }) {
           />
         </div>
 
-        <div className="bg-surface-base rounded-sm p-3 space-y-2">
-          <div className="label-caps">Contacto onsite (opcional)</div>
+        <DialogPanel label="Contacto onsite (opcional)">
           <div className="grid grid-cols-2 gap-2">
             <div>
               <DialogLabel htmlFor="cs-cn" optional>Nombre</DialogLabel>
@@ -235,7 +236,7 @@ export default function CreateSiteAction({ onCreated }) {
               />
             </div>
           </div>
-        </div>
+        </DialogPanel>
 
         <DialogCheckbox
           id="cs-resident"
@@ -261,20 +262,4 @@ export default function CreateSiteAction({ onCreated }) {
   );
 }
 
-function Select({ id, value, onChange, options, required }) {
-  return (
-    <select
-      id={id}
-      value={value}
-      onChange={(e) => onChange?.(e.target.value)}
-      required={required}
-      className="w-full bg-surface-overlay border border-surface-border rounded-sm px-3 py-2 text-text-primary font-body text-sm focus:outline-none focus:border-primary focus:shadow-glow-primary transition-all duration-fast ease-out-expo"
-    >
-      {options.map((o) => (
-        <option key={o.v} value={o.v}>
-          {o.l}
-        </option>
-      ))}
-    </select>
-  );
-}
+// Local Select removed in Iter 2.34 — use DialogSelect from ActionDialog.

@@ -16,6 +16,8 @@ import { useFetch } from "../../lib/useFetch";
 import ActionDialog, {
   DialogInput,
   DialogLabel,
+  DialogPanel,
+  DialogSelect,
   DialogTextarea,
 } from "../ui/ActionDialog";
 
@@ -117,7 +119,7 @@ export default function GenerateInvoiceAction({ defaultOrgId, onGenerated }) {
       >
         <div>
           <DialogLabel htmlFor="gi-org">Cliente</DialogLabel>
-          <Select
+          <DialogSelect
             id="gi-org"
             value={orgId}
             onChange={setOrgId}
@@ -133,7 +135,7 @@ export default function GenerateInvoiceAction({ defaultOrgId, onGenerated }) {
         </div>
         <div>
           <DialogLabel htmlFor="gi-ag">Service Agreement</DialogLabel>
-          <Select
+          <DialogSelect
             id="gi-ag"
             value={agreementId}
             onChange={setAgreementId}
@@ -221,21 +223,4 @@ export default function GenerateInvoiceAction({ defaultOrgId, onGenerated }) {
   );
 }
 
-function Select({ id, value, onChange, options, disabled, required }) {
-  return (
-    <select
-      id={id}
-      value={value}
-      onChange={(e) => onChange?.(e.target.value)}
-      disabled={disabled}
-      required={required}
-      className="w-full bg-surface-overlay border border-surface-border rounded-sm px-3 py-2 text-text-primary font-body text-sm focus:outline-none focus:border-primary focus:shadow-glow-primary transition-all duration-fast ease-out-expo disabled:opacity-50 disabled:cursor-not-allowed"
-    >
-      {options.map((o) => (
-        <option key={o.v} value={o.v}>
-          {o.l}
-        </option>
-      ))}
-    </select>
-  );
-}
+// Local Select removed in Iter 2.34 — use DialogSelect from ActionDialog.

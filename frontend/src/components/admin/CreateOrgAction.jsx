@@ -7,6 +7,7 @@ import { api } from "../../lib/api";
 import ActionDialog, {
   DialogInput,
   DialogLabel,
+  DialogSelect,
   DialogTextarea,
 } from "../ui/ActionDialog";
 
@@ -145,18 +146,12 @@ export default function CreateOrgAction({ onCreated }) {
         </div>
         <div>
           <DialogLabel htmlFor="co-partner">Partner relationship</DialogLabel>
-          <select
+          <DialogSelect
             id="co-partner"
             value={partnerType}
-            onChange={(e) => setPartnerType(e.target.value)}
-            className="w-full bg-surface-overlay border border-surface-border rounded-sm px-3 py-2 text-text-primary font-body text-sm focus:outline-none focus:border-primary focus:shadow-glow-primary transition-all duration-fast ease-out-expo"
-          >
-            {PARTNER_TYPES.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
+            onChange={setPartnerType}
+            options={PARTNER_TYPES.map((t) => ({ v: t, l: t }))}
+          />
         </div>
         <div>
           <DialogLabel htmlFor="co-notes" optional>
