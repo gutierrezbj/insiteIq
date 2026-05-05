@@ -16,6 +16,8 @@ import { useFetch } from "../../lib/useFetch";
 import ActionDialog, {
   DialogInput,
   DialogLabel,
+  DialogPanel,
+  DialogSelect,
   DialogTextarea,
 } from "../ui/ActionDialog";
 
@@ -159,11 +161,7 @@ export default function IntakeWorkOrderAction({ onCreated }) {
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="font-mono font-semibold uppercase tracking-widest-srs text-2xs px-3 py-2 rounded-sm bg-primary text-text-inverse hover:bg-primary-light hover:shadow-glow-primary transition-all duration-fast ease-out-expo"
-      >
+      <button type="button" onClick={() => setOpen(true)} className="btn-trigger-v2">
         + Nueva WO
       </button>
 
@@ -177,11 +175,10 @@ export default function IntakeWorkOrderAction({ onCreated }) {
         onSubmit={submit}
       >
         {/* Paso 1: Cliente + contrato + site */}
-        <div className="bg-surface-base rounded-sm p-3 space-y-2">
-          <div className="label-caps">Cliente · contrato · site</div>
+        <DialogPanel label="Cliente · contrato · site">
           <div>
             <DialogLabel htmlFor="int-org">Organizacion cliente</DialogLabel>
-            <Select
+            <DialogSelect
               id="int-org"
               value={orgId}
               onChange={setOrgId}
@@ -198,7 +195,7 @@ export default function IntakeWorkOrderAction({ onCreated }) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             <div>
               <DialogLabel htmlFor="int-agreement">Service agreement</DialogLabel>
-              <Select
+              <DialogSelect
                 id="int-agreement"
                 value={agreementId}
                 onChange={setAgreementId}
@@ -215,7 +212,7 @@ export default function IntakeWorkOrderAction({ onCreated }) {
             </div>
             <div>
               <DialogLabel htmlFor="int-site">Site</DialogLabel>
-              <Select
+              <DialogSelect
                 id="int-site"
                 value={siteId}
                 onChange={setSiteId}
@@ -233,7 +230,7 @@ export default function IntakeWorkOrderAction({ onCreated }) {
               />
             </div>
           </div>
-        </div>
+        </DialogPanel>
 
         {/* Paso 2: identidad del ticket */}
         <div>
@@ -270,7 +267,7 @@ export default function IntakeWorkOrderAction({ onCreated }) {
         </div>
         <div>
           <DialogLabel htmlFor="int-sev">Severity</DialogLabel>
-          <Select
+          <DialogSelect
             id="int-sev"
             value={severity}
             onChange={setSeverity}
@@ -282,17 +279,33 @@ export default function IntakeWorkOrderAction({ onCreated }) {
         <button
           type="button"
           onClick={() => setShowAdvanced((v) => !v)}
-          className="w-full text-left font-mono text-2xs uppercase tracking-widest-srs text-text-secondary hover:text-text-primary py-1"
+          style={{
+            width: "100%",
+            textAlign: "left",
+            fontFamily: "'JetBrains Mono', monospace",
+            fontWeight: 700,
+            letterSpacing: "0.14em",
+            textTransform: "uppercase",
+            fontSize: 10,
+            color: "#3D4A66",
+            background: "transparent",
+            border: "none",
+            padding: "6px 0",
+            cursor: "pointer",
+            transition: "color 160ms",
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.color = "#0A1628")}
+          onMouseLeave={(e) => (e.currentTarget.style.color = "#3D4A66")}
         >
-          {showAdvanced ? "▼" : "▶"} Asignacion (opcional)
+          {showAdvanced ? "▼" : "▶"} Asignación (opcional)
         </button>
         {showAdvanced && (
-          <div className="bg-surface-base rounded-sm p-3 space-y-2">
+          <DialogPanel>
             <div>
               <DialogLabel htmlFor="int-tech" optional>
                 Tech asignado
               </DialogLabel>
-              <Select
+              <DialogSelect
                 id="int-tech"
                 value={assignedTechId}
                 onChange={setAssignedTechId}
@@ -310,7 +323,7 @@ export default function IntakeWorkOrderAction({ onCreated }) {
                 <DialogLabel htmlFor="int-noc" optional>
                   NOC Operator
                 </DialogLabel>
-                <Select
+                <DialogSelect
                   id="int-noc"
                   value={nocId}
                   onChange={setNocId}
@@ -327,7 +340,7 @@ export default function IntakeWorkOrderAction({ onCreated }) {
                 <DialogLabel htmlFor="int-res" optional>
                   Onsite resident
                 </DialogLabel>
-                <Select
+                <DialogSelect
                   id="int-res"
                   value={residentId}
                   onChange={setResidentId}
@@ -341,28 +354,9 @@ export default function IntakeWorkOrderAction({ onCreated }) {
                 />
               </div>
             </div>
-          </div>
+          </DialogPanel>
         )}
       </ActionDialog>
     </>
-  );
-}
-
-function Select({ id, value, onChange, options, disabled, required }) {
-  return (
-    <select
-      id={id}
-      value={value}
-      onChange={(e) => onChange?.(e.target.value)}
-      disabled={disabled}
-      required={required}
-      className="w-full bg-surface-overlay border border-surface-border rounded-sm px-3 py-2 text-text-primary font-body text-sm focus:outline-none focus:border-primary focus:shadow-glow-primary transition-all duration-fast ease-out-expo disabled:opacity-50 disabled:cursor-not-allowed"
-    >
-      {options.map((o) => (
-        <option key={o.v} value={o.v}>
-          {o.l}
-        </option>
-      ))}
-    </select>
   );
 }
