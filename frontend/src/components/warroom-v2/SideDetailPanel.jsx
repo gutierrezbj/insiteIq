@@ -233,7 +233,7 @@ function DocCycleGrid({ briefing, capture, report }) {
   const items = [
     { label: "Briefing", state: briefing?.status || "PENDING", detail: briefing?.signed_by || "sin firmar" },
     { label: "Capture", state: capture?.status || "PENDING", detail: capture?.photos ? `${capture.photos} fotos` : "sin evidencia" },
-    { label: "Report", state: report?.status || "PENDING", detail: report?.reason ? report.reason.slice(0, 40) : "ok" },
+    { label: "Report", state: report?.status || "PENDING", detail: report?.reason ? report.reason.slice(0, 40) : "OK" },
   ];
   const colorFor = (s) =>
     s === "SIGNED" || s === "COMPLETE" || s === "EMITTED" ? "#22C55E"
@@ -344,7 +344,7 @@ export default function SideDetailPanel({
                       letterSpacing: "0.12em",
                     }}
                   >
-                    {sla.label} · {slaTime}
+                    {sla.label}{slaTime && slaTime !== "—" ? ` · ${slaTime}` : ""}
                   </span>
                 </div>
                 <button
@@ -396,7 +396,7 @@ export default function SideDetailPanel({
             {/* Body scrollable */}
             <div
               className="wr-scroll"
-              style={{ flex: 1, overflowY: "auto", padding: 18, display: "flex", flexDirection: "column", gap: 20 }}
+              style={{ flex: 1, overflowY: "auto", padding: 18, display: "flex", flexDirection: "column", gap: 16 }}
             >
               {/* Warning banner */}
               {warning && (
@@ -432,7 +432,7 @@ export default function SideDetailPanel({
                       className="text-[13px] m-0"
                       style={{ color: getBallColor(wo), fontWeight: 500 }}
                     >
-                      {getBallLabel(wo)}
+                      {getBallLabel(wo) === "—" ? "Sin asignar" : getBallLabel(wo)}
                     </p>
                   </div>
                   <div>
