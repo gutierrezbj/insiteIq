@@ -1,18 +1,36 @@
 /**
- * SRS Techs — listado con Skill Passport resumido.
- * Decision #4 Modo 1 visible: quien sabe que, rating, jobs_completed, level.
+ * SRS Techs · list (Iter 2.25 · paleta F NAVEGANTE).
+ *
+ * Migración v1 amber legacy → v2 paleta F usando v2-shared.
+ * Decision #4 Modo 1: Skill Passport visible (level + jobs + rating +
+ * countries). Sort por rating_avg desc → jobs_completed desc.
+ *
+ * Endpoints:
+ *   GET /api/users (filter local por memberships.space === "tech_field")
+ *   GET /api/techs/{id}/passport (N+1 paralelo, OK para tenant scale)
  */
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../../../lib/api";
 import { useFetch } from "../../../lib/useFetch";
+import { JAKARTA, MONO, MONO_CAPS } from "../../../components/v2-shared/typography";
 
-const LEVEL_TINT = {
-  bronze: "text-[#B08968]",
-  silver: "text-text-secondary",
-  gold: "text-primary-light",
-  unrated: "text-text-tertiary",
+const LEVEL_STYLES = {
+  bronze:  { dot: "#A16207", label: "BRONZE" },
+  silver:  { dot: "#94A3B8", label: "SILVER" },
+  gold:    { dot: "#CA8A04", label: "GOLD" },
+  unrated: { dot: "#C8CDD8", label: "UNRATED" },
 };
+
+function LevelPill({ level }) {
+  const s = LEVEL_STYLES[level] || LEVEL_STYLES.unrated;
+  return (
+    <span style={{ ...MONO_CAPS, display: "inline-flex", alignItems: "center", gap: 6, fontSize: 9.5, color: "#3D4A66" }}>
+      <span style={{ width: 6, height: 6, borderRadius: "50%", background: s.dot }} />
+      {s.label}
+    </span>
+  );
+}
 
 export default function TechsListPage() {
   const { data: users, loading } = useFetch("/users");
@@ -21,13 +39,10 @@ export default function TechsListPage() {
 
   const techs = useMemo(() => {
     return (users || []).filter((u) =>
-      (u.memberships || []).some(
-        (m) => m.space === "tech_field" && m.active
-      )
+      (u.memberships || []).some((m) => m.space === "tech_field" && m.active)
     );
   }, [users]);
 
-  // Fetch each passport in parallel. Pragmatic N+1; OK for tenant scale.
   useEffect(() => {
     if (!techs.length) return;
     let alive = true;
@@ -46,9 +61,7 @@ export default function TechsListPage() {
       setPassports(map);
       setLoadingPassports(false);
     });
-    return () => {
-      alive = false;
-    };
+    return () => { alive = false; };
   }, [techs]);
 
   const rows = techs
@@ -61,85 +74,169 @@ export default function TechsListPage() {
     });
 
   return (
-    <div className="px-4 md:px-8 py-5 md:py-7 max-w-wide">
-      <div className="accent-bar pl-4 mb-6">
-        <div className="label-caps">Techs · Skill Passports</div>
-        <h1 className="font-display text-2xl text-text-primary leading-tight">
-          {techs.length} techs operando
+    <div style={{ padding: "32px 40px", maxWidth: 1400 }}>
+      {/* Header */}
+      <div style={{ paddingLeft: 16, borderLeft: "3px solid #0A1628", marginBottom: 22 }}>
+        <div style={{ ...MONO_CAPS, fontSize: 11, color: "#8B95A8", marginBottom: 6 }}>
+          Techs · Skill Passports
+        </div>
+        <h1
+          style={{
+            fontFamily: JAKARTA,
+            fontSize: 28,
+            fontWeight: 800,
+            color: "#0A1628",
+            letterSpacing: "-0.02em",
+            lineHeight: 1.1,
+          }}
+        >
+          {techs.length} <span style={{ color: "#3D4A66", fontWeight: 600 }}>techs operando</span>
         </h1>
-        <p className="font-body text-text-secondary text-sm mt-1">
+        <p style={{ fontFamily: JAKARTA, fontSize: 13, color: "#3D4A66", marginTop: 6, fontWeight: 500 }}>
           Decision #4 Modo 1 · jobs + rating + level + quality marks
         </p>
       </div>
 
-      <div className="bg-surface-raised accent-bar rounded-sm">
-        <div className="grid grid-cols-12 gap-3 px-4 py-2 border-b border-surface-border text-text-tertiary">
-          <div className="col-span-3 label-caps">Tech</div>
-          <div className="col-span-2 label-caps">Level</div>
-          <div className="col-span-1 label-caps text-right">Jobs</div>
-          <div className="col-span-2 label-caps text-right">Rating</div>
-          <div className="col-span-2 label-caps">Employment</div>
-          <div className="col-span-2 label-caps text-right">Countries</div>
+      {/* Table */}
+      <div
+        style={{
+          background: "#FFFFFF",
+          border: "1px solid #E2E5EC",
+          borderRadius: 8,
+          overflow: "hidden",
+          boxShadow: "0 1px 3px rgba(10, 22, 40, 0.05)",
+        }}
+      >
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "3fr 2fr 1fr 2fr 2fr 2fr",
+            gap: 12,
+            padding: "12px 18px",
+            background: "#F4F6F8",
+            borderBottom: "1px solid #E2E5EC",
+            ...MONO_CAPS,
+            fontSize: 10,
+            color: "#3D4A66",
+            letterSpacing: "0.14em",
+          }}
+        >
+          <div>Tech</div>
+          <div>Level</div>
+          <div style={{ textAlign: "right" }}>Jobs</div>
+          <div style={{ textAlign: "right" }}>Rating</div>
+          <div>Employment</div>
+          <div style={{ textAlign: "right" }}>Countries</div>
         </div>
 
-        <div className="divide-y divide-surface-border">
-          {(loading || loadingPassports) && (
-            <Empty text="cargando…" />
-          )}
-          {!loading && rows.length === 0 && <Empty text="— sin techs —" />}
-          {rows.map(({ user: t, passport: p }) => (
-            <Link
-              key={t.id}
-              to={`/srs/techs/${t.id}`}
-              className="grid grid-cols-12 gap-3 px-4 py-3 items-start hover:bg-surface-overlay/60 transition-colors duration-fast"
-            >
-              <div className="col-span-3 min-w-0">
-                <div className="font-body text-sm text-text-primary truncate">
-                  {t.full_name || "—"}
-                </div>
-                <div className="font-mono text-2xs text-text-tertiary truncate">
-                  {t.email}
-                </div>
+        {(loading || loadingPassports) && <Empty text="cargando…" />}
+        {!loading && rows.length === 0 && <Empty text="— sin techs —" />}
+        {rows.map(({ user: t, passport: p }) => (
+          <Link
+            key={t.id}
+            to={`/srs/techs/${t.id}`}
+            style={{
+              display: "grid",
+              gridTemplateColumns: "3fr 2fr 1fr 2fr 2fr 2fr",
+              gap: 12,
+              padding: "14px 18px",
+              borderBottom: "1px solid #E2E5EC",
+              alignItems: "center",
+              textDecoration: "none",
+              transition: "background 160ms",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "#F7F8FA")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+          >
+            <div style={{ minWidth: 0 }}>
+              <div
+                style={{
+                  fontFamily: JAKARTA,
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: "#0A1628",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+              >
+                {t.full_name || "—"}
               </div>
               <div
-                className={`col-span-2 font-mono text-2xs uppercase tracking-widest-srs ${
-                  LEVEL_TINT[p?.level || "unrated"]
-                }`}
+                style={{
+                  fontFamily: MONO,
+                  fontSize: 11,
+                  color: "#8B95A8",
+                  fontWeight: 500,
+                  marginTop: 2,
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
               >
-                {p?.level || "—"}
+                {t.email}
               </div>
-              <div className="col-span-1 text-right">
-                <div className="font-display text-base text-text-primary leading-none">
-                  {p?.jobs_completed ?? "—"}
-                </div>
+            </div>
+            <div>
+              <LevelPill level={p?.level || "unrated"} />
+            </div>
+            <div style={{ textAlign: "right" }}>
+              <div
+                style={{
+                  fontFamily: JAKARTA,
+                  fontSize: 16,
+                  fontWeight: 700,
+                  color: "#0A1628",
+                  fontVariantNumeric: "tabular-nums",
+                  lineHeight: 1,
+                }}
+              >
+                {p?.jobs_completed ?? "—"}
               </div>
-              <div className="col-span-2 text-right">
-                {p?.rating_count ? (
-                  <>
-                    <div className="font-display text-base text-text-primary leading-none">
-                      {p.rating_avg.toFixed(2)}
-                    </div>
-                    <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary mt-0.5">
-                      · {p.rating_count} rating{p.rating_count === 1 ? "" : "s"}
-                    </div>
-                  </>
-                ) : (
-                  <span className="font-mono text-2xs text-text-tertiary">
-                    sin ratings
-                  </span>
-                )}
-              </div>
-              <div className="col-span-2 font-mono text-2xs uppercase tracking-widest-srs text-text-secondary">
-                {p?.employment_type || t.employment_type || "—"}
-              </div>
-              <div className="col-span-2 text-right font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
-                {(p?.countries_covered || []).length > 0
-                  ? p.countries_covered.join(" · ")
-                  : "—"}
-              </div>
-            </Link>
-          ))}
-        </div>
+            </div>
+            <div style={{ textAlign: "right" }}>
+              {p?.rating_count ? (
+                <>
+                  <div
+                    style={{
+                      fontFamily: JAKARTA,
+                      fontSize: 16,
+                      fontWeight: 700,
+                      color: "#0A1628",
+                      fontVariantNumeric: "tabular-nums",
+                      lineHeight: 1,
+                    }}
+                  >
+                    {p.rating_avg.toFixed(2)}
+                  </div>
+                  <div style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.12em", marginTop: 3 }}>
+                    · {p.rating_count} rating{p.rating_count === 1 ? "" : "s"}
+                  </div>
+                </>
+              ) : (
+                <span style={{ ...MONO_CAPS, fontSize: 9.5, color: "#8B95A8", letterSpacing: "0.14em" }}>
+                  sin ratings
+                </span>
+              )}
+            </div>
+            <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.14em" }}>
+              {p?.employment_type || t.employment_type || "—"}
+            </div>
+            <div
+              style={{
+                textAlign: "right",
+                ...MONO_CAPS,
+                fontSize: 9.5,
+                color: "#3D4A66",
+                letterSpacing: "0.14em",
+              }}
+            >
+              {(p?.countries_covered || []).length > 0
+                ? p.countries_covered.join(" · ")
+                : "—"}
+            </div>
+          </Link>
+        ))}
       </div>
     </div>
   );
@@ -147,7 +244,7 @@ export default function TechsListPage() {
 
 function Empty({ text }) {
   return (
-    <div className="px-4 py-6 font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+    <div style={{ padding: "24px 18px", ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em" }}>
       {text}
     </div>
   );
