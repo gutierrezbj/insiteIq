@@ -31,6 +31,20 @@ function TechCard({ item }) {
       className="flex items-center gap-2.5 px-3 py-2 bg-cl-surface border border-cl-border rounded-md flex-shrink-0 hover:border-cl-border-strong transition"
       title={`${item.techName} · ${dot.label} · ${item.siteName} · ${item.woCode}${item.woReference ? ` · ${item.woReference}` : ""}`}
     >
+      {/* Dot status — estilo 100% inline, sin depender de clases Tailwind tricky.
+          Se ubica antes del avatar para que sea lo primero que vea el ojo. */}
+      <span
+        className={dot.pulse ? "animate-pulse" : ""}
+        style={{
+          display: "inline-block",
+          width: 10,
+          height: 10,
+          borderRadius: "50%",
+          background: dot.color,
+          flexShrink: 0,
+        }}
+        aria-label={dot.label}
+      />
       <Icon icon={ICONS.user} size={18} color="#3D4A66" className="flex-shrink-0" />
       <div className="leading-tight min-w-0">
         <p className="text-[12px] font-jakarta font-semibold text-cl-text truncate max-w-[160px]">
@@ -40,12 +54,6 @@ function TechCard({ item }) {
           {item.siteName} · {item.woCode}
         </p>
       </div>
-      {/* Dot status simple, plano, a la derecha del card · igual al patrón de admin */}
-      <span
-        className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ml-1${dot.pulse ? " animate-pulse" : ""}`}
-        style={{ background: dot.color }}
-        aria-label={dot.label}
-      />
     </div>
   );
 }
