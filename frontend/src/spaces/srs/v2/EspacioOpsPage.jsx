@@ -19,6 +19,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 import { api } from "../../../lib/api";
 import { useRefresh } from "../../../contexts/RefreshContext";
 import { useAuth } from "../../../contexts/AuthContext";
@@ -184,6 +185,7 @@ export default function EspacioOpsPage({ scope = "srs" }) {
   const [activeFilter, setActiveFilter] = useState(null);
   const [detailWoId, setDetailWoId] = useState(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [escalating, setEscalating] = useState(false);
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
 
   /* ─────────────────────── Data fetch ─────────────────────── */
@@ -609,9 +611,21 @@ export default function EspacioOpsPage({ scope = "srs" }) {
         viewerScope={scope}
         open={detailOpen}
         onClose={() => setDetailOpen(false)}
-        onEscalate={() => {
-          // TODO: api.post(`/work-orders/${detailWoId}/escalate`)
-          setDetailOpen(false);
+        escalating={escalating}
+        onEscalate={async () => {
+          if (!detailWoId || escalating) return;
+          setEscalating(true);
+          try {
+            await api.post(`/work-orders/${detailWoId}/threads/shared/messages`, {
+              text: "Intervención escalada al cliente — acción requerida de su parte.",
+            });
+            toast.success("Ball escalado al cliente");
+          } catch {
+            toast.error("No se pudo escalar — intenta de nuevo");
+          } finally {
+            setEscalating(false);
+            setDetailOpen(false);
+          }
         }}
       />
     </div>

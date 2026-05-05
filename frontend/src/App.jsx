@@ -15,6 +15,7 @@
  */
 import { lazy, Suspense } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { Toaster } from "sonner";
 
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import RequireSpace from "./components/RequireSpace";
@@ -124,6 +125,18 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <Toaster
+          position="bottom-right"
+          toastOptions={{
+            style: {
+              background: "#FFFFFF",
+              color: "#0A1628",
+              border: "1px solid #C8CDD8",
+              fontFamily: "'Plus Jakarta Sans', sans-serif",
+              fontSize: 13,
+            },
+          }}
+        />
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/no-access" element={<NoAccessPage />} />

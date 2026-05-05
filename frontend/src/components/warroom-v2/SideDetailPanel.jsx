@@ -283,6 +283,7 @@ export default function SideDetailPanel({
   open,
   onClose,
   onEscalate,
+  escalating = false,
   viewerScope = "srs",
 }) {
   // Cliente NO ve threads internos ni audit log SRS-internal (Principio #1).
@@ -649,30 +650,35 @@ export default function SideDetailPanel({
                 Cerrar
               </button>
               <button
-                onClick={onEscalate}
-                className="rounded-sm cursor-pointer flex items-center justify-center gap-1.5 transition font-jakarta uppercase"
+                onClick={escalating ? undefined : onEscalate}
+                disabled={escalating}
+                className="rounded-sm flex items-center justify-center gap-1.5 transition font-jakarta uppercase"
                 style={{
                   flex: 2,
                   height: 36,
-                  background: "#FF6B35",
+                  background: escalating ? "#E8895A" : "#FF6B35",
                   color: "#FFFFFF",
-                  border: "1px solid #FF6B35",
+                  border: `1px solid ${escalating ? "#E8895A" : "#FF6B35"}`,
                   fontSize: 11,
                   fontWeight: 700,
                   letterSpacing: "0.08em",
-                  boxShadow: "0 2px 6px -1px rgba(255, 107, 53, 0.32)",
+                  boxShadow: escalating ? "none" : "0 2px 6px -1px rgba(255, 107, 53, 0.32)",
+                  cursor: escalating ? "wait" : "pointer",
+                  opacity: escalating ? 0.8 : 1,
                 }}
                 onMouseEnter={(e) => {
+                  if (escalating) return;
                   e.currentTarget.style.background = "#C5481E";
                   e.currentTarget.style.borderColor = "#C5481E";
                 }}
                 onMouseLeave={(e) => {
+                  if (escalating) return;
                   e.currentTarget.style.background = "#FF6B35";
                   e.currentTarget.style.borderColor = "#FF6B35";
                 }}
               >
-                Escalar ball → cliente
-                <Icon icon={ICONS.arrowRight} size={14} />
+                {escalating ? "Escalando…" : "Escalar ball → cliente"}
+                {!escalating && <Icon icon={ICONS.arrowRight} size={14} />}
               </button>
             </footer>
           </>
