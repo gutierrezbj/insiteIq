@@ -1219,7 +1219,7 @@ function KanbanTab({ wos, sites, users, reload }) {
                   key={wo.id}
                   draggable
                   onDragStart={(e) => onDragStart(e, wo.id)}
-                  className="bg-cl-bg border border-cl-border rounded-sm p-2.5 cursor-grab"
+                  className="bg-cl-bg border border-cl-border rounded-sm py-2.5 pr-2.5 pl-4 cursor-grab"
                   style={{ borderLeftWidth: 2, borderLeftColor: FLAG_COLORS[flag] }}
                 >
                   <div className="flex items-center justify-between mb-1">
