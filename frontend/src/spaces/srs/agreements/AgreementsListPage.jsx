@@ -1,19 +1,21 @@
 /**
- * Service Agreements — contratos + Shield SLA por cliente.
+ * SRS Service Agreements · list (Iter 2.23 · paleta F NAVEGANTE).
+ *
+ * Migración v1 amber legacy → v2 paleta F usando v2-shared.
  * Decision #3 Modo 1: Shield level vive en service_agreement, snapshot al
- * work_order.intake. Un cliente puede tener multiples agreements con shield
- * distintos.
+ * work_order.intake. Un cliente puede tener múltiples agreements con
+ * shield distintos.
+ *
+ * Endpoints:
+ *   GET /api/service-agreements
+ *   GET /api/service-agreements/shield-levels (catalog)
+ *   GET /api/organizations
  */
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useFetch } from "../../../lib/useFetch";
-
-const SHIELD_TINT = {
-  bronze: "text-[#B08968]",
-  bronze_plus: "text-[#C68E5B]",
-  silver: "text-text-secondary",
-  gold: "text-primary-light",
-};
+import { ShieldPill } from "../../../components/v2-shared/Pills";
+import { JAKARTA, MONO_CAPS } from "../../../components/v2-shared/typography";
 
 export default function AgreementsListPage() {
   const { data: agreements, loading } = useFetch("/service-agreements");
@@ -34,23 +36,51 @@ export default function AgreementsListPage() {
   }, [list, shieldFilter]);
 
   return (
-    <div className="px-4 md:px-8 py-5 md:py-7 max-w-wide">
-      <div className="accent-bar pl-4 mb-6">
-        <div className="label-caps">Service Agreements</div>
-        <h1 className="font-display text-2xl text-text-primary leading-tight">
-          {list.length} contratos activos
+    <div style={{ padding: "32px 40px", maxWidth: 1400 }}>
+      {/* Header */}
+      <div
+        style={{
+          paddingLeft: 16,
+          borderLeft: "3px solid #0A1628",
+          marginBottom: 22,
+        }}
+      >
+        <div style={{ ...MONO_CAPS, fontSize: 11, color: "#8B95A8", marginBottom: 6 }}>
+          Service Agreements
+        </div>
+        <h1
+          style={{
+            fontFamily: JAKARTA,
+            fontSize: 28,
+            fontWeight: 800,
+            color: "#0A1628",
+            letterSpacing: "-0.02em",
+            lineHeight: 1.1,
+          }}
+        >
+          {list.length} <span style={{ color: "#3D4A66", fontWeight: 600 }}>contratos activos</span>
         </h1>
-        <p className="font-body text-text-secondary text-sm mt-1">
-          Shield snapshot al intake — Decision #3 Modo 1. SLA por work_order
-          se fija aqui.
+        <p style={{ fontFamily: JAKARTA, fontSize: 13, color: "#3D4A66", marginTop: 6, fontWeight: 500 }}>
+          Shield snapshot al intake — Decision #3 Modo 1. SLA por work_order se fija acá.
         </p>
       </div>
 
       {/* Shield catalog reference */}
       {shieldCatalog?.levels && (
-        <section className="bg-surface-raised accent-bar rounded-sm p-4 mb-5">
-          <div className="label-caps mb-3">Shield catalog · SLA defaults</div>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+        <section
+          style={{
+            background: "#FFFFFF",
+            border: "1px solid #E2E5EC",
+            borderLeft: "3px solid #0A1628",
+            borderRadius: 6,
+            padding: 18,
+            marginBottom: 18,
+          }}
+        >
+          <div style={{ ...MONO_CAPS, fontSize: 10, color: "#3D4A66", letterSpacing: "0.14em", marginBottom: 14 }}>
+            Shield catalog · SLA defaults
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12 }}>
             {Object.entries(shieldCatalog.levels).map(([level, sla]) => (
               <ShieldCatalogCard key={level} level={level} sla={sla} />
             ))}
@@ -59,86 +89,201 @@ export default function AgreementsListPage() {
       )}
 
       {/* Filter */}
-      <div className="bg-surface-raised accent-bar rounded-sm p-3 mb-4 flex items-center gap-3 flex-wrap">
-        <label htmlFor="sfilter" className="label-caps">
-          Shield
-        </label>
-        <select
-          id="sfilter"
-          value={shieldFilter}
-          onChange={(e) => setShieldFilter(e.target.value)}
-          className="bg-surface-overlay border border-surface-border rounded-sm px-3 py-1.5 text-text-primary font-body text-sm focus:outline-none focus:border-primary focus:shadow-glow-primary transition-all duration-fast"
+      <div
+        style={{
+          background: "#FFFFFF",
+          border: "1px solid #E2E5EC",
+          borderLeft: "3px solid #0A1628",
+          borderRadius: 6,
+          padding: 14,
+          marginBottom: 16,
+          display: "flex",
+          alignItems: "flex-end",
+          gap: 14,
+          flexWrap: "wrap",
+        }}
+      >
+        <div>
+          <label
+            htmlFor="sfilter"
+            style={{ ...MONO_CAPS, display: "block", fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.14em", marginBottom: 4 }}
+          >
+            Shield
+          </label>
+          <select
+            id="sfilter"
+            value={shieldFilter}
+            onChange={(e) => setShieldFilter(e.target.value)}
+            style={{
+              height: 32,
+              border: "1px solid #C8CDD8",
+              borderRadius: 6,
+              padding: "0 10px",
+              fontFamily: JAKARTA,
+              fontSize: 13,
+              fontWeight: 500,
+              color: "#0A1628",
+              background: "#FFFFFF",
+              outline: "none",
+              cursor: "pointer",
+            }}
+          >
+            <option value="">todos</option>
+            <option value="bronze">bronze</option>
+            <option value="bronze_plus">bronze_plus</option>
+            <option value="silver">silver</option>
+            <option value="gold">gold</option>
+          </select>
+        </div>
+        <div
+          style={{
+            marginLeft: "auto",
+            ...MONO_CAPS,
+            fontSize: 11,
+            color: "#0A1628",
+            letterSpacing: "0.14em",
+            fontVariantNumeric: "tabular-nums",
+          }}
         >
-          <option value="">todos</option>
-          <option value="bronze">bronze</option>
-          <option value="bronze_plus">bronze_plus</option>
-          <option value="silver">silver</option>
-          <option value="gold">gold</option>
-        </select>
-        <div className="ml-auto font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
-          {filtered.length} / {list.length}
+          <span style={{ fontWeight: 800 }}>{filtered.length}</span>{" "}
+          <span style={{ color: "#8B95A8" }}>/ {list.length}</span>
         </div>
       </div>
 
-      {/* Agreements table */}
-      <div className="bg-surface-raised accent-bar rounded-sm">
-        <div className="grid grid-cols-12 gap-3 px-4 py-2 border-b border-surface-border text-text-tertiary">
-          <div className="col-span-4 label-caps">Contract</div>
-          <div className="col-span-3 label-caps">Client</div>
-          <div className="col-span-1 label-caps">Shield</div>
-          <div className="col-span-2 label-caps text-right">SLA resolve</div>
-          <div className="col-span-2 label-caps text-right">Threshold</div>
+      {/* Table */}
+      <div
+        style={{
+          background: "#FFFFFF",
+          border: "1px solid #E2E5EC",
+          borderRadius: 8,
+          overflow: "hidden",
+          boxShadow: "0 1px 3px rgba(10, 22, 40, 0.05)",
+        }}
+      >
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "4fr 3fr 2fr 2fr 2fr",
+            gap: 12,
+            padding: "12px 18px",
+            background: "#F4F6F8",
+            borderBottom: "1px solid #E2E5EC",
+            ...MONO_CAPS,
+            fontSize: 10,
+            color: "#3D4A66",
+            letterSpacing: "0.14em",
+          }}
+        >
+          <div>Contract</div>
+          <div>Client</div>
+          <div>Shield</div>
+          <div style={{ textAlign: "right" }}>SLA resolve</div>
+          <div style={{ textAlign: "right" }}>Threshold</div>
         </div>
 
-        <div className="divide-y divide-surface-border">
-          {loading && <Empty text="cargando…" />}
-          {!loading && filtered.length === 0 && <Empty text="— nada match —" />}
-          {filtered.map((a) => (
-            <Link
-              key={a.id}
-              to={`/srs/agreements/${a.id}`}
-              className="grid grid-cols-12 gap-3 px-4 py-3 items-center hover:bg-surface-overlay/60 transition-colors duration-fast"
-            >
-              <div className="col-span-4 min-w-0">
-                <div className="font-body text-sm text-text-primary truncate">
-                  {a.title}
-                </div>
-                <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary truncate">
-                  {a.contract_ref}
-                  {a.active === false && <span className="ml-2 text-danger">· inactive</span>}
-                </div>
-              </div>
-              <div className="col-span-3 font-body text-sm text-text-secondary truncate">
-                {orgById.get(a.organization_id)?.legal_name || (
-                  <span className="text-text-tertiary">—</span>
-                )}
+        {loading && <Empty text="cargando…" />}
+        {!loading && filtered.length === 0 && <Empty text="— nada match —" />}
+        {filtered.map((a) => (
+          <Link
+            key={a.id}
+            to={`/srs/agreements/${a.id}`}
+            style={{
+              display: "grid",
+              gridTemplateColumns: "4fr 3fr 2fr 2fr 2fr",
+              gap: 12,
+              padding: "14px 18px",
+              borderBottom: "1px solid #E2E5EC",
+              alignItems: "center",
+              textDecoration: "none",
+              transition: "background 160ms",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "#F7F8FA")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+          >
+            <div style={{ minWidth: 0 }}>
+              <div
+                style={{
+                  fontFamily: JAKARTA,
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: "#0A1628",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+              >
+                {a.title}
               </div>
               <div
-                className={`col-span-1 font-mono text-2xs uppercase tracking-widest-srs ${
-                  SHIELD_TINT[a.shield_level] || "text-text-tertiary"
-                }`}
+                style={{
+                  ...MONO_CAPS,
+                  fontSize: 9.5,
+                  color: "#8B95A8",
+                  letterSpacing: "0.12em",
+                  marginTop: 2,
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
               >
-                {a.shield_level}
+                {a.contract_ref}
+                {a.active === false && (
+                  <span style={{ marginLeft: 8, color: "#DC2626" }}>· inactive</span>
+                )}
               </div>
-              <div className="col-span-2 text-right">
-                <div className="font-mono text-sm text-text-primary">
-                  {formatMinutes(a.sla_spec?.resolve_minutes)}
-                </div>
-                <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
-                  recv {formatMinutes(a.sla_spec?.receive_minutes)}
-                </div>
+            </div>
+            <div
+              style={{
+                fontFamily: JAKARTA,
+                fontSize: 13,
+                color: "#3D4A66",
+                fontWeight: 500,
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+              }}
+            >
+              {orgById.get(a.organization_id)?.legal_name || (
+                <span style={{ color: "#8B95A8" }}>—</span>
+              )}
+            </div>
+            <div>
+              <ShieldPill level={a.shield_level} />
+            </div>
+            <div style={{ textAlign: "right" }}>
+              <div
+                style={{
+                  fontFamily: "'JetBrains Mono', monospace",
+                  fontSize: 14,
+                  fontWeight: 700,
+                  color: "#0A1628",
+                  fontVariantNumeric: "tabular-nums",
+                }}
+              >
+                {formatMinutes(a.sla_spec?.resolve_minutes)}
               </div>
-              <div className="col-span-2 text-right">
-                <div className="font-mono text-sm text-text-primary">
-                  ${a.parts_approval_threshold_usd?.toFixed(2) || "—"}
-                </div>
-                <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
-                  {a.currency || "USD"}
-                </div>
+              <div style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.14em" }}>
+                recv {formatMinutes(a.sla_spec?.receive_minutes)}
               </div>
-            </Link>
-          ))}
-        </div>
+            </div>
+            <div style={{ textAlign: "right" }}>
+              <div
+                style={{
+                  fontFamily: "'JetBrains Mono', monospace",
+                  fontSize: 14,
+                  fontWeight: 700,
+                  color: "#0A1628",
+                  fontVariantNumeric: "tabular-nums",
+                }}
+              >
+                ${a.parts_approval_threshold_usd?.toFixed(2) || "—"}
+              </div>
+              <div style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.14em" }}>
+                {a.currency || "USD"}
+              </div>
+            </div>
+          </Link>
+        ))}
       </div>
     </div>
   );
@@ -146,32 +291,51 @@ export default function AgreementsListPage() {
 
 function ShieldCatalogCard({ level, sla }) {
   return (
-    <div className="bg-surface-base rounded-sm p-3">
-      <div
-        className={`font-mono text-2xs uppercase tracking-widest-srs mb-1 ${
-          SHIELD_TINT[level] || "text-text-tertiary"
-        }`}
-      >
-        {level}
+    <div
+      style={{
+        background: "#F4F6F8",
+        border: "1px solid #E2E5EC",
+        borderRadius: 4,
+        padding: 12,
+      }}
+    >
+      <div style={{ marginBottom: 8 }}>
+        <ShieldPill level={level} />
       </div>
-      <div className="font-body text-sm space-y-0.5">
-        <div>
-          <span className="text-text-tertiary">recv</span>{" "}
-          <span className="text-text-primary font-mono">
+      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8 }}>
+          <span style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.14em" }}>recv</span>
+          <span
+            style={{
+              fontFamily: "'JetBrains Mono', monospace",
+              fontSize: 13,
+              fontWeight: 700,
+              color: "#0A1628",
+              fontVariantNumeric: "tabular-nums",
+            }}
+          >
             {formatMinutes(sla.receive_minutes)}
           </span>
         </div>
-        <div>
-          <span className="text-text-tertiary">resolve</span>{" "}
-          <span className="text-text-primary font-mono">
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8 }}>
+          <span style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.14em" }}>resolve</span>
+          <span
+            style={{
+              fontFamily: "'JetBrains Mono', monospace",
+              fontSize: 13,
+              fontWeight: 700,
+              color: "#0A1628",
+              fontVariantNumeric: "tabular-nums",
+            }}
+          >
             {formatMinutes(sla.resolve_minutes)}
           </span>
         </div>
-        <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary mt-1.5">
-          {sla.coverage_247 && "· 24×7 "}
-          {sla.dedicated_coordinator && "· coord dedicado "}
-          {sla.client_copilot_readonly && "· copilot RO"}
-        </div>
+      </div>
+      <div style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.12em", marginTop: 8 }}>
+        {sla.coverage_247 && "· 24×7 "}
+        {sla.dedicated_coordinator && "· coord ded "}
+        {sla.client_copilot_readonly && "· copilot RO"}
       </div>
     </div>
   );
@@ -179,7 +343,7 @@ function ShieldCatalogCard({ level, sla }) {
 
 function Empty({ text }) {
   return (
-    <div className="px-4 py-6 font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+    <div style={{ padding: "20px 18px", ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em" }}>
       {text}
     </div>
   );

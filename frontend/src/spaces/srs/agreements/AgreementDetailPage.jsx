@@ -1,33 +1,35 @@
 /**
- * Service Agreement detail — Shield + SLA completo + WOs bajo contrato.
+ * SRS Service Agreement detail · v2 paleta F (Iter 2.23).
+ *
+ * Migración v1 amber legacy → v2 usando v2-shared. RateCardSection (X-a)
+ * preservada v1 — sprint propio para migrar.
+ *
+ * Endpoints:
+ *   GET /api/service-agreements/{id}
+ *   GET /api/organizations
+ *   GET /api/work-orders?limit=200 (filtra client-side por agreement_id)
  */
 import { useMemo } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useFetch } from "../../../lib/useFetch";
 import { useAuth } from "../../../contexts/AuthContext";
-import BackLink from "../../../components/ui/BackLink";
-import {
-  BallBadge,
-  SeverityBadge,
-  StatusBadge,
-} from "../../../components/ui/Badges";
 import RateCardSection from "../../../components/agreement/RateCardSection";
-
-const SHIELD_TINT = {
-  bronze: "text-[#B08968]",
-  bronze_plus: "text-[#C68E5B]",
-  silver: "text-text-secondary",
-  gold: "text-primary-light",
-};
+import {
+  ShieldPill,
+  WoStatusPill,
+  SeverityPill,
+  BallPill,
+} from "../../../components/v2-shared/Pills";
+import BackLinkV2 from "../../../components/v2-shared/BackLinkV2";
+import SectionCard, { SectionTitle } from "../../../components/v2-shared/SectionCard";
+import MetaRow from "../../../components/v2-shared/MetaRow";
+import { JAKARTA, MONO_CAPS } from "../../../components/v2-shared/typography";
 
 export default function AgreementDetailPage() {
   const { agreement_id } = useParams();
   const { user } = useAuth();
-  const srsMem = user?.memberships?.find(
-    (m) => m.space === "srs_coordinators"
-  );
-  const isSrsAdmin =
-    !!srsMem && ["owner", "director"].includes(srsMem.authority_level);
+  const srsMem = user?.memberships?.find((m) => m.space === "srs_coordinators");
+  const isSrsAdmin = !!srsMem && ["owner", "director"].includes(srsMem.authority_level);
 
   const { data: agreement, loading, error, reload } = useFetch(
     `/service-agreements/${agreement_id}`,
@@ -46,67 +48,69 @@ export default function AgreementDetailPage() {
     return wos.filter((w) => w.service_agreement_id === agreement_id);
   }, [wos, agreement, agreement_id]);
 
-  const active = boundWos.filter(
-    (w) => !["closed", "cancelled"].includes(w.status)
-  );
+  const active = boundWos.filter((w) => !["closed", "cancelled"].includes(w.status));
   const recent = boundWos
     .filter((w) => ["closed", "cancelled"].includes(w.status))
     .slice(0, 5);
 
   if (loading) return <Centered text="cargando…" />;
-  if (error)
-    return <Centered text={`error · ${error.message}`} />;
+  if (error) return <Centered text={`error · ${error.message}`} />;
   if (!agreement) return <Centered text="—" />;
 
   const sla = agreement.sla_spec || {};
 
   return (
-    <div className="px-4 md:px-8 py-5 md:py-7 max-w-wide">
-      <BackLink to="/srs/agreements" label="Service Agreements" />
+    <div style={{ padding: "32px 40px", maxWidth: 1400 }}>
+      <BackLinkV2 to="/srs/agreements" label="Service Agreements" />
 
-      <div className="accent-bar pl-4 mb-6">
-        <div className="flex items-center gap-3 mb-1 flex-wrap">
-          <span className="label-caps">Agreement</span>
-          <span className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+      <div style={{ paddingLeft: 16, borderLeft: "3px solid #0A1628", marginBottom: 24 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6, flexWrap: "wrap" }}>
+          <span style={{ ...MONO_CAPS, fontSize: 10, color: "#0A1628", letterSpacing: "0.16em" }}>
+            Agreement
+          </span>
+          <span style={{ ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.12em" }}>
             {agreement.contract_ref}
           </span>
-          <span
-            className={`font-mono text-2xs uppercase tracking-widest-srs ${
-              SHIELD_TINT[agreement.shield_level] || "text-text-tertiary"
-            }`}
-          >
-            · shield {agreement.shield_level}
-          </span>
+          <ShieldPill level={agreement.shield_level} />
           {agreement.active === false && (
-            <span className="font-mono text-2xs uppercase tracking-widest-srs text-danger">
+            <span style={{ ...MONO_CAPS, fontSize: 10, color: "#DC2626", letterSpacing: "0.14em" }}>
               · inactive
             </span>
           )}
         </div>
-        <h1 className="font-display text-2xl text-text-primary leading-tight">
+        <h1
+          style={{
+            fontFamily: JAKARTA,
+            fontSize: 28,
+            fontWeight: 800,
+            color: "#0A1628",
+            letterSpacing: "-0.02em",
+            lineHeight: 1.15,
+          }}
+        >
           {agreement.title}
         </h1>
-        <p className="font-body text-text-secondary text-sm mt-1">
+        <p style={{ fontFamily: JAKARTA, fontSize: 13.5, color: "#3D4A66", marginTop: 8, fontWeight: 500 }}>
           {org?.legal_name || agreement.organization_id}
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* SLA spec */}
-        <section className="bg-surface-raised accent-bar rounded-sm p-4">
-          <div className="label-caps mb-3">SLA spec (snapshot al intake)</div>
-          <dl className="font-body text-sm divide-y divide-surface-border">
-            <Row label="Receive (time to ack)" value={formatMinutes(sla.receive_minutes)} />
-            <Row
-              label="Resolve (time to fix)"
-              value={formatMinutes(sla.resolve_minutes)}
-            />
-            <Row label="Photos required" value={sla.photos_required || "—"} />
-            <Row
-              label="Escalation role"
-              value={sla.escalation_role || "—"}
-            />
-            <Row
+      {/* Body grid · SLA spec + Contract meta */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))",
+          gap: 16,
+        }}
+      >
+        <SectionCard>
+          <SectionTitle>SLA spec (snapshot al intake)</SectionTitle>
+          <dl style={{ display: "flex", flexDirection: "column" }}>
+            <MetaRow label="Receive (time to ack)" value={formatMinutes(sla.receive_minutes)} />
+            <MetaRow label="Resolve (time to fix)" value={formatMinutes(sla.resolve_minutes)} />
+            <MetaRow label="Photos required" value={sla.photos_required || "—"} />
+            <MetaRow label="Escalation role" value={sla.escalation_role || "—"} />
+            <MetaRow
               label="Escalation trigger"
               value={
                 sla.escalation_minutes != null
@@ -114,30 +118,28 @@ export default function AgreementDetailPage() {
                   : "—"
               }
             />
-            <Row label="24×7" value={sla.coverage_247 ? "yes" : "no"} />
-            <Row
-              label="Coordinator dedicado"
-              value={sla.dedicated_coordinator ? "yes" : "no"}
-            />
-            <Row
-              label="Client Copilot read-only"
-              value={sla.client_copilot_readonly ? "yes" : "no"}
-            />
+            <MetaRow label="24×7" value={sla.coverage_247 ? "yes" : "no"} />
+            <MetaRow label="Coordinator dedicado" value={sla.dedicated_coordinator ? "yes" : "no"} />
+            <MetaRow label="Client Copilot read-only" value={sla.client_copilot_readonly ? "yes" : "no"} />
           </dl>
-        </section>
+        </SectionCard>
 
-        {/* Contract meta */}
-        <section className="bg-surface-raised accent-bar rounded-sm p-4">
-          <div className="label-caps mb-3">Contract meta</div>
-          <dl className="font-body text-sm divide-y divide-surface-border">
-            <Row label="Contract ref" value={agreement.contract_ref || "—"} />
-            <Row
+        <SectionCard>
+          <SectionTitle>Contract meta</SectionTitle>
+          <dl style={{ display: "flex", flexDirection: "column" }}>
+            <MetaRow label="Contract ref" value={agreement.contract_ref || "—"} />
+            <MetaRow
               label="Client org"
               value={
                 org ? (
                   <Link
-                    to={`/srs/admin`}
-                    className="text-primary-light hover:text-primary underline decoration-dotted"
+                    to="/srs/admin"
+                    style={{
+                      color: "#0A1628",
+                      textDecoration: "underline",
+                      textDecorationStyle: "dotted",
+                      fontWeight: 700,
+                    }}
                   >
                     {org.legal_name}
                   </Link>
@@ -146,84 +148,73 @@ export default function AgreementDetailPage() {
                 )
               }
             />
-            <Row
-              label="SRS entity"
-              value={agreement.srs_entity_id || "—"}
-            />
-            <Row label="Currency" value={agreement.currency || "USD"} />
-            <Row
+            <MetaRow label="SRS entity" value={agreement.srs_entity_id || "—"} />
+            <MetaRow label="Currency" value={agreement.currency || "USD"} />
+            <MetaRow
               label="Parts threshold USD"
               value={`$${agreement.parts_approval_threshold_usd?.toFixed(2) || "—"}`}
             />
-            <Row
-              label="Starts"
-              value={agreement.starts_at || "—"}
-            />
-            <Row
-              label="Ends"
-              value={agreement.ends_at || "— open-ended —"}
-            />
+            <MetaRow label="Starts" value={agreement.starts_at || "—"} />
+            <MetaRow label="Ends" value={agreement.ends_at || "— open-ended —"} />
           </dl>
           {agreement.notes && (
             <>
-              <div className="label-caps mt-4 mb-1.5">Notas</div>
-              <p className="font-body text-sm text-text-primary whitespace-pre-line">
+              <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.14em", marginTop: 16, marginBottom: 6 }}>
+                Notas
+              </div>
+              <p
+                style={{
+                  fontFamily: JAKARTA,
+                  fontSize: 13,
+                  color: "#0A1628",
+                  whiteSpace: "pre-line",
+                  lineHeight: 1.55,
+                  fontWeight: 500,
+                }}
+              >
                 {agreement.notes}
               </p>
             </>
           )}
-        </section>
+        </SectionCard>
       </div>
 
-      {/* Rate card (X-a) */}
-      <RateCardSection
-        agreement={agreement}
-        isSrs={isSrsAdmin}
-        reload={reload}
-      />
+      {/* Rate card (X-a · preservado v1, sprint propio para migrar) */}
+      <RateCardSection agreement={agreement} isSrs={isSrsAdmin} reload={reload} />
 
-      {/* Active WOs bajo este contrato */}
-      <section className="bg-surface-raised accent-bar rounded-sm mt-4">
-        <header className="px-4 py-3 border-b border-surface-border">
-          <div className="label-caps">WOs activas · {active.length}</div>
+      {/* Active WOs */}
+      <SectionCard padding={0} style={{ marginTop: 16 }}>
+        <header style={{ padding: "14px 18px", borderBottom: "1px solid #E2E5EC" }}>
+          <div style={{ ...MONO_CAPS, fontSize: 10, color: "#3D4A66", letterSpacing: "0.14em" }}>
+            WOs activas · {active.length}
+          </div>
         </header>
-        <div className="divide-y divide-surface-border">
-          {active.length === 0 && <Empty text="— sin activas —" />}
-          {active.map((w) => (
-            <WoLink key={w.id} wo={w} />
-          ))}
+        <div>
+          {active.length === 0 && (
+            <div style={{ padding: "20px 18px", ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em" }}>
+              — sin activas —
+            </div>
+          )}
+          {active.map((w) => <WoLink key={w.id} wo={w} />)}
         </div>
-      </section>
+      </SectionCard>
 
       {recent.length > 0 && (
-        <section className="bg-surface-raised accent-bar rounded-sm mt-4">
-          <header className="px-4 py-3 border-b border-surface-border">
-            <div className="label-caps">Historico reciente (últimas 5)</div>
+        <SectionCard padding={0} style={{ marginTop: 16 }}>
+          <header style={{ padding: "14px 18px", borderBottom: "1px solid #E2E5EC" }}>
+            <div style={{ ...MONO_CAPS, fontSize: 10, color: "#3D4A66", letterSpacing: "0.14em" }}>
+              Histórico reciente (últimas 5)
+            </div>
           </header>
-          <div className="divide-y divide-surface-border">
-            {recent.map((w) => (
-              <WoLink key={w.id} wo={w} compact />
-            ))}
+          <div>
+            {recent.map((w) => <WoLink key={w.id} wo={w} compact />)}
           </div>
-        </section>
+        </SectionCard>
       )}
 
-      <p className="mt-6 text-text-tertiary font-mono text-2xs uppercase tracking-widest-srs">
-        Fase 2 plumbing · edicion de agreements via Admin Fase 3
+      <p style={{ marginTop: 24, ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em" }}>
+        Iter 2.23 · edición de agreements via Admin Fase 3
       </p>
-    </div>
-  );
-}
-
-function Row({ label, value }) {
-  return (
-    <div className="flex items-center justify-between gap-3 py-1.5">
-      <span className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary flex-shrink-0">
-        {label}
-      </span>
-      <span className="font-body text-sm text-text-primary truncate max-w-[60%] text-right">
-        {value}
-      </span>
     </div>
   );
 }
@@ -232,45 +223,59 @@ function WoLink({ wo, compact }) {
   return (
     <Link
       to={`/srs/ops/${wo.id}`}
-      className="block px-4 py-2.5 hover:bg-surface-overlay/60 transition-colors duration-fast"
+      style={{
+        display: "block",
+        padding: "12px 18px",
+        borderBottom: "1px solid #F0F2F7",
+        textDecoration: "none",
+        transition: "background 160ms",
+      }}
+      onMouseEnter={(e) => (e.currentTarget.style.background = "#F7F8FA")}
+      onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
     >
-      <div className="flex items-center justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 mb-0.5">
-            <span className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 2 }}>
+            <span style={{ ...MONO_CAPS, fontSize: 9.5, color: "#8B95A8", letterSpacing: "0.12em" }}>
               {wo.reference}
             </span>
-            {!compact && <SeverityBadge severity={wo.severity} />}
+            {!compact && <SeverityPill severity={wo.severity} />}
           </div>
-          <div className="font-body text-sm text-text-primary truncate">
+          <div
+            style={{
+              fontFamily: JAKARTA,
+              fontSize: 13,
+              fontWeight: 600,
+              color: "#0A1628",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
             {wo.title}
           </div>
         </div>
-        <div className="flex flex-col items-end gap-1 flex-shrink-0">
-          <StatusBadge status={wo.status} />
-          {!compact && (
-            <BallBadge
-              side={wo.ball_in_court?.side}
-              sinceIso={wo.ball_in_court?.since}
-            />
-          )}
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6, flexShrink: 0 }}>
+          <WoStatusPill status={wo.status} />
+          {!compact && <BallPill side={wo.ball_in_court?.side} />}
         </div>
       </div>
     </Link>
   );
 }
 
-function Empty({ text }) {
-  return (
-    <div className="px-4 py-6 font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
-      {text}
-    </div>
-  );
-}
-
 function Centered({ text }) {
   return (
-    <div className="px-8 py-16 text-center font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+    <div
+      style={{
+        padding: "60px 32px",
+        textAlign: "center",
+        ...MONO_CAPS,
+        fontSize: 11,
+        color: "#8B95A8",
+        letterSpacing: "0.14em",
+      }}
+    >
       {text}
     </div>
   );

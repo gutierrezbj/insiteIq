@@ -1,11 +1,22 @@
 /**
- * SRS Insights · Pasito Y-b · AI Learning Engine Fase 1.
- * Panorama SRS-wide · 90d default · patterns + señales de anomalia.
- * Sin LLM, pure aggregations on-demand.
+ * SRS Insights · v2 paleta F (Iter 2.23).
+ *
+ * Migración v1 amber legacy → v2 usando v2-shared. Pasito Y-b · AI Learning
+ * Engine Fase 1. Panorama SRS-wide · 90d default · agregaciones on-demand,
+ * sin LLM.
+ *
+ * Endpoint: GET /api/insights/dashboard?window_days={n}
+ *   → { window_days, as_of, overview, clients_top, repeat_sites_30d,
+ *       tech_drift, finance_snapshot }
  */
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useFetch } from "../../../lib/useFetch";
+import KpiTile from "../../../components/v2-shared/KpiTile";
+import SectionCard, { SectionTitle } from "../../../components/v2-shared/SectionCard";
+import { JAKARTA, MONO_CAPS } from "../../../components/v2-shared/typography";
+
+const MONO = "'JetBrains Mono', monospace";
 
 export default function InsightsPage() {
   const [windowDays, setWindowDays] = useState(90);
@@ -15,27 +26,64 @@ export default function InsightsPage() {
   );
 
   return (
-    <div className="px-4 md:px-8 py-5 md:py-7 max-w-wide">
-      <div className="accent-bar pl-4 mb-6 flex items-start justify-between gap-4 flex-wrap">
+    <div style={{ padding: "32px 40px", maxWidth: 1400 }}>
+      {/* Header */}
+      <div
+        style={{
+          paddingLeft: 16,
+          borderLeft: "3px solid #0A1628",
+          marginBottom: 22,
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
+          gap: 16,
+          flexWrap: "wrap",
+        }}
+      >
         <div>
-          <div className="label-caps">Insights · Y-b · AI learning engine</div>
-          <h1 className="font-display text-2xl text-text-primary leading-tight">
-            Panorama SRS-wide · últimos {windowDays}d
+          <div style={{ ...MONO_CAPS, fontSize: 11, color: "#8B95A8", marginBottom: 6 }}>
+            Insights · Y-b · AI learning engine
+          </div>
+          <h1
+            style={{
+              fontFamily: JAKARTA,
+              fontSize: 28,
+              fontWeight: 800,
+              color: "#0A1628",
+              letterSpacing: "-0.02em",
+              lineHeight: 1.1,
+            }}
+          >
+            Panorama SRS-wide · <span style={{ color: "#3D4A66", fontWeight: 600 }}>últimos {windowDays}d</span>
           </h1>
-          <p className="font-body text-text-secondary text-sm mt-1">
-            Sin LLM · agregaciones sobre data viva · señales de anomalia
-            expuestas. El sistema aprende de si mismo.
+          <p style={{ fontFamily: JAKARTA, fontSize: 13, color: "#3D4A66", marginTop: 6, fontWeight: 500 }}>
+            Sin LLM · agregaciones sobre data viva · señales de anomalía expuestas. El sistema aprende de sí mismo.
           </p>
         </div>
         <div>
-          <label htmlFor="iw" className="label-caps block mb-1">
+          <label
+            htmlFor="iw"
+            style={{ ...MONO_CAPS, display: "block", fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.14em", marginBottom: 4 }}
+          >
             Window
           </label>
           <select
             id="iw"
             value={windowDays}
             onChange={(e) => setWindowDays(Number(e.target.value))}
-            className="bg-surface-overlay border border-surface-border rounded-sm px-3 py-1.5 text-text-primary font-body text-sm focus:outline-none focus:border-primary focus:shadow-glow-primary transition-all duration-fast"
+            style={{
+              height: 32,
+              border: "1px solid #C8CDD8",
+              borderRadius: 6,
+              padding: "0 10px",
+              fontFamily: JAKARTA,
+              fontSize: 13,
+              fontWeight: 500,
+              color: "#0A1628",
+              background: "#FFFFFF",
+              outline: "none",
+              cursor: "pointer",
+            }}
           >
             <option value={30}>30d</option>
             <option value={60}>60d</option>
@@ -50,17 +98,16 @@ export default function InsightsPage() {
       {error && <Empty text={`error · ${error.message}`} />}
 
       {data && (
-        <div className="space-y-4">
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <OverviewSection overview={data.overview} />
           <ClientsSection clients={data.clients_top} />
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))", gap: 16 }}>
             <RepeatSitesSection sites={data.repeat_sites_30d} />
             <TechDriftSection techs={data.tech_drift} />
           </div>
           <FinanceSnapshot snapshot={data.finance_snapshot} />
-          <p className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary pt-2">
-            Y-b · compute on-demand · Y-c LLM enrichment · Y-d Pain Log
-            auto-detect
+          <p style={{ ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em", paddingTop: 4 }}>
+            Y-b · compute on-demand · Y-c LLM enrichment · Y-d Pain Log auto-detect
           </p>
         </div>
       )}
@@ -68,31 +115,36 @@ export default function InsightsPage() {
   );
 }
 
-// -------------------- Overview --------------------
+/* ─── Overview ─────────────────────────────────────────────────── */
 
 function OverviewSection({ overview: o }) {
   if (!o) return null;
   const warnSla = o.sla_compliance_pct != null && o.sla_compliance_pct < 80;
   return (
-    <section className="bg-surface-raised accent-bar rounded-sm p-4">
-      <div className="label-caps mb-3">Overview</div>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-        <Kpi label="Total WOs" value={o.wo_total} />
-        <Kpi
+    <SectionCard>
+      <SectionTitle>Overview</SectionTitle>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+          gap: 12,
+          marginBottom: 18,
+        }}
+      >
+        <KpiTile label="Total WOs" value={o.wo_total} tone="primary" />
+        <KpiTile
           label="SLA compliance"
-          value={
-            o.sla_compliance_pct != null ? `${o.sla_compliance_pct}%` : "—"
-          }
+          value={o.sla_compliance_pct != null ? `${o.sla_compliance_pct}%` : "—"}
           hint={`${o.sla_compliant}/${o.sla_applicable} closed on-time`}
           tone={warnSla ? "danger" : "success"}
         />
-        <Kpi
+        <KpiTile
           label="After-hours"
           value={`${o.after_hours_pct}%`}
           hint="nights/weekends"
           tone={o.after_hours_pct >= 30 ? "warning" : "default"}
         />
-        <Kpi
+        <KpiTile
           label="Avg resolve"
           value={o.avg_resolution_minutes != null ? formatMin(o.avg_resolution_minutes) : "—"}
           hint={
@@ -102,12 +154,12 @@ function OverviewSection({ overview: o }) {
           }
         />
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 18 }}>
         <CountBreakdown label="Por status" data={o.wo_by_status} />
         <CountBreakdown label="Por severity" data={o.wo_by_severity} />
         <CountBreakdown label="Por shield" data={o.wo_by_shield} />
       </div>
-    </section>
+    </SectionCard>
   );
 }
 
@@ -116,28 +168,50 @@ function CountBreakdown({ label, data }) {
   if (entries.length === 0) {
     return (
       <div>
-        <div className="label-caps mb-1.5">{label}</div>
-        <div className="font-body text-sm text-text-tertiary">—</div>
+        <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.14em", marginBottom: 6 }}>
+          {label}
+        </div>
+        <div style={{ ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em" }}>—</div>
       </div>
     );
   }
   const max = Math.max(...entries.map((e) => e[1]));
   return (
     <div>
-      <div className="label-caps mb-1.5">{label}</div>
-      <div className="space-y-1">
+      <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.14em", marginBottom: 8 }}>
+        {label}
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
         {entries.map(([k, v]) => (
-          <div key={k} className="flex items-center gap-2">
-            <span className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary w-24 truncate">
-              {k}
+          <div key={k} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span
+              style={{
+                ...MONO_CAPS,
+                fontSize: 9.5,
+                color: "#8B95A8",
+                letterSpacing: "0.12em",
+                width: 92,
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+              }}
+            >
+              {(k || "").replace("_", " ")}
             </span>
-            <div className="flex-1 h-1.5 bg-surface-base rounded-sm overflow-hidden">
-              <div
-                className="h-full bg-primary"
-                style={{ width: `${(v / max) * 100}%` }}
-              />
+            <div style={{ flex: 1, height: 6, background: "#F0F2F7", borderRadius: 3, overflow: "hidden" }}>
+              <div style={{ height: "100%", background: "#0A1628", width: `${(v / max) * 100}%` }} />
             </div>
-            <span className="font-mono text-sm text-text-primary w-8 text-right">
+            <span
+              style={{
+                fontFamily: MONO,
+                fontSize: 13,
+                fontWeight: 700,
+                color: "#0A1628",
+                fontVariantNumeric: "tabular-nums",
+                width: 36,
+                textAlign: "right",
+              }}
+            >
               {v}
             </span>
           </div>
@@ -147,110 +221,203 @@ function CountBreakdown({ label, data }) {
   );
 }
 
-// -------------------- Clients top --------------------
+/* ─── Clients top ──────────────────────────────────────────────── */
 
 function ClientsSection({ clients }) {
   if (!clients || clients.length === 0) return null;
   return (
-    <section className="bg-surface-raised accent-bar rounded-sm">
-      <header className="px-4 py-3 border-b border-surface-border">
-        <div className="label-caps">Clientes · top por volumen</div>
-        <h2 className="font-display text-base text-text-primary">
-          {clients.length} clientes activos en el periodo
-        </h2>
+    <SectionCard padding={0}>
+      <header style={{ padding: "14px 18px", borderBottom: "1px solid #E2E5EC" }}>
+        <div style={{ ...MONO_CAPS, fontSize: 10, color: "#3D4A66", letterSpacing: "0.14em", marginBottom: 2 }}>
+          Clientes · top por volumen
+        </div>
+        <div style={{ fontFamily: JAKARTA, fontSize: 16, fontWeight: 700, color: "#0A1628" }}>
+          {clients.length} <span style={{ color: "#3D4A66", fontWeight: 500 }}>clientes activos en el período</span>
+        </div>
       </header>
-      <div className="grid grid-cols-12 gap-3 px-4 py-2 border-b border-surface-border text-text-tertiary">
-        <div className="col-span-4 label-caps">Cliente</div>
-        <div className="col-span-2 label-caps text-right">WOs</div>
-        <div className="col-span-2 label-caps text-right">Avg resolve</div>
-        <div className="col-span-2 label-caps text-right">SLA</div>
-        <div className="col-span-2 label-caps text-right">After-hours</div>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "4fr 2fr 2fr 2fr 2fr",
+          gap: 12,
+          padding: "10px 18px",
+          background: "#F4F6F8",
+          borderBottom: "1px solid #E2E5EC",
+          ...MONO_CAPS,
+          fontSize: 9.5,
+          color: "#3D4A66",
+          letterSpacing: "0.14em",
+        }}
+      >
+        <div>Cliente</div>
+        <div style={{ textAlign: "right" }}>WOs</div>
+        <div style={{ textAlign: "right" }}>Avg resolve</div>
+        <div style={{ textAlign: "right" }}>SLA</div>
+        <div style={{ textAlign: "right" }}>After-hours</div>
       </div>
-      <div className="divide-y divide-surface-border">
+      <div>
         {clients.map((c) => {
           const warnSla = c.sla_compliance_pct != null && c.sla_compliance_pct < 80;
           const warnAh = c.after_hours_pct >= 30;
           return (
             <div
               key={c.organization_id}
-              className="grid grid-cols-12 gap-3 px-4 py-2.5 items-center"
+              style={{
+                display: "grid",
+                gridTemplateColumns: "4fr 2fr 2fr 2fr 2fr",
+                gap: 12,
+                padding: "12px 18px",
+                borderBottom: "1px solid #F0F2F7",
+                alignItems: "center",
+              }}
             >
-              <div className="col-span-4 min-w-0">
-                <div className="font-body text-sm text-text-primary truncate">
+              <div style={{ minWidth: 0 }}>
+                <div
+                  style={{
+                    fontFamily: JAKARTA,
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: "#0A1628",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
                   {c.organization_name}
                 </div>
               </div>
-              <div className="col-span-2 text-right">
-                <div className="font-display text-base text-text-primary">
+              <div style={{ textAlign: "right" }}>
+                <div
+                  style={{
+                    fontFamily: JAKARTA,
+                    fontSize: 16,
+                    fontWeight: 700,
+                    color: "#0A1628",
+                    fontVariantNumeric: "tabular-nums",
+                    lineHeight: 1.1,
+                  }}
+                >
                   {c.wo_count}
                 </div>
-                <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+                <div style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.14em" }}>
                   {c.closed_count} closed
                 </div>
               </div>
-              <div className="col-span-2 text-right font-mono text-sm text-text-primary">
-                {c.avg_resolution_minutes != null
-                  ? formatMin(c.avg_resolution_minutes)
-                  : "—"}
+              <div
+                style={{
+                  textAlign: "right",
+                  fontFamily: MONO,
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: "#0A1628",
+                  fontVariantNumeric: "tabular-nums",
+                }}
+              >
+                {c.avg_resolution_minutes != null ? formatMin(c.avg_resolution_minutes) : "—"}
               </div>
-              <div className={`col-span-2 text-right font-mono text-sm ${warnSla ? "text-danger" : "text-text-primary"}`}>
+              <div
+                style={{
+                  textAlign: "right",
+                  fontFamily: MONO,
+                  fontSize: 13,
+                  fontWeight: 700,
+                  color: warnSla ? "#991B1B" : "#0A1628",
+                  fontVariantNumeric: "tabular-nums",
+                }}
+              >
                 {c.sla_compliance_pct != null ? `${c.sla_compliance_pct}%` : "—"}
               </div>
-              <div className={`col-span-2 text-right font-mono text-sm ${warnAh ? "text-warning" : "text-text-primary"}`}>
+              <div
+                style={{
+                  textAlign: "right",
+                  fontFamily: MONO,
+                  fontSize: 13,
+                  fontWeight: 700,
+                  color: warnAh ? "#7E5212" : "#0A1628",
+                  fontVariantNumeric: "tabular-nums",
+                }}
+              >
                 {c.after_hours_pct}%
               </div>
             </div>
           );
         })}
       </div>
-    </section>
+    </SectionCard>
   );
 }
 
-// -------------------- Repeat sites (root cause signal) --------------------
+/* ─── Repeat sites (root cause signal) ─────────────────────────── */
 
 function RepeatSitesSection({ sites }) {
   if (!sites) return null;
   return (
-    <section className="bg-surface-raised accent-bar rounded-sm">
-      <header className="px-4 py-3 border-b border-surface-border">
-        <div className="label-caps">Sites · repeat 30d</div>
-        <h2 className="font-display text-base text-text-primary">
+    <SectionCard padding={0}>
+      <header style={{ padding: "14px 18px", borderBottom: "1px solid #E2E5EC" }}>
+        <div style={{ ...MONO_CAPS, fontSize: 10, color: "#3D4A66", letterSpacing: "0.14em", marginBottom: 2 }}>
+          Sites · repeat 30d
+        </div>
+        <div style={{ fontFamily: JAKARTA, fontSize: 14, fontWeight: 700, color: "#0A1628" }}>
           Posible root-cause sin resolver
-        </h2>
+        </div>
       </header>
-      <div className="divide-y divide-surface-border">
-        {sites.length === 0 && (
-          <Empty text="— sin repeats significativos —" />
-        )}
+      <div>
+        {sites.length === 0 && <Empty text="— sin repeats significativos —" />}
         {sites.map((s) => (
           <Link
             key={s.site_id}
             to={`/srs/sites/${s.site_id}`}
-            className="block px-4 py-2.5 hover:bg-surface-overlay/60 transition-colors duration-fast"
+            style={{
+              display: "block",
+              padding: "12px 18px",
+              borderBottom: "1px solid #F0F2F7",
+              textDecoration: "none",
+              transition: "background 160ms",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "#F7F8FA")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
           >
-            <div className="flex items-center justify-between gap-3">
-              <div className="min-w-0">
-                <div className="font-body text-sm text-text-primary truncate">
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div
+                  style={{
+                    fontFamily: JAKARTA,
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: "#0A1628",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
                   {s.site_name || s.site_id.slice(-6)}
                 </div>
-                <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+                <div style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.12em", marginTop: 2 }}>
                   {s.country || "—"}
                   {s.city && ` · ${s.city}`}
                 </div>
               </div>
-              <div className="text-right flex-shrink-0">
+              <div style={{ textAlign: "right", flexShrink: 0 }}>
                 <div
-                  className={`font-display text-xl leading-none ${
-                    s.anomaly ? "text-warning" : "text-text-primary"
-                  }`}
+                  style={{
+                    fontFamily: JAKARTA,
+                    fontSize: 20,
+                    fontWeight: 800,
+                    color: s.anomaly ? "#7E5212" : "#0A1628",
+                    fontVariantNumeric: "tabular-nums",
+                    lineHeight: 1,
+                  }}
                 >
                   {s.wo_count_30d}
                 </div>
                 <div
-                  className={`font-mono text-2xs uppercase tracking-widest-srs ${
-                    s.anomaly ? "text-warning" : "text-text-tertiary"
-                  }`}
+                  style={{
+                    ...MONO_CAPS,
+                    fontSize: 9,
+                    color: s.anomaly ? "#7E5212" : "#8B95A8",
+                    letterSpacing: "0.12em",
+                    marginTop: 2,
+                  }}
                 >
                   {s.anomaly ? "· anomaly" : "WOs/30d"}
                 </div>
@@ -259,59 +426,94 @@ function RepeatSitesSection({ sites }) {
           </Link>
         ))}
       </div>
-    </section>
+    </SectionCard>
   );
 }
 
-// -------------------- Tech drift --------------------
+/* ─── Tech drift ───────────────────────────────────────────────── */
 
 function TechDriftSection({ techs }) {
   if (!techs) return null;
   return (
-    <section className="bg-surface-raised accent-bar rounded-sm">
-      <header className="px-4 py-3 border-b border-surface-border">
-        <div className="label-caps">Tech rating · drift detection</div>
-        <h2 className="font-display text-base text-text-primary">
+    <SectionCard padding={0}>
+      <header style={{ padding: "14px 18px", borderBottom: "1px solid #E2E5EC" }}>
+        <div style={{ ...MONO_CAPS, fontSize: 10, color: "#3D4A66", letterSpacing: "0.14em", marginBottom: 2 }}>
+          Tech rating · drift detection
+        </div>
+        <div style={{ fontFamily: JAKARTA, fontSize: 14, fontWeight: 700, color: "#0A1628" }}>
           Últimos 3 ratings vs lifetime
-        </h2>
+        </div>
       </header>
-      <div className="divide-y divide-surface-border">
+      <div>
         {techs.length === 0 && <Empty text="— sin ratings —" />}
         {techs.map((t) => (
           <Link
             key={t.tech_user_id}
             to={`/srs/techs/${t.tech_user_id}`}
-            className="block px-4 py-2.5 hover:bg-surface-overlay/60 transition-colors duration-fast"
+            style={{
+              display: "block",
+              padding: "12px 18px",
+              borderBottom: "1px solid #F0F2F7",
+              textDecoration: "none",
+              transition: "background 160ms",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "#F7F8FA")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
           >
-            <div className="flex items-center justify-between gap-3">
-              <div className="min-w-0">
-                <div className="font-body text-sm text-text-primary truncate">
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div
+                  style={{
+                    fontFamily: JAKARTA,
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: "#0A1628",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
                   {t.full_name || t.tech_user_id.slice(-6)}
                 </div>
-                <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+                <div style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.12em", marginTop: 2 }}>
                   {t.employment_type || "—"} · {t.wo_count} WOs · {t.lifetime_rating_count} ratings
                 </div>
               </div>
-              <div className="text-right flex-shrink-0">
-                <div className="flex items-baseline gap-1">
-                  <span className="font-display text-base text-text-primary">
+              <div style={{ textAlign: "right", flexShrink: 0 }}>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 4, justifyContent: "flex-end" }}>
+                  <span
+                    style={{
+                      fontFamily: JAKARTA,
+                      fontSize: 16,
+                      fontWeight: 800,
+                      color: "#0A1628",
+                      fontVariantNumeric: "tabular-nums",
+                    }}
+                  >
                     {t.last3_avg ?? "—"}
                   </span>
                   {t.lifetime_avg != null && (
-                    <span className="font-mono text-2xs text-text-tertiary">
+                    <span
+                      style={{
+                        fontFamily: MONO,
+                        fontSize: 10,
+                        color: "#8B95A8",
+                        fontVariantNumeric: "tabular-nums",
+                      }}
+                    >
                       / {t.lifetime_avg}
                     </span>
                   )}
                 </div>
                 {t.drift != null && (
                   <div
-                    className={`font-mono text-2xs uppercase tracking-widest-srs ${
-                      t.drift_warning
-                        ? "text-danger"
-                        : t.drift > 0
-                        ? "text-success"
-                        : "text-text-tertiary"
-                    }`}
+                    style={{
+                      ...MONO_CAPS,
+                      fontSize: 9,
+                      letterSpacing: "0.14em",
+                      marginTop: 2,
+                      color: t.drift_warning ? "#991B1B" : t.drift > 0 ? "#0A6131" : "#8B95A8",
+                    }}
                   >
                     {t.drift >= 0 ? "+" : ""}
                     {t.drift}
@@ -323,78 +525,81 @@ function TechDriftSection({ techs }) {
           </Link>
         ))}
       </div>
-    </section>
+    </SectionCard>
   );
 }
 
-// -------------------- Finance snapshot --------------------
+/* ─── Finance snapshot ─────────────────────────────────────────── */
 
 function FinanceSnapshot({ snapshot }) {
   if (!snapshot) return null;
   return (
-    <section className="bg-surface-raised accent-bar rounded-sm p-4">
-      <div className="flex items-start justify-between gap-3 flex-wrap">
+    <SectionCard>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
         <div>
-          <div className="label-caps">Finance snapshot</div>
-          <h2 className="font-display text-base text-text-primary">
+          <div style={{ ...MONO_CAPS, fontSize: 10, color: "#3D4A66", letterSpacing: "0.14em", marginBottom: 4 }}>
+            Finance snapshot
+          </div>
+          <div style={{ fontFamily: JAKARTA, fontSize: 14, fontWeight: 700, color: "#0A1628" }}>
             Estado actual AR + AP
-          </h2>
+          </div>
         </div>
         <Link
           to="/srs/finance"
-          className="font-mono text-2xs uppercase tracking-widest-srs text-primary-light hover:text-primary self-end"
+          style={{
+            ...MONO_CAPS,
+            fontSize: 10,
+            color: "#0A1628",
+            letterSpacing: "0.14em",
+            textDecoration: "underline",
+            textDecorationStyle: "dotted",
+            alignSelf: "flex-end",
+            fontWeight: 800,
+          }}
         >
           Finance tab →
         </Link>
       </div>
-      <div className="grid grid-cols-3 gap-3 mt-3">
-        <Kpi label="AR pending" value={snapshot.pending_ar_invoices} hint="draft+sent" />
-        <Kpi
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+          gap: 12,
+          marginTop: 14,
+        }}
+      >
+        <KpiTile label="AR pending" value={snapshot.pending_ar_invoices} hint="draft+sent" />
+        <KpiTile
           label="AR overdue"
           value={snapshot.overdue_ar_invoices}
           hint="past due_date"
           tone={snapshot.overdue_ar_invoices > 0 ? "danger" : "default"}
         />
-        <Kpi
+        <KpiTile
           label="AP pending"
           value={snapshot.pending_ap_invoices}
           hint="unpaid vendor invoices"
           tone={snapshot.pending_ap_invoices > 0 ? "warning" : "default"}
         />
       </div>
-    </section>
+    </SectionCard>
   );
 }
 
-// -------------------- Blocks --------------------
-
-function Kpi({ label, value, hint, tone = "default" }) {
-  const tint =
-    tone === "danger"
-      ? "text-danger"
-      : tone === "warning"
-      ? "text-warning"
-      : tone === "success"
-      ? "text-success"
-      : "text-text-primary";
-  return (
-    <div className="bg-surface-base rounded-sm p-3">
-      <div className="label-caps mb-0.5">{label}</div>
-      <div className={`font-display text-2xl leading-none ${tint}`}>
-        {value}
-      </div>
-      {hint && (
-        <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary mt-1">
-          {hint}
-        </div>
-      )}
-    </div>
-  );
-}
+/* ─── Helpers ──────────────────────────────────────────────────── */
 
 function Empty({ text }) {
   return (
-    <div className="px-4 py-6 font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary text-center">
+    <div
+      style={{
+        padding: "20px 18px",
+        ...MONO_CAPS,
+        fontSize: 10,
+        color: "#8B95A8",
+        letterSpacing: "0.14em",
+        textAlign: "center",
+      }}
+    >
       {text}
     </div>
   );
