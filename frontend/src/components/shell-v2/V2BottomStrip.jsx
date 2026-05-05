@@ -1,112 +1,95 @@
 /**
- * V2BottomStrip — Strip inferior con técnicos REALMENTE en pista
+ * V2BottomStrip — Equipo de operaciones con timezone live
  *
- * Antes leía de un array hardcoded TECHS_IN_STRIP que mostraba siempre
- * los mismos 5 nombres con la hora actual de su timezone, dando la falsa
- * sensación de que estaban "en pista" cuando solo estaban dentro de su
- * franja horaria laboral.
+ * Recupera el comportamiento original (lista del equipo SRS con su hora
+ * local y dot de estado laboral). Cambios respecto a la versión inicial:
+ *   - Label: "Equipo de operaciones" (antes "Técnicos en pista")
+ *   - Dot status: ESQUINA SUPERIOR DERECHA del avatar, contenido dentro
+ *     del wrapper · sin desbordar sobre el texto adyacente.
  *
- * Ahora cruza /api/work-orders + /api/users + /api/sites en useTechsOnDuty
- * y pinta SOLO los técnicos con WO activa en status dispatched / en_route /
- * on_site. Si no hay ninguno → empty state honesto.
+ * Fuente de los miembros: keys de TECH_REGISTRY (lib/tz.js). Cuando el
+ * registry crece (Andros, Adriana, JuanCho, etc.), aparecen automáticamente.
  *
- * Hook: lib/useTechsOnDuty.js
+ * Refresco: tick cada 30s para mantener vivas las horas locales.
  */
 
+import { useEffect, useState } from "react";
 import { Icon, ICONS } from "../../lib/icons";
-import { useTechsOnDuty } from "../../lib/useTechsOnDuty";
+import { getTechTimeInfo, TECH_REGISTRY } from "../../lib/tz";
 
-// Colores del dot por status — alineados con DS v2
-const STATUS_DOT = {
-  dispatched: { color: "#3B82F6", label: "Despachado",  pulse: false }, // azul
-  en_route:   { color: "#F59E0B", label: "En camino",   pulse: true  }, // amber pulse
-  on_site:    { color: "#10B981", label: "En sitio",    pulse: true  }, // verde pulse
-};
+// Lista de miembros del equipo de operaciones.
+// Por defecto, todos los keys del TECH_REGISTRY (lib/tz.js).
+// Cuando se añada Andros, Adriana, JuanCho, etc. al registry, aparecen aquí.
+const OPS_TEAM = Object.keys(TECH_REGISTRY);
 
-function TechCard({ item }) {
-  const dot = STATUS_DOT[item.woStatus] || { color: "#94A3B8", label: item.woStatus, pulse: false };
+function TeamCard({ name }) {
+  const info = getTechTimeInfo(name);
+  if (!info) return null;
+
+  const dotColor = info.color;
+  const pulse = info.status === "onduty";
 
   return (
     <div
       className="flex items-center gap-2.5 px-3 py-2 bg-cl-surface border border-cl-border rounded-md flex-shrink-0 hover:border-cl-border-strong transition"
-      title={`${item.techName} · ${dot.label} · ${item.siteName} · ${item.woCode}${item.woReference ? ` · ${item.woReference}` : ""}`}
+      title={`${name} · ${info.label} · ${info.tzLabel} ${info.techTime} · ${info.offsetText}`}
     >
-      {/* Dot status — estilo 100% inline, sin depender de clases Tailwind tricky.
-          Se ubica antes del avatar para que sea lo primero que vea el ojo. */}
-      <span
-        className={dot.pulse ? "animate-pulse" : ""}
+      {/* Avatar 24x24 con dot status en ESQUINA SUPERIOR DERECHA · contenido · estilo inline */}
+      <div
         style={{
-          display: "inline-block",
-          width: 10,
-          height: 10,
-          borderRadius: "50%",
-          background: dot.color,
+          position: "relative",
+          width: 24,
+          height: 24,
           flexShrink: 0,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
         }}
-        aria-label={dot.label}
-      />
-      <Icon icon={ICONS.user} size={18} color="#3D4A66" className="flex-shrink-0" />
+      >
+        <Icon icon={ICONS.user} size={18} color="#3D4A66" />
+        <span
+          className={pulse ? "animate-pulse" : ""}
+          style={{
+            position: "absolute",
+            top: 0,
+            right: 0,
+            width: 9,
+            height: 9,
+            borderRadius: "50%",
+            background: dotColor,
+            boxShadow: "0 0 0 1.5px #FFFFFF",
+          }}
+          aria-label={info.label}
+        />
+      </div>
       <div className="leading-tight min-w-0">
         <p className="text-[12px] font-jakarta font-semibold text-cl-text truncate max-w-[160px]">
-          {item.techName}
+          {name}
         </p>
         <p className="text-[10px] font-mono text-cl-text-dim truncate max-w-[160px]">
-          {item.siteName} · {item.woCode}
+          {info.tzLabel} · {info.techTime}
         </p>
       </div>
-    </div>
-  );
-}
-
-function EmptyState() {
-  return (
-    <div className="flex items-center gap-2 text-[12px] font-jakarta text-cl-text-dim italic px-2">
-      <span
-        className="w-1.5 h-1.5 rounded-full bg-cl-border-strong"
-        aria-hidden
-      />
-      Sin intervenciones activas en este momento
-    </div>
-  );
-}
-
-function LoadingSkel() {
-  return (
-    <div className="flex items-center gap-2">
-      {[0, 1, 2].map((i) => (
-        <div
-          key={i}
-          className="h-[44px] w-[180px] rounded-md bg-cl-surface border border-cl-border animate-pulse flex-shrink-0"
-        />
-      ))}
     </div>
   );
 }
 
 export default function V2BottomStrip() {
-  const { loading, error, items } = useTechsOnDuty({ pollMs: 60000 });
+  // Trigger re-render cada 30s para refrescar horas locales
+  const [, setTick] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => setTick((t) => t + 1), 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <footer className="h-[84px] border-t border-cl-border bg-cl-bg flex items-center px-6 gap-4 flex-shrink-0">
-      <span className="label-caps-v2 mr-2">Técnicos en pista</span>
+      <span className="label-caps-v2 mr-2">Equipo de operaciones</span>
 
       <div className="flex items-center gap-2 overflow-x-auto wr-scroll flex-1 pb-1">
-        {loading && items.length === 0 && <LoadingSkel />}
-        {!loading && error && (
-          <div className="text-[12px] font-jakarta text-cl-text-dim italic px-2">
-            No se pudo cargar el estado de pista
-          </div>
-        )}
-        {!loading && !error && items.length === 0 && <EmptyState />}
-        {items.length > 0 && items.map((it) => <TechCard key={it.techId} item={it} />)}
+        {OPS_TEAM.map((name) => <TeamCard key={name} name={name} />)}
       </div>
-
-      {/* Counter discreto a la derecha */}
-      {items.length > 0 && (
-        <span className="text-[10px] font-mono text-cl-text-dim tabular-nums whitespace-nowrap pl-2 border-l border-cl-border">
-          {items.length} {items.length === 1 ? "tech" : "techs"}
-        </span>
-      )}
     </footer>
   );
 }
