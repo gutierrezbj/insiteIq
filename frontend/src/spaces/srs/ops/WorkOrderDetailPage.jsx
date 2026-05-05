@@ -1,24 +1,24 @@
 /**
- * SRS Ops — Work Order detail.
- * Pasito C (read-only view) + Pasito G (actions: advance / cancel / preflight /
- * briefing ack / capture submit / rate tech).
+ * SRS Ops · Work Order detail · v2 paleta F (Iter 2.33).
+ *
+ * Pasito C (read-only view) + Pasito G (actions: advance / cancel /
+ * preflight / briefing ack / capture submit / rate tech / scan equipment).
  *
  * Buttons render based on (current status × user role × tech assignment).
- * State machine legality is enforced by the backend; the UI just hides what
- * would 400 out of the gate.
+ * State machine legality is enforced by the backend; the UI just hides lo
+ * que daría 400.
+ *
+ * NOTA: 5 sub-components imported (BriefingSection, CaptureSection,
+ * PartsSection, ThreadsSection, CostSnapshotAction) siguen v1 — sprints
+ * propios (Iter 2.34-2.36). El chrome de la página principal + ActionBar
+ * + Cost AfterHours están en paleta F.
  */
 import { useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { useFetch } from "../../../lib/useFetch";
-import { api } from "../../../lib/api";
+import { api, uploadFile } from "../../../lib/api";
 import { useAuth } from "../../../contexts/AuthContext";
-import {
-  BallBadge,
-  SeverityBadge,
-  ShieldBadge,
-  StatusBadge,
-  formatAge,
-} from "../../../components/ui/Badges";
+import { formatAge } from "../../../components/ui/Badges";
 import ActionDialog, {
   DialogLabel,
   DialogInput,
@@ -26,15 +26,22 @@ import ActionDialog, {
   DialogCheckbox,
 } from "../../../components/ui/ActionDialog";
 import AuthImage from "../../../components/ui/AuthImage";
-import BackLink from "../../../components/ui/BackLink";
-import { uploadFile } from "../../../lib/api";
 import BriefingSection from "../../../components/workorder/BriefingSection";
 import CaptureSection from "../../../components/workorder/CaptureSection";
 import CostSnapshotAction from "../../../components/workorder/CostSnapshotAction";
 import PartsSection from "../../../components/workorder/PartsSection";
 import ThreadsSection from "../../../components/workorder/ThreadsSection";
+import {
+  WoStatusPill,
+  SeverityPill,
+  ShieldPill,
+  BallPill,
+} from "../../../components/v2-shared/Pills";
+import BackLinkV2 from "../../../components/v2-shared/BackLinkV2";
+import SectionCard, { SectionTitle } from "../../../components/v2-shared/SectionCard";
+import MetaRow from "../../../components/v2-shared/MetaRow";
+import { JAKARTA, MONO, MONO_CAPS } from "../../../components/v2-shared/typography";
 
-// The 7 stages per Blueprint Modo 1 Decision #1
 const STAGES = [
   { key: "intake",     label: "Intake" },
   { key: "triage",     label: "Triage" },
@@ -66,41 +73,56 @@ export default function WorkOrderDetailPage() {
     !!user?.memberships?.some((m) => m.space === "tech_field") &&
     wo.assigned_tech_user_id === user?.id;
 
-  // Stay within whichever space the user is browsing (tech PWA / SRS cockpit / Client portal)
   const inTech = location.pathname.startsWith("/tech");
   const inClientSpace = location.pathname.startsWith("/client");
   const backHref = inTech ? "/tech" : inClientSpace ? "/client" : "/srs/ops";
-  const backLabel = inTech
-    ? "Mis trabajos"
-    : inClientSpace
-    ? "Status"
-    : "Work orders";
+  const backLabel = inTech ? "Mis trabajos" : inClientSpace ? "Status" : "Work orders";
 
   return (
-    <div className="px-4 md:px-8 py-5 md:py-7 max-w-wide">
-      {/* Back link */}
-      <BackLink to={backHref} label={backLabel} />
+    <div style={{ padding: "32px 40px", maxWidth: 1400 }}>
+      <BackLinkV2 to={backHref} label={backLabel} />
 
       {/* Header */}
-      <div className="accent-bar pl-4 mb-6">
-        <div className="flex items-center gap-3 mb-1">
-          <span className="label-caps">Work Order</span>
-          <span className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+      <div style={{ paddingLeft: 16, borderLeft: "3px solid #0A1628", marginBottom: 22 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6, flexWrap: "wrap" }}>
+          <span style={{ ...MONO_CAPS, fontSize: 10, color: "#0A1628", letterSpacing: "0.16em" }}>
+            Work Order
+          </span>
+          <span style={{ ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.12em" }}>
             {wo.reference}
           </span>
-          <SeverityBadge severity={wo.severity} />
+          <SeverityPill severity={wo.severity} />
         </div>
-        <h1 className="font-display text-2xl text-text-primary leading-tight">
+        <h1
+          style={{
+            fontFamily: JAKARTA,
+            fontSize: 28,
+            fontWeight: 800,
+            color: "#0A1628",
+            letterSpacing: "-0.02em",
+            lineHeight: 1.15,
+          }}
+        >
           {wo.title}
         </h1>
         {wo.description && (
-          <p className="font-body text-text-secondary text-sm mt-2 max-w-prose">
+          <p
+            style={{
+              fontFamily: JAKARTA,
+              fontSize: 13.5,
+              color: "#3D4A66",
+              marginTop: 10,
+              maxWidth: 920,
+              lineHeight: 1.55,
+              fontWeight: 500,
+            }}
+          >
             {wo.description}
           </p>
         )}
       </div>
 
-      {/* Actions bar — buttons appear based on status × role × assignment */}
+      {/* Actions bar */}
       <ActionBar
         wo={wo}
         reload={reload}
@@ -110,50 +132,68 @@ export default function WorkOrderDetailPage() {
       />
 
       {/* State + Ball banner */}
-      <section className="bg-surface-raised accent-bar rounded-sm p-4 mb-5 flex flex-wrap gap-5 items-center">
-        <StateBlock label="Status" value={<StatusBadge status={wo.status} />} />
-        <StateBlock
-          label="Balón"
-          value={
-            <BallBadge
-              side={wo.ball_in_court?.side}
-              sinceIso={wo.ball_in_court?.since}
-            />
-          }
-          hint={wo.ball_in_court?.reason}
-        />
-        <StateBlock label="Shield" value={<ShieldBadge level={wo.shield_level} />} />
-        <StateBlock
-          label="Deadline resolve"
-          value={
-            <span className="font-mono text-sm text-text-primary">
-              {formatDeadline(wo.deadline_resolve_at, wo.status)}
-            </span>
-          }
-        />
-        {wo.closed_at && (
+      <SectionCard style={{ marginBottom: 16 }}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 22, alignItems: "flex-start" }}>
+          <StateBlock label="Status" value={<WoStatusPill status={wo.status} />} />
           <StateBlock
-            label="Closed"
+            label="Balón"
+            value={<BallPill side={wo.ball_in_court?.side} />}
+            hint={wo.ball_in_court?.reason}
+          />
+          <StateBlock label="Shield" value={<ShieldPill level={wo.shield_level} />} />
+          <StateBlock
+            label="Deadline resolve"
             value={
-              <span className="font-mono text-sm text-success">
-                {new Date(wo.closed_at).toLocaleString()}
+              <span
+                style={{
+                  fontFamily: MONO,
+                  fontSize: 13,
+                  color: "#0A1628",
+                  fontWeight: 700,
+                  fontVariantNumeric: "tabular-nums",
+                }}
+              >
+                {formatDeadline(wo.deadline_resolve_at, wo.status)}
               </span>
             }
           />
-        )}
-      </section>
+          {wo.closed_at && (
+            <StateBlock
+              label="Closed"
+              value={
+                <span
+                  style={{
+                    fontFamily: MONO,
+                    fontSize: 13,
+                    color: "#0A6131",
+                    fontWeight: 700,
+                  }}
+                >
+                  {new Date(wo.closed_at).toLocaleString()}
+                </span>
+              }
+            />
+          )}
+        </div>
+      </SectionCard>
 
       {/* 7-stage timeline */}
-      <section className="bg-surface-raised accent-bar rounded-sm mb-5 p-4">
-        <div className="label-caps mb-3">State machine — 7 etapas</div>
+      <SectionCard style={{ marginBottom: 16 }}>
+        <SectionTitle>State machine — 7 etapas</SectionTitle>
         <StageTimeline currentStatus={wo.status} />
-      </section>
+      </SectionCard>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Metadata */}
-        <section className="bg-surface-raised accent-bar rounded-sm p-4">
-          <div className="label-caps mb-3">Metadata</div>
-          <dl className="font-body text-sm divide-y divide-surface-border">
+      {/* Metadata + Pre-flight grid */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))",
+          gap: 16,
+        }}
+      >
+        <SectionCard>
+          <SectionTitle>Metadata</SectionTitle>
+          <dl style={{ display: "flex", flexDirection: "column" }}>
             <MetaRow label="Cliente org" value={shortId(wo.organization_id)} />
             <MetaRow
               label="Site"
@@ -161,7 +201,7 @@ export default function WorkOrderDetailPage() {
                 wo.site_id ? (
                   <Link
                     to={`/srs/sites/${wo.site_id}`}
-                    className="text-primary-light hover:text-primary underline decoration-dotted"
+                    style={dottedLink}
                   >
                     {shortId(wo.site_id)} ↗
                   </Link>
@@ -174,10 +214,7 @@ export default function WorkOrderDetailPage() {
               label="Service agreement"
               value={
                 wo.service_agreement_id && !inClientSpace ? (
-                  <Link
-                    to={`/srs/agreements/${wo.service_agreement_id}`}
-                    className="text-primary-light hover:text-primary underline decoration-dotted"
-                  >
+                  <Link to={`/srs/agreements/${wo.service_agreement_id}`} style={dottedLink}>
                     {shortId(wo.service_agreement_id)} ↗
                   </Link>
                 ) : (
@@ -185,10 +222,7 @@ export default function WorkOrderDetailPage() {
                 )
               }
             />
-            <MetaRow
-              label="SRS Coordinator"
-              value={shortId(wo.srs_coordinator_user_id)}
-            />
+            <MetaRow label="SRS Coordinator" value={shortId(wo.srs_coordinator_user_id)} />
             <MetaRow
               label="Tech asignado"
               value={shortId(wo.assigned_tech_user_id) || "— sin asignar —"}
@@ -201,9 +235,7 @@ export default function WorkOrderDetailPage() {
               label="Onsite resident"
               value={shortId(wo.onsite_resident_user_id) || "— no aplica —"}
             />
-            {wo.project_id && (
-              <MetaRow label="Project" value={shortId(wo.project_id)} />
-            )}
+            {wo.project_id && <MetaRow label="Project" value={shortId(wo.project_id)} />}
             {wo.cluster_group_id && (
               <MetaRow label="Cluster group" value={shortId(wo.cluster_group_id)} />
             )}
@@ -216,120 +248,97 @@ export default function WorkOrderDetailPage() {
               value={wo.updated_at ? formatAge(wo.updated_at) + " ago" : "—"}
             />
           </dl>
-        </section>
+        </SectionCard>
 
-        {/* Handshakes + pre-flight */}
-        <section className="bg-surface-raised accent-bar rounded-sm p-4">
-          <div className="label-caps mb-3">Pre-flight + handshakes</div>
-          <div className="mb-4">
-            <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary mb-1">
+        <SectionCard>
+          <SectionTitle>Pre-flight + handshakes</SectionTitle>
+          <div style={{ marginBottom: 18 }}>
+            <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.14em", marginBottom: 6 }}>
               Pre-flight checklist
             </div>
             <PreflightBlock checklist={wo.pre_flight_checklist} />
           </div>
           <div>
-            <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary mb-2">
+            <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.14em", marginBottom: 8 }}>
               Handshakes ({wo.handshakes?.length || 0})
             </div>
             {(!wo.handshakes || wo.handshakes.length === 0) && (
-              <div className="font-body text-sm text-text-tertiary">— ninguno aún —</div>
+              <div style={{ ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em" }}>
+                — ninguno aún —
+              </div>
             )}
-            <div className="space-y-2">
-              {wo.handshakes?.map((h, i) => (
-                <HandshakeRow key={i} h={h} />
-              ))}
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {wo.handshakes?.map((h, i) => <HandshakeRow key={i} h={h} />)}
             </div>
           </div>
-        </section>
+        </SectionCard>
       </div>
 
       {/* SLA snapshot */}
       {wo.sla_snapshot && (
-        <section className="bg-surface-raised accent-bar rounded-sm p-4 mt-4">
-          <div className="label-caps mb-3">SLA snapshot (fijado al intake)</div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 font-body text-sm">
-            <SlaItem
-              label="Receive"
-              minutes={wo.sla_snapshot.receive_minutes}
-            />
-            <SlaItem
-              label="Resolve"
-              minutes={wo.sla_snapshot.resolve_minutes}
-            />
-            <SlaItem
-              label="Photos"
-              text={wo.sla_snapshot.photos_required}
-            />
-            <SlaItem
-              label="24×7"
-              text={wo.sla_snapshot.coverage_247 ? "yes" : "no"}
-            />
+        <SectionCard style={{ marginTop: 16 }}>
+          <SectionTitle>SLA snapshot (fijado al intake)</SectionTitle>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
+              gap: 12,
+            }}
+          >
+            <SlaItem label="Receive" minutes={wo.sla_snapshot.receive_minutes} />
+            <SlaItem label="Resolve" minutes={wo.sla_snapshot.resolve_minutes} />
+            <SlaItem label="Photos" text={wo.sla_snapshot.photos_required} />
+            <SlaItem label="24×7" text={wo.sla_snapshot.coverage_247 ? "yes" : "no"} />
           </div>
-        </section>
+        </SectionCard>
       )}
 
-      {/* Copilot Briefing — tech lee antes de en_route */}
-      <BriefingSection
-        wo={wo}
-        isSrs={isSrs}
-        isAssignedTech={isAssignedTech}
-      />
-
-      {/* Tech Capture + photos (Domain 10.4) — tech records post-intervention */}
-      <CaptureSection
-        wo={wo}
-        isSrs={isSrs}
-        isAssignedTech={isAssignedTech}
-      />
-
-      {/* Threads (shared + internal) — kills WhatsApp */}
-      <ThreadsSection
-        wo={wo}
-        isSrs={isSrs}
-        isClient={isClient}
-        isAssignedTech={isAssignedTech}
-      />
-
-      {/* Parts / Budget approvals */}
+      {/* Sub-components v1 (sprints propios) */}
+      <BriefingSection wo={wo} isSrs={isSrs} isAssignedTech={isAssignedTech} />
+      <CaptureSection wo={wo} isSrs={isSrs} isAssignedTech={isAssignedTech} />
+      <ThreadsSection wo={wo} isSrs={isSrs} isClient={isClient} isAssignedTech={isAssignedTech} />
       <PartsSection wo={wo} isSrs={isSrs} isClient={isClient} />
 
-      {/* Cost snapshot + after-hours — SRS internal, alimenta P&L (X-g) */}
-      {isSrs && (
-        <CostAfterHoursSection wo={wo} reload={reload} />
-      )}
+      {/* Cost snapshot · SRS internal */}
+      {isSrs && <CostAfterHoursSection wo={wo} reload={reload} />}
 
-      {/* Intervention Report link (solo cuando WO cerrada) */}
+      {/* Intervention Report link */}
       {wo.status === "closed" && (
-        <section className="bg-surface-raised accent-bar rounded-sm p-4 mt-4 flex items-center justify-between gap-3 flex-wrap">
-          <div>
-            <div className="label-caps">Intervention Report</div>
-            <p className="font-body text-sm text-text-secondary">
-              Reporte final auto-ensamblado al cierre · 5 canales emit
-            </p>
+        <SectionCard style={{ marginTop: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+            <div>
+              <SectionTitle marginBottom={2}>Intervention Report</SectionTitle>
+              <p style={{ fontFamily: JAKARTA, fontSize: 13, color: "#3D4A66", fontWeight: 500 }}>
+                Reporte final auto-ensamblado al cierre · 5 canales emit
+              </p>
+            </div>
+            <Link
+              to={`${inTech ? "/tech" : inClientSpace ? "/client" : "/srs"}/ops/${wo_id}/report`}
+              className="btn-trigger-v2"
+              style={{ textDecoration: "none" }}
+            >
+              Abrir reporte →
+            </Link>
           </div>
-          <Link
-            to={`${
-              inTech ? "/tech" : inClientSpace ? "/client" : "/srs"
-            }/ops/${wo_id}/report`}
-            className="bg-primary text-text-inverse font-mono font-semibold uppercase tracking-widest-srs text-2xs px-3 py-2 rounded-sm hover:bg-primary-light hover:shadow-glow-primary transition-all duration-fast ease-out-expo"
-          >
-            Abrir reporte →
-          </Link>
-        </section>
+        </SectionCard>
       )}
 
-      <p className="mt-6 text-text-tertiary font-mono text-2xs uppercase tracking-widest-srs">
-        Fase 2 plumbing · state-machine vivo · audit_log graba todo
+      <p style={{ marginTop: 24, ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em" }}>
+        Iter 2.33 · state-machine vivo · audit_log graba todo
       </p>
     </div>
   );
 }
 
-// -------------------- Action bar + actions --------------------
+const dottedLink = {
+  color: "#0A1628",
+  fontWeight: 800,
+  textDecoration: "underline",
+  textDecorationStyle: "dotted",
+};
 
-// Advance targets per current status (happy path + quick back-steps).
-// Every target is re-validated by the backend state machine; this list
-// just filters what we ever show the user.
+/* ─── Action bar + actions ─────────────────────────────────────── */
+
 const ADVANCE_TARGETS = {
   intake:     [{ to: "triage",     label: "Pasar a triage" }],
   triage:     [{ to: "pre_flight", label: "A pre-flight" }],
@@ -344,7 +353,7 @@ const ADVANCE_TARGETS = {
   en_route:   [{ to: "on_site",  label: "Check-in on site", handshake: "check_in" }],
   on_site:    [
     { to: "resolved",  label: "Resolver", handshake: "resolution" },
-    { to: "en_route",  label: "Sali a por partes", soft: true },
+    { to: "en_route",  label: "Salí a por partes", soft: true },
   ],
   resolved:   [
     { to: "closed",    label: "Cerrar WO", handshake: "closure" },
@@ -354,124 +363,19 @@ const ADVANCE_TARGETS = {
   cancelled:  [],
 };
 
-// -------------------- CostAfterHoursSection (X-g) --------------------
-
-function CostAfterHoursSection({ wo, reload }) {
-  const cs = wo.cost_snapshot || null;
-  const currency = cs?.currency || "USD";
-  const directCost =
-    (cs?.labor || 0) + (cs?.parts || 0) + (cs?.travel || 0) + (cs?.other || 0);
-  const coordCost =
-    (cs?.coordination_hours || 0) * (cs?.coordination_hourly_rate || 0);
-
-  async function toggleAfterHours() {
-    try {
-      await api.post(`/work-orders/${wo.id}/after-hours`, {
-        after_hours: !wo.after_hours,
-      });
-      reload();
-    } catch (e) {
-      alert(e.message || "error");
-    }
-  }
-
-  return (
-    <section className="bg-surface-raised accent-bar rounded-sm mt-4">
-      <header className="px-4 py-3 border-b border-surface-border flex items-start justify-between gap-3 flex-wrap">
-        <div>
-          <div className="label-caps">Cost snapshot · SRS internal</div>
-          <h2 className="font-display text-base text-text-primary leading-tight">
-            {cs
-              ? `${directCost.toFixed(2)} ${currency} direct` +
-                (coordCost > 0 ? ` · ${coordCost.toFixed(2)} coord` : "")
-              : "Sin registrar — carga lo que gastaste"}
-          </h2>
-          <p className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary mt-0.5">
-            Alimenta P&L · no facturable al cliente
-          </p>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <button
-            type="button"
-            onClick={toggleAfterHours}
-            className={`font-mono font-semibold uppercase tracking-widest-srs text-2xs px-3 py-2 rounded-sm border transition-colors duration-fast ${
-              wo.after_hours
-                ? "bg-warning text-text-inverse border-warning hover:bg-warning/90"
-                : "bg-surface-overlay text-text-tertiary border-surface-border hover:border-warning hover:text-warning"
-            }`}
-            title="Marca si la WO se ejecutó en horario nocturno / fin de semana — aplica multiplier del rate_card"
-          >
-            {wo.after_hours ? "✓ after-hours" : "after-hours"}
-          </button>
-          <CostSnapshotAction wo={wo} reload={reload} />
-        </div>
-      </header>
-
-      {cs && (
-        <div className="px-4 py-3 grid grid-cols-2 md:grid-cols-5 gap-3">
-          <CostPill label="Labor" value={cs.labor} currency={currency} />
-          <CostPill label="Parts" value={cs.parts} currency={currency} />
-          <CostPill label="Travel" value={cs.travel} currency={currency} />
-          <CostPill label="Other" value={cs.other} currency={currency} />
-          <CostPill
-            label="Coord absorbido"
-            value={coordCost || null}
-            currency={currency}
-            hint={
-              cs.coordination_hours
-                ? `${cs.coordination_hours}h × ${cs.coordination_hourly_rate || 0}`
-                : null
-            }
-            tone="warning"
-          />
-        </div>
-      )}
-      {cs?.notes && (
-        <div className="px-4 pb-3">
-          <div className="bg-surface-base rounded-sm p-3">
-            <div className="label-caps mb-0.5">Notas</div>
-            <p className="font-body text-sm text-text-primary whitespace-pre-line">
-              {cs.notes}
-            </p>
-          </div>
-        </div>
-      )}
-    </section>
-  );
-}
-
-function CostPill({ label, value, currency, hint, tone = "default" }) {
-  const tint = tone === "warning" ? "text-warning" : "text-text-primary";
-  return (
-    <div className="bg-surface-base rounded-sm p-3">
-      <div className="label-caps mb-0.5">{label}</div>
-      <div className={`font-display text-base leading-none ${tint}`}>
-        {value != null ? value.toFixed(2) : "—"}
-      </div>
-      <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary mt-1">
-        {value != null ? currency : "sin cargar"}
-        {hint && ` · ${hint}`}
-      </div>
-    </div>
-  );
-}
-
 function ActionBar({ wo, reload, isSrs, isClient, isAssignedTech }) {
   const status = wo.status;
   const isTerminal = status === "closed" || status === "cancelled";
 
-  // Who is allowed to advance to what (mirrors backend auth)
   const srsOnlyTargets = new Set(["triage", "pre_flight", "closed"]);
   const srsOrTechTargets = new Set(["en_route", "on_site", "resolved"]);
 
   const availableAdvance = (ADVANCE_TARGETS[status] || []).filter((t) => {
     if (srsOnlyTargets.has(t.to)) return isSrs;
     if (srsOrTechTargets.has(t.to)) return isSrs || isAssignedTech;
-    // Back-steps + other transitions: SRS can do it
     return isSrs;
   });
 
-  // Nothing to do on this WO for this user
   const canRate =
     (isSrs || isClient) &&
     (status === "resolved" || status === "closed") &&
@@ -480,26 +384,20 @@ function ActionBar({ wo, reload, isSrs, isClient, isAssignedTech }) {
   const canPreflight = (isSrs || isAssignedTech) && status === "pre_flight";
   const canAckBriefing = isAssignedTech && status === "dispatched";
   const canSubmitCapture = isAssignedTech && status === "on_site";
-  // Scan equipment: tech on_site (most realistic window) + SRS anytime non-terminal
   const canScan =
     ((isAssignedTech && status === "on_site") || (isSrs && !isTerminal)) &&
     !!wo.site_id;
 
   const hasAny =
     availableAdvance.length > 0 ||
-    canRate ||
-    canCancel ||
-    canPreflight ||
-    canAckBriefing ||
-    canSubmitCapture ||
-    canScan;
+    canRate || canCancel || canPreflight || canAckBriefing || canSubmitCapture || canScan;
 
   if (!hasAny) return null;
 
   return (
-    <section className="bg-surface-raised accent-bar rounded-sm p-4 mb-5">
-      <div className="label-caps mb-3">Acciones disponibles</div>
-      <div className="flex flex-wrap gap-2">
+    <SectionCard style={{ marginBottom: 16 }}>
+      <SectionTitle>Acciones disponibles</SectionTitle>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
         {availableAdvance.map((t) => (
           <AdvanceAction
             key={t.to}
@@ -519,22 +417,56 @@ function ActionBar({ wo, reload, isSrs, isClient, isAssignedTech }) {
         {canRate && <RateTechAction wo={wo} reload={reload} isClient={isClient} />}
         {canCancel && <CancelAction wo={wo} reload={reload} />}
       </div>
-    </section>
+    </SectionCard>
   );
 }
 
 function ActionButton({ onClick, label, tone = "default" }) {
-  const toneClass =
-    tone === "destructive"
-      ? "bg-danger text-text-inverse hover:bg-danger/90 hover:shadow-glow-danger"
-      : tone === "soft"
-      ? "bg-surface-overlay text-text-secondary border border-surface-border hover:text-text-primary hover:border-primary"
-      : "bg-primary text-text-inverse hover:bg-primary-light hover:shadow-glow-primary";
+  const styles = {
+    default: {
+      bg: "#0A1628", color: "#FFFFFF", border: "#0A1628",
+      hoverBg: "#1A2640", shadow: "rgba(10, 22, 40, 0.32)",
+    },
+    soft: {
+      bg: "#FFFFFF", color: "#3D4A66", border: "#C8CDD8",
+      hoverBg: "#F4F6F8", hoverColor: "#0A1628", hoverBorder: "#0A1628",
+    },
+    destructive: {
+      bg: "#DC2626", color: "#FFFFFF", border: "#DC2626",
+      hoverBg: "#991B1B", shadow: "rgba(220, 38, 38, 0.32)",
+    },
+  };
+  const s = styles[tone] || styles.default;
+  const isSoft = tone === "soft";
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`font-mono font-semibold uppercase tracking-widest-srs text-2xs px-3 py-2 rounded-sm transition-all duration-fast ease-out-expo ${toneClass}`}
+      style={{
+        ...MONO_CAPS,
+        fontSize: 11,
+        letterSpacing: "0.14em",
+        padding: "8px 14px",
+        background: s.bg,
+        color: s.color,
+        border: `1.5px solid ${s.border}`,
+        borderRadius: 6,
+        cursor: "pointer",
+        boxShadow: isSoft ? "none" : `0 2px 6px -1px ${s.shadow}`,
+        transition: "all 160ms",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.background = s.hoverBg;
+        if (s.hoverColor) e.currentTarget.style.color = s.hoverColor;
+        if (s.hoverBorder) e.currentTarget.style.borderColor = s.hoverBorder;
+        if (!isSoft) e.currentTarget.style.boxShadow = `0 4px 12px -2px ${s.shadow}`;
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = s.bg;
+        e.currentTarget.style.color = s.color;
+        e.currentTarget.style.borderColor = s.border;
+        if (!isSoft) e.currentTarget.style.boxShadow = `0 2px 6px -1px ${s.shadow}`;
+      }}
     >
       {label}
     </button>
@@ -561,11 +493,7 @@ function AdvanceAction({ wo, target, label, handshake, soft, isSrs, reload }) {
 
   return (
     <>
-      <ActionButton
-        onClick={() => setOpen(true)}
-        label={label}
-        tone={soft ? "soft" : "default"}
-      />
+      <ActionButton onClick={() => setOpen(true)} label={label} tone={soft ? "soft" : "default"} />
       <ActionDialog
         open={open}
         onClose={() => setOpen(false)}
@@ -575,9 +503,7 @@ function AdvanceAction({ wo, target, label, handshake, soft, isSrs, reload }) {
         onSubmit={submit}
       >
         <div>
-          <DialogLabel htmlFor="notes" optional>
-            Notas
-          </DialogLabel>
+          <DialogLabel htmlFor="notes" optional>Notas</DialogLabel>
           <DialogTextarea
             id="notes"
             rows={3}
@@ -587,14 +513,22 @@ function AdvanceAction({ wo, target, label, handshake, soft, isSrs, reload }) {
           />
         </div>
         {needsEmergencyHint && isSrs && (
-          <div className="bg-surface-base rounded-sm p-3 border border-surface-border">
+          <div
+            style={{
+              background: "#F4F6F8",
+              border: "1px solid #E2E5EC",
+              borderLeft: "3px solid #E8A33D",
+              borderRadius: 4,
+              padding: 12,
+            }}
+          >
             <DialogCheckbox
               id="emergency"
               label="Override emergency (bypassa guards)"
               checked={emergency}
               onChange={setEmergency}
             />
-            <p className="mt-1.5 text-2xs text-text-tertiary font-mono uppercase tracking-widest-srs">
+            <p style={{ ...MONO_CAPS, fontSize: 9.5, color: "#7E5212", letterSpacing: "0.14em", marginTop: 6, fontWeight: 600 }}>
               {isDispatch && "pre-flight all_green, o emergency"}
               {isEnRoute && "briefing acknowledged, o emergency"}
               {isResolve && "tech capture submitted, o emergency"}
@@ -629,11 +563,7 @@ function PreflightAction({ wo, reload }) {
 
   return (
     <>
-      <ActionButton
-        onClick={() => setOpen(true)}
-        label="Pre-flight checklist"
-        tone="soft"
-      />
+      <ActionButton onClick={() => setOpen(true)} label="Pre-flight checklist" tone="soft" />
       <ActionDialog
         open={open}
         onClose={() => setOpen(false)}
@@ -656,14 +586,19 @@ function PreflightAction({ wo, reload }) {
         />
         <DialogCheckbox
           id="sitebible"
-          label="Site Bible leido"
+          label="Site Bible leído"
           checked={siteBible}
           onChange={setSiteBible}
         />
         <div
-          className={`font-mono text-2xs uppercase tracking-widest-srs mt-2 ${
-            allGreen ? "text-success" : "text-text-tertiary"
-          }`}
+          style={{
+            ...MONO_CAPS,
+            fontSize: 9.5,
+            letterSpacing: "0.14em",
+            marginTop: 8,
+            color: allGreen ? "#0A6131" : "#8B95A8",
+            fontWeight: 800,
+          }}
         >
           {allGreen ? "· all_green" : "· falta"}
         </div>
@@ -682,10 +617,7 @@ function AckBriefingAction({ wo, reload }) {
 
   return (
     <>
-      <ActionButton
-        onClick={() => setOpen(true)}
-        label="Acknowledge briefing"
-      />
+      <ActionButton onClick={() => setOpen(true)} label="Acknowledge briefing" />
       <ActionDialog
         open={open}
         onClose={() => setOpen(false)}
@@ -694,9 +626,9 @@ function AckBriefingAction({ wo, reload }) {
         submitLabel="Confirmar"
         onSubmit={submit}
       >
-        <p className="font-body text-sm text-text-secondary">
-          Confirmo que lei el briefing asignado a este work order. Queda
-          registrado en audit_log con mi user_id y timestamp.
+        <p style={{ fontFamily: JAKARTA, fontSize: 13, color: "#3D4A66", lineHeight: 1.55, fontWeight: 500 }}>
+          Confirmo que leí el briefing asignado a este work order. Queda registrado en
+          audit_log con mi user_id y timestamp.
         </p>
       </ActionDialog>
     </>
@@ -711,7 +643,6 @@ function SubmitCaptureAction({ wo, reload }) {
   const [minutes, setMinutes] = useState("");
   const [followUp, setFollowUp] = useState(false);
   const [followUpNotes, setFollowUpNotes] = useState("");
-  // photos: list of {url, kind, label, size_bytes, uploading?, error?}
   const [photos, setPhotos] = useState([]);
 
   const canSubmit =
@@ -722,7 +653,6 @@ function SubmitCaptureAction({ wo, reload }) {
   async function handleFiles(files) {
     const list = Array.from(files || []);
     if (!list.length) return;
-    // Insert pending rows optimistically
     const placeholders = list.map((f) => ({
       local_id: `pending-${Math.random()}-${f.name}`,
       url: null,
@@ -801,24 +731,24 @@ function SubmitCaptureAction({ wo, reload }) {
         open={open}
         onClose={() => setOpen(false)}
         title="Tech Capture"
-        subtitle="Ritual post-intervencion — requerido antes de resolver"
+        subtitle="Ritual post-intervención — requerido antes de resolver"
         submitLabel={uploading ? "Subiendo…" : "Submit capture"}
         submitDisabled={!canSubmit || uploading}
         onSubmit={submit}
       >
         <div>
-          <DialogLabel htmlFor="cap-found">Que encontraste</DialogLabel>
+          <DialogLabel htmlFor="cap-found">Qué encontraste</DialogLabel>
           <DialogTextarea
             id="cap-found"
             rows={3}
             value={whatFound}
             onChange={(e) => setWhatFound(e.target.value)}
-            placeholder="Sintomas, causa raiz, estado al llegar"
+            placeholder="Síntomas, causa raíz, estado al llegar"
             required
           />
         </div>
         <div>
-          <DialogLabel htmlFor="cap-did">Que hiciste</DialogLabel>
+          <DialogLabel htmlFor="cap-did">Qué hiciste</DialogLabel>
           <DialogTextarea
             id="cap-did"
             rows={3}
@@ -841,7 +771,6 @@ function SubmitCaptureAction({ wo, reload }) {
           />
         </div>
 
-        {/* Photo picker */}
         <div>
           <DialogLabel htmlFor="cap-photos" optional>
             Fotos / evidencia (15MB max por archivo)
@@ -853,21 +782,61 @@ function SubmitCaptureAction({ wo, reload }) {
             multiple
             capture="environment"
             onChange={(e) => handleFiles(e.target.files)}
-            className="block w-full text-sm text-text-primary file:mr-3 file:py-2 file:px-3 file:rounded-sm file:border-0 file:bg-primary file:text-text-inverse file:font-mono file:font-semibold file:uppercase file:tracking-widest-srs file:text-2xs hover:file:bg-primary-light cursor-pointer"
+            style={{
+              display: "block",
+              width: "100%",
+              fontSize: 13,
+              color: "#0A1628",
+              fontFamily: JAKARTA,
+              cursor: "pointer",
+            }}
           />
           {photos.length > 0 && (
-            <div className="mt-3 grid grid-cols-3 gap-2">
+            <div style={{ marginTop: 12, display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
               {photos.map((p, i) => (
                 <div
                   key={p.local_id || p.url || i}
-                  className="relative bg-surface-base rounded-sm overflow-hidden aspect-square"
+                  style={{
+                    position: "relative",
+                    background: "#F4F6F8",
+                    border: "1px solid #E2E5EC",
+                    borderRadius: 4,
+                    overflow: "hidden",
+                    aspectRatio: "1 / 1",
+                  }}
                 >
                   {p.uploading ? (
-                    <div className="w-full h-full flex items-center justify-center font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+                    <div
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        ...MONO_CAPS,
+                        fontSize: 9.5,
+                        color: "#8B95A8",
+                        letterSpacing: "0.14em",
+                      }}
+                    >
                       subiendo…
                     </div>
                   ) : p.error ? (
-                    <div className="w-full h-full flex items-center justify-center font-mono text-2xs uppercase tracking-widest-srs text-danger p-1 text-center">
+                    <div
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        ...MONO_CAPS,
+                        fontSize: 9.5,
+                        color: "#991B1B",
+                        letterSpacing: "0.14em",
+                        padding: 4,
+                        textAlign: "center",
+                      }}
+                    >
                       {p.error}
                     </div>
                   ) : p.kind === "image" ? (
@@ -878,7 +847,21 @@ function SubmitCaptureAction({ wo, reload }) {
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center font-mono text-2xs uppercase tracking-widest-srs text-text-secondary p-1 text-center">
+                    <div
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        ...MONO_CAPS,
+                        fontSize: 9.5,
+                        color: "#3D4A66",
+                        letterSpacing: "0.14em",
+                        padding: 4,
+                        textAlign: "center",
+                      }}
+                    >
                       {p.label || "file"}
                     </div>
                   )}
@@ -886,7 +869,20 @@ function SubmitCaptureAction({ wo, reload }) {
                     type="button"
                     onClick={() => removePhoto(i)}
                     title="Quitar"
-                    className="absolute top-1 right-1 bg-surface-base/90 rounded-sm px-1.5 py-0.5 font-mono text-2xs uppercase tracking-widest-srs text-danger hover:bg-danger hover:text-text-inverse transition-colors duration-fast"
+                    style={{
+                      position: "absolute",
+                      top: 4,
+                      right: 4,
+                      background: "rgba(255,255,255,0.92)",
+                      border: "1px solid #FCA5A5",
+                      borderRadius: 4,
+                      padding: "2px 6px",
+                      ...MONO_CAPS,
+                      fontSize: 9.5,
+                      color: "#991B1B",
+                      letterSpacing: "0.14em",
+                      cursor: "pointer",
+                    }}
                   >
                     ×
                   </button>
@@ -896,7 +892,7 @@ function SubmitCaptureAction({ wo, reload }) {
           )}
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
           <div>
             <DialogLabel htmlFor="cap-min" optional>
               Tiempo on site (min)
@@ -910,7 +906,7 @@ function SubmitCaptureAction({ wo, reload }) {
               placeholder="90"
             />
           </div>
-          <div className="flex items-end">
+          <div style={{ display: "flex", alignItems: "flex-end" }}>
             <DialogCheckbox
               id="cap-follow"
               label="Requiere follow-up"
@@ -929,7 +925,7 @@ function SubmitCaptureAction({ wo, reload }) {
               rows={2}
               value={followUpNotes}
               onChange={(e) => setFollowUpNotes(e.target.value)}
-              placeholder="Que falta, para cuando"
+              placeholder="Que falta, para cuándo"
             />
           </div>
         )}
@@ -961,7 +957,7 @@ function RateTechAction({ wo, reload, isClient }) {
         open={open}
         onClose={() => setOpen(false)}
         title="Rate tech"
-        subtitle="Unico por tech por WO — alimenta Skill Passport"
+        subtitle="Único por tech por WO — alimenta Skill Passport"
         submitLabel="Rate"
         onSubmit={submit}
       >
@@ -986,7 +982,7 @@ function RateTechAction({ wo, reload, isClient }) {
             rows={2}
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="Que destaco, que pulir"
+            placeholder="Qué destacó, qué pulir"
           />
         </div>
       </ActionDialog>
@@ -1007,29 +1003,25 @@ function CancelAction({ wo, reload }) {
 
   return (
     <>
-      <ActionButton
-        onClick={() => setOpen(true)}
-        label="Cancelar WO"
-        tone="destructive"
-      />
+      <ActionButton onClick={() => setOpen(true)} label="Cancelar WO" tone="destructive" />
       <ActionDialog
         open={open}
         onClose={() => setOpen(false)}
         title="Cancelar work order"
-        subtitle="Accion irreversible — sella threads y emite audit_log"
+        subtitle="Acción irreversible — sella threads y emite audit_log"
         submitLabel="Cancelar WO"
         destructive
         submitDisabled={!canSubmit}
         onSubmit={submit}
       >
         <div>
-          <DialogLabel htmlFor="cancel-reason">Razon</DialogLabel>
+          <DialogLabel htmlFor="cancel-reason">Razón</DialogLabel>
           <DialogTextarea
             id="cancel-reason"
             rows={3}
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            placeholder="Cliente retiro, out of scope, duplicado…"
+            placeholder="Cliente retiró, out of scope, duplicado…"
             required
           />
         </div>
@@ -1038,59 +1030,254 @@ function CancelAction({ wo, reload }) {
   );
 }
 
-// -------------------- Sub-components --------------------
+/* ─── CostAfterHoursSection (X-g) ──────────────────────────────── */
+
+function CostAfterHoursSection({ wo, reload }) {
+  const cs = wo.cost_snapshot || null;
+  const currency = cs?.currency || "USD";
+  const directCost =
+    (cs?.labor || 0) + (cs?.parts || 0) + (cs?.travel || 0) + (cs?.other || 0);
+  const coordCost =
+    (cs?.coordination_hours || 0) * (cs?.coordination_hourly_rate || 0);
+
+  async function toggleAfterHours() {
+    try {
+      await api.post(`/work-orders/${wo.id}/after-hours`, {
+        after_hours: !wo.after_hours,
+      });
+      reload();
+    } catch (e) {
+      alert(e.message || "error");
+    }
+  }
+
+  return (
+    <SectionCard padding={0} style={{ marginTop: 16 }}>
+      <header
+        style={{
+          padding: "14px 18px",
+          borderBottom: "1px solid #E2E5EC",
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
+          gap: 12,
+          flexWrap: "wrap",
+        }}
+      >
+        <div>
+          <SectionTitle marginBottom={4}>Cost snapshot · SRS internal</SectionTitle>
+          <div style={{ fontFamily: JAKARTA, fontSize: 14, fontWeight: 700, color: "#0A1628" }}>
+            {cs
+              ? `${directCost.toFixed(2)} ${currency} direct` +
+                (coordCost > 0 ? ` · ${coordCost.toFixed(2)} coord` : "")
+              : "Sin registrar — carga lo que gastaste"}
+          </div>
+          <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#8B95A8", letterSpacing: "0.14em", marginTop: 4 }}>
+            Alimenta P&L · no facturable al cliente
+          </div>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          <button
+            type="button"
+            onClick={toggleAfterHours}
+            title="Marca si la WO se ejecutó en horario nocturno / fin de semana — aplica multiplier del rate_card"
+            style={{
+              ...MONO_CAPS,
+              fontSize: 11,
+              letterSpacing: "0.14em",
+              padding: "8px 14px",
+              background: wo.after_hours ? "#E8A33D" : "#FFFFFF",
+              color: wo.after_hours ? "#FFFFFF" : "#3D4A66",
+              border: `1.5px solid ${wo.after_hours ? "#E8A33D" : "#C8CDD8"}`,
+              borderRadius: 6,
+              cursor: "pointer",
+              transition: "all 160ms",
+            }}
+            onMouseEnter={(e) => {
+              if (wo.after_hours) {
+                e.currentTarget.style.background = "#7E5212";
+                e.currentTarget.style.borderColor = "#7E5212";
+              } else {
+                e.currentTarget.style.color = "#7E5212";
+                e.currentTarget.style.borderColor = "#E8A33D";
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (wo.after_hours) {
+                e.currentTarget.style.background = "#E8A33D";
+                e.currentTarget.style.borderColor = "#E8A33D";
+              } else {
+                e.currentTarget.style.color = "#3D4A66";
+                e.currentTarget.style.borderColor = "#C8CDD8";
+              }
+            }}
+          >
+            {wo.after_hours ? "✓ after-hours" : "after-hours"}
+          </button>
+          <CostSnapshotAction wo={wo} reload={reload} />
+        </div>
+      </header>
+
+      {cs && (
+        <div
+          style={{
+            padding: "14px 18px",
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
+            gap: 12,
+          }}
+        >
+          <CostPill label="Labor" value={cs.labor} currency={currency} />
+          <CostPill label="Parts" value={cs.parts} currency={currency} />
+          <CostPill label="Travel" value={cs.travel} currency={currency} />
+          <CostPill label="Other" value={cs.other} currency={currency} />
+          <CostPill
+            label="Coord absorbido"
+            value={coordCost || null}
+            currency={currency}
+            hint={
+              cs.coordination_hours
+                ? `${cs.coordination_hours}h × ${cs.coordination_hourly_rate || 0}`
+                : null
+            }
+            tone="warning"
+          />
+        </div>
+      )}
+      {cs?.notes && (
+        <div style={{ padding: "0 18px 14px" }}>
+          <div
+            style={{
+              background: "#F4F6F8",
+              border: "1px solid #E2E5EC",
+              borderRadius: 4,
+              padding: "10px 12px",
+            }}
+          >
+            <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.14em", marginBottom: 4 }}>
+              Notas
+            </div>
+            <p
+              style={{
+                fontFamily: JAKARTA,
+                fontSize: 13,
+                color: "#0A1628",
+                whiteSpace: "pre-line",
+                fontWeight: 500,
+                lineHeight: 1.5,
+              }}
+            >
+              {cs.notes}
+            </p>
+          </div>
+        </div>
+      )}
+    </SectionCard>
+  );
+}
+
+function CostPill({ label, value, currency, hint, tone = "default" }) {
+  const valueColor = tone === "warning" ? "#7E5212" : "#0A1628";
+  return (
+    <div
+      style={{
+        background: "#F4F6F8",
+        border: "1px solid #E2E5EC",
+        borderRadius: 4,
+        padding: "10px 12px",
+      }}
+    >
+      <div style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.14em", marginBottom: 4 }}>
+        {label}
+      </div>
+      <div
+        style={{
+          fontFamily: JAKARTA,
+          fontSize: 16,
+          fontWeight: 800,
+          color: valueColor,
+          fontVariantNumeric: "tabular-nums",
+          lineHeight: 1,
+        }}
+      >
+        {value != null ? value.toFixed(2) : "—"}
+      </div>
+      <div style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.14em", marginTop: 4 }}>
+        {value != null ? currency : "sin cargar"}
+        {hint && ` · ${hint}`}
+      </div>
+    </div>
+  );
+}
+
+/* ─── Sub-components ───────────────────────────────────────────── */
 
 function StateBlock({ label, value, hint }) {
   return (
     <div>
-      <div className="label-caps mb-1">{label}</div>
+      <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.14em", marginBottom: 6 }}>
+        {label}
+      </div>
       <div>{value}</div>
       {hint && (
-        <div className="font-body text-2xs text-text-tertiary mt-0.5">{hint}</div>
+        <div style={{ fontFamily: JAKARTA, fontSize: 11, color: "#8B95A8", marginTop: 4, fontWeight: 500 }}>
+          {hint}
+        </div>
       )}
     </div>
   );
 }
 
 function StageTimeline({ currentStatus }) {
-  // Cancelled is displayed separately, not part of the main sequence
   const isCancelled = currentStatus === "cancelled";
   if (isCancelled) {
     return (
-      <div className="font-body text-sm text-danger">
+      <div style={{ fontFamily: JAKARTA, fontSize: 13, color: "#991B1B", fontWeight: 600 }}>
         Cancelled · flujo normal no aplica
       </div>
     );
   }
   const currentIdx = STAGES.findIndex((s) => s.key === currentStatus);
   return (
-    <div className="flex items-center gap-1 overflow-x-auto">
+    <div style={{ display: "flex", alignItems: "center", gap: 4, overflowX: "auto", paddingBottom: 4 }}>
       {STAGES.map((s, i) => {
         const done = i < currentIdx;
         const active = i === currentIdx;
+        const dotBg = active ? "#0A1628" : done ? "#16A34A" : "#C8CDD8";
+        const labelColor = active ? "#0A1628" : done ? "#3D4A66" : "#8B95A8";
         return (
-          <div key={s.key} className="flex items-center flex-shrink-0">
-            <div
-              className={`flex flex-col items-center px-2 ${
-                active ? "text-primary-light" : done ? "text-text-primary" : "text-text-tertiary"
-              }`}
-            >
+          <div key={s.key} style={{ display: "flex", alignItems: "center", flexShrink: 0 }}>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "0 8px" }}>
               <div
-                className={`w-2.5 h-2.5 rounded-full mb-1 ${
-                  active
-                    ? "bg-primary shadow-glow-primary"
-                    : done
-                    ? "bg-success"
-                    : "bg-surface-border"
-                }`}
+                style={{
+                  width: 10,
+                  height: 10,
+                  borderRadius: "50%",
+                  background: dotBg,
+                  marginBottom: 6,
+                  boxShadow: active ? "0 0 0 3px rgba(10, 22, 40, 0.18)" : "none",
+                }}
               />
-              <div className="font-mono text-2xs uppercase tracking-widest-srs whitespace-nowrap">
+              <div
+                style={{
+                  ...MONO_CAPS,
+                  fontSize: 9.5,
+                  letterSpacing: "0.12em",
+                  color: labelColor,
+                  whiteSpace: "nowrap",
+                  fontWeight: active ? 800 : 700,
+                }}
+              >
                 {s.label}
               </div>
             </div>
             {i < STAGES.length - 1 && (
               <div
-                className={`h-px w-6 ${done ? "bg-success" : "bg-surface-border"}`}
+                style={{
+                  height: 1,
+                  width: 24,
+                  background: done ? "#16A34A" : "#E2E5EC",
+                }}
               />
             )}
           </div>
@@ -1100,45 +1287,33 @@ function StageTimeline({ currentStatus }) {
   );
 }
 
-function MetaRow({ label, value }) {
-  return (
-    <div className="flex items-center justify-between gap-3 py-1.5">
-      <span className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary flex-shrink-0">
-        {label}
-      </span>
-      <span className="font-body text-sm text-text-primary truncate max-w-[55%] text-right">
-        {value}
-      </span>
-    </div>
-  );
-}
-
 function PreflightBlock({ checklist }) {
   const items = Object.entries(checklist || {});
   if (items.length === 0) {
     return (
-      <div className="font-body text-sm text-text-tertiary">— sin checklist aún —</div>
+      <div style={{ ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em" }}>
+        — sin checklist aún —
+      </div>
     );
   }
   return (
-    <div className="space-y-1">
-      {items.map(([key, val]) => (
-        <div key={key} className="flex items-center gap-2 font-body text-sm">
-          <span
-            className={`w-1.5 h-1.5 rounded-full ${
-              val === true
-                ? "bg-success"
-                : val === false
-                ? "bg-danger"
-                : "bg-text-tertiary"
-            }`}
-          />
-          <span className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
-            {key}
-          </span>
-          <span className="text-text-primary">{String(val)}</span>
-        </div>
-      ))}
+    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      {items.map(([key, val]) => {
+        const dotColor =
+          val === true ? "#16A34A" : val === false ? "#DC2626" : "#C8CDD8";
+        return (
+          <div
+            key={key}
+            style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: JAKARTA, fontSize: 13 }}
+          >
+            <span style={{ width: 6, height: 6, borderRadius: "50%", background: dotColor }} />
+            <span style={{ ...MONO_CAPS, fontSize: 9.5, color: "#8B95A8", letterSpacing: "0.12em" }}>
+              {key}
+            </span>
+            <span style={{ color: "#0A1628", fontWeight: 600 }}>{String(val)}</span>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -1146,20 +1321,29 @@ function PreflightBlock({ checklist }) {
 function HandshakeRow({ h }) {
   const geo = h.lat != null && h.lng != null ? `${h.lat.toFixed(3)}, ${h.lng.toFixed(3)}` : null;
   return (
-    <div className="bg-surface-base rounded-sm px-3 py-2">
-      <div className="flex items-center justify-between gap-2">
-        <div className="font-mono text-2xs uppercase tracking-widest-srs text-primary-light">
+    <div
+      style={{
+        background: "#F4F6F8",
+        border: "1px solid #E2E5EC",
+        borderRadius: 4,
+        padding: "10px 12px",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+        <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#0A1628", letterSpacing: "0.14em" }}>
           {h.kind}
         </div>
-        <div className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+        <div style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.12em" }}>
           {h.ts ? formatAge(h.ts) + " ago" : "—"}
         </div>
       </div>
       {h.notes && (
-        <div className="font-body text-sm text-text-primary mt-1">{h.notes}</div>
+        <div style={{ fontFamily: JAKARTA, fontSize: 13, color: "#0A1628", marginTop: 6, fontWeight: 500 }}>
+          {h.notes}
+        </div>
       )}
       {geo && (
-        <div className="font-mono text-2xs text-text-tertiary mt-1">
+        <div style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.12em", marginTop: 4 }}>
           geo {geo}
         </div>
       )}
@@ -1170,13 +1354,19 @@ function HandshakeRow({ h }) {
 function SlaItem({ label, minutes, text }) {
   return (
     <div>
-      <div className="label-caps mb-0.5">{label}</div>
-      <div className="font-mono text-text-primary">
-        {text != null
-          ? text
-          : minutes != null
-          ? formatMinutes(minutes)
-          : "—"}
+      <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.14em", marginBottom: 4 }}>
+        {label}
+      </div>
+      <div
+        style={{
+          fontFamily: MONO,
+          fontSize: 14,
+          color: "#0A1628",
+          fontWeight: 700,
+          fontVariantNumeric: "tabular-nums",
+        }}
+      >
+        {text != null ? text : minutes != null ? formatMinutes(minutes) : "—"}
       </div>
     </div>
   );
@@ -1184,13 +1374,22 @@ function SlaItem({ label, minutes, text }) {
 
 function CenteredMessage({ text }) {
   return (
-    <div className="px-8 py-16 text-center font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary">
+    <div
+      style={{
+        padding: "60px 32px",
+        textAlign: "center",
+        ...MONO_CAPS,
+        fontSize: 11,
+        color: "#8B95A8",
+        letterSpacing: "0.14em",
+      }}
+    >
       {text}
     </div>
   );
 }
 
-// -------------------- Helpers --------------------
+/* ─── Helpers ──────────────────────────────────────────────────── */
 
 function shortId(id) {
   if (!id) return null;
@@ -1221,16 +1420,7 @@ function formatMinutes(m) {
   return `${days}d`;
 }
 
-// -------------------- Scan equipment action --------------------
-//
-// Tech on-site registra equipment que encontro (Domain 11 Asset Management).
-// Backend crea/update asset + inserta asset_event (append-only). Si el serial
-// ya existia en otro site, el event_type es 'relocated'; si es nuevo,
-// 'installed'; si esta en el mismo site, 'inspected'.
-//
-// Despues de scan, el assetId + event_type vuelven y los mostramos en una
-// lista in-dialog (session buffer) para que el tech vea lo que lleva escaneado
-// sin cerrar el dialog.
+/* ─── Scan equipment action ────────────────────────────────────── */
 
 const CATEGORY_OPTIONS = [
   { v: "", l: "— elegir —" },
@@ -1256,7 +1446,7 @@ function ScanEquipmentAction({ wo, reload }) {
   const [model, setModel] = useState("");
   const [category, setCategory] = useState("");
   const [notes, setNotes] = useState("");
-  const [recent, setRecent] = useState([]); // session buffer
+  const [recent, setRecent] = useState([]);
 
   function resetForm() {
     setSerial("");
@@ -1276,28 +1466,25 @@ function ScanEquipmentAction({ wo, reload }) {
       category: category || null,
       notes: notes.trim() || null,
     };
-    const result = await api.post(
-      `/sites/${wo.site_id}/equipment/scan`,
-      body
+    const result = await api.post(`/sites/${wo.site_id}/equipment/scan`, body);
+    setRecent((r) =>
+      [
+        {
+          ...result,
+          make,
+          model,
+          asset_tag: assetTag || null,
+          ts: new Date().toISOString(),
+        },
+        ...r,
+      ].slice(0, 10)
     );
-    setRecent((r) => [
-      {
-        ...result,
-        make,
-        model,
-        asset_tag: assetTag || null,
-        ts: new Date().toISOString(),
-      },
-      ...r,
-    ].slice(0, 10));
     resetForm();
     reload();
-    // Keep dialog open — tech is typically scanning multiple items
   }
 
   function close() {
     setOpen(false);
-    // Clear session buffer when dialog closes
     setTimeout(() => setRecent([]), 300);
   }
 
@@ -1329,7 +1516,7 @@ function ScanEquipmentAction({ wo, reload }) {
             required
           />
         </div>
-        <div className="grid grid-cols-2 gap-2">
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
           <div>
             <DialogLabel htmlFor="scan-tag" optional>
               Asset tag
@@ -1344,13 +1531,26 @@ function ScanEquipmentAction({ wo, reload }) {
           </div>
           <div>
             <DialogLabel htmlFor="scan-cat" optional>
-              Categoria
+              Categoría
             </DialogLabel>
             <select
               id="scan-cat"
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="w-full bg-surface-overlay border border-surface-border rounded-sm px-3 py-2 text-text-primary font-body focus:outline-none focus:border-primary focus:shadow-glow-primary transition-all duration-fast ease-out-expo"
+              style={{
+                width: "100%",
+                height: 38,
+                border: "1px solid #C8CDD8",
+                borderRadius: 6,
+                padding: "0 12px",
+                fontFamily: JAKARTA,
+                fontSize: 13.5,
+                fontWeight: 500,
+                color: "#0A1628",
+                background: "#FFFFFF",
+                outline: "none",
+                cursor: "pointer",
+              }}
             >
               {CATEGORY_OPTIONS.map((o) => (
                 <option key={o.v} value={o.v}>
@@ -1360,7 +1560,7 @@ function ScanEquipmentAction({ wo, reload }) {
             </select>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-2">
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
           <div>
             <DialogLabel htmlFor="scan-make" optional>
               Make
@@ -1393,45 +1593,73 @@ function ScanEquipmentAction({ wo, reload }) {
             rows={2}
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="Ubicacion en rack, condicion, serial ilegible…"
+            placeholder="Ubicación en rack, condición, serial ilegible…"
           />
         </div>
 
-        {/* Session buffer: lo que el tech lleva scaneado en esta apertura */}
         {recent.length > 0 && (
-          <div className="pt-3 border-t border-surface-border">
-            <div className="label-caps mb-2">
-              Scaneados en esta sesion ({recent.length})
+          <div style={{ paddingTop: 14, borderTop: "1px solid #E2E5EC" }}>
+            <div style={{ ...MONO_CAPS, fontSize: 10, color: "#3D4A66", letterSpacing: "0.14em", marginBottom: 8 }}>
+              Scaneados en esta sesión ({recent.length})
             </div>
-            <div className="space-y-1.5 max-h-40 overflow-y-auto">
-              {recent.map((r, i) => (
-                <div
-                  key={i}
-                  className="bg-surface-base rounded-sm px-3 py-2 flex items-center justify-between gap-2"
-                >
-                  <div className="min-w-0">
-                    <div className="font-mono text-sm text-text-primary truncate">
-                      {r.serial_number}
-                    </div>
-                    {(r.make || r.model) && (
-                      <div className="font-mono text-2xs text-text-tertiary truncate">
-                        {[r.make, r.model].filter(Boolean).join(" · ")}
-                      </div>
-                    )}
-                  </div>
-                  <span
-                    className={`font-mono text-2xs uppercase tracking-widest-srs ${
-                      r.event_type === "installed"
-                        ? "text-success"
-                        : r.event_type === "relocated"
-                        ? "text-warning"
-                        : "text-text-secondary"
-                    }`}
+            <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 200, overflowY: "auto" }}>
+              {recent.map((r, i) => {
+                const eventColor =
+                  r.event_type === "installed"
+                    ? "#0A6131"
+                    : r.event_type === "relocated"
+                    ? "#7E5212"
+                    : "#3D4A66";
+                return (
+                  <div
+                    key={i}
+                    style={{
+                      background: "#F4F6F8",
+                      border: "1px solid #E2E5EC",
+                      borderRadius: 4,
+                      padding: "8px 12px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: 10,
+                    }}
                   >
-                    {r.event_type}
-                  </span>
-                </div>
-              ))}
+                    <div style={{ minWidth: 0 }}>
+                      <div
+                        style={{
+                          fontFamily: MONO,
+                          fontSize: 13,
+                          color: "#0A1628",
+                          fontWeight: 700,
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                        }}
+                      >
+                        {r.serial_number}
+                      </div>
+                      {(r.make || r.model) && (
+                        <div
+                          style={{
+                            fontFamily: MONO,
+                            fontSize: 10,
+                            color: "#8B95A8",
+                            fontWeight: 500,
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                          }}
+                        >
+                          {[r.make, r.model].filter(Boolean).join(" · ")}
+                        </div>
+                      )}
+                    </div>
+                    <span style={{ ...MONO_CAPS, fontSize: 9.5, color: eventColor, letterSpacing: "0.12em", fontWeight: 800 }}>
+                      {r.event_type}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
