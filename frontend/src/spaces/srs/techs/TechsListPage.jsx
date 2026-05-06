@@ -1,18 +1,17 @@
 /**
- * SRS Techs · list (Iter 2.52 · grid de TechCards · paleta F).
+ * SRS Equipo · list (Iter 2.53 · grid de TechCards · paleta F).
  *
  * Layout: grid auto-fit minmax(280px, 1fr) de <TechCard />.
  * Cada card muestra avatar + dot presence + nombre + cargo + ciudad·hora.
- * Las métricas detalladas (rating/jobs/level/countries) viven en
- * TechDetailPage (click navega ahí).
+ * Las métricas detalladas de Skill Passport viven en TechDetailPage
+ * (click navega ahí · solo si el user tiene membership tech_field).
  *
  * Dictado del owner (2026-05-06): "Cargo, ciudad, hora local".
+ * Update 2026-05-06: incluye SRS coordinators (Andros · Adriana) además
+ * de tech_field.
  *
  * Endpoints:
- *   GET /api/users (filter local por memberships.space === "tech_field")
- *
- * Nota: ya no se hace fetch N+1 de skill passports en la lista — se difiere
- * a TechDetailPage para reducir round-trips.
+ *   GET /api/users (filter local por srs_coordinators OR tech_field active)
  */
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -21,6 +20,12 @@ import { getTechTimeInfo } from "../../../lib/tz";
 import TechCard from "../../../components/v2-shared/TechCard";
 import { JAKARTA, MONO_CAPS } from "../../../components/v2-shared/typography";
 
+function hasTechFieldMembership(user) {
+  return (user.memberships || []).some(
+    (m) => m.space === "tech_field" && m.active
+  );
+}
+
 export default function TechsListPage() {
   const { data: users, loading } = useFetch("/users");
   const navigate = useNavigate();
@@ -28,7 +33,10 @@ export default function TechsListPage() {
 
   const techs = useMemo(() => {
     return (users || []).filter((u) =>
-      (u.memberships || []).some((m) => m.space === "tech_field" && m.active)
+      u.is_active !== false &&
+      (u.memberships || []).some(
+        (m) => m.active && (m.space === "tech_field" || m.space === "srs_coordinators")
+      )
     );
   }, [users]);
 
@@ -50,7 +58,7 @@ export default function TechsListPage() {
       {/* Header */}
       <div style={{ paddingLeft: 16, borderLeft: "3px solid #0A1628", marginBottom: 22 }}>
         <div style={{ ...MONO_CAPS, fontSize: 11, color: "#8B95A8", marginBottom: 6 }}>
-          Techs · Equipo de operaciones
+          Equipo SRS
         </div>
         <h1
           style={{
@@ -63,7 +71,7 @@ export default function TechsListPage() {
           }}
         >
           {techs.length}{" "}
-          <span style={{ color: "#3D4A66", fontWeight: 600 }}>técnicos activos</span>
+          <span style={{ color: "#3D4A66", fontWeight: 600 }}>miembros operando</span>
         </h1>
         <p
           style={{
@@ -74,7 +82,7 @@ export default function TechsListPage() {
             fontWeight: 500,
           }}
         >
-          Cargo · ciudad · hora local en vivo · click para ver Skill Passport completo
+          Cargo · ciudad · hora local en vivo · click en técnicos para ver Skill Passport
         </p>
       </div>
 
@@ -155,6 +163,10 @@ export default function TechsListPage() {
               info?.offsetText,
             ].filter(Boolean);
 
+            // Click navega a TechDetailPage solo si tiene membership tech_field
+            // (TechDetailPage requiere Skill Passport · SRS coords no lo tienen).
+            const isTech = hasTechFieldMembership(u);
+
             return (
               <TechCard
                 key={u.id}
@@ -165,7 +177,7 @@ export default function TechsListPage() {
                 color={color}
                 pulse={pulse}
                 title={tooltipParts.join(" · ")}
-                onClick={() => navigate(`/srs/techs/${u.id}`)}
+                onClick={isTech ? () => navigate(`/srs/techs/${u.id}`) : undefined}
               />
             );
           })}
