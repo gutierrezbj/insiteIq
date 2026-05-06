@@ -14,23 +14,26 @@ export const VIEWER_TZ = "Europe/Madrid";
 export const VIEWER_TZ_LABEL = "Madrid";
 
 /**
- * Registry del equipo SRS con zona horaria, horario laboral y cargo.
+ * Registry del equipo SRS con zona horaria, horario laboral, cargo y
+ * display name corto.
  *
  * Keys = `full_name` exacto del backend (matchea con `users.full_name` del
  * seed_foundation.py para que getTechTimeInfo() funcione cross-vista).
+ * `displayName` = nombre corto para tarjetas y strips (primer nombre +
+ * inicial primer apellido).
  *
  * TODO(fase Zeta): mover a backend y exponer via /api/users con campos
- * `tz` + `work_start` + `work_end` + `role_title`. Por ahora registro local
- * en frontend.
+ * `tz` + `work_start` + `work_end` + `role_title` + `display_name`. Por
+ * ahora registro local en frontend.
  */
 export const TECH_REGISTRY = {
-  "Agustin Rivera":   { tz: "America/New_York", tzLabel: "NY",     role: "Senior Consultant",    workStart: 9, workEnd: 18 },
-  "Andros Briceño":   { tz: "Europe/Madrid",    tzLabel: "Madrid", role: "Project Manager",      workStart: 8, workEnd: 19 },
-  "Adriana Bracho":   { tz: "Europe/Madrid",    tzLabel: "Madrid", role: "Accountant",           workStart: 8, workEnd: 18 },
-  "Hugo M Rodriguez": { tz: "Europe/Madrid",    tzLabel: "Madrid", role: "Tech plantilla",       workStart: 8, workEnd: 19 },
-  "Arlindo Ochoa":    { tz: "America/New_York", tzLabel: "NY",     role: "Tech external sub",    workStart: 9, workEnd: 18 },
-  "Luis Sánchez":     { tz: "America/Lima",     tzLabel: "Lima",   role: "Field Consultant CET", workStart: 8, workEnd: 17 },
-  "Yunus Hafesjee":   { tz: "Europe/London",    tzLabel: "London", role: "Account Lead London",  workStart: 9, workEnd: 18 },
+  "Agustin Rivera":   { displayName: "Agustin R",  tz: "America/New_York", tzLabel: "NY",     role: "Senior Consultant",    workStart: 9, workEnd: 18 },
+  "Andros Briceño":   { displayName: "Andros B",   tz: "Europe/Madrid",    tzLabel: "Madrid", role: "Project Manager",      workStart: 8, workEnd: 19 },
+  "Adriana Bracho":   { displayName: "Adriana B",  tz: "Europe/Madrid",    tzLabel: "Madrid", role: "Accountant",           workStart: 8, workEnd: 18 },
+  "Hugo M Rodriguez": { displayName: "Hugo R",     tz: "Europe/Madrid",    tzLabel: "Madrid", role: "Tech plantilla",       workStart: 8, workEnd: 19 },
+  "Arlindo Ochoa":    { displayName: "Arlindo O",  tz: "America/New_York", tzLabel: "NY",     role: "Tech external sub",    workStart: 9, workEnd: 18 },
+  "Luis Sánchez":     { displayName: "Luis S",     tz: "America/Lima",     tzLabel: "Lima",   role: "Field Consultant CET", workStart: 8, workEnd: 17 },
+  "Yunus Hafesjee":   { displayName: "Yunus H",    tz: "Europe/London",    tzLabel: "London", role: "Account Lead London",  workStart: 9, workEnd: 18 },
 };
 
 /**
@@ -128,6 +131,7 @@ export function getTechTimeInfo(techName, viewerTz = VIEWER_TZ) {
     diffHours,
     tzLabel: meta.tzLabel,
     role: meta.role || null,
+    displayName: meta.displayName || null,
     untilEndOfDay,
     shouldNotDisturb: status === "sleeping" || status === "weekend",
   };

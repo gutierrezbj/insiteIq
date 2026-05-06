@@ -150,13 +150,14 @@ export default function TechsListPage() {
         >
           {filtered.map((u) => {
             const info = getTechTimeInfo(u.full_name);
+            const displayName = info?.displayName || u.full_name || u.email;
             const role = info?.role || null;
             const tzLabel = info?.tzLabel || null;
             const techTime = info?.techTime || null;
             const color = info?.color || null;
             const pulse = info?.status === "onduty";
             const tooltipParts = [
-              u.full_name,
+              u.full_name,  // tooltip muestra el formal completo
               role,
               tzLabel && techTime ? `${tzLabel} ${techTime}` : null,
               info?.label,
@@ -170,7 +171,7 @@ export default function TechsListPage() {
             return (
               <TechCard
                 key={u.id}
-                name={u.full_name || u.email}
+                name={displayName}
                 role={role}
                 tzLabel={tzLabel}
                 techTime={techTime}

@@ -27,6 +27,7 @@ function TeamCard({ name }) {
 
   const dotColor = info.color;
   const pulse = info.status === "onduty";
+  const display = info.displayName || name;
 
   return (
     <div
@@ -50,10 +51,10 @@ function TeamCard({ name }) {
       <span style={{ lineHeight: 0, flexShrink: 0 }}>
         <Icon icon={ICONS.user} size={18} color="#3D4A66" />
       </span>
-      {/* Nombre + hora local. */}
+      {/* Nombre corto + hora local. */}
       <div className="leading-tight min-w-0">
         <p className="text-[12px] font-jakarta font-semibold text-cl-text truncate max-w-[160px]">
-          {name}
+          {display}
         </p>
         <p className="text-[10px] font-mono text-cl-text-dim truncate max-w-[160px]">
           {info.tzLabel} · {info.techTime}
