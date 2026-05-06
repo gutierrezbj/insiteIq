@@ -1,41 +1,30 @@
 /**
- * SRS Techs · list (Iter 2.25 · paleta F NAVEGANTE).
+ * SRS Techs · list (Iter 2.52 · grid de TechCards · paleta F).
  *
- * Migración v1 amber legacy → v2 paleta F usando v2-shared.
- * Decision #4 Modo 1: Skill Passport visible (level + jobs + rating +
- * countries). Sort por rating_avg desc → jobs_completed desc.
+ * Layout: grid auto-fit minmax(280px, 1fr) de <TechCard />.
+ * Cada card muestra avatar + dot presence + nombre + cargo + ciudad·hora.
+ * Las métricas detalladas (rating/jobs/level/countries) viven en
+ * TechDetailPage (click navega ahí).
+ *
+ * Dictado del owner (2026-05-06): "Cargo, ciudad, hora local".
  *
  * Endpoints:
  *   GET /api/users (filter local por memberships.space === "tech_field")
- *   GET /api/techs/{id}/passport (N+1 paralelo, OK para tenant scale)
+ *
+ * Nota: ya no se hace fetch N+1 de skill passports en la lista — se difiere
+ * a TechDetailPage para reducir round-trips.
  */
-import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
-import { api } from "../../../lib/api";
+import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useFetch } from "../../../lib/useFetch";
-import { JAKARTA, MONO, MONO_CAPS } from "../../../components/v2-shared/typography";
-
-const LEVEL_STYLES = {
-  bronze:  { dot: "#A16207", label: "BRONZE" },
-  silver:  { dot: "#94A3B8", label: "SILVER" },
-  gold:    { dot: "#CA8A04", label: "GOLD" },
-  unrated: { dot: "#C8CDD8", label: "UNRATED" },
-};
-
-function LevelPill({ level }) {
-  const s = LEVEL_STYLES[level] || LEVEL_STYLES.unrated;
-  return (
-    <span style={{ ...MONO_CAPS, display: "inline-flex", alignItems: "center", gap: 6, fontSize: 9.5, color: "#3D4A66" }}>
-      <span style={{ width: 6, height: 6, borderRadius: "50%", background: s.dot }} />
-      {s.label}
-    </span>
-  );
-}
+import { getTechTimeInfo } from "../../../lib/tz";
+import TechCard from "../../../components/v2-shared/TechCard";
+import { JAKARTA, MONO_CAPS } from "../../../components/v2-shared/typography";
 
 export default function TechsListPage() {
   const { data: users, loading } = useFetch("/users");
-  const [passports, setPassports] = useState({});
-  const [loadingPassports, setLoadingPassports] = useState(false);
+  const navigate = useNavigate();
+  const [query, setQuery] = useState("");
 
   const techs = useMemo(() => {
     return (users || []).filter((u) =>
@@ -43,42 +32,25 @@ export default function TechsListPage() {
     );
   }, [users]);
 
-  useEffect(() => {
-    if (!techs.length) return;
-    let alive = true;
-    setLoadingPassports(true);
-    Promise.all(
-      techs.map((t) =>
-        api
-          .get(`/techs/${t.id}/passport`)
-          .then((p) => [t.id, p])
-          .catch(() => [t.id, null])
-      )
-    ).then((entries) => {
-      if (!alive) return;
-      const map = {};
-      for (const [k, v] of entries) if (v) map[k] = v;
-      setPassports(map);
-      setLoadingPassports(false);
-    });
-    return () => { alive = false; };
-  }, [techs]);
-
-  const rows = techs
-    .map((t) => ({ user: t, passport: passports[t.id] }))
-    .sort((a, b) => {
-      const ar = a.passport?.rating_avg || 0;
-      const br = b.passport?.rating_avg || 0;
-      if (br !== ar) return br - ar;
-      return (b.passport?.jobs_completed || 0) - (a.passport?.jobs_completed || 0);
-    });
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return [...techs].sort((a, b) =>
+      (a.full_name || "").localeCompare(b.full_name || "")
+    );
+    return techs
+      .filter((t) => {
+        const hay = [t.full_name, t.email].filter(Boolean).join(" ").toLowerCase();
+        return hay.includes(q);
+      })
+      .sort((a, b) => (a.full_name || "").localeCompare(b.full_name || ""));
+  }, [techs, query]);
 
   return (
     <div style={{ padding: "32px 40px", maxWidth: 1400 }}>
       {/* Header */}
       <div style={{ paddingLeft: 16, borderLeft: "3px solid #0A1628", marginBottom: 22 }}>
         <div style={{ ...MONO_CAPS, fontSize: 11, color: "#8B95A8", marginBottom: 6 }}>
-          Techs · Skill Passports
+          Techs · Equipo de operaciones
         </div>
         <h1
           style={{
@@ -90,162 +62,214 @@ export default function TechsListPage() {
             lineHeight: 1.1,
           }}
         >
-          {techs.length} <span style={{ color: "#3D4A66", fontWeight: 600 }}>techs operando</span>
+          {techs.length}{" "}
+          <span style={{ color: "#3D4A66", fontWeight: 600 }}>técnicos activos</span>
         </h1>
-        <p style={{ fontFamily: JAKARTA, fontSize: 13, color: "#3D4A66", marginTop: 6, fontWeight: 500 }}>
-          Decision #4 Modo 1 · jobs + rating + level + quality marks
+        <p
+          style={{
+            fontFamily: JAKARTA,
+            fontSize: 13,
+            color: "#3D4A66",
+            marginTop: 6,
+            fontWeight: 500,
+          }}
+        >
+          Cargo · ciudad · hora local en vivo · click para ver Skill Passport completo
         </p>
       </div>
 
-      {/* Table */}
+      {/* Filter bar */}
       <div
         style={{
           background: "#FFFFFF",
           border: "1px solid #E2E5EC",
-          borderRadius: 8,
-          overflow: "hidden",
-          boxShadow: "0 1px 3px rgba(10, 22, 40, 0.05)",
+          borderLeft: "3px solid #0A1628",
+          borderRadius: 6,
+          padding: 14,
+          marginBottom: 16,
+          display: "flex",
+          flexWrap: "wrap",
+          gap: 14,
+          alignItems: "flex-end",
         }}
       >
+        <div>
+          <label htmlFor="q" style={filterLabelStyle}>
+            Buscar
+          </label>
+          <input
+            id="q"
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="nombre o email…"
+            style={{ ...filterInputStyle, width: 260 }}
+            onFocus={(e) => {
+              e.currentTarget.style.border = "1.5px solid #0A1628";
+              e.currentTarget.style.boxShadow = "0 0 0 3px rgba(10, 22, 40, 0.10)";
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.border = "1px solid #C8CDD8";
+              e.currentTarget.style.boxShadow = "none";
+            }}
+          />
+        </div>
+        <div
+          style={{
+            marginLeft: "auto",
+            ...MONO_CAPS,
+            fontSize: 11,
+            color: "#0A1628",
+            letterSpacing: "0.14em",
+            fontVariantNumeric: "tabular-nums",
+          }}
+        >
+          <span style={{ fontWeight: 800 }}>{filtered.length}</span>{" "}
+          <span style={{ color: "#8B95A8" }}>/ {techs.length}</span>
+        </div>
+      </div>
+
+      {/* Grid de cards */}
+      {loading && <SkeletonGrid />}
+      {!loading && filtered.length === 0 && <EmptyMsg query={query} totalTechs={techs.length} />}
+      {!loading && filtered.length > 0 && (
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "3fr 2fr 1fr 2fr 2fr 2fr",
-            gap: 12,
-            padding: "12px 18px",
-            background: "#F4F6F8",
-            borderBottom: "1px solid #E2E5EC",
-            ...MONO_CAPS,
-            fontSize: 10,
-            color: "#3D4A66",
-            letterSpacing: "0.14em",
+            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+            gap: 14,
           }}
         >
-          <div>Tech</div>
-          <div>Level</div>
-          <div style={{ textAlign: "right" }}>Jobs</div>
-          <div style={{ textAlign: "right" }}>Rating</div>
-          <div>Employment</div>
-          <div style={{ textAlign: "right" }}>Countries</div>
-        </div>
+          {filtered.map((u) => {
+            const info = getTechTimeInfo(u.full_name);
+            const role = info?.role || null;
+            const tzLabel = info?.tzLabel || null;
+            const techTime = info?.techTime || null;
+            const color = info?.color || null;
+            const pulse = info?.status === "onduty";
+            const tooltipParts = [
+              u.full_name,
+              role,
+              tzLabel && techTime ? `${tzLabel} ${techTime}` : null,
+              info?.label,
+              info?.offsetText,
+            ].filter(Boolean);
 
-        {(loading || loadingPassports) && <Empty text="cargando…" />}
-        {!loading && rows.length === 0 && <Empty text="— sin techs —" />}
-        {rows.map(({ user: t, passport: p }) => (
-          <Link
-            key={t.id}
-            to={`/srs/techs/${t.id}`}
-            style={{
-              display: "grid",
-              gridTemplateColumns: "3fr 2fr 1fr 2fr 2fr 2fr",
-              gap: 12,
-              padding: "14px 18px",
-              borderBottom: "1px solid #E2E5EC",
-              alignItems: "center",
-              textDecoration: "none",
-              transition: "background 160ms",
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = "#F7F8FA")}
-            onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-          >
-            <div style={{ minWidth: 0 }}>
-              <div
-                style={{
-                  fontFamily: JAKARTA,
-                  fontSize: 14,
-                  fontWeight: 600,
-                  color: "#0A1628",
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                }}
-              >
-                {t.full_name || "—"}
-              </div>
-              <div
-                style={{
-                  fontFamily: MONO,
-                  fontSize: 11,
-                  color: "#8B95A8",
-                  fontWeight: 500,
-                  marginTop: 2,
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                }}
-              >
-                {t.email}
-              </div>
-            </div>
-            <div>
-              <LevelPill level={p?.level || "unrated"} />
-            </div>
-            <div style={{ textAlign: "right" }}>
-              <div
-                style={{
-                  fontFamily: JAKARTA,
-                  fontSize: 16,
-                  fontWeight: 700,
-                  color: "#0A1628",
-                  fontVariantNumeric: "tabular-nums",
-                  lineHeight: 1,
-                }}
-              >
-                {p?.jobs_completed ?? "—"}
-              </div>
-            </div>
-            <div style={{ textAlign: "right" }}>
-              {p?.rating_count ? (
-                <>
-                  <div
-                    style={{
-                      fontFamily: JAKARTA,
-                      fontSize: 16,
-                      fontWeight: 700,
-                      color: "#0A1628",
-                      fontVariantNumeric: "tabular-nums",
-                      lineHeight: 1,
-                    }}
-                  >
-                    {p.rating_avg.toFixed(2)}
-                  </div>
-                  <div style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.12em", marginTop: 3 }}>
-                    · {p.rating_count} rating{p.rating_count === 1 ? "" : "s"}
-                  </div>
-                </>
-              ) : (
-                <span style={{ ...MONO_CAPS, fontSize: 9.5, color: "#8B95A8", letterSpacing: "0.14em" }}>
-                  sin ratings
-                </span>
-              )}
-            </div>
-            <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.14em" }}>
-              {p?.employment_type || t.employment_type || "—"}
-            </div>
-            <div
-              style={{
-                textAlign: "right",
-                ...MONO_CAPS,
-                fontSize: 9.5,
-                color: "#3D4A66",
-                letterSpacing: "0.14em",
-              }}
-            >
-              {(p?.countries_covered || []).length > 0
-                ? p.countries_covered.join(" · ")
-                : "—"}
-            </div>
-          </Link>
-        ))}
-      </div>
+            return (
+              <TechCard
+                key={u.id}
+                name={u.full_name || u.email}
+                role={role}
+                tzLabel={tzLabel}
+                techTime={techTime}
+                color={color}
+                pulse={pulse}
+                title={tooltipParts.join(" · ")}
+                onClick={() => navigate(`/srs/techs/${u.id}`)}
+              />
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
 
-function Empty({ text }) {
+// ---- helpers ----
+
+const filterLabelStyle = {
+  ...MONO_CAPS,
+  display: "block",
+  fontSize: 9.5,
+  color: "#3D4A66",
+  letterSpacing: "0.14em",
+  marginBottom: 4,
+};
+
+const filterInputStyle = {
+  height: 32,
+  border: "1px solid #C8CDD8",
+  borderRadius: 6,
+  padding: "0 10px",
+  fontFamily: JAKARTA,
+  fontSize: 13,
+  fontWeight: 500,
+  color: "#0A1628",
+  outline: "none",
+  transition: "all 160ms",
+};
+
+function SkeletonGrid() {
   return (
-    <div style={{ padding: "24px 18px", ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em" }}>
-      {text}
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+        gap: 14,
+      }}
+    >
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div
+          key={i}
+          style={{
+            background: "#FFFFFF",
+            border: "1px solid #E2E5EC",
+            borderLeft: "3px solid #E2E5EC",
+            borderRadius: 8,
+            padding: 16,
+            height: 92,
+            display: "flex",
+            alignItems: "center",
+            gap: 14,
+          }}
+        >
+          <div
+            style={{
+              width: 44,
+              height: 44,
+              borderRadius: "50%",
+              background: "#F0F2F5",
+              animation: "pulse 1.4s ease-in-out infinite",
+            }}
+          />
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
+            <div style={{ height: 12, background: "#F0F2F5", borderRadius: 4, width: "60%" }} />
+            <div style={{ height: 10, background: "#F4F6F8", borderRadius: 4, width: "40%" }} />
+            <div style={{ height: 9, background: "#F7F8FA", borderRadius: 4, width: "30%" }} />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function EmptyMsg({ query, totalTechs }) {
+  return (
+    <div
+      style={{
+        background: "#FFFFFF",
+        border: "1px solid #E2E5EC",
+        borderRadius: 8,
+        padding: "40px 24px",
+        textAlign: "center",
+      }}
+    >
+      <div
+        style={{
+          ...MONO_CAPS,
+          fontSize: 11,
+          color: "#8B95A8",
+          letterSpacing: "0.14em",
+          marginBottom: 6,
+        }}
+      >
+        — sin matches —
+      </div>
+      <div style={{ fontFamily: JAKARTA, fontSize: 14, color: "#3D4A66", fontWeight: 500 }}>
+        {query
+          ? `Ningún técnico match con "${query}"`
+          : `No hay técnicos activos · total ${totalTechs}`}
+      </div>
     </div>
   );
 }

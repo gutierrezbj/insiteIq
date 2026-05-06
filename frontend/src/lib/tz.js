@@ -14,17 +14,18 @@ export const VIEWER_TZ = "Europe/Madrid";
 export const VIEWER_TZ_LABEL = "Madrid";
 
 /**
- * Registry de técnicos con zona horaria y horario laboral.
+ * Registry de técnicos con zona horaria, horario laboral y cargo.
  * TODO(fase Zeta): mover a backend y exponer via /api/users con campos
- * `tz` + `work_start` + `work_end`. Por ahora registro local en frontend.
+ * `tz` + `work_start` + `work_end` + `role_title`. Por ahora registro local
+ * en frontend.
  */
 export const TECH_REGISTRY = {
-  "Agustin Rivera": { tz: "America/New_York", tzLabel: "NY", workStart: 9, workEnd: 18 },
-  "Agustín C.":      { tz: "Europe/Madrid",    tzLabel: "Madrid", workStart: 8, workEnd: 19 },
-  "Hugo Q.":         { tz: "Europe/Madrid",    tzLabel: "Madrid", workStart: 8, workEnd: 19 },
-  "Arlindo O.":      { tz: "Europe/Madrid",    tzLabel: "Madrid", workStart: 8, workEnd: 19 },
-  "Luis S.":         { tz: "America/Lima",     tzLabel: "Lima",   workStart: 8, workEnd: 17 },
-  "Yunus H.":        { tz: "Europe/London",    tzLabel: "London", workStart: 9, workEnd: 18 },
+  "Agustin Rivera": { tz: "America/New_York", tzLabel: "NY",     role: "Top tech NY",          workStart: 9, workEnd: 18 },
+  "Agustín C.":     { tz: "Europe/Madrid",    tzLabel: "Madrid", role: "Tech plantilla",       workStart: 8, workEnd: 19 },
+  "Hugo Q.":        { tz: "Europe/Madrid",    tzLabel: "Madrid", role: "Tech plantilla",       workStart: 8, workEnd: 19 },
+  "Arlindo O.":     { tz: "Europe/Madrid",    tzLabel: "Madrid", role: "Tech external sub",    workStart: 8, workEnd: 19 },
+  "Luis S.":        { tz: "America/Lima",     tzLabel: "Lima",   role: "Field Consultant CET", workStart: 8, workEnd: 17 },
+  "Yunus H.":       { tz: "Europe/London",    tzLabel: "London", role: "Account Lead London",  workStart: 9, workEnd: 18 },
 };
 
 /**
@@ -121,6 +122,7 @@ export function getTechTimeInfo(techName, viewerTz = VIEWER_TZ) {
     offsetText,
     diffHours,
     tzLabel: meta.tzLabel,
+    role: meta.role || null,
     untilEndOfDay,
     shouldNotDisturb: status === "sleeping" || status === "weekend",
   };
