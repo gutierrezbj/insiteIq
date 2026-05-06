@@ -12,6 +12,7 @@
  *   GET /api/projects/{id}/work-orders  → WOs in project
  */
 import { Link, useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useFetch } from "../../../lib/useFetch";
 import { useAuth } from "../../../contexts/AuthContext";
 import EquipmentSection from "../../../components/project/EquipmentSection";
@@ -37,6 +38,7 @@ const CLUSTER_STATUS_COLOR = {
 };
 
 export default function ProjectDetailPage() {
+  const { t } = useTranslation("common");
   const { project_id } = useParams();
   const { user } = useAuth();
   const isSrs = !!user?.memberships?.some((m) => m.space === "srs_coordinators");
@@ -55,15 +57,15 @@ export default function ProjectDetailPage() {
     { deps: [project_id] }
   );
 
-  if (pLoading) return <CenteredMessage text="cargando…" />;
-  if (!project) return <CenteredMessage text="— proyecto no encontrado —" />;
+  if (pLoading) return <CenteredMessage text={t("common.loading")} />;
+  if (!project) return <CenteredMessage text={t("page_projects.not_found")} />;
 
   const kpis = dashboard?.kpis || {};
   const buckets = dashboard?.work_orders || {};
 
   return (
     <div style={{ padding: "32px 40px", maxWidth: 1400 }}>
-      <BackLinkV2 to="/srs/projects" label="Projects" />
+      <BackLinkV2 to="/srs/projects" label={t("page_projects.back_label")} />
 
       {/* Header */}
       <div
@@ -121,27 +123,27 @@ export default function ProjectDetailPage() {
         }}
       >
         <KpiTile
-          label="Progress"
+          label={t("page_projects.kpi_progress")}
           value={`${kpis.progress_pct ?? 0}%`}
-          hint={`${buckets.completed ?? 0} de ${project.total_sites_target ?? "—"}`}
+          hint={t("page_projects.kpi_progress_hint", { done: buckets.completed ?? 0, total: project.total_sites_target ?? "—" })}
           tone="primary"
         />
         <KpiTile
-          label="SLA compliance"
+          label={t("page_projects.kpi_sla_compliance")}
           value={kpis.sla_compliance_pct != null ? `${kpis.sla_compliance_pct}%` : "—"}
-          hint="closed within deadline"
+          hint={t("page_projects.kpi_sla_compliance_hint")}
           tone={kpis.sla_compliance_pct >= 90 ? "success" : "warning"}
         />
         <KpiTile
-          label="Throughput 7d"
+          label={t("page_projects.kpi_throughput_7d")}
           value={kpis.throughput_week ?? 0}
-          hint="WOs closed last week"
+          hint={t("page_projects.kpi_throughput_hint")}
           tone="default"
         />
         <KpiTile
-          label="Incidencias activas"
+          label={t("page_projects.kpi_incidents_active")}
           value={kpis.incidents_active ?? 0}
-          hint="high/critical abiertas"
+          hint={t("page_projects.kpi_incidents_hint")}
           tone={(kpis.incidents_active ?? 0) > 0 ? "danger" : "default"}
         />
       </div>
@@ -157,33 +159,33 @@ export default function ProjectDetailPage() {
         {/* Left col · Metadata + Delivery + Clusters */}
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           <SectionCard>
-            <SectionTitle>Metadata</SectionTitle>
+            <SectionTitle>{t("page_projects.section_metadata")}</SectionTitle>
             <dl style={{ display: "flex", flexDirection: "column" }}>
-              <MetaRow label="Client org" value={shortId(project.client_organization_id)} />
-              <MetaRow label="End client" value={shortId(project.end_client_organization_id) || "—"} />
-              <MetaRow label="Service agreement" value={shortId(project.service_agreement_id)} />
-              <MetaRow label="PO number" value={project.po_number || "—"} />
-              <MetaRow label="Playbook" value={project.playbook_template || "—"} />
-              <MetaRow label="Cluster lead" value={shortId(project.cluster_lead_user_id) || "—"} />
-              <MetaRow label="Field senior" value={shortId(project.field_senior_user_id) || "—"} />
-              <MetaRow label="SRS coordinator" value={shortId(project.srs_coordinator_user_id) || "—"} />
+              <MetaRow label={t("page_projects.meta_client_org")} value={shortId(project.client_organization_id)} />
+              <MetaRow label={t("page_projects.meta_end_client")} value={shortId(project.end_client_organization_id) || "—"} />
+              <MetaRow label={t("page_projects.meta_service_agreement")} value={shortId(project.service_agreement_id)} />
+              <MetaRow label={t("page_projects.meta_po_number")} value={project.po_number || "—"} />
+              <MetaRow label={t("page_projects.meta_playbook")} value={project.playbook_template || "—"} />
+              <MetaRow label={t("page_projects.meta_cluster_lead")} value={shortId(project.cluster_lead_user_id) || "—"} />
+              <MetaRow label={t("page_projects.meta_field_senior")} value={shortId(project.field_senior_user_id) || "—"} />
+              <MetaRow label={t("page_projects.meta_srs_coordinator")} value={shortId(project.srs_coordinator_user_id) || "—"} />
               <MetaRow
-                label="Target end"
+                label={t("page_projects.meta_target_end")}
                 value={project.target_end_date ? new Date(project.target_end_date).toLocaleDateString() : "—"}
               />
               <MetaRow
-                label="Actual end"
+                label={t("page_projects.meta_actual_end")}
                 value={project.actual_end_date ? new Date(project.actual_end_date).toLocaleDateString() : "—"}
               />
-              <MetaRow label="Total sites target" value={project.total_sites_target ?? "—"} />
+              <MetaRow label={t("page_projects.meta_total_sites_target")} value={project.total_sites_target ?? "—"} />
             </dl>
           </SectionCard>
 
           {project.delivery_chain?.length > 0 && (
             <SectionCard>
-              <SectionTitle>Delivery chain</SectionTitle>
+              <SectionTitle>{t("page_projects.section_delivery_chain")}</SectionTitle>
               <ol style={{ display: "flex", flexDirection: "column", gap: 6, listStyle: "none", padding: 0 }}>
-                {project.delivery_chain.map((t, i) => (
+                {project.delivery_chain.map((tier, i) => (
                   <li
                     key={i}
                     style={{
@@ -205,10 +207,10 @@ export default function ProjectDetailPage() {
                         color: "#8B95A8",
                       }}
                     >
-                      {t.tier_index}
+                      {tier.tier_index}
                     </span>
                     <span style={{ ...MONO_CAPS, fontSize: 9.5, color: "#0A1628", letterSpacing: "0.14em" }}>
-                      {t.role}
+                      {tier.role}
                     </span>
                     <span
                       style={{
@@ -219,7 +221,7 @@ export default function ProjectDetailPage() {
                         fontWeight: 500,
                       }}
                     >
-                      {shortId(t.organization_id)}
+                      {shortId(tier.organization_id)}
                     </span>
                   </li>
                 ))}
@@ -228,10 +230,10 @@ export default function ProjectDetailPage() {
           )}
 
           <SectionCard>
-            <SectionTitle>Cluster groups ({clusters?.length ?? 0})</SectionTitle>
+            <SectionTitle>{t("page_projects.section_clusters_count", { count: clusters?.length ?? 0 })}</SectionTitle>
             {(!clusters || clusters.length === 0) && (
               <div style={{ ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em" }}>
-                — sin clusters aún —
+                {t("page_projects.empty_no_clusters_yet")}
               </div>
             )}
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -243,7 +245,7 @@ export default function ProjectDetailPage() {
         {/* Right col · WO buckets + WOs list */}
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           <SectionCard>
-            <SectionTitle>WO buckets por status</SectionTitle>
+            <SectionTitle>{t("page_projects.section_wo_buckets")}</SectionTitle>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(110px, 1fr))", gap: 8 }}>
               {Object.entries(buckets.by_status || {}).map(([k, v]) => (
                 <div
@@ -274,7 +276,7 @@ export default function ProjectDetailPage() {
               ))}
               {Object.keys(buckets.by_status || {}).length === 0 && (
                 <div style={{ ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em", gridColumn: "1 / -1" }}>
-                  — sin work orders aún —
+                  {t("page_projects.empty_no_wos_yet")}
                 </div>
               )}
             </div>
@@ -288,11 +290,11 @@ export default function ProjectDetailPage() {
               }}
             >
               <div style={{ ...MONO_CAPS, fontSize: 10, color: "#3D4A66", letterSpacing: "0.14em" }}>
-                Work orders ({projectWos?.length ?? 0})
+                {t("page_projects.section_work_orders_count", { count: projectWos?.length ?? 0 })}
               </div>
             </header>
             <div style={{ maxHeight: "70vh", overflowY: "auto" }}>
-              {(!projectWos || projectWos.length === 0) && <EmptyRow text="— sin WOs aún —" />}
+              {(!projectWos || projectWos.length === 0) && <EmptyRow text={t("page_projects.empty_no_wos")} />}
               {projectWos?.map((w) => <WoRow key={w.id} wo={w} />)}
             </div>
           </SectionCard>
@@ -313,7 +315,7 @@ export default function ProjectDetailPage() {
           letterSpacing: "0.14em",
         }}
       >
-        Iter 2.22 · Rollout Command Center · paleta F NAVEGANTE
+        {t("page_projects.footer_iter_detail")}
       </p>
     </div>
   );
@@ -322,6 +324,7 @@ export default function ProjectDetailPage() {
 /* ─── Sub-components específicos del project ─────────────────── */
 
 function ClusterRow({ c }) {
+  const { t } = useTranslation("common");
   const color = CLUSTER_STATUS_COLOR[c.status] || CLUSTER_STATUS_COLOR.proposed;
   return (
     <div
@@ -356,7 +359,7 @@ function ClusterRow({ c }) {
         </span>
       </div>
       <div style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.14em", marginTop: 4 }}>
-        {c.site_ids?.length ?? 0} sites
+        {t("page_projects.cluster_sites_count", { count: c.site_ids?.length ?? 0 })}
       </div>
     </div>
   );

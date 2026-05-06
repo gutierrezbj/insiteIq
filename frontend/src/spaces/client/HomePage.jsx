@@ -6,6 +6,7 @@
  */
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "../../contexts/AuthContext";
 import { useFetch } from "../../lib/useFetch";
 import {
@@ -15,6 +16,7 @@ import {
 import { JAKARTA, MONO_CAPS } from "../../components/v2-shared/typography";
 
 export default function ClientHome() {
+  const { t } = useTranslation("common");
   const { user } = useAuth();
   const { data: projects } = useFetch("/projects");
   const { data: workOrders } = useFetch("/work-orders?limit=100");
@@ -31,7 +33,7 @@ export default function ClientHome() {
     <div style={{ padding: "32px 40px", maxWidth: 1400 }}>
       <div style={{ paddingLeft: 16, borderLeft: "3px solid #0A1628", marginBottom: 32 }}>
         <div style={{ ...MONO_CAPS, fontSize: 11, color: "#8B95A8", marginBottom: 6 }}>
-          Status
+          {t("page_client_home.kicker_status")}
         </div>
         <h1
           style={{
@@ -43,7 +45,7 @@ export default function ClientHome() {
             lineHeight: 1.1,
           }}
         >
-          {user?.full_name?.split(" ")[0] || "Cliente"}
+          {user?.full_name?.split(" ")[0] || t("page_client_home.fallback_name")}
         </h1>
         <p
           style={{
@@ -54,7 +56,7 @@ export default function ClientHome() {
             fontWeight: 500,
           }}
         >
-          Tus engagements con SRS · updates en tiempo real
+          {t("page_client_home.subtitle")}
         </p>
       </div>
 
@@ -66,16 +68,16 @@ export default function ClientHome() {
           marginBottom: 32,
         }}
       >
-        <SnapshotCard label="Proyectos activos" value={projs.length} />
-        <SnapshotCard label="Intervenciones activas" value={activeWOs.length} />
+        <SnapshotCard label={t("page_client_home.snap_active_projects")} value={projs.length} />
+        <SnapshotCard label={t("page_client_home.snap_active_interventions")} value={activeWOs.length} />
         <SnapshotCard
-          label="Acciones pendientes"
+          label={t("page_client_home.snap_pending_actions")}
           value={
             wos.filter(
               (w) => w.ball_in_court?.side === "client" && w.status === "resolved"
             ).length
           }
-          hint="esperando tu sign-off"
+          hint={t("page_client_home.snap_pending_hint")}
         />
       </div>
 
@@ -88,7 +90,7 @@ export default function ClientHome() {
       >
         <section>
           <div style={{ ...MONO_CAPS, fontSize: 10, color: "#3D4A66", letterSpacing: "0.14em", marginBottom: 12 }}>
-            Proyectos
+            {t("page_client_home.section_projects")}
           </div>
           <div
             style={{
@@ -100,7 +102,7 @@ export default function ClientHome() {
           >
             {projs.length === 0 && (
               <div style={{ padding: "20px 16px", ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em" }}>
-                — sin proyectos activos —
+                {t("page_client_home.empty_no_active_projects")}
               </div>
             )}
             {projs.map((p, i) => (
@@ -139,7 +141,7 @@ export default function ClientHome() {
 
         <section>
           <div style={{ ...MONO_CAPS, fontSize: 10, color: "#3D4A66", letterSpacing: "0.14em", marginBottom: 12 }}>
-            Intervenciones recientes
+            {t("page_client_home.section_recent_interventions")}
           </div>
           <div
             style={{
@@ -151,7 +153,7 @@ export default function ClientHome() {
           >
             {wos.length === 0 && (
               <div style={{ padding: "20px 16px", ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em" }}>
-                — ninguna registrada —
+                {t("page_client_home.empty_no_interventions")}
               </div>
             )}
             {wos.slice(0, 10).map((w, i, arr) => (
@@ -196,7 +198,7 @@ export default function ClientHome() {
       </div>
 
       <p style={{ marginTop: 32, ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em" }}>
-        Vista cliente · detalles operativos internos no se exponen acá
+        {t("page_client_home.footer_note")}
       </p>
     </div>
   );

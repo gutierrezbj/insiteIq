@@ -10,11 +10,13 @@
  */
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useFetch } from "../../../lib/useFetch";
 import { ProjectStatusPill } from "../../../components/v2-shared/Pills";
 import { JAKARTA, MONO_CAPS } from "../../../components/v2-shared/typography";
 
 export default function ProjectsListPage() {
+  const { t } = useTranslation("common");
   const { data, loading } = useFetch("/projects");
   const projects = useMemo(() => data || [], [data]);
 
@@ -35,7 +37,7 @@ export default function ProjectsListPage() {
         }}
       >
         <div style={{ ...MONO_CAPS, fontSize: 11, color: "#8B95A8", marginBottom: 6 }}>
-          Projects
+          {t("page_projects.kicker")}
         </div>
         <h1
           style={{
@@ -47,12 +49,12 @@ export default function ProjectsListPage() {
             lineHeight: 1.1,
           }}
         >
-          {projects.length} <span style={{ color: "#3D4A66", fontWeight: 600 }}>proyectos</span>
+          {projects.length} <span style={{ color: "#3D4A66", fontWeight: 600 }}>{t("page_projects.title_count_suffix")}</span>
         </h1>
         <div style={{ marginTop: 10, display: "flex", flexWrap: "wrap", gap: 8 }}>
-          {Object.entries(byType).map(([t, n]) => (
+          {Object.entries(byType).map(([type, n]) => (
             <span
-              key={t}
+              key={type}
               style={{
                 padding: "4px 10px",
                 background: "#FFFFFF",
@@ -64,7 +66,7 @@ export default function ProjectsListPage() {
                 letterSpacing: "0.12em",
               }}
             >
-              {t} · <span style={{ color: "#3D4A66", fontWeight: 800, marginLeft: 2 }}>{n}</span>
+              {type} · <span style={{ color: "#3D4A66", fontWeight: 800, marginLeft: 2 }}>{n}</span>
             </span>
           ))}
         </div>
@@ -95,16 +97,16 @@ export default function ProjectsListPage() {
             letterSpacing: "0.14em",
           }}
         >
-          <div>Code / Título</div>
-          <div>Type</div>
-          <div>Pattern</div>
-          <div>Status</div>
-          <div style={{ textAlign: "right" }}>Target sites</div>
+          <div>{t("page_projects.col_code_title")}</div>
+          <div>{t("page_projects.col_type")}</div>
+          <div>{t("page_projects.col_pattern")}</div>
+          <div>{t("page_projects.col_status")}</div>
+          <div style={{ textAlign: "right" }}>{t("page_projects.col_target_sites")}</div>
         </div>
 
         {/* Rows */}
-        {loading && <EmptyRow text="cargando…" />}
-        {!loading && projects.length === 0 && <EmptyRow text="— sin proyectos —" />}
+        {loading && <EmptyRow text={t("common.loading")} />}
+        {!loading && projects.length === 0 && <EmptyRow text={t("page_projects.empty_no_projects")} />}
         {projects.map((p) => (
           <Link
             key={p.id}
