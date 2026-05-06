@@ -15,6 +15,7 @@
  */
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useFetch } from "../../../lib/useFetch";
 import { getTechTimeInfo } from "../../../lib/tz";
 import TechCard from "../../../components/v2-shared/TechCard";
@@ -27,6 +28,7 @@ function hasTechFieldMembership(user) {
 }
 
 export default function TechsListPage() {
+  const { t } = useTranslation("common");
   const { data: users, loading } = useFetch("/users");
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
@@ -58,7 +60,7 @@ export default function TechsListPage() {
       {/* Header */}
       <div style={{ paddingLeft: 16, borderLeft: "3px solid #0A1628", marginBottom: 22 }}>
         <div style={{ ...MONO_CAPS, fontSize: 11, color: "#8B95A8", marginBottom: 6 }}>
-          Equipo SRS
+          {t("techs.title")}
         </div>
         <h1
           style={{
@@ -70,8 +72,18 @@ export default function TechsListPage() {
             lineHeight: 1.1,
           }}
         >
-          {techs.length}{" "}
-          <span style={{ color: "#3D4A66", fontWeight: 600 }}>miembros operando</span>
+          {(() => {
+            const phrase = t("techs.title_count", { count: techs.length });
+            const idx = phrase.indexOf(" ");
+            return (
+              <>
+                {phrase.slice(0, idx)}{" "}
+                <span style={{ color: "#3D4A66", fontWeight: 600 }}>
+                  {phrase.slice(idx + 1)}
+                </span>
+              </>
+            );
+          })()}
         </h1>
         <p
           style={{
@@ -82,7 +94,7 @@ export default function TechsListPage() {
             fontWeight: 500,
           }}
         >
-          Cargo · ciudad · hora local en vivo · click en técnicos para ver Skill Passport
+          {t("techs.subtitle")}
         </p>
       </div>
 
@@ -103,14 +115,14 @@ export default function TechsListPage() {
       >
         <div>
           <label htmlFor="q" style={filterLabelStyle}>
-            Buscar
+            {t("common.search")}
           </label>
           <input
             id="q"
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="nombre o email…"
+            placeholder={t("techs.search_placeholder")}
             style={{ ...filterInputStyle, width: 260 }}
             onFocus={(e) => {
               e.currentTarget.style.border = "1.5px solid #0A1628";
@@ -139,7 +151,9 @@ export default function TechsListPage() {
 
       {/* Grid de cards */}
       {loading && <SkeletonGrid />}
-      {!loading && filtered.length === 0 && <EmptyMsg query={query} totalTechs={techs.length} />}
+      {!loading && filtered.length === 0 && (
+        <EmptyMsg query={query} totalTechs={techs.length} t={t} />
+      )}
       {!loading && filtered.length > 0 && (
         <div
           style={{
@@ -256,7 +270,7 @@ function SkeletonGrid() {
   );
 }
 
-function EmptyMsg({ query, totalTechs }) {
+function EmptyMsg({ query, totalTechs, t }) {
   return (
     <div
       style={{
@@ -276,12 +290,12 @@ function EmptyMsg({ query, totalTechs }) {
           marginBottom: 6,
         }}
       >
-        — sin matches —
+        {t("techs.no_match_short")}
       </div>
       <div style={{ fontFamily: JAKARTA, fontSize: 14, color: "#3D4A66", fontWeight: 500 }}>
         {query
-          ? `Ningún técnico match con "${query}"`
-          : `No hay técnicos activos · total ${totalTechs}`}
+          ? t("techs.no_match_query", { query })
+          : t("techs.no_techs_active", { total: totalTechs })}
       </div>
     </div>
   );

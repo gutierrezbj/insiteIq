@@ -17,14 +17,16 @@
 
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { VIEWER_TZ, VIEWER_TZ_LABEL } from "../../lib/tz";
 import { useRefresh, formatAgo } from "../../contexts/RefreshContext";
 import { useAuth } from "../../contexts/AuthContext";
 import { Icon, ICONS } from "../../lib/icons";
 
-function formatDateTime() {
+function formatDateTime(lang = "es") {
   const now = new Date();
-  const fmt = new Intl.DateTimeFormat("es-ES", {
+  const locale = lang === "en" ? "en-US" : "es-ES";
+  const fmt = new Intl.DateTimeFormat(locale, {
     timeZone: VIEWER_TZ,
     weekday: "short",
     day: "2-digit",
@@ -33,7 +35,7 @@ function formatDateTime() {
     minute: "2-digit",
     hour12: false,
   }).format(now);
-  // Es-ES devuelve "vie, 24 abr, 18:32" → ajustamos separador final a " · "
+  // ES: "vie, 24 abr, 18:32" / EN: "Fri, Apr 24, 18:32" → separador final " · "
   return fmt.replace(/,\s*(\d{2}:\d{2})$/, " · $1");
 }
 
@@ -59,23 +61,35 @@ export default function V2TopHeader({
   title,
   highlight,
   liveCount = 0,
-  liveLabel = "activas",
+  liveLabel,
   compact = false,
+  showLanguageToggle = true,
 }) {
   const location = useLocation();
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation("common");
   const auto = getTitleForPath(location.pathname);
   // Props explícitas tienen prioridad. Si no, deriva de la ruta.
   const finalTitle = title ?? auto.title;
   const finalHighlight = highlight ?? auto.highlight;
-  const [dateTime, setDateTime] = useState(formatDateTime());
+  const finalLiveLabel = liveLabel ?? t("common.active", { defaultValue: "activas" });
+  const [dateTime, setDateTime] = useState(formatDateTime(i18n.language));
   const { isRefreshing, lastRefreshAt } = useRefresh();
   const { user, logout } = useAuth();
 
   useEffect(() => {
-    const interval = setInterval(() => setDateTime(formatDateTime()), 30000);
+    setDateTime(formatDateTime(i18n.language));
+    const interval = setInterval(
+      () => setDateTime(formatDateTime(i18n.language)),
+      30000
+    );
     return () => clearInterval(interval);
-  }, []);
+  }, [i18n.language]);
+
+  function setLang(lang) {
+    if (i18n.language !== lang) i18n.changeLanguage(lang);
+  }
+  const currentLang = (i18n.language || "es").slice(0, 2).toLowerCase();
 
   function handleLogout() {
     logout();
@@ -145,9 +159,47 @@ export default function V2TopHeader({
               transition: "color 280ms ease",
             }}
           >
-            {liveCount} {liveLabel}
+            {liveCount} {finalLiveLabel}
           </span>
         </span>
+
+        {/* Toggle ES/EN · pildora compacta · solo visible si showLanguageToggle=true */}
+        {showLanguageToggle && (
+          <div
+            className="inline-flex items-center rounded-full overflow-hidden border"
+            style={{
+              borderColor: "#C8CDD8",
+              background: "#FFFFFF",
+              fontFamily: "'Plus Jakarta Sans', sans-serif",
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: "0.06em",
+            }}
+            title={t("common.language", { defaultValue: "Idioma" })}
+          >
+            {["es", "en"].map((lang) => {
+              const active = currentLang === lang;
+              return (
+                <button
+                  key={lang}
+                  type="button"
+                  onClick={() => setLang(lang)}
+                  style={{
+                    padding: "4px 10px",
+                    border: 0,
+                    background: active ? "#0A1628" : "transparent",
+                    color: active ? "#FFFFFF" : "#3D4A66",
+                    cursor: active ? "default" : "pointer",
+                    transition: "background 160ms, color 160ms",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  {lang}
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {/* User identity + logout · presencia navy strong, hover orange (acento escaso) */}
         <div className="flex items-center gap-2 pl-3 border-l border-cl-border-strong">
@@ -161,7 +213,7 @@ export default function V2TopHeader({
           <button
             type="button"
             onClick={handleLogout}
-            title="Cerrar sesión"
+            title={t("nav.logout")}
             className="inline-flex items-center justify-center w-8 h-8 rounded-sm border transition"
             style={{
               background: "#FFFFFF",

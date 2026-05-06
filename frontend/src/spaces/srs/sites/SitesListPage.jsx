@@ -1,5 +1,5 @@
 /**
- * SRS Sites · list page (Iter 2.51 · multi-filter).
+ * SRS Sites · list page (Iter 2.55 · i18n EN/ES).
  *
  * Filters: cliente (organization), tipo de sitio, país, status, búsqueda libre.
  * Tabla: Site | Cliente | Country | City | Tipo | Residente | Status.
@@ -11,22 +11,17 @@
  *   GET /api/organizations  → [{ id, display_name, legal_name, ... }]
  *
  * Filter persistence: localStorage `sites-filters-v1` (TTL implicit · cross-session).
+ * i18n: useTranslation("common") · keys bajo `sites.*` · piloto EN/ES.
  */
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useFetch } from "../../../lib/useFetch";
 import CreateSiteAction from "../../../components/admin/CreateSiteAction";
 import { SiteStatusPill } from "../../../components/v2-shared/Pills";
 import { JAKARTA, MONO_CAPS } from "../../../components/v2-shared/typography";
 
-const SITE_TYPES = [
-  { value: "retail", label: "Retail" },
-  { value: "dc", label: "DC" },
-  { value: "office", label: "Office" },
-  { value: "warehouse", label: "Warehouse" },
-  { value: "branch", label: "Branch" },
-  { value: "other", label: "Other" },
-];
+const SITE_TYPE_VALUES = ["retail", "dc", "office", "warehouse", "branch", "other"];
 
 const FILTERS_KEY = "sites-filters-v1";
 
@@ -48,8 +43,15 @@ function saveFilters(f) {
 }
 
 export default function SitesListPage() {
+  const { t } = useTranslation("common");
   const { data: sites, loading, reload } = useFetch("/sites");
   const { data: orgs } = useFetch("/organizations");
+
+  // SITE_TYPES dinámico para que las labels se actualicen al cambiar idioma
+  const SITE_TYPES = useMemo(
+    () => SITE_TYPE_VALUES.map((v) => ({ value: v, label: t(`sites.type_${v}`) })),
+    [t]
+  );
 
   const persisted = loadFilters() || {};
   const [query, setQuery] = useState(persisted.query || "");
@@ -137,7 +139,7 @@ export default function SitesListPage() {
       >
         <div>
           <div style={{ ...MONO_CAPS, fontSize: 11, color: "#8B95A8", marginBottom: 6 }}>
-            Sites
+            {t("sites.title")}
           </div>
           <h1
             style={{
@@ -149,8 +151,19 @@ export default function SitesListPage() {
               lineHeight: 1.1,
             }}
           >
-            {list.length}{" "}
-            <span style={{ color: "#3D4A66", fontWeight: 600 }}>sites registrados</span>
+            {(() => {
+              // "{{count}} sites registrados" / "{{count}} registered sites"
+              const phrase = t("sites.title_count", { count: list.length });
+              const idx = phrase.indexOf(" ");
+              return (
+                <>
+                  {phrase.slice(0, idx)}{" "}
+                  <span style={{ color: "#3D4A66", fontWeight: 600 }}>
+                    {phrase.slice(idx + 1)}
+                  </span>
+                </>
+              );
+            })()}
           </h1>
           <p
             style={{
@@ -161,7 +174,7 @@ export default function SitesListPage() {
               fontWeight: 500,
             }}
           >
-            Fase 2 plumbing · Site Bible completo aterriza en Fase 5 (Domain 10)
+            {t("sites.subtitle")}
           </p>
         </div>
         <CreateSiteAction onCreated={() => reload()} />
@@ -184,13 +197,13 @@ export default function SitesListPage() {
       >
         {/* Búsqueda libre */}
         <div>
-          <label htmlFor="q" style={filterLabelStyle}>Buscar</label>
+          <label htmlFor="q" style={filterLabelStyle}>{t("common.search")}</label>
           <input
             id="q"
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="nombre, code, ciudad, address…"
+            placeholder={t("sites.filter_search_placeholder")}
             style={{ ...filterInputStyle, width: 240 }}
             onFocus={onFocus}
             onBlur={onBlur}
@@ -199,14 +212,14 @@ export default function SitesListPage() {
 
         {/* Cliente */}
         <div>
-          <label htmlFor="org" style={filterLabelStyle}>Cliente</label>
+          <label htmlFor="org" style={filterLabelStyle}>{t("sites.filter_client")}</label>
           <select
             id="org"
             value={orgId}
             onChange={(e) => setOrgId(e.target.value)}
             style={{ ...filterSelectStyle, width: 200 }}
           >
-            <option value="">todos</option>
+            <option value="">{t("common.all")}</option>
             {orgsWithSites.map((o) => (
               <option key={o.id} value={o.id}>
                 {o.label}
@@ -217,14 +230,14 @@ export default function SitesListPage() {
 
         {/* País */}
         <div>
-          <label htmlFor="c" style={filterLabelStyle}>País</label>
+          <label htmlFor="c" style={filterLabelStyle}>{t("sites.filter_country")}</label>
           <select
             id="c"
             value={country}
             onChange={(e) => setCountry(e.target.value)}
             style={{ ...filterSelectStyle, width: 110 }}
           >
-            <option value="">todos</option>
+            <option value="">{t("common.all")}</option>
             {countries.map((c) => (
               <option key={c} value={c}>
                 {c}
@@ -235,7 +248,7 @@ export default function SitesListPage() {
 
         {/* Tipo (pills) */}
         <div>
-          <label style={filterLabelStyle}>Tipo</label>
+          <label style={filterLabelStyle}>{t("sites.filter_type")}</label>
           <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
             {SITE_TYPES.map((t) => {
               const active = siteType === t.value;
@@ -268,7 +281,7 @@ export default function SitesListPage() {
 
         {/* Toggle solo activos */}
         <div>
-          <label style={filterLabelStyle}>Status</label>
+          <label style={filterLabelStyle}>{t("common.status")}</label>
           <button
             type="button"
             onClick={() => setOnlyActive(!onlyActive)}
@@ -297,7 +310,7 @@ export default function SitesListPage() {
                 background: onlyActive ? "#16a34a" : "#C8CDD8",
               }}
             />
-            {onlyActive ? "Solo activos" : "Todos los status"}
+            {onlyActive ? t("common.active_only") : t("common.all_statuses")}
           </button>
         </div>
 
@@ -326,7 +339,7 @@ export default function SitesListPage() {
                 letterSpacing: "0.14em",
               }}
             >
-              limpiar
+              {t("common.clear")}
             </button>
           )}
           <div
@@ -369,18 +382,18 @@ export default function SitesListPage() {
             letterSpacing: "0.14em",
           }}
         >
-          <div>Site</div>
-          <div>Cliente</div>
-          <div>Country</div>
-          <div>City</div>
-          <div>Tipo</div>
-          <div>Residente</div>
-          <div style={{ textAlign: "right" }}>Status</div>
+          <div>{t("sites.col_site")}</div>
+          <div>{t("sites.col_client")}</div>
+          <div>{t("sites.col_country")}</div>
+          <div>{t("sites.col_city")}</div>
+          <div>{t("sites.col_type")}</div>
+          <div>{t("sites.col_resident")}</div>
+          <div style={{ textAlign: "right" }}>{t("sites.col_status")}</div>
         </div>
 
         {/* Rows */}
-        {loading && <EmptyRow text="cargando…" />}
-        {!loading && filtered.length === 0 && <EmptyRow text="— nada match —" />}
+        {loading && <EmptyRow text={t("common.loading")} />}
+        {!loading && filtered.length === 0 && <EmptyRow text={t("common.no_match")} />}
         {filtered.map((s) => {
           const orgLabel = orgsById.get(s.organization_id) || "—";
           const stype = s.site_type || "retail";
@@ -489,9 +502,9 @@ export default function SitesListPage() {
               {/* Residente */}
               <div style={{ ...MONO_CAPS, fontSize: 9.5, letterSpacing: "0.14em" }}>
                 {s.has_physical_resident ? (
-                  <span style={{ color: "#1E3A8A" }}>· residente</span>
+                  <span style={{ color: "#1E3A8A" }}>{t("sites.physical_resident")}</span>
                 ) : (
-                  <span style={{ color: "#8B95A8" }}>NOC remoto</span>
+                  <span style={{ color: "#8B95A8" }}>{t("sites.noc_remote")}</span>
                 )}
               </div>
 
