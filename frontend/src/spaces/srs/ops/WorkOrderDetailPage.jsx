@@ -13,8 +13,9 @@
  * propios (Iter 2.34-2.36). El chrome de la página principal + ActionBar
  * + Cost AfterHours están en paleta F.
  */
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useFetch } from "../../../lib/useFetch";
 import { api, uploadFile } from "../../../lib/api";
 import { useAuth } from "../../../contexts/AuthContext";
@@ -42,18 +43,23 @@ import SectionCard, { SectionTitle } from "../../../components/v2-shared/Section
 import MetaRow from "../../../components/v2-shared/MetaRow";
 import { JAKARTA, MONO, MONO_CAPS } from "../../../components/v2-shared/typography";
 
-const STAGES = [
-  { key: "intake",     label: "Intake" },
-  { key: "triage",     label: "Triage" },
-  { key: "pre_flight", label: "Pre-flight" },
-  { key: "dispatched", label: "Dispatched" },
-  { key: "en_route",   label: "En route" },
-  { key: "on_site",    label: "On site" },
-  { key: "resolved",   label: "Resolved" },
-  { key: "closed",     label: "Closed" },
+const STAGE_KEYS = [
+  { key: "intake",     i18n: "stage_intake" },
+  { key: "triage",     i18n: "stage_triage" },
+  { key: "pre_flight", i18n: "stage_preflight" },
+  { key: "dispatched", i18n: "stage_dispatched" },
+  { key: "en_route",   i18n: "stage_en_route" },
+  { key: "on_site",    i18n: "stage_on_site" },
+  { key: "resolved",   i18n: "stage_resolved" },
+  { key: "closed",     i18n: "stage_closed" },
 ];
 
 export default function WorkOrderDetailPage() {
+  const { t } = useTranslation("common");
+  const STAGES = useMemo(
+    () => STAGE_KEYS.map((s) => ({ ...s, label: t(`page_wo_detail.${s.i18n}`) })),
+    [t]
+  );
   const { wo_id } = useParams();
   const { user } = useAuth();
   const location = useLocation();
@@ -63,7 +69,7 @@ export default function WorkOrderDetailPage() {
     { deps: [wo_id] }
   );
 
-  if (loading) return <CenteredMessage text="cargando…" />;
+  if (loading) return <CenteredMessage text={t("common.loading")} />;
   if (error) return <CenteredMessage text={`error: ${error.message}`} />;
   if (!wo) return <CenteredMessage text="—" />;
 
@@ -76,7 +82,7 @@ export default function WorkOrderDetailPage() {
   const inTech = location.pathname.startsWith("/tech");
   const inClientSpace = location.pathname.startsWith("/client");
   const backHref = inTech ? "/tech" : inClientSpace ? "/client" : "/srs/ops";
-  const backLabel = inTech ? "Mis trabajos" : inClientSpace ? "Status" : "Work orders";
+  const backLabel = inTech ? t("page_wo_detail.back_my_work") : inClientSpace ? t("page_wo_detail.back_status") : t("page_wo_detail.back_work_orders");
 
   return (
     <div style={{ padding: "32px 40px", maxWidth: 1400 }}>
@@ -134,15 +140,15 @@ export default function WorkOrderDetailPage() {
       {/* State + Ball banner */}
       <SectionCard style={{ marginBottom: 16 }}>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 22, alignItems: "flex-start" }}>
-          <StateBlock label="Status" value={<WoStatusPill status={wo.status} />} />
+          <StateBlock label={t("page_wo_detail.state_status")} value={<WoStatusPill status={wo.status} />} />
           <StateBlock
-            label="Balón"
+            label={t("page_wo_detail.state_ball")}
             value={<BallPill side={wo.ball_in_court?.side} />}
             hint={wo.ball_in_court?.reason}
           />
-          <StateBlock label="Shield" value={<ShieldPill level={wo.shield_level} />} />
+          <StateBlock label={t("page_wo_detail.state_shield")} value={<ShieldPill level={wo.shield_level} />} />
           <StateBlock
-            label="Deadline resolve"
+            label={t("page_wo_detail.state_deadline_resolve")}
             value={
               <span
                 style={{
@@ -159,7 +165,7 @@ export default function WorkOrderDetailPage() {
           />
           {wo.closed_at && (
             <StateBlock
-              label="Closed"
+              label={t("page_wo_detail.state_closed")}
               value={
                 <span
                   style={{
@@ -179,7 +185,7 @@ export default function WorkOrderDetailPage() {
 
       {/* 7-stage timeline */}
       <SectionCard style={{ marginBottom: 16 }}>
-        <SectionTitle>State machine — 7 etapas</SectionTitle>
+        <SectionTitle>{t("page_wo_detail.section_state_machine")}</SectionTitle>
         <StageTimeline currentStatus={wo.status} />
       </SectionCard>
 
@@ -192,9 +198,9 @@ export default function WorkOrderDetailPage() {
         }}
       >
         <SectionCard>
-          <SectionTitle>Metadata</SectionTitle>
+          <SectionTitle>{t("page_wo_detail.section_metadata")}</SectionTitle>
           <dl style={{ display: "flex", flexDirection: "column" }}>
-            <MetaRow label="Cliente org" value={shortId(wo.organization_id)} />
+            <MetaRow label={t("page_wo_detail.meta_client_org")} value={shortId(wo.organization_id)} />
             <MetaRow
               label="Site"
               value={
@@ -211,7 +217,7 @@ export default function WorkOrderDetailPage() {
               }
             />
             <MetaRow
-              label="Service agreement"
+              label={t("page_wo_detail.meta_service_agreement")}
               value={
                 wo.service_agreement_id && !inClientSpace ? (
                   <Link to={`/srs/agreements/${wo.service_agreement_id}`} style={dottedLink}>
@@ -222,36 +228,36 @@ export default function WorkOrderDetailPage() {
                 )
               }
             />
-            <MetaRow label="SRS Coordinator" value={shortId(wo.srs_coordinator_user_id)} />
+            <MetaRow label={t("page_wo_detail.meta_srs_coord")} value={shortId(wo.srs_coordinator_user_id)} />
             <MetaRow
-              label="Tech asignado"
-              value={shortId(wo.assigned_tech_user_id) || "— sin asignar —"}
+              label={t("page_wo_detail.meta_tech")}
+              value={shortId(wo.assigned_tech_user_id) || "—"}
             />
             <MetaRow
-              label="NOC Operator"
-              value={shortId(wo.noc_operator_user_id) || "— default remoto —"}
+              label={t("page_wo_detail.meta_noc")}
+              value={shortId(wo.noc_operator_user_id) || "—"}
             />
             <MetaRow
-              label="Onsite resident"
-              value={shortId(wo.onsite_resident_user_id) || "— no aplica —"}
+              label={t("page_wo_detail.meta_resident")}
+              value={shortId(wo.onsite_resident_user_id) || "—"}
             />
-            {wo.project_id && <MetaRow label="Project" value={shortId(wo.project_id)} />}
+            {wo.project_id && <MetaRow label={t("page_wo_detail.meta_project")} value={shortId(wo.project_id)} />}
             {wo.cluster_group_id && (
-              <MetaRow label="Cluster group" value={shortId(wo.cluster_group_id)} />
+              <MetaRow label={t("page_wo_detail.meta_cluster")} value={shortId(wo.cluster_group_id)} />
             )}
             <MetaRow
-              label="Opened"
+              label={t("page_wo_detail.meta_opened")}
               value={wo.created_at ? new Date(wo.created_at).toLocaleString() : "—"}
             />
             <MetaRow
-              label="Last update"
+              label={t("page_wo_detail.meta_last_update")}
               value={wo.updated_at ? formatAge(wo.updated_at) + " ago" : "—"}
             />
           </dl>
         </SectionCard>
 
         <SectionCard>
-          <SectionTitle>Pre-flight + handshakes</SectionTitle>
+          <SectionTitle>{t("page_wo_detail.section_preflight_handshakes")}</SectionTitle>
           <div style={{ marginBottom: 18 }}>
             <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.14em", marginBottom: 6 }}>
               Pre-flight checklist
@@ -285,10 +291,10 @@ export default function WorkOrderDetailPage() {
               gap: 12,
             }}
           >
-            <SlaItem label="Receive" minutes={wo.sla_snapshot.receive_minutes} />
-            <SlaItem label="Resolve" minutes={wo.sla_snapshot.resolve_minutes} />
-            <SlaItem label="Photos" text={wo.sla_snapshot.photos_required} />
-            <SlaItem label="24×7" text={wo.sla_snapshot.coverage_247 ? "yes" : "no"} />
+            <SlaItem label={t("page_wo_detail.sla_receive")} minutes={wo.sla_snapshot.receive_minutes} />
+            <SlaItem label={t("page_wo_detail.sla_resolve")} minutes={wo.sla_snapshot.resolve_minutes} />
+            <SlaItem label={t("page_wo_detail.sla_photos")} text={wo.sla_snapshot.photos_required} />
+            <SlaItem label="24×7" text={wo.sla_snapshot.coverage_247 ? t("common.yes") : t("common.no")} />
           </div>
         </SectionCard>
       )}
@@ -307,7 +313,7 @@ export default function WorkOrderDetailPage() {
         <SectionCard style={{ marginTop: 16 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
             <div>
-              <SectionTitle marginBottom={2}>Intervention Report</SectionTitle>
+              <SectionTitle marginBottom={2}>{t("page_wo_detail.section_intervention_report")}</SectionTitle>
               <p style={{ fontFamily: JAKARTA, fontSize: 13, color: "#3D4A66", fontWeight: 500 }}>
                 Reporte final auto-ensamblado al cierre · 5 canales emit
               </p>
@@ -339,31 +345,33 @@ const dottedLink = {
 
 /* ─── Action bar + actions ─────────────────────────────────────── */
 
+// Targets metadata · `i18n` resuelve la label dinámicamente según el idioma actual.
 const ADVANCE_TARGETS = {
-  intake:     [{ to: "triage",     label: "Pasar a triage" }],
-  triage:     [{ to: "pre_flight", label: "A pre-flight" }],
+  intake:     [{ to: "triage",     i18n: "tx_to_triage" }],
+  triage:     [{ to: "pre_flight", i18n: "tx_to_preflight" }],
   pre_flight: [
-    { to: "dispatched", label: "Dispatch" },
-    { to: "triage",     label: "Volver a triage", soft: true },
+    { to: "dispatched", i18n: "tx_dispatch" },
+    { to: "triage",     i18n: "tx_back_triage", soft: true },
   ],
   dispatched: [
-    { to: "en_route",   label: "En ruta" },
-    { to: "triage",     label: "Volver a triage", soft: true },
+    { to: "en_route",   i18n: "tx_to_en_route" },
+    { to: "triage",     i18n: "tx_back_triage", soft: true },
   ],
-  en_route:   [{ to: "on_site",  label: "Check-in on site", handshake: "check_in" }],
+  en_route:   [{ to: "on_site",  i18n: "tx_check_in", handshake: "check_in" }],
   on_site:    [
-    { to: "resolved",  label: "Resolver", handshake: "resolution" },
-    { to: "en_route",  label: "Salí a por partes", soft: true },
+    { to: "resolved",  i18n: "tx_resolve",        handshake: "resolution" },
+    { to: "en_route",  i18n: "tx_step_out_parts", soft: true },
   ],
   resolved:   [
-    { to: "closed",    label: "Cerrar WO", handshake: "closure" },
-    { to: "on_site",   label: "Reabrir on-site", soft: true },
+    { to: "closed",    i18n: "tx_close",          handshake: "closure" },
+    { to: "on_site",   i18n: "tx_reopen_on_site", soft: true },
   ],
   closed:     [],
   cancelled:  [],
 };
 
 function ActionBar({ wo, reload, isSrs, isClient, isAssignedTech }) {
+  const { t } = useTranslation("common");
   const status = wo.status;
   const isTerminal = status === "closed" || status === "cancelled";
 
@@ -396,16 +404,16 @@ function ActionBar({ wo, reload, isSrs, isClient, isAssignedTech }) {
 
   return (
     <SectionCard style={{ marginBottom: 16 }}>
-      <SectionTitle>Acciones disponibles</SectionTitle>
+      <SectionTitle>{t("page_wo_detail.section_actions")}</SectionTitle>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-        {availableAdvance.map((t) => (
+        {availableAdvance.map((tx) => (
           <AdvanceAction
-            key={t.to}
+            key={tx.to}
             wo={wo}
-            target={t.to}
-            label={t.label}
-            handshake={t.handshake}
-            soft={t.soft}
+            target={tx.to}
+            label={t(`page_wo_detail.${tx.i18n}`)}
+            handshake={tx.handshake}
+            soft={tx.soft}
             isSrs={isSrs}
             reload={reload}
           />

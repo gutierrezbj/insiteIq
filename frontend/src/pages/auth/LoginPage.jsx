@@ -17,6 +17,7 @@
  */
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "../../contexts/AuthContext";
 import { preferredSpaceFor, spaceToPath } from "../../lib/auth";
 
@@ -47,6 +48,7 @@ const MONO_LABEL = {
 const JAKARTA = "'Plus Jakarta Sans', sans-serif";
 
 export default function LoginPage() {
+  const { t } = useTranslation("common");
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -65,7 +67,7 @@ export default function LoginPage() {
       const target = from || spaceToPath(preferredSpaceFor(user)) || "/no-access";
       navigate(target, { replace: true });
     } catch (err) {
-      setError(err.message || "Credenciales invalidas");
+      setError(err.message || t("page_auth.error_invalid_credentials"));
     } finally {
       setBusy(false);
       setQuickKey(null);
@@ -191,7 +193,7 @@ export default function LoginPage() {
               Iniciar sesión
             </h2>
 
-            <FieldLabel>Email</FieldLabel>
+            <FieldLabel>{t("page_auth.field_email")}</FieldLabel>
             <input
               type="email"
               autoComplete="username"
@@ -203,7 +205,7 @@ export default function LoginPage() {
               onBlur={blurInput}
             />
 
-            <FieldLabel>Contraseña</FieldLabel>
+            <FieldLabel>{t("page_auth.field_password")}</FieldLabel>
             <input
               type="password"
               autoComplete="current-password"
@@ -267,7 +269,7 @@ export default function LoginPage() {
                 e.currentTarget.style.boxShadow = "0 2px 6px -1px rgba(10, 22, 40, 0.32)";
               }}
             >
-              {busy ? "Validando…" : "Iniciar sesión"}
+              {busy ? t("page_auth.submitting_login") : t("page_auth.submit_login")}
             </button>
           </form>
 

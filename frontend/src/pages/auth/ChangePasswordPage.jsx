@@ -11,6 +11,7 @@
  */
 import { useMemo, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "../../contexts/AuthContext";
 import { preferredSpaceFor, spaceToPath } from "../../lib/auth";
 
@@ -24,6 +25,7 @@ const MONO_CAPS = {
 };
 
 export default function ChangePasswordPage() {
+  const { t } = useTranslation("common");
   const { user, changePassword } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -39,11 +41,11 @@ export default function ChangePasswordPage() {
 
   const validation = useMemo(() => {
     const issues = [];
-    if (next && next.length < 10) issues.push("Mínimo 10 caracteres");
-    if (next && current && next === current) issues.push("Debe diferir de la actual");
-    if (next && confirm && next !== confirm) issues.push("No coinciden");
+    if (next && next.length < 10) issues.push(t("page_auth.error_pwd_too_short"));
+    if (next && current && next === current) issues.push(t("page_auth.error_pwd_must_differ"));
+    if (next && confirm && next !== confirm) issues.push(t("page_auth.error_passwords_mismatch"));
     return issues;
-  }, [current, next, confirm]);
+  }, [current, next, confirm, t]);
 
   const canSubmit =
     current.length > 0 &&
@@ -68,7 +70,7 @@ export default function ChangePasswordPage() {
         setTimeout(() => navigate(from || "/", { replace: true }), 900);
       }
     } catch (err) {
-      setError(err.message || "No se pudo cambiar la contraseña");
+      setError(err.message || t("page_auth.error_pwd_change_failed"));
     } finally {
       setBusy(false);
     }
@@ -107,7 +109,7 @@ export default function ChangePasswordPage() {
             marginBottom: 6,
           }}
         >
-          {forced ? "Rotación obligatoria" : "Seguridad"}
+          {forced ? t("page_auth.change_pwd_forced_title") : t("page_auth.change_pwd_security_title")}
         </div>
         <h1
           style={{
@@ -132,11 +134,11 @@ export default function ChangePasswordPage() {
           }}
         >
           {forced
-            ? "Tu cuenta fue provisionada por SRS. Antes de entrar, define una contraseña propia."
-            : "Reemplaza tu contraseña actual por una nueva."}
+            ? t("page_auth.change_pwd_first_login_explainer")
+            : t("page_auth.change_pwd_replace_explainer")}
         </p>
 
-        <FieldLabel>Contraseña actual</FieldLabel>
+        <FieldLabel>{t("page_auth.change_pwd_field_current_legacy")}</FieldLabel>
         <PasswordInput
           id="cp-current"
           autoComplete="current-password"
@@ -144,7 +146,7 @@ export default function ChangePasswordPage() {
           onChange={setCurrent}
         />
 
-        <FieldLabel>Contraseña nueva</FieldLabel>
+        <FieldLabel>{t("page_auth.change_pwd_field_new_legacy")}</FieldLabel>
         <PasswordInput
           id="cp-new"
           autoComplete="new-password"
@@ -165,7 +167,7 @@ export default function ChangePasswordPage() {
           {next.length}/10 min
         </div>
 
-        <FieldLabel>Confirmar nueva</FieldLabel>
+        <FieldLabel>{t("page_auth.change_pwd_field_confirm_legacy")}</FieldLabel>
         <PasswordInput
           id="cp-confirm"
           autoComplete="new-password"
@@ -261,7 +263,7 @@ export default function ChangePasswordPage() {
             e.currentTarget.style.borderColor = "#0A1628";
           }}
         >
-          {busy ? "Guardando…" : "Actualizar contraseña"}
+          {busy ? t("page_auth.submitting_change_pwd") : t("page_auth.submit_change_pwd")}
         </button>
 
         {!forced && (

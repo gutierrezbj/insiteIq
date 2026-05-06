@@ -10,6 +10,7 @@
  */
 import { useState } from "react";
 import { useLocation, useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useFetch } from "../../../lib/useFetch";
 import { api } from "../../../lib/api";
 import { useAuth } from "../../../contexts/AuthContext";
@@ -24,6 +25,7 @@ import SectionCard, { SectionTitle } from "../../../components/v2-shared/Section
 import { JAKARTA, MONO, MONO_CAPS } from "../../../components/v2-shared/typography";
 
 export default function InterventionReportPage() {
+  const { t } = useTranslation("common");
   const { wo_id } = useParams();
   const { user } = useAuth();
   const location = useLocation();
@@ -41,14 +43,14 @@ export default function InterventionReportPage() {
     ? `/client/ops/${wo_id}`
     : `/srs/ops/${wo_id}`;
 
-  if (loading) return <Centered text="cargando…" />;
+  if (loading) return <Centered text={t("common.loading")} />;
   if (error) {
     const is404 = error.status === 404;
     return (
       <div style={{ padding: "32px 40px", maxWidth: 1400 }}>
-        <BackLinkV2 to={backHref} label="Work order" />
+        <BackLinkV2 to={backHref} label={t("page_report.back_wo")} />
         <SectionCard>
-          <SectionTitle marginBottom={6}>Intervention report</SectionTitle>
+          <SectionTitle marginBottom={6}>{t("page_report.title")}</SectionTitle>
           <h1
             style={{
               fontFamily: JAKARTA,
@@ -59,7 +61,7 @@ export default function InterventionReportPage() {
               marginBottom: 8,
             }}
           >
-            {is404 ? "Aún no ensamblado" : "Error"}
+            {is404 ? t("page_report.not_assembled_yet") : t("page_report.error_title")}
           </h1>
           <p
             style={{
@@ -72,7 +74,7 @@ export default function InterventionReportPage() {
             }}
           >
             {is404
-              ? "El report se auto-ensambla al cerrar el WO. Si querés forzar, podés usar regenerate."
+              ? t("page_report.auto_assemble_hint")
               : error.message}
           </p>
           {isSrs && <RegenerateAction wo_id={wo_id} reload={reload} />}
@@ -92,7 +94,7 @@ export default function InterventionReportPage() {
 
   return (
     <div style={{ padding: "32px 40px", maxWidth: 1400 }}>
-      <BackLinkV2 to={backHref} label="Work order" />
+      <BackLinkV2 to={backHref} label={t("page_report.back_wo")} />
 
       <div style={{ paddingLeft: 16, borderLeft: "3px solid #0A1628", marginBottom: 22 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6, flexWrap: "wrap" }}>
@@ -132,7 +134,7 @@ export default function InterventionReportPage() {
 
       {isSrs && (
         <SectionCard style={{ marginBottom: 16 }}>
-          <SectionTitle>Emit outward — 5 canales</SectionTitle>
+          <SectionTitle>{t("page_report.section_emit")}</SectionTitle>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
             <ChannelLink href={`/api/work-orders/${wo_id}/report.html`} label="HTML ↗" external />
             <ChannelLink href={`/api/work-orders/${wo_id}/report.csv`} label="CSV ↓" />
@@ -145,12 +147,12 @@ export default function InterventionReportPage() {
 
       <SectionCard style={{ marginBottom: 16 }}>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 24 }}>
-          <Stat label="Abierto" value={h.opened_at ? new Date(h.opened_at).toLocaleString() : "—"} />
-          <Stat label="Cerrado" value={h.closed_at ? new Date(h.closed_at).toLocaleString() : "—"} />
-          <Stat label="Severity" value={h.severity || "—"} />
-          <Stat label="Shield" value={h.shield_level || "—"} />
+          <Stat label={t("page_report.stat_opened")} value={h.opened_at ? new Date(h.opened_at).toLocaleString() : "—"} />
+          <Stat label={t("page_report.stat_closed")} value={h.closed_at ? new Date(h.closed_at).toLocaleString() : "—"} />
+          <Stat label={t("page_report.stat_severity")} value={h.severity || "—"} />
+          <Stat label={t("page_report.stat_shield")} value={h.shield_level || "—"} />
           <Stat label="Tech" value={h.tech_name || "—"} />
-          <Stat label="SRS coord" value={h.srs_coordinator_name || "—"} />
+          <Stat label={t("page_report.stat_srs_coord")} value={h.srs_coordinator_name || "—"} />
         </div>
       </SectionCard>
 
@@ -195,13 +197,13 @@ export default function InterventionReportPage() {
         </SectionCard>
 
         <SectionCard>
-          <SectionTitle>Tech capture</SectionTitle>
+          <SectionTitle>{t("page_report.section_tech_capture")}</SectionTitle>
           {capture ? (
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              <Block label="Qué encontró">{capture.what_found || "—"}</Block>
-              <Block label="Qué hizo">{capture.what_did || "—"}</Block>
+              <Block label={t("page_report.block_what_found")}>{capture.what_found || "—"}</Block>
+              <Block label={t("page_report.block_what_did")}>{capture.what_did || "—"}</Block>
               {capture.anything_new_about_site && (
-                <Block label="Nuevo sobre el site">{capture.anything_new_about_site}</Block>
+                <Block label={t("page_report.block_new_about_site")}>{capture.anything_new_about_site}</Block>
               )}
               <div
                 style={{
@@ -213,15 +215,15 @@ export default function InterventionReportPage() {
                 }}
               >
                 <MiniStat
-                  label="Time on site"
+                  label={t("page_report.stat_time_on_site")}
                   value={
                     capture.time_on_site_minutes != null
                       ? `${capture.time_on_site_minutes}min`
                       : "—"
                   }
                 />
-                <MiniStat label="Devices" value={(capture.devices_touched || []).length} />
-                <MiniStat label="Photos" value={capture.photos_count ?? 0} />
+                <MiniStat label={t("page_report.stat_devices")} value={(capture.devices_touched || []).length} />
+                <MiniStat label={t("page_report.stat_photos")} value={capture.photos_count ?? 0} />
               </div>
               {capture.follow_up_needed && (
                 <div
@@ -264,12 +266,12 @@ export default function InterventionReportPage() {
       {(threads.shared_message_count != null ||
         threads.internal_message_count != null) && (
         <SectionCard style={{ marginTop: 16 }}>
-          <SectionTitle>Comunicación</SectionTitle>
+          <SectionTitle>{t("page_report.section_communication")}</SectionTitle>
           <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
-            <Stat label="Shared thread" value={threads.shared_message_count ?? 0} />
+            <Stat label={t("page_report.stat_shared_thread")} value={threads.shared_message_count ?? 0} />
             {threads.internal_message_count != null && (
               <Stat
-                label="Internal thread"
+                label={t("page_report.stat_internal_thread")}
                 value={threads.internal_message_count}
                 hint="solo visible a SRS"
               />
@@ -280,7 +282,7 @@ export default function InterventionReportPage() {
 
       <SectionCard padding={0} style={{ marginTop: 16 }}>
         <header style={{ padding: "14px 18px", borderBottom: "1px solid #E2E5EC" }}>
-          <SectionTitle marginBottom={4}>Deliveries log</SectionTitle>
+          <SectionTitle marginBottom={4}>{t("page_report.section_deliveries")}</SectionTitle>
           <div style={{ fontFamily: JAKARTA, fontSize: 14, fontWeight: 700, color: "#0A1628" }}>
             {deliveries.length}{" "}
             <span style={{ color: "#3D4A66", fontWeight: 500 }}>
