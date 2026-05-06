@@ -20,6 +20,8 @@
  *  - onFilterChange: (key | null) => void
  */
 
+import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { Icon, ICONS } from "../../lib/icons";
 
 /**
@@ -33,45 +35,26 @@ import { Icon, ICONS } from "../../lib/icons";
  * Número siempre navy strong para legibilidad ABSOLUTA — el color del KPI
  * vive en la barra izquierda + label + icono.
  */
-const KPI_DEFS = [
-  {
-    key: "critical",
-    label: "Críticos abiertos",
-    sublabel: "Severity critical · activos",
-    color: "#D63944",
-    icon: ICONS.dangerTriangle,
-  },
-  {
-    key: "slaRisk",
-    label: "SLA en riesgo",
-    sublabel: "Breach o próximo breach",
-    color: "#E8A33D",
-    icon: ICONS.dangerTriangle,
-  },
-  {
-    key: "ballSrs",
-    label: "Ball SRS >6h",
-    sublabel: "Pendiente acción nuestra",
-    color: "#0A1628",
-    icon: ICONS.clock,
-  },
-  {
-    key: "unassigned",
-    label: "Sin asignar",
-    sublabel: "Activa sin técnico",
-    color: "#0066B8",
-    icon: ICONS.userCross,
-  },
-  {
-    key: "activeToday",
-    label: "Activas · hoy",
-    sublabel: "En ruta y en sitio",
-    color: "#16A34A",
-    icon: ICONS.mapPoint,
-  },
+const KPI_KEYS = [
+  { key: "critical",     i18n: "critical_open",  color: "#D63944", icon: "dangerTriangle" },
+  { key: "slaRisk",      i18n: "sla_risk",       color: "#E8A33D", icon: "dangerTriangle" },
+  { key: "ballSrs",      i18n: "ball_srs_6h",    color: "#0A1628", icon: "clock" },
+  { key: "unassigned",   i18n: "unassigned",     color: "#0066B8", icon: "userCross" },
+  { key: "activeToday",  i18n: "active_today",   color: "#16A34A", icon: "mapPoint" },
 ];
 
 export default function KpiStripV2({ stats, activeFilter, onFilterChange }) {
+  const { t } = useTranslation("common");
+  const KPI_DEFS = useMemo(
+    () =>
+      KPI_KEYS.map((k) => ({
+        ...k,
+        label: t(`kpi.${k.i18n}`),
+        sublabel: t(`kpi.${k.i18n}_sub`),
+        icon: ICONS[k.icon],
+      })),
+    [t]
+  );
   return (
     // Strip con border-bottom navy soft para presencia + bg surface-3 entre cards
     <section

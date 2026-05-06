@@ -26,6 +26,7 @@
  */
 
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { api } from "../../lib/api";
 import { useAuth } from "../../contexts/AuthContext";
@@ -52,6 +53,7 @@ function getSlaBadge(slaStatus) {
 
 /* Sub-componente: Timezone block */
 function TimezoneBlock({ tech }) {
+  const { t } = useTranslation("common");
   if (!tech) return null;
   const techName = tech.full_name || tech.name;
   const info = getTechTimeInfo(techName);
@@ -72,7 +74,7 @@ function TimezoneBlock({ tech }) {
           className="text-[9px]"
           style={{ color: "#8B95A8", letterSpacing: "0.14em", textTransform: "uppercase" }}
         >
-          Hora del técnico
+          {t("detail_panel.tz_block_label")}
         </span>
         <span
           style={{
@@ -106,7 +108,7 @@ function TimezoneBlock({ tech }) {
         <span className="text-[12px]" style={{ color: "#3D4A66", fontWeight: 600 }}>{techName}</span>
       </div>
       <div className="flex items-center gap-2 text-[11px] text-cl-text-dim font-mono">
-        <span>Tú estás en {info.viewerTime} {VIEWER_TZ_LABEL}</span>
+        <span>{t("detail_panel.tz_viewer_at", { time: info.viewerTime, tz: VIEWER_TZ_LABEL })}</span>
         <span>·</span>
         <span style={{ color: info.diffHours !== 0 ? "#0A1628" : "#3D4A66" }}>
           {info.offsetText}
@@ -114,7 +116,7 @@ function TimezoneBlock({ tech }) {
         {info.untilEndOfDay && (
           <>
             <span>·</span>
-            <span>fin jornada en {info.untilEndOfDay}</span>
+            <span>{t("detail_panel.tz_end_of_day", { time: info.untilEndOfDay })}</span>
           </>
         )}
       </div>
@@ -124,7 +126,7 @@ function TimezoneBlock({ tech }) {
           style={{ borderTop: `1px solid ${info.color}22`, color: info.color }}
         >
           <Icon icon={ICONS.moon} size={13} />
-          <span>No contactar salvo emergencia crítica · escalación vía Luis (Lima CET cover)</span>
+          <span>{t("detail_panel.tz_dnd_warning")}</span>
         </div>
       )}
     </section>
@@ -133,9 +135,10 @@ function TimezoneBlock({ tech }) {
 
 /* Sub-componente: Timeline */
 function TimelineSection({ items = [] }) {
+  const { t } = useTranslation("common");
   if (!items.length) {
     return (
-      <p className="text-[11px] text-cl-text-dim italic">Sin eventos registrados.</p>
+      <p className="text-[11px] text-cl-text-dim italic">{t("detail_panel.no_events")}</p>
     );
   }
   return items.map((item, idx) => {
@@ -170,8 +173,9 @@ function TimelineSection({ items = [] }) {
 
 /* Sub-componente: Thread */
 function ThreadList({ messages = [], kind }) {
+  const { t } = useTranslation("common");
   if (!messages.length) {
-    return <p className="text-[11px] text-cl-text-dim italic py-2">Sin mensajes.</p>;
+    return <p className="text-[11px] text-cl-text-dim italic py-2">{t("detail_panel.no_messages")}</p>;
   }
   const accentColor = kind === "shared" ? "#06B6D4" : "#0A1628";
   return messages.map((m, idx) => (
@@ -230,10 +234,11 @@ function PartsTable({ parts = [] }) {
 
 /* Sub-componente: Doc cycle (Briefing/Capture/Report) */
 function DocCycleGrid({ briefing, capture, report }) {
+  const { t } = useTranslation("common");
   const items = [
-    { label: "Briefing", state: briefing?.status || "PENDING", detail: briefing?.signed_by || "sin firmar" },
-    { label: "Capture", state: capture?.status || "PENDING", detail: capture?.photos ? `${capture.photos} fotos` : "sin evidencia" },
-    { label: "Report", state: report?.status || "PENDING", detail: report?.reason ? report.reason.slice(0, 40) : "OK" },
+    { label: t("detail_panel.doc_briefing"), state: briefing?.status || "PENDING", detail: briefing?.signed_by || t("detail_panel.doc_unsigned") },
+    { label: t("detail_panel.doc_capture"), state: capture?.status || "PENDING", detail: capture?.photos ? t("detail_panel.doc_photos", { count: capture.photos }) : t("detail_panel.doc_no_evidence") },
+    { label: t("detail_panel.doc_report"), state: report?.status || "PENDING", detail: report?.reason ? report.reason.slice(0, 40) : t("detail_panel.doc_ok") },
   ];
   const colorFor = (s) =>
     s === "SIGNED" || s === "COMPLETE" || s === "EMITTED" ? "#22C55E"
@@ -286,6 +291,7 @@ export default function SideDetailPanel({
   escalating = false,
   viewerScope = "srs",
 }) {
+  const { t } = useTranslation("common");
   // Cliente NO ve threads internos ni audit log SRS-internal (Principio #1).
   const isClientScope = viewerScope === "client";
   const visibleThreadsInternal = isClientScope ? null : threadsInternal;
@@ -351,7 +357,7 @@ export default function SideDetailPanel({
                 <button
                   onClick={onClose}
                   className="bg-transparent border-0 text-cl-text-dim hover:text-cl-orange transition cursor-pointer p-1 flex items-center"
-                  aria-label="Cerrar"
+                  aria-label={t("detail_panel.close")}
                 >
                   <Icon icon={ICONS.close} size={22} />
                 </button>
@@ -383,7 +389,7 @@ export default function SideDetailPanel({
                   className="font-jakarta text-[22px] m-0 leading-tight"
                   style={{ color: "#0A1628", fontWeight: 700, letterSpacing: "-0.015em" }}
                 >
-                  {site?.name || wo?.site_name || "Sin sitio"}
+                  {site?.name || wo?.site_name || t("intervention.no_site")}
                 </h2>
                 <p className="text-[12px] m-0 mt-1" style={{ color: "#3D4A66", fontWeight: 500 }}>
                   <span className="font-mono" style={{ color: "#0A1628", fontWeight: 600 }}>{site?.code || site?.id || "—"}</span>
@@ -424,33 +430,33 @@ export default function SideDetailPanel({
               {/* Metadata grid 2x2 */}
               <section>
                 <div className="text-[10px] text-cl-text-dim uppercase mb-2" style={{ letterSpacing: "0.14em", fontWeight: 600 }}>
-                  Referencias
+                  {t("detail_panel.references")}
                 </div>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-2.5">
                   <div>
-                    <p className="text-[9px] text-cl-text-dim uppercase mb-0.5" style={{ letterSpacing: "0.14em" }}>BALL</p>
+                    <p className="text-[9px] text-cl-text-dim uppercase mb-0.5" style={{ letterSpacing: "0.14em" }}>{t("detail_panel.ball")}</p>
                     <p
                       className="text-[13px] m-0"
                       style={{ color: getBallColor(wo), fontWeight: 500 }}
                     >
-                      {getBallLabel(wo) === "—" ? "Sin asignar" : getBallLabel(wo)}
+                      {getBallLabel(wo) === "—" ? t("intervention.unassigned") : getBallLabel(wo)}
                     </p>
                   </div>
                   <div>
-                    <p className="text-[9px] text-cl-text-dim uppercase mb-0.5" style={{ letterSpacing: "0.14em" }}>TECH</p>
+                    <p className="text-[9px] text-cl-text-dim uppercase mb-0.5" style={{ letterSpacing: "0.14em" }}>{t("detail_panel.tech_label")}</p>
                     <p className="text-[13px] m-0" style={{ color: tech ? "#0A1628" : "#8B95A8" }}>
-                      {tech?.full_name || tech?.name || "Sin asignar"}
+                      {tech?.full_name || tech?.name || t("intervention.unassigned")}
                     </p>
                   </div>
                   <div>
-                    <p className="text-[9px] text-cl-text-dim uppercase mb-0.5" style={{ letterSpacing: "0.14em" }}>TAG</p>
+                    <p className="text-[9px] text-cl-text-dim uppercase mb-0.5" style={{ letterSpacing: "0.14em" }}>{t("detail_panel.tag")}</p>
                     <p className="text-[13px] m-0" style={{ color: getTag(wo) ? "#0A1628" : "#8B95A8" }}>
                       {getTag(wo) || "—"}
                     </p>
                   </div>
                   <div>
-                    <p className="text-[9px] text-cl-text-dim uppercase mb-0.5" style={{ letterSpacing: "0.14em" }}>AUDIT LOG</p>
-                    <p className="text-[13px] text-cl-text m-0">{auditCount ?? 0} eventos</p>
+                    <p className="text-[9px] text-cl-text-dim uppercase mb-0.5" style={{ letterSpacing: "0.14em" }}>{t("detail_panel.audit_log")}</p>
+                    <p className="text-[13px] text-cl-text m-0">{t("detail_panel.audit_events", { count: auditCount ?? 0 })}</p>
                   </div>
                 </div>
               </section>
@@ -462,7 +468,7 @@ export default function SideDetailPanel({
               {description && (
                 <section>
                   <div className="text-[10px] text-cl-text-dim uppercase mb-2" style={{ letterSpacing: "0.14em", fontWeight: 600 }}>
-                    Descripción
+                    {t("detail_panel.description")}
                   </div>
                   <p className="text-[12px] text-cl-text leading-relaxed m-0">{description}</p>
                 </section>
@@ -472,7 +478,7 @@ export default function SideDetailPanel({
               {scope && (
                 <section>
                   <div className="text-[10px] text-cl-text-dim uppercase mb-2" style={{ letterSpacing: "0.14em", fontWeight: 600 }}>
-                    Alcance
+                    {t("detail_panel.scope")}
                   </div>
                   <p className="text-[12px] text-cl-text-mid leading-relaxed m-0">{scope}</p>
                 </section>
@@ -485,7 +491,7 @@ export default function SideDetailPanel({
                     className="text-[10px] text-cl-text-dim uppercase mb-2 flex items-center justify-between"
                     style={{ letterSpacing: "0.14em", fontWeight: 600 }}
                   >
-                    <span>Timeline</span>
+                    <span>{t("detail_panel.timeline")}</span>
                     <span className="text-[10px] text-cl-text-dim normal-case" style={{ letterSpacing: 0, fontWeight: 400 }}>
                       {timeline.filter((t) => t.kind === "done").length}/{timeline.length}
                     </span>
@@ -503,9 +509,9 @@ export default function SideDetailPanel({
                     className="text-[10px] text-cl-text-dim uppercase mb-2 flex items-center justify-between"
                     style={{ letterSpacing: "0.14em", fontWeight: 600 }}
                   >
-                    <span>Thread con cliente</span>
+                    <span>{t("detail_panel.thread_client")}</span>
                     <span className="text-[10px] normal-case" style={{ letterSpacing: 0, fontWeight: 400, color: "#06B6D4" }}>
-                      {threadsShared.length} mensajes · visible para cliente
+                      {t("detail_panel.thread_visible_client", { count: threadsShared.length })}
                     </span>
                   </div>
                   <div>
@@ -521,9 +527,9 @@ export default function SideDetailPanel({
                     className="text-[10px] text-cl-text-dim uppercase mb-2 flex items-center justify-between"
                     style={{ letterSpacing: "0.14em", fontWeight: 600 }}
                   >
-                    <span>Thread interno SRS</span>
+                    <span>{t("detail_panel.thread_internal")}</span>
                     <span className="text-[10px] normal-case" style={{ letterSpacing: 0, fontWeight: 400, color: "#0A1628" }}>
-                      {visibleThreadsInternal.length} mensajes · opaco cliente
+                      {t("detail_panel.thread_opaque_client", { count: visibleThreadsInternal.length })}
                     </span>
                   </div>
                   <div>
@@ -539,9 +545,9 @@ export default function SideDetailPanel({
                     className="text-[10px] text-cl-text-dim uppercase mb-2 flex items-center justify-between"
                     style={{ letterSpacing: "0.14em", fontWeight: 600 }}
                   >
-                    <span>Repuestos / partes</span>
+                    <span>{t("detail_panel.parts")}</span>
                     <span className="text-[10px] normal-case" style={{ letterSpacing: 0, fontWeight: 400, color: "#8B95A8" }}>
-                      {parts.length} ítems
+                      {t("detail_panel.parts_count", { count: parts.length })}
                     </span>
                   </div>
                   <PartsTable parts={parts} />
@@ -551,7 +557,7 @@ export default function SideDetailPanel({
               {/* Doc cycle */}
               <section>
                 <div className="text-[10px] text-cl-text-dim uppercase mb-2" style={{ letterSpacing: "0.14em", fontWeight: 600 }}>
-                  Estado del ciclo documental
+                  {t("detail_panel.doc_cycle_title")}
                 </div>
                 <DocCycleGrid briefing={briefing} capture={capture} report={report} />
               </section>
@@ -563,13 +569,13 @@ export default function SideDetailPanel({
                     className="text-[10px] text-cl-text-dim uppercase mb-2 flex items-center justify-between"
                     style={{ letterSpacing: "0.14em", fontWeight: 600 }}
                   >
-                    <span>Audit log reciente</span>
+                    <span>{t("detail_panel.audit_recent_title")}</span>
                     <a
                       href="#"
                       className="text-[10px] uppercase no-underline"
                       style={{ color: "#0A1628", letterSpacing: "0.1em", fontWeight: 500 }}
                     >
-                      Ver {visibleAuditCount} →
+                      {t("detail_panel.audit_recent_view_all", { count: visibleAuditCount })}
                     </a>
                   </div>
                   <div className="border border-cl-border rounded-sm text-[11px]">
@@ -610,7 +616,7 @@ export default function SideDetailPanel({
                   color: "#3D4A66",
                   border: "1px solid #C8CDD8",
                 }}
-                title="Más acciones"
+                title={t("detail_panel.more_actions")}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.background = "#F4F6F8";
                   e.currentTarget.style.color = "#0A1628";
@@ -647,7 +653,7 @@ export default function SideDetailPanel({
                   e.currentTarget.style.borderColor = "#C8CDD8";
                 }}
               >
-                Cerrar
+                {t("detail_panel.close")}
               </button>
               <button
                 onClick={escalating ? undefined : onEscalate}
@@ -677,7 +683,7 @@ export default function SideDetailPanel({
                   e.currentTarget.style.borderColor = "#FF6B35";
                 }}
               >
-                {escalating ? "Escalando…" : "Escalar ball → cliente"}
+                {escalating ? t("detail_panel.escalating") : t("detail_panel.escalate_to_client")}
                 {!escalating && <Icon icon={ICONS.arrowRight} size={14} />}
               </button>
             </footer>
@@ -695,6 +701,7 @@ export default function SideDetailPanel({
  *   - eta_ack presente: pill verde "ETA confirmada · {hora} · por {source}" + botón "Re-registrar"
  * Solo SRS coord ve el botón. Tech PWA self-service queda para iter futura. */
 function EtaSection({ wo, onUpdated }) {
+  const { t, i18n } = useTranslation("common");
   const { user } = useAuth();
   const [modalOpen, setModalOpen] = useState(false);
   const isSrsCoord = user?.memberships?.some((m) => m.space === "srs_coordinators");
@@ -704,23 +711,26 @@ function EtaSection({ wo, onUpdated }) {
 
   if (!scheduledAt && !etaAck) return null;  // WO sin agendar
 
+  const locale = (i18n.language || "es").startsWith("en") ? "en-US" : "es-ES";
   const fmtDate = (iso) => {
     if (!iso) return "—";
     try {
-      return new Date(iso).toLocaleString("es-ES", { dateStyle: "medium", timeStyle: "short" });
+      return new Date(iso).toLocaleString(locale, { dateStyle: "medium", timeStyle: "short" });
     } catch { return iso; }
   };
 
   const hasAck = !!etaAck;
   const ackedAt = etaAck?.proposed_eta;
-  const ackSource = etaAck?.ack_source === "self" ? "tech (self)" : "SRS coord";
+  const ackSource = etaAck?.ack_source === "self"
+    ? t("detail_panel.eta_source_short_self")
+    : t("detail_panel.eta_source_short_coord");
 
   return (
     <>
       <section>
         <div className="flex items-center justify-between mb-2">
           <div className="text-[10px] text-cl-text-dim uppercase" style={{ letterSpacing: "0.14em", fontWeight: 600 }}>
-            ETA del tech
+            {t("detail_panel.eta_title")}
           </div>
           {isSrsCoord && (
             <button
@@ -733,7 +743,7 @@ function EtaSection({ wo, onUpdated }) {
                 letterSpacing: "0.08em",
               }}
             >
-              {hasAck ? "Re-registrar" : "Registrar"}
+              {hasAck ? t("detail_panel.eta_re_register") : t("detail_panel.eta_register")}
             </button>
           )}
         </div>
@@ -755,27 +765,27 @@ function EtaSection({ wo, onUpdated }) {
             {hasAck ? (
               <>
                 <p className="text-[12px] text-cl-text m-0" style={{ fontWeight: 500 }}>
-                  Confirmada {fmtDate(ackedAt)}
+                  {t("detail_panel.eta_confirmed", { date: fmtDate(ackedAt) })}
                 </p>
                 <p className="text-[10px] text-cl-text-mid font-mono mt-0.5">
-                  por {ackSource} · {fmtDate(etaAck.acknowledged_at)}
+                  {t("detail_panel.eta_by_source", { source: ackSource, date: fmtDate(etaAck.acknowledged_at) })}
                 </p>
                 {etaAck.notes && (
                   <p className="text-[11px] text-cl-text-mid mt-1 leading-snug">{etaAck.notes}</p>
                 )}
                 {scheduledAt && new Date(scheduledAt).getTime() !== new Date(ackedAt).getTime() && (
                   <p className="text-[10px] text-cl-text-dim font-mono mt-1">
-                    (programado original: {fmtDate(scheduledAt)})
+                    {t("detail_panel.eta_original_sched", { date: fmtDate(scheduledAt) })}
                   </p>
                 )}
               </>
             ) : (
               <>
                 <p className="text-[12px] text-cl-text m-0" style={{ fontWeight: 500 }}>
-                  Pendiente confirmación tech
+                  {t("detail_panel.eta_pending_confirm")}
                 </p>
                 <p className="text-[10px] text-cl-text-mid font-mono mt-0.5">
-                  Programado para {fmtDate(scheduledAt)}
+                  {t("detail_panel.eta_scheduled_for", { date: fmtDate(scheduledAt) })}
                 </p>
               </>
             )}
@@ -798,6 +808,8 @@ function EtaSection({ wo, onUpdated }) {
 }
 
 function RegisterEtaModalLight({ wo, onClose, onSaved }) {
+  const { t, i18n } = useTranslation("common");
+  const locale = (i18n.language || "es").startsWith("en") ? "en-US" : "es-ES";
   const initial = wo?.eta_ack?.proposed_eta
     ? new Date(wo.eta_ack.proposed_eta).toISOString().slice(0, 16)
     : (wo?.scheduled_at ? new Date(wo.scheduled_at).toISOString().slice(0, 16) : "");
@@ -808,7 +820,7 @@ function RegisterEtaModalLight({ wo, onClose, onSaved }) {
 
   async function handleSubmit() {
     if (!proposedEta) {
-      toast.error("Fecha y hora obligatorias");
+      toast.error(t("detail_panel.eta_toast_required"));
       return;
     }
     setSubmitting(true);
@@ -818,10 +830,10 @@ function RegisterEtaModalLight({ wo, onClose, onSaved }) {
         ack_source: ackSource,
         notes: notes.trim() || null,
       });
-      toast.success("ETA registrada");
+      toast.success(t("detail_panel.eta_toast_saved"));
       onSaved?.();
     } catch (err) {
-      toast.error(`Error: ${err.message || err}`);
+      toast.error(t("detail_panel.eta_toast_error", { message: err.message || err }));
     } finally {
       setSubmitting(false);
     }
@@ -843,7 +855,7 @@ function RegisterEtaModalLight({ wo, onClose, onSaved }) {
         }}
       >
         <header className="px-5 py-4" style={{ borderBottom: "1px solid #E2E5EC", background: "#F7F8FA", borderRadius: "6px 6px 0 0" }}>
-          <p className="label-caps-v2 mb-1" style={{ color: "#0A1628", fontWeight: 800 }}>Registrar ETA del tech</p>
+          <p className="label-caps-v2 mb-1" style={{ color: "#0A1628", fontWeight: 800 }}>{t("detail_panel.eta_modal_title")}</p>
           {/* Title navy strong (NO text-white) */}
           <h2 className="font-jakarta text-[18px] leading-tight" style={{ color: "#0A1628", fontWeight: 700, letterSpacing: "-0.005em" }}>
             {wo?.title || "Work Order"}
@@ -854,7 +866,7 @@ function RegisterEtaModalLight({ wo, onClose, onSaved }) {
         <div className="px-5 py-4 space-y-4">
           <div>
             <label className="block text-[10px] text-cl-text-dim uppercase mb-1.5" style={{ letterSpacing: "0.14em" }}>
-              Hora confirmada por el tech
+              {t("detail_panel.eta_field_time")}
             </label>
             <input
               type="datetime-local"
@@ -865,14 +877,14 @@ function RegisterEtaModalLight({ wo, onClose, onSaved }) {
             />
             {wo?.scheduled_at && (
               <p className="text-[10px] text-cl-text-dim mt-1 font-mono">
-                Programado original: {new Date(wo.scheduled_at).toLocaleString("es-ES", { dateStyle: "medium", timeStyle: "short" })}
+                {t("detail_panel.eta_field_original", { date: new Date(wo.scheduled_at).toLocaleString(locale, { dateStyle: "medium", timeStyle: "short" }) })}
               </p>
             )}
           </div>
 
           <div>
             <label className="block text-[10px] text-cl-text-dim uppercase mb-1.5" style={{ letterSpacing: "0.14em" }}>
-              Fuente del ack
+              {t("detail_panel.eta_field_source")}
             </label>
             <div className="flex items-center gap-2">
               <button
@@ -885,9 +897,9 @@ function RegisterEtaModalLight({ wo, onClose, onSaved }) {
                   background: ackSource === "by_coord" ? "#0A1628" : "#FFFFFF",
                   fontWeight: ackSource === "by_coord" ? 700 : 600,
                 }}
-                title="SRS registró info externa (WhatsApp/llamada)"
+                title={t("detail_panel.eta_source_coord_title")}
               >
-                SRS coord (info externa)
+                {t("detail_panel.eta_source_coord")}
               </button>
               <button
                 onClick={() => setAckSource("self")}
@@ -899,23 +911,23 @@ function RegisterEtaModalLight({ wo, onClose, onSaved }) {
                   background: ackSource === "self" ? "#0A1628" : "#FFFFFF",
                   fontWeight: ackSource === "self" ? 700 : 600,
                 }}
-                title="Tech confirmó directamente"
+                title={t("detail_panel.eta_source_self_title")}
               >
-                Tech (self)
+                {t("detail_panel.eta_source_self")}
               </button>
             </div>
           </div>
 
           <div>
             <label className="block text-[10px] text-cl-text-dim uppercase mb-1.5" style={{ letterSpacing: "0.14em" }}>
-              Notas (opcional)
+              {t("detail_panel.eta_field_notes")}
             </label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               disabled={submitting}
               rows={2}
-              placeholder='Ej. "Tech ajustó +30min por traffic" / "Confirmado vía WhatsApp"'
+              placeholder={t("detail_panel.eta_notes_placeholder")}
               className="w-full bg-cl-surface/40 border border-cl-border rounded-sm px-3 py-2 text-[12px] text-cl-text font-mono resize-none"
             />
           </div>
@@ -930,7 +942,7 @@ function RegisterEtaModalLight({ wo, onClose, onSaved }) {
             onMouseEnter={(e) => (e.currentTarget.style.color = "#0A1628")}
             onMouseLeave={(e) => (e.currentTarget.style.color = "#3D4A66")}
           >
-            Cancelar
+            {t("detail_panel.eta_cancel")}
           </button>
           <button
             onClick={handleSubmit}
@@ -946,7 +958,7 @@ function RegisterEtaModalLight({ wo, onClose, onSaved }) {
               boxShadow: submitting || !proposedEta ? "none" : "0 2px 6px -1px rgba(10, 22, 40, 0.18)",
             }}
           >
-            {submitting ? "Registrando…" : "Registrar ETA"}
+            {submitting ? t("detail_panel.eta_submitting") : t("detail_panel.eta_submit")}
           </button>
         </footer>
       </div>

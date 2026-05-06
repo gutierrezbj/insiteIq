@@ -14,21 +14,30 @@
  *  - site: site { name }
  */
 
+import { useTranslation } from "react-i18next";
+import i18n from "../../i18n";
 import { getStatusInfo } from "./InterventionCardFull";
 import { formatWoCode } from "../../lib/woCode";
 
-const SEVERITY_LABEL = {
-  critical: { label: "URGENTE", color: "#D63944" },
-  high:     { label: "ALTA",    color: "#E8A33D" },
-  medium:   { label: "Normal",  color: "#3D4A66" },
-  low:      { label: "Baja",    color: "#8B95A8" },
+const SEVERITY_COLORS = {
+  critical: "#D63944",
+  high:     "#E8A33D",
+  medium:   "#3D4A66",
+  normal:   "#3D4A66",
+  low:      "#8B95A8",
 };
 
 function getSeverityInfo(severity) {
-  return SEVERITY_LABEL[severity] || { label: "Normal", color: "#3D4A66" };
+  const color = SEVERITY_COLORS[severity] || "#3D4A66";
+  const t = i18n.t.bind(i18n);
+  const key = `wo_severity.${severity}`;
+  const i18nLabel = t(key);
+  const label = i18nLabel === key ? t("wo_severity.normal") : i18nLabel;
+  return { label, color };
 }
 
 export default function InterventionCardMini({ wo, site, onClick }) {
+  const { t } = useTranslation("common");
   const status = getStatusInfo(wo?.status);
   const severity = getSeverityInfo(wo?.severity);
 
@@ -63,7 +72,7 @@ export default function InterventionCardMini({ wo, site, onClick }) {
         title={site?.name || wo?.site_name}
         style={{ color: "#0A1628", fontWeight: 700, letterSpacing: "-0.005em" }}
       >
-        {site?.name || wo?.site_name || "Sin sitio"}
+        {site?.name || wo?.site_name || t("intervention.no_site")}
       </h4>
       <div className="flex items-center justify-between">
         <span
@@ -97,4 +106,4 @@ export default function InterventionCardMini({ wo, site, onClick }) {
   );
 }
 
-export { SEVERITY_LABEL, getSeverityInfo };
+export { SEVERITY_COLORS, getSeverityInfo };

@@ -17,6 +17,7 @@
  */
 
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Icon, ICONS } from "../../lib/icons";
 
 function normalizeOption(opt) {
@@ -30,6 +31,7 @@ export default function MultiSelectDropdown({
   selected = new Set(),
   onChange,
 }) {
+  const { t } = useTranslation("common");
   const [open, setOpen] = useState(false);
   const wrapRef = useRef(null);
 
@@ -121,7 +123,7 @@ export default function MultiSelectDropdown({
             <p
               className="p-3 text-[12px] text-cl-text-dim italic"
             >
-              Sin opciones disponibles
+              {t("kanban.no_options")}
             </p>
           ) : (
             <>
@@ -179,7 +181,9 @@ export default function MultiSelectDropdown({
                   style={{ borderTop: "1px solid #E2E5EC", background: "#F7F8FA" }}
                 >
                   <span className="text-[10px] text-cl-text-dim font-mono">
-                    {count} seleccionado{count > 1 ? "s" : ""}
+                    {count === 1
+                      ? t("kanban.selected_one", { count })
+                      : t("kanban.selected_other", { count })}
                   </span>
                   <button
                     onClick={clear}
@@ -193,7 +197,7 @@ export default function MultiSelectDropdown({
                     onMouseEnter={(e) => (e.currentTarget.style.color = "#FF6B35")}
                     onMouseLeave={(e) => (e.currentTarget.style.color = "#3D4A66")}
                   >
-                    Limpiar
+                    {t("kanban.clear")}
                   </button>
                 </div>
               )}

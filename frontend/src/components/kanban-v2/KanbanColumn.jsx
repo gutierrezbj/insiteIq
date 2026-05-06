@@ -18,6 +18,7 @@
  *   - onDragOver, onDragLeave, onDrop
  */
 
+import { useTranslation } from "react-i18next";
 import EmptyState from "../v2-shared/EmptyState";
 
 export default function KanbanColumn({
@@ -29,6 +30,7 @@ export default function KanbanColumn({
   onDragLeave,
   onDrop,
 }) {
+  const { t } = useTranslation("common");
   return (
     <section
       data-col={id}
@@ -88,7 +90,7 @@ export default function KanbanColumn({
       {/* Body */}
       <div className="col-scroll wr-scroll flex-1 overflow-y-auto p-3 flex flex-col gap-3">
         {count === 0 ? (
-          <EmptyState icon="inbox" title="Sin intervenciones" compact />
+          <EmptyState icon="inbox" title={t("kanban.empty_col")} compact />
         ) : (
           children
         )}

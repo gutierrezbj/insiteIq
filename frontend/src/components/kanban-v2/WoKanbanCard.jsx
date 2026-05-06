@@ -24,6 +24,8 @@
  *   - onDragEnd(): handler cuando termina drag
  */
 
+import { useTranslation } from "react-i18next";
+import i18n from "../../i18n";
 import { Icon, ICONS } from "../../lib/icons";
 import { formatWoCode } from "../../lib/woCode";
 import { getStatusInfo } from "../cockpit-v2/InterventionCardFull";
@@ -39,16 +41,22 @@ const SHIELD_META = {
 
 function timeAgo(date) {
   if (!date) return "";
-  const t = new Date(date).getTime();
-  if (Number.isNaN(t)) return "";
-  const diffMs = Date.now() - t;
+  const ts = new Date(date).getTime();
+  if (Number.isNaN(ts)) return "";
+  const t = i18n.t.bind(i18n);
+  const diffMs = Date.now() - ts;
   const minutes = Math.floor(diffMs / 60000);
-  if (minutes < 1) return "ahora";
-  if (minutes < 60) return `hace ${minutes} min`;
+  if (minutes < 1) return t("kanban.time_now");
+  if (minutes < 60) return t("kanban.time_min_ago", { count: minutes });
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `hace ${hours}h${minutes % 60 > 0 ? ` ${minutes % 60}min` : ""}`;
+  if (hours < 24) {
+    const remMin = minutes % 60;
+    return remMin > 0
+      ? t("kanban.time_h_ago_with_min", { h: hours, m: remMin })
+      : t("kanban.time_h_ago", { count: hours });
+  }
   const days = Math.floor(hours / 24);
-  return `hace ${days}d`;
+  return t("kanban.time_d_ago", { count: days });
 }
 
 /* Drag handle 6-dots SVG inline · Design System v1.7 §3.6b */
@@ -81,6 +89,7 @@ export default function WoKanbanCard({
   onDragStart,
   onDragEnd,
 }) {
+  const { t } = useTranslation("common");
   const status = getStatusInfo(wo?.status);
   const severity = getSeverityInfo(wo?.severity);
   const shield = SHIELD_META[site?.shield_level || wo?.shield_level] || null;
@@ -158,7 +167,7 @@ export default function WoKanbanCard({
         className="font-jakarta text-[15px] leading-tight mb-1"
         style={{ color: "#0A1628", fontWeight: 700, letterSpacing: "-0.005em" }}
       >
-        {site?.name || wo?.site_name || "Sin sitio"}
+        {site?.name || wo?.site_name || t("intervention.no_site")}
       </h3>
       <div className="flex items-center gap-1.5 text-[12px] mb-2 flex-wrap" style={{ color: "#3D4A66" }}>
         <span className="font-mono text-[11px] text-cl-text-dim">{formatWoCode(wo)}</span>
@@ -219,7 +228,7 @@ export default function WoKanbanCard({
               <span style={{ color: "#0A1628", fontWeight: 600 }}>{tech.full_name || tech.name}</span>
             </>
           ) : (
-            <span className="text-cl-text-dim italic">Sin asignar</span>
+            <span className="text-cl-text-dim italic">{t("intervention.unassigned")}</span>
           )}
         </div>
         <div className="flex items-center gap-1 text-[11px] text-cl-text-dim font-mono">

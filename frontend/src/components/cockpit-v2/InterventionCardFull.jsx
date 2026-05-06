@@ -20,28 +20,39 @@
  *  - onCompliance: () => void
  */
 
+import { useTranslation } from "react-i18next";
+import i18n from "../../i18n";
 import { Icon, ICONS } from "../../lib/icons";
 import { formatWoCode } from "../../lib/woCode";
 
-// Mapping de status del backend → display label + color del stage
-const STATUS_DISPLAY = {
-  intake:        { label: "ENTRADA",     color: "#3B82F6" },
-  triage:        { label: "TRIAJE",      color: "#3B82F6" },
-  pre_flight:    { label: "PREPARANDO",  color: "#8B5CF6" },
-  dispatched:    { label: "DESPACHADA",  color: "#7C3AED" },
-  assigned:      { label: "DESPACHADA",  color: "#7C3AED" },
-  en_route:      { label: "EN RUTA",     color: "#0A1628" },
-  on_site:       { label: "EN SITIO",    color: "#EA580C" },
-  in_progress:   { label: "EN SITIO",    color: "#EA580C" },
-  in_closeout:   { label: "RESUELTA",    color: "#22C55E" },
-  resolved:      { label: "RESUELTA",    color: "#22C55E" },
-  completed:     { label: "CERRADA",     color: "#16A34A" },
-  closed:        { label: "CERRADA",     color: "#16A34A" },
-  cancelled:     { label: "CANCELADA",   color: "#8B95A8" },
+// Color semántico por status (la label viene de i18n, no hardcoded).
+const STATUS_COLORS = {
+  intake:      "#3B82F6",
+  triage:      "#3B82F6",
+  pre_flight:  "#8B5CF6",
+  dispatched:  "#7C3AED",
+  assigned:    "#7C3AED",
+  en_route:    "#0A1628",
+  on_site:     "#EA580C",
+  in_progress: "#EA580C",
+  in_closeout: "#22C55E",
+  resolved:    "#22C55E",
+  completed:   "#16A34A",
+  closed:      "#16A34A",
+  cancelled:   "#8B95A8",
 };
 
+// Helper · usable también desde class components / non-React
 function getStatusInfo(status) {
-  return STATUS_DISPLAY[status] || { label: status?.toUpperCase() || "—", color: "#8B95A8" };
+  const color = STATUS_COLORS[status] || "#8B95A8";
+  // Si el status existe en el catálogo, usamos i18n. Si no (status raro del
+  // backend), fallback a uppercase del status raw.
+  const t = i18n.t.bind(i18n);
+  const key = `wo_status.${status}`;
+  const i18nLabel = t(key);
+  // i18n.t devuelve la key si no encuentra valor. Detectamos eso.
+  const label = i18nLabel === key ? (status?.toUpperCase() || "—") : i18nLabel;
+  return { label, color };
 }
 
 export default function InterventionCardFull({
@@ -52,6 +63,7 @@ export default function InterventionCardFull({
   onDetail,
   onCompliance,
 }) {
+  const { t } = useTranslation("common");
   const status = getStatusInfo(wo?.status);
 
   return (
@@ -102,7 +114,7 @@ export default function InterventionCardFull({
         className="font-jakarta text-[16px] mb-1 leading-tight"
         style={{ color: "#0A1628", fontWeight: 700, letterSpacing: "-0.005em" }}
       >
-        {site?.name || wo?.site_name || "Sin sitio"}
+        {site?.name || wo?.site_name || t("intervention.no_site")}
       </h3>
       <p className="text-[12px] text-cl-text-dim mb-3" style={{ fontWeight: 500 }}>
         {site?.code && (
@@ -125,7 +137,7 @@ export default function InterventionCardFull({
               fontWeight: tech ? 600 : 400,
             }}
           >
-            {tech?.full_name || tech?.name || "Sin asignar"}
+            {tech?.full_name || tech?.name || t("intervention.unassigned")}
           </span>
         </div>
         {extra && (
@@ -162,7 +174,7 @@ export default function InterventionCardFull({
             e.currentTarget.style.borderColor = "#C8CDD8";
           }}
         >
-          Detalle
+          {t("intervention.details_btn")}
         </button>
         <button
           onClick={onCompliance}
@@ -190,11 +202,11 @@ export default function InterventionCardFull({
             e.currentTarget.style.color = "#3D4A66";
           }}
         >
-          Compliance
+          {t("intervention.compliance_btn")}
         </button>
       </div>
     </article>
   );
 }
 
-export { STATUS_DISPLAY, getStatusInfo };
+export { STATUS_COLORS, getStatusInfo };

@@ -15,6 +15,7 @@
  */
 
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Icon, ICONS } from "../../lib/icons";
 import { fetchWeatherFor, formatTemp } from "../../lib/weather";
 
@@ -23,6 +24,7 @@ import { fetchWeatherFor, formatTemp } from "../../lib/weather";
 /* ─────────────────────────────────────────────────────────────── */
 
 export function AlertsWidget({ alerts = [] }) {
+  const { t } = useTranslation("common");
   // Solo mostramos las 3 más críticas/recientes
   const shown = alerts.slice(0, 3);
 
@@ -32,12 +34,12 @@ export function AlertsWidget({ alerts = [] }) {
         <div className="flex items-center gap-2">
           <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#D63944" }} />
           <p className="label-caps-v2" style={{ color: "#D63944", fontWeight: 800 }}>
-            Alertas operativas
+            {t("widget.alerts_title")}
           </p>
         </div>
         <button
           className="text-cl-text-dim transition"
-          aria-label="Refrescar alertas"
+          aria-label={t("widget.alerts_refresh")}
           onMouseEnter={(e) => (e.currentTarget.style.color = "#0A1628")}
           onMouseLeave={(e) => (e.currentTarget.style.color = "#8B95A8")}
         >
@@ -46,7 +48,7 @@ export function AlertsWidget({ alerts = [] }) {
       </header>
       <div className="px-5 pb-4 space-y-2">
         {shown.length === 0 ? (
-          <p className="text-[11px] text-cl-text-dim italic py-2">Sin alertas activas</p>
+          <p className="text-[11px] text-cl-text-dim italic py-2">{t("widget.alerts_empty")}</p>
         ) : (
           shown.map((a, idx) => {
             const sev = a.severity || "warning";
@@ -72,7 +74,7 @@ export function AlertsWidget({ alerts = [] }) {
                   className="font-jakarta text-[13px]"
                   style={{ color: "#0A1628", fontWeight: 600, lineHeight: 1.35 }}
                 >
-                  {a.title || a.kind || "Alerta"}
+                  {a.title || a.kind || t("widget.alerts_default_label")}
                 </p>
                 {a.detail && (
                   <p className="text-[11px] text-cl-text-mid mt-1" style={{ lineHeight: 1.4 }}>{a.detail}</p>
@@ -105,6 +107,7 @@ const SHIELD_NAME = {
 };
 
 export function ShieldsWidget({ agreements = [] }) {
+  const { t } = useTranslation("common");
   const total = agreements.length;
 
   // Próximos a vencer (si data lo permite)
@@ -129,12 +132,12 @@ export function ShieldsWidget({ agreements = [] }) {
     return (
       <section className="border-b border-cl-border">
         <header className="px-5 py-3 flex items-center justify-between">
-          <p className="label-caps-v2">Shields</p>
-          <span className="text-[10px] font-mono text-cl-text-dim">0 activos</span>
+          <p className="label-caps-v2">{t("widget.shields_title")}</p>
+          <span className="text-[10px] font-mono text-cl-text-dim">{t("widget.shields_active_count", { count: 0 })}</span>
         </header>
         <div className="px-5 pb-4">
           <p className="text-[11px] text-cl-text-dim italic py-2">
-            Sin contratos Shield activos.
+            {t("widget.shields_empty")}
           </p>
         </div>
       </section>
@@ -144,9 +147,9 @@ export function ShieldsWidget({ agreements = [] }) {
   return (
     <section className="border-b border-cl-border-strong">
       <header className="px-5 py-3 flex items-center justify-between">
-        <p className="label-caps-v2" style={{ color: "#0A1628", fontWeight: 800 }}>Shields</p>
+        <p className="label-caps-v2" style={{ color: "#0A1628", fontWeight: 800 }}>{t("widget.shields_title")}</p>
         <span className="font-jakarta uppercase" style={{ color: "#0A6131", fontSize: 10, fontWeight: 700, letterSpacing: "0.1em" }}>
-          {total} activos
+          {t("widget.shields_active_count", { count: total })}
         </span>
       </header>
       <div className="px-5 pb-4">
@@ -154,7 +157,7 @@ export function ShieldsWidget({ agreements = [] }) {
         {upcoming.length > 0 && (
           <div className="space-y-1.5 mb-3">
             <p className="text-[9px] text-cl-text-dim uppercase mb-1.5" style={{ letterSpacing: "0.14em" }}>
-              Próximos a vencer
+              {t("widget.shields_expiring")}
             </p>
             {upcoming.map((a) => {
               const dot = SHIELD_DOT_COLOR[a.shield_level] || "#3D4A66";
@@ -179,7 +182,7 @@ export function ShieldsWidget({ agreements = [] }) {
 
         {/* Breakdown por nivel (siempre visible) */}
         <p className="text-[9px] text-cl-text-dim uppercase mb-1.5" style={{ letterSpacing: "0.14em" }}>
-          Por nivel
+          {t("widget.shields_by_level")}
         </p>
         <div className="space-y-1">
           {orderedLevels.map((level) => {
@@ -204,7 +207,7 @@ export function ShieldsWidget({ agreements = [] }) {
         {/* Si no hay data de vencimiento, mensaje neutro */}
         {upcoming.length === 0 && agreements.every((a) => a.days_to_expire == null) && (
           <p className="text-[10px] text-cl-text-dim mt-3 leading-snug">
-            Sin datos de vencimiento en estos contratos.
+            {t("widget.shields_no_expiry_data")}
           </p>
         )}
       </div>
@@ -228,6 +231,7 @@ export function ShieldsWidget({ agreements = [] }) {
  *  - onSelectSite(id)
  */
 export function WeatherWidget({ sites = [], selectedSiteId, onSelectSite }) {
+  const { t } = useTranslation("common");
   // Auto-select primer site con coords si no hay seleccionado
   const defaultSiteId = useMemo(() => {
     if (selectedSiteId) return selectedSiteId;
@@ -275,9 +279,9 @@ export function WeatherWidget({ sites = [], selectedSiteId, onSelectSite }) {
   return (
     <section className="border-b border-cl-border-strong">
       <header className="px-5 py-3 flex items-center justify-between">
-        <p className="label-caps-v2">Meteorología</p>
+        <p className="label-caps-v2">{t("widget.weather_title")}</p>
         <span className="text-[10px] text-cl-text-dim">
-          {selectedSite?.city || "Sites activos"}
+          {selectedSite?.city || t("widget.weather_active_sites")}
         </span>
       </header>
       <div className="px-5 pb-4">
@@ -288,7 +292,7 @@ export function WeatherWidget({ sites = [], selectedSiteId, onSelectSite }) {
               className="text-[9px] text-cl-text-dim mb-1.5 uppercase"
               style={{ letterSpacing: "0.14em" }}
             >
-              Sites con coordenadas
+              {t("widget.weather_with_coords")}
             </p>
             <div className="flex flex-wrap gap-1.5">
               {sitesWithCoords.slice(0, 6).map((site) => {
@@ -317,7 +321,7 @@ export function WeatherWidget({ sites = [], selectedSiteId, onSelectSite }) {
         {/* Weather card */}
         {loading ? (
           <p className="text-[11px] text-cl-text-dim italic py-2">
-            Cargando datos meteorológicos…
+            {t("widget.weather_loading")}
           </p>
         ) : weather && selectedSite ? (
           <div className="bg-cl-surface border border-cl-border rounded-sm p-3">
@@ -348,24 +352,24 @@ export function WeatherWidget({ sites = [], selectedSiteId, onSelectSite }) {
                   icon={weather.flightOk ? ICONS.checkCircle : ICONS.dangerCircle}
                   size={10}
                 />
-                {weather.flightOk ? "Apto" : "No apto"}
+                {weather.flightOk ? t("widget.weather_apt") : t("widget.weather_not_apt")}
               </span>
             </div>
             <div className="grid grid-cols-3 gap-2 pt-2 border-t border-cl-border">
               <div>
-                <p className="text-[9px] text-cl-text-dim uppercase">Temp</p>
+                <p className="text-[9px] text-cl-text-dim uppercase">{t("widget.weather_temp")}</p>
                 <p className="text-[12px] font-mono text-cl-text">
                   {formatTemp(weather)}
                 </p>
               </div>
               <div>
-                <p className="text-[9px] text-cl-text-dim uppercase">Viento</p>
+                <p className="text-[9px] text-cl-text-dim uppercase">{t("widget.weather_wind")}</p>
                 <p className="text-[12px] font-mono text-cl-text">
                   {weather.wind != null ? `${weather.wind} km/h` : "—"}
                 </p>
               </div>
               <div>
-                <p className="text-[9px] text-cl-text-dim uppercase">Precip</p>
+                <p className="text-[9px] text-cl-text-dim uppercase">{t("widget.weather_precip")}</p>
                 <p className="text-[12px] font-mono text-cl-text">
                   {weather.precip != null ? `${weather.precip}%` : "—"}
                 </p>
@@ -374,11 +378,11 @@ export function WeatherWidget({ sites = [], selectedSiteId, onSelectSite }) {
           </div>
         ) : sitesWithCoords.length === 0 ? (
           <p className="text-[11px] text-cl-text-dim italic py-2">
-            Sin sites con coordenadas registradas.
+            {t("widget.weather_no_coords")}
           </p>
         ) : (
           <p className="text-[11px] text-cl-text-dim italic py-2">
-            No se pudo cargar la meteorología.
+            {t("widget.weather_failed")}
           </p>
         )}
       </div>
@@ -391,19 +395,21 @@ export function WeatherWidget({ sites = [], selectedSiteId, onSelectSite }) {
 /* ─────────────────────────────────────────────────────────────── */
 
 export function SummaryWidget({ stats = {}, viewerScope = "srs" }) {
+  const { t, i18n } = useTranslation("common");
   // Principio #1: Facturado MTD es "ropa en casa" — solo visible en SRS scope.
   const isClientScope = viewerScope === "client";
+  const numLocale = (i18n.language || "es").startsWith("en") ? "en-US" : "es-ES";
   const rows = [
-    { label: "Completadas hoy",       value: stats.completedToday ?? 0,   color: "#22C55E", size: 18 },
-    { label: "Total intervenciones",  value: stats.totalActive ?? 0,      color: "#06B6D4", size: 18 },
-    { label: "Técnicos asignables",   value: stats.techsAvailable ?? 0,   suffix: stats.techsTotal != null ? `/${stats.techsTotal}` : "", color: "#06B6D4", size: 18 },
-    { label: "Flota de vehículos",    value: stats.fleet ?? 0,            color: "#06B6D4", size: 18 },
+    { label: t("widget.summary_completed_today"),  value: stats.completedToday ?? 0,   color: "#22C55E", size: 18 },
+    { label: t("widget.summary_total_active"),     value: stats.totalActive ?? 0,      color: "#06B6D4", size: 18 },
+    { label: t("widget.summary_techs_available"),  value: stats.techsAvailable ?? 0,   suffix: stats.techsTotal != null ? `/${stats.techsTotal}` : "", color: "#06B6D4", size: 18 },
+    { label: t("widget.summary_fleet"),            value: stats.fleet ?? 0,            color: "#06B6D4", size: 18 },
   ];
 
   return (
     <section>
       <header className="px-5 py-3 flex items-center justify-between">
-        <p className="label-caps-v2">Resumen</p>
+        <p className="label-caps-v2">{t("widget.summary_title")}</p>
       </header>
       <div className="px-5 pb-5 space-y-2.5">
         {rows.map((row) => (
@@ -420,12 +426,12 @@ export function SummaryWidget({ stats = {}, viewerScope = "srs" }) {
         ))}
         {stats.invoicedMtd != null && !isClientScope && (
           <div className="flex items-center justify-between py-1 pt-3 border-t border-cl-border">
-            <span className="text-[12px] text-cl-text-mid">Facturado MTD</span>
+            <span className="text-[12px] text-cl-text-mid">{t("widget.summary_invoiced_mtd")}</span>
             <span
               className="font-mono text-[14px]"
               style={{ color: "#0A1628", fontWeight: 600 }}
             >
-              € {Number(stats.invoicedMtd).toLocaleString("es-ES")}
+              € {Number(stats.invoicedMtd).toLocaleString(numLocale)}
             </span>
           </div>
         )}

@@ -36,27 +36,30 @@
  *   - onAdvance(targetStage) → llama API advance
  */
 
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { Icon, ICONS } from "../../lib/icons";
 import { formatWoCode } from "../../lib/woCode";
 import { getStatusInfo } from "../cockpit-v2/InterventionCardFull";
 import { getSeverityInfo } from "../cockpit-v2/InterventionCardMini";
 import { computeSlaInfo, getTag, buildTimeline } from "../../lib/woFields";
 
-const STAGE_CTA = {
-  intake:      { label: "Triagear",                      target: "triage",     bg: "#0EA5E9", note: "Mover a evaluación interna." },
-  triage:      { label: "Preparar intervención",         target: "pre_flight", bg: "#8B5CF6", note: "Inicia la lista de preparación SRS." },
-  pre_flight:  { label: "Despachar",                     target: "dispatched", bg: "#7C3AED", note: "Requiere lista de preparación completa." },
-  dispatched:  { label: "Esperando confirmación del técnico", target: null,    bg: "#0A1628", note: "Bloqueado hasta que el técnico firme la preparación.", disabled: true },
-  assigned:    { label: "Esperando confirmación del técnico", target: null,    bg: "#0A1628", note: "Bloqueado hasta que el técnico firme la preparación.", disabled: true },
-  en_route:    { label: "Llegar al sitio",               target: "on_site",    bg: "#EA580C", note: "Confirmar arribo del técnico." },
-  on_site:     { label: "Marcar como resuelta",          target: "resolved",   bg: "#22C55E", note: "Requiere captura de evidencia." },
-  in_progress: { label: "Marcar como resuelta",          target: "resolved",   bg: "#22C55E", note: "Requiere captura de evidencia." },
-  resolved:    { label: "Cerrar intervención",           target: "closed",     bg: "#16A34A", note: "Requiere firma del cliente (o autorización SRS)." },
-  in_closeout: { label: "Cerrar intervención",           target: "closed",     bg: "#16A34A", note: "Requiere firma del cliente (o autorización SRS)." },
-  closed:      { label: "Descargar informe",             target: null,         bg: "#16A34A", note: "Informe emitido a 5 canales. PDF firmado.", terminal: true },
-  completed:   { label: "Descargar informe",             target: null,         bg: "#16A34A", note: "Informe emitido a 5 canales. PDF firmado.", terminal: true },
-  cancelled:   { label: null,                            target: null,         readonly: true, note: "Intervención cancelada. Ver razón abajo." },
+// CTA spec por stage. Las strings (label/note) vienen de i18n; aquí solo la
+// metadata estructural del flujo de avance.
+const STAGE_CTA_META = {
+  intake:      { i18n: "intake",      target: "triage",     bg: "#0EA5E9" },
+  triage:      { i18n: "triage",      target: "pre_flight", bg: "#8B5CF6" },
+  pre_flight:  { i18n: "pre_flight",  target: "dispatched", bg: "#7C3AED" },
+  dispatched:  { i18n: "dispatched",  target: null,         bg: "#0A1628", disabled: true },
+  assigned:    { i18n: "dispatched",  target: null,         bg: "#0A1628", disabled: true },
+  en_route:    { i18n: "en_route",    target: "on_site",    bg: "#EA580C" },
+  on_site:     { i18n: "on_site",     target: "resolved",   bg: "#22C55E" },
+  in_progress: { i18n: "on_site",     target: "resolved",   bg: "#22C55E" },
+  resolved:    { i18n: "resolved",    target: "closed",     bg: "#16A34A" },
+  in_closeout: { i18n: "resolved",    target: "closed",     bg: "#16A34A" },
+  closed:      { i18n: "closed",      target: null,         bg: "#16A34A", terminal: true },
+  completed:   { i18n: "closed",      target: null,         bg: "#16A34A", terminal: true },
+  cancelled:   { i18n: "cancelled",   target: null,         readonly: true },
 };
 
 const SHIELD_META = {
@@ -75,6 +78,7 @@ export default function WoStageModal({
   onClose,
   onAdvance,
 }) {
+  const { t } = useTranslation("common");
   // ESC para cerrar
   useEffect(() => {
     if (!open) return;
@@ -89,7 +93,12 @@ export default function WoStageModal({
 
   const status = getStatusInfo(wo.status);
   const severity = getSeverityInfo(wo.severity);
-  const cta = STAGE_CTA[wo.status] || STAGE_CTA.intake;
+  const ctaMeta = STAGE_CTA_META[wo.status] || STAGE_CTA_META.intake;
+  const cta = {
+    ...ctaMeta,
+    label: ctaMeta.i18n === "cancelled" ? null : t(`modal_stage.cta_${ctaMeta.i18n}_label`),
+    note: t(`modal_stage.cta_${ctaMeta.i18n}_note`),
+  };
   const shield = SHIELD_META[site?.shield_level || wo?.shield_level];
   const tag = getTag(wo);
   const showResult = ["resolved", "in_closeout", "closed", "completed"].includes(wo.status);
@@ -194,14 +203,14 @@ export default function WoStageModal({
                 }}
               >
                 <Icon icon={ICONS.dangerTriangle} size={11} />
-                SLA EN RIESGO
+                {t("modal_stage.sla_at_risk_alert")}
               </span>
             )}
           </div>
           <button
             onClick={onClose}
             className="bg-transparent border-0 text-cl-text-dim transition cursor-pointer p-1 flex items-center rounded"
-            aria-label="Cerrar"
+            aria-label={t("modal_stage.close")}
             onMouseEnter={(e) => {
               e.currentTarget.style.color = "#0A1628";
               e.currentTarget.style.background = "#E8EDF5";
@@ -224,7 +233,7 @@ export default function WoStageModal({
                 className="font-jakarta leading-tight"
                 style={{ fontSize: 24, fontWeight: 700, margin: 0, color: "#0A1628", letterSpacing: "-0.015em" }}
               >
-                {site?.name || wo?.site_name || "Sin sitio"}
+                {site?.name || wo?.site_name || t("intervention.no_site")}
               </h2>
               <p className="text-[13px] mt-1" style={{ color: "#3D4A66", fontWeight: 500 }}>
                 {client?.name && <span>{client.name}</span>}
@@ -280,7 +289,7 @@ export default function WoStageModal({
           {wo?.description && (
             <section>
               <div className="label-caps-v2 mb-1.5" style={{ color: "#94A3B8", letterSpacing: "0.14em" }}>
-                Descripción
+                {t("modal_stage.section_description")}
               </div>
               <p className="text-[13px] text-cl-text leading-relaxed m-0">{wo.description}</p>
             </section>
@@ -290,7 +299,7 @@ export default function WoStageModal({
           {wo?.scope && (
             <section>
               <div className="label-caps-v2 mb-1.5" style={{ color: "#94A3B8", letterSpacing: "0.14em" }}>
-                Alcance
+                {t("modal_stage.section_scope")}
               </div>
               <p className="text-[13px] text-cl-text-mid leading-relaxed m-0">{wo.scope}</p>
             </section>
@@ -300,7 +309,7 @@ export default function WoStageModal({
           {timelineItems.length > 0 && (
             <section>
               <div className="label-caps-v2 mb-1.5" style={{ color: "#94A3B8", letterSpacing: "0.14em" }}>
-                Timeline
+                {t("modal_stage.section_timeline")}
               </div>
               <div>
                 {timelineItems.map((item, idx) => {
@@ -339,7 +348,7 @@ export default function WoStageModal({
           {showResult && wo?.result && (
             <section>
               <div className="label-caps-v2 mb-1.5" style={{ color: "#94A3B8", letterSpacing: "0.14em" }}>
-                Resultado
+                {t("modal_stage.section_result")}
               </div>
               <p className="text-[13px] text-cl-text leading-relaxed m-0">{wo.result}</p>
             </section>
@@ -349,7 +358,7 @@ export default function WoStageModal({
           {showRisk && (
             <section>
               <div className="label-caps-v2 mb-1.5" style={{ color: "#94A3B8", letterSpacing: "0.14em" }}>
-                Nivel riesgo
+                {t("modal_stage.section_risk")}
               </div>
               <div className="flex items-center gap-2">
                 <span
@@ -364,7 +373,7 @@ export default function WoStageModal({
                   }}
                 >
                   <Icon icon={ICONS.checkCircle} size={13} />
-                  {wo.risk_level || "Nominal"}
+                  {wo.risk_level || t("modal_stage.risk_default")}
                 </span>
                 {wo.risk_note && (
                   <span className="text-[12px] text-cl-text-mid">{wo.risk_note}</span>
@@ -377,7 +386,7 @@ export default function WoStageModal({
           {showReason && wo?.cancellation_reason && (
             <section>
               <div className="label-caps-v2 mb-1.5" style={{ color: "#94A3B8", letterSpacing: "0.14em" }}>
-                Razón cancelación
+                {t("modal_stage.section_cancel_reason")}
               </div>
               <p className="text-[13px] text-cl-text leading-relaxed m-0">
                 {wo.cancellation_reason}
@@ -422,7 +431,7 @@ export default function WoStageModal({
                 e.currentTarget.style.borderColor = "#C8CDD8";
               }}
             >
-              Cerrar
+              {t("modal_stage.close")}
             </button>
             {!cta.readonly && cta.label && (
               <button
