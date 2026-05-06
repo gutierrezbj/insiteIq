@@ -482,6 +482,7 @@ function ActionButton({ onClick, label, tone = "default" }) {
 }
 
 function AdvanceAction({ wo, target, label, handshake, soft, isSrs, reload }) {
+  const { t } = useTranslation("common");
   const [open, setOpen] = useState(false);
   const [notes, setNotes] = useState("");
   const [emergency, setEmergency] = useState(false);
@@ -511,13 +512,13 @@ function AdvanceAction({ wo, target, label, handshake, soft, isSrs, reload }) {
         onSubmit={submit}
       >
         <div>
-          <DialogLabel htmlFor="notes" optional>Notas</DialogLabel>
+          <DialogLabel htmlFor="notes" optional>{t("wo_modal.advance_notes_label")}</DialogLabel>
           <DialogTextarea
             id="notes"
             rows={3}
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="Contexto breve — opcional, queda en audit_log"
+            placeholder={t("wo_modal.advance_notes_placeholder")}
           />
         </div>
         {needsEmergencyHint && isSrs && (
@@ -532,14 +533,14 @@ function AdvanceAction({ wo, target, label, handshake, soft, isSrs, reload }) {
           >
             <DialogCheckbox
               id="emergency"
-              label="Override emergency (bypassa guards)"
+              label={t("wo_modal.advance_emergency_label")}
               checked={emergency}
               onChange={setEmergency}
             />
             <p style={{ ...MONO_CAPS, fontSize: 9.5, color: "#7E5212", letterSpacing: "0.14em", marginTop: 6, fontWeight: 600 }}>
-              {isDispatch && "pre-flight all_green, o emergency"}
-              {isEnRoute && "briefing acknowledged, o emergency"}
-              {isResolve && "tech capture submitted, o emergency"}
+              {isDispatch && t("wo_modal.emergency_hint_dispatch")}
+              {isEnRoute && t("wo_modal.emergency_hint_en_route")}
+              {isResolve && t("wo_modal.emergency_hint_resolve")}
             </p>
           </div>
         )}
@@ -549,6 +550,7 @@ function AdvanceAction({ wo, target, label, handshake, soft, isSrs, reload }) {
 }
 
 function PreflightAction({ wo, reload }) {
+  const { t } = useTranslation("common");
   const [open, setOpen] = useState(false);
   const existing = wo.pre_flight_checklist || {};
   const [kit, setKit] = useState(!!existing.kit_verified);
@@ -571,30 +573,30 @@ function PreflightAction({ wo, reload }) {
 
   return (
     <>
-      <ActionButton onClick={() => setOpen(true)} label="Pre-flight checklist" tone="soft" />
+      <ActionButton onClick={() => setOpen(true)} label={t("wo_modal.preflight_btn")} tone="soft" />
       <ActionDialog
         open={open}
         onClose={() => setOpen(false)}
-        title="Pre-flight checklist"
-        subtitle="Todo verde desbloquea dispatch sin emergency"
-        submitLabel="Guardar"
+        title={t("wo_modal.preflight_title")}
+        subtitle={t("wo_modal.preflight_subtitle")}
+        submitLabel={t("wo_modal.preflight_save")}
         onSubmit={submit}
       >
         <DialogCheckbox
           id="kit"
-          label="Kit verificado (laptop, cables, herramientas)"
+          label={t("wo_modal.preflight_kit")}
           checked={kit}
           onChange={setKit}
         />
         <DialogCheckbox
           id="parts"
-          label="Partes listas (si aplica)"
+          label={t("wo_modal.preflight_parts")}
           checked={parts}
           onChange={setParts}
         />
         <DialogCheckbox
           id="sitebible"
-          label="Site Bible leído"
+          label={t("wo_modal.preflight_site_bible")}
           checked={siteBible}
           onChange={setSiteBible}
         />
@@ -608,7 +610,7 @@ function PreflightAction({ wo, reload }) {
             fontWeight: 800,
           }}
         >
-          {allGreen ? "· all_green" : "· falta"}
+          {allGreen ? t("wo_modal.preflight_all_green") : t("wo_modal.preflight_missing")}
         </div>
       </ActionDialog>
     </>
@@ -616,6 +618,7 @@ function PreflightAction({ wo, reload }) {
 }
 
 function AckBriefingAction({ wo, reload }) {
+  const { t } = useTranslation("common");
   const [open, setOpen] = useState(false);
 
   async function submit() {
@@ -625,18 +628,17 @@ function AckBriefingAction({ wo, reload }) {
 
   return (
     <>
-      <ActionButton onClick={() => setOpen(true)} label="Acknowledge briefing" />
+      <ActionButton onClick={() => setOpen(true)} label={t("wo_modal.ack_btn")} />
       <ActionDialog
         open={open}
         onClose={() => setOpen(false)}
-        title="Acknowledge Copilot briefing"
-        subtitle="Requerido antes de marcar en ruta"
-        submitLabel="Confirmar"
+        title={t("wo_modal.ack_title")}
+        subtitle={t("wo_modal.ack_subtitle")}
+        submitLabel={t("wo_modal.ack_submit")}
         onSubmit={submit}
       >
         <p style={{ fontFamily: JAKARTA, fontSize: 13, color: "#3D4A66", lineHeight: 1.55, fontWeight: 500 }}>
-          Confirmo que leí el briefing asignado a este work order. Queda registrado en
-          audit_log con mi user_id y timestamp.
+          {t("wo_modal.ack_body")}
         </p>
       </ActionDialog>
     </>
@@ -644,6 +646,7 @@ function AckBriefingAction({ wo, reload }) {
 }
 
 function SubmitCaptureAction({ wo, reload }) {
+  const { t } = useTranslation("common");
   const [open, setOpen] = useState(false);
   const [whatFound, setWhatFound] = useState("");
   const [whatDid, setWhatDid] = useState("");
@@ -734,54 +737,54 @@ function SubmitCaptureAction({ wo, reload }) {
 
   return (
     <>
-      <ActionButton onClick={() => setOpen(true)} label="Submit capture" />
+      <ActionButton onClick={() => setOpen(true)} label={t("wo_modal.capture_btn")} />
       <ActionDialog
         open={open}
         onClose={() => setOpen(false)}
-        title="Tech Capture"
-        subtitle="Ritual post-intervención — requerido antes de resolver"
-        submitLabel={uploading ? "Subiendo…" : "Submit capture"}
+        title={t("wo_modal.capture_title")}
+        subtitle={t("wo_modal.capture_subtitle")}
+        submitLabel={uploading ? t("wo_modal.capture_uploading") : t("wo_modal.capture_btn")}
         submitDisabled={!canSubmit || uploading}
         onSubmit={submit}
       >
         <div>
-          <DialogLabel htmlFor="cap-found">Qué encontraste</DialogLabel>
+          <DialogLabel htmlFor="cap-found">{t("wo_modal.capture_what_found_label")}</DialogLabel>
           <DialogTextarea
             id="cap-found"
             rows={3}
             value={whatFound}
             onChange={(e) => setWhatFound(e.target.value)}
-            placeholder="Síntomas, causa raíz, estado al llegar"
+            placeholder={t("wo_modal.capture_what_found_placeholder")}
             required
           />
         </div>
         <div>
-          <DialogLabel htmlFor="cap-did">Qué hiciste</DialogLabel>
+          <DialogLabel htmlFor="cap-did">{t("wo_modal.capture_what_did_label")}</DialogLabel>
           <DialogTextarea
             id="cap-did"
             rows={3}
             value={whatDid}
             onChange={(e) => setWhatDid(e.target.value)}
-            placeholder="Pasos ejecutados, partes tocadas, resultado"
+            placeholder={t("wo_modal.capture_what_did_placeholder")}
             required
           />
         </div>
         <div>
           <DialogLabel htmlFor="cap-new" optional>
-            Algo nuevo sobre el sitio
+            {t("wo_modal.capture_site_new_label")}
           </DialogLabel>
           <DialogTextarea
             id="cap-new"
             rows={2}
             value={siteNew}
             onChange={(e) => setSiteNew(e.target.value)}
-            placeholder="Cambio de acceso, layout, contacto, rack…"
+            placeholder={t("wo_modal.capture_site_new_placeholder")}
           />
         </div>
 
         <div>
           <DialogLabel htmlFor="cap-photos" optional>
-            Fotos / evidencia (15MB max por archivo)
+            {t("wo_modal.capture_photos_label")}
           </DialogLabel>
           <input
             id="cap-photos"
@@ -827,7 +830,7 @@ function SubmitCaptureAction({ wo, reload }) {
                         letterSpacing: "0.14em",
                       }}
                     >
-                      subiendo…
+                      {t("wo_modal.capture_photo_uploading")}
                     </div>
                   ) : p.error ? (
                     <div
@@ -870,13 +873,13 @@ function SubmitCaptureAction({ wo, reload }) {
                         textAlign: "center",
                       }}
                     >
-                      {p.label || "file"}
+                      {p.label || t("wo_modal.capture_photo_file_fallback")}
                     </div>
                   )}
                   <button
                     type="button"
                     onClick={() => removePhoto(i)}
-                    title="Quitar"
+                    title={t("wo_modal.capture_photo_remove")}
                     style={{
                       position: "absolute",
                       top: 4,
@@ -903,7 +906,7 @@ function SubmitCaptureAction({ wo, reload }) {
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
           <div>
             <DialogLabel htmlFor="cap-min" optional>
-              Tiempo on site (min)
+              {t("wo_modal.capture_minutes_label")}
             </DialogLabel>
             <DialogInput
               id="cap-min"
@@ -917,7 +920,7 @@ function SubmitCaptureAction({ wo, reload }) {
           <div style={{ display: "flex", alignItems: "flex-end" }}>
             <DialogCheckbox
               id="cap-follow"
-              label="Requiere follow-up"
+              label={t("wo_modal.capture_followup_label")}
               checked={followUp}
               onChange={setFollowUp}
             />
@@ -926,14 +929,14 @@ function SubmitCaptureAction({ wo, reload }) {
         {followUp && (
           <div>
             <DialogLabel htmlFor="cap-follow-notes" optional>
-              Notas follow-up
+              {t("wo_modal.capture_followup_notes_label")}
             </DialogLabel>
             <DialogTextarea
               id="cap-follow-notes"
               rows={2}
               value={followUpNotes}
               onChange={(e) => setFollowUpNotes(e.target.value)}
-              placeholder="Que falta, para cuándo"
+              placeholder={t("wo_modal.capture_followup_placeholder")}
             />
           </div>
         )}
@@ -943,6 +946,7 @@ function SubmitCaptureAction({ wo, reload }) {
 }
 
 function RateTechAction({ wo, reload, isClient }) {
+  const { t } = useTranslation("common");
   const [open, setOpen] = useState(false);
   const [score, setScore] = useState("5");
   const [notes, setNotes] = useState("");
@@ -960,17 +964,17 @@ function RateTechAction({ wo, reload, isClient }) {
 
   return (
     <>
-      <ActionButton onClick={() => setOpen(true)} label="Rate tech" tone="soft" />
+      <ActionButton onClick={() => setOpen(true)} label={t("wo_modal.rate_btn")} tone="soft" />
       <ActionDialog
         open={open}
         onClose={() => setOpen(false)}
-        title="Rate tech"
-        subtitle="Único por tech por WO — alimenta Skill Passport"
-        submitLabel="Rate"
+        title={t("wo_modal.rate_title")}
+        subtitle={t("wo_modal.rate_subtitle")}
+        submitLabel={t("wo_modal.rate_submit")}
         onSubmit={submit}
       >
         <div>
-          <DialogLabel htmlFor="rate-score">Score (1.0–5.0)</DialogLabel>
+          <DialogLabel htmlFor="rate-score">{t("wo_modal.rate_score_label")}</DialogLabel>
           <DialogInput
             id="rate-score"
             type="number"
@@ -983,14 +987,14 @@ function RateTechAction({ wo, reload, isClient }) {
         </div>
         <div>
           <DialogLabel htmlFor="rate-notes" optional>
-            Comentario
+            {t("wo_modal.rate_comment_label")}
           </DialogLabel>
           <DialogTextarea
             id="rate-notes"
             rows={2}
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="Qué destacó, qué pulir"
+            placeholder={t("wo_modal.rate_comment_placeholder")}
           />
         </div>
       </ActionDialog>
@@ -999,6 +1003,7 @@ function RateTechAction({ wo, reload, isClient }) {
 }
 
 function CancelAction({ wo, reload }) {
+  const { t } = useTranslation("common");
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState("");
 
@@ -1011,25 +1016,25 @@ function CancelAction({ wo, reload }) {
 
   return (
     <>
-      <ActionButton onClick={() => setOpen(true)} label="Cancelar WO" tone="destructive" />
+      <ActionButton onClick={() => setOpen(true)} label={t("wo_modal.cancel_btn")} tone="destructive" />
       <ActionDialog
         open={open}
         onClose={() => setOpen(false)}
-        title="Cancelar work order"
-        subtitle="Acción irreversible — sella threads y emite audit_log"
-        submitLabel="Cancelar WO"
+        title={t("wo_modal.cancel_title")}
+        subtitle={t("wo_modal.cancel_subtitle")}
+        submitLabel={t("wo_modal.cancel_submit")}
         destructive
         submitDisabled={!canSubmit}
         onSubmit={submit}
       >
         <div>
-          <DialogLabel htmlFor="cancel-reason">Razón</DialogLabel>
+          <DialogLabel htmlFor="cancel-reason">{t("wo_modal.cancel_reason_label")}</DialogLabel>
           <DialogTextarea
             id="cancel-reason"
             rows={3}
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            placeholder="Cliente retiró, out of scope, duplicado…"
+            placeholder={t("wo_modal.cancel_reason_placeholder")}
             required
           />
         </div>
