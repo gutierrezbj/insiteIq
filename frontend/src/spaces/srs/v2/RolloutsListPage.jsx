@@ -11,26 +11,36 @@
  */
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { api } from "../../../lib/api";
 import { Icon, ICONS } from "../../../lib/icons";
 import EmptyState from "../../../components/v2-shared/EmptyState";
 
-const STATUS_FILTERS = [
-  { key: "active", label: "Activos" },
-  { key: "closed", label: "Cerrados" },
-  { key: "all",    label: "Todos" },
+const STATUS_FILTER_KEYS = [
+  { key: "active", i18n: "filter_active" },
+  { key: "closed", i18n: "filter_closed" },
+  { key: "all",    i18n: "filter_all" },
 ];
 
-const SORT_OPTIONS = [
-  { key: "progress_desc", label: "Más avance" },
-  { key: "progress_asc",  label: "Menos avance" },
-  { key: "active_desc",   label: "Más activas" },
-  { key: "incidents_desc", label: "Más incidentes" },
-  { key: "alpha",         label: "Alfabético" },
-  { key: "recent",        label: "Más reciente" },
+const SORT_OPTION_KEYS = [
+  { key: "progress_desc",  i18n: "sort_progress_desc" },
+  { key: "progress_asc",   i18n: "sort_progress_asc" },
+  { key: "active_desc",    i18n: "sort_active_desc" },
+  { key: "incidents_desc", i18n: "sort_incidents_desc" },
+  { key: "alpha",          i18n: "sort_alpha" },
+  { key: "recent",         i18n: "sort_recent" },
 ];
 
 export default function RolloutsListPage() {
+  const { t } = useTranslation("common");
+  const STATUS_FILTERS = useMemo(
+    () => STATUS_FILTER_KEYS.map((s) => ({ ...s, label: t(`page_rollouts_list.${s.i18n}`) })),
+    [t]
+  );
+  const SORT_OPTIONS = useMemo(
+    () => SORT_OPTION_KEYS.map((s) => ({ ...s, label: t(`page_rollouts_list.${s.i18n}`) })),
+    [t]
+  );
   const navigate = useNavigate();
   const [projects, setProjects] = useState([]);
   const [orgsMap, setOrgsMap] = useState({});
@@ -122,21 +132,25 @@ export default function RolloutsListPage() {
       <header className="mb-4">
         <div className="flex items-end justify-between gap-3 flex-wrap mb-3">
           <div>
-            <p className="label-caps-v2" style={{ color: "#0A1628", fontWeight: 800 }}>Rollouts</p>
+            <p className="label-caps-v2" style={{ color: "#0A1628", fontWeight: 800 }}>{t("page_rollouts_list.title")}</p>
             <h1
               className="font-jakarta text-[22px] leading-tight"
               style={{ color: "#0A1628", fontWeight: 800, letterSpacing: "-0.015em" }}
             >
-              {loading ? "Cargando…" : `${visible.length} de ${projects.length} ${projects.length === 1 ? "rollout" : "rollouts"}`}
+              {loading
+                ? t("page_rollouts_list.loading")
+                : projects.length === 1
+                  ? t("page_rollouts_list.header_count_one", { count: visible.length, total: projects.length })
+                  : t("page_rollouts_list.header_count_other", { count: visible.length, total: projects.length })}
             </h1>
             <p className="text-[12px] text-cl-text-mid mt-1" style={{ fontWeight: 500 }}>
-              Click en una tarjeta para ver mapa · kanban · cuadro de mando · timeline
+              {t("page_rollouts_list.header_subtitle")}
             </p>
           </div>
 
           {/* Sort selector */}
           <div className="flex items-center gap-2">
-            <span className="text-[10px] text-cl-text-dim uppercase" style={{ letterSpacing: "0.1em" }}>Ordenar:</span>
+            <span className="text-[10px] text-cl-text-dim uppercase" style={{ letterSpacing: "0.1em" }}>{t("page_rollouts_list.sort_label")}</span>
             <select
               value={sortKey}
               onChange={(e) => setSortKey(e.target.value)}
@@ -162,14 +176,14 @@ export default function RolloutsListPage() {
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar por código, título, PO…"
+              placeholder={t("page_rollouts_list.search_placeholder")}
               className="w-full bg-cl-surface/40 border border-cl-border rounded-sm pl-8 pr-8 py-1.5 text-[12px] text-cl-text font-mono placeholder-cl-text-dim focus:outline-none focus:border-cl-amber/60"
             />
             {search && (
               <button
                 onClick={() => setSearch("")}
                 className="absolute right-2 top-1/2 -translate-y-1/2 text-cl-text-dim hover:text-cl-text"
-                title="Limpiar búsqueda"
+                title={t("page_rollouts_list.clear_search_tooltip")}
               >
                 <Icon icon={ICONS.close} size={12} />
               </button>
@@ -226,9 +240,11 @@ export default function RolloutsListPage() {
         <div className="px-6 py-12">
           <EmptyState
             icon="inbox"
-            title={search || statusFilter !== "all" ? "Sin rollouts en este filtro" : "Sin rollouts activos"}
-            sublabel={search ? `Probá quitar la búsqueda "${search}"` : "Cambiá el filtro o creá uno desde Proyectos / API"}
-            action={search ? { label: "Limpiar búsqueda", onClick: () => setSearch("") } : undefined}
+            title={search || statusFilter !== "all" ? t("page_rollouts_list.empty_filter_title") : t("page_rollouts_list.empty_no_active_title")}
+            sublabel={search
+              ? t("page_rollouts_list.empty_search_sublabel", { search })
+              : t("page_rollouts_list.empty_no_active_sublabel")}
+            action={search ? { label: t("page_rollouts_list.clear_search_action"), onClick: () => setSearch("") } : undefined}
           />
         </div>
       ) : (
@@ -274,6 +290,7 @@ function RolloutCardSkeleton() {
 }
 
 function RolloutCard({ project, dashboard, orgsMap, onClick }) {
+  const { t } = useTranslation("common");
   const totalSites = dashboard?.total_sites_target || project.total_sites_target || 0;
   const completed = dashboard?.work_orders?.completed || 0;
   const active = dashboard?.work_orders?.active || 0;
@@ -346,12 +363,12 @@ function RolloutCard({ project, dashboard, orgsMap, onClick }) {
         <div className="text-[10px] text-cl-text-mid space-y-0.5 mb-3 font-mono">
           {clientOrg && (
             <div className="truncate" title={(clientOrg.display_name || clientOrg.legal_name)}>
-              <span className="text-cl-text-dim">Cliente:</span> <span className="text-cl-text">{(clientOrg.display_name || clientOrg.legal_name)}</span>
+              <span className="text-cl-text-dim">{t("page_rollouts_list.client_label")}</span> <span className="text-cl-text">{(clientOrg.display_name || clientOrg.legal_name)}</span>
             </div>
           )}
           {endClientOrg && endClientOrg.id !== clientOrg?.id && (
             <div className="truncate" title={(endClientOrg.display_name || endClientOrg.legal_name)}>
-              <span className="text-cl-text-dim">End-client:</span> <span className="text-cl-text">{(endClientOrg.display_name || endClientOrg.legal_name)}</span>
+              <span className="text-cl-text-dim">{t("page_rollouts_list.end_client_label")}</span> <span className="text-cl-text">{(endClientOrg.display_name || endClientOrg.legal_name)}</span>
             </div>
           )}
           {project.po_number && (
@@ -364,7 +381,7 @@ function RolloutCard({ project, dashboard, orgsMap, onClick }) {
 
       <div className="space-y-2.5 mt-3">
         <div className="flex items-baseline justify-between">
-          <span className="text-[11px] font-jakarta uppercase" style={{ color: "#3D4A66", fontWeight: 700, letterSpacing: "0.1em" }}>Avance</span>
+          <span className="text-[11px] font-jakarta uppercase" style={{ color: "#3D4A66", fontWeight: 700, letterSpacing: "0.1em" }}>{t("page_rollouts_list.progress")}</span>
           {/* Avance navy strong + counter limpio */}
           <span className="font-jakarta" style={{ fontSize: 16, color: "#0A1628", fontWeight: 800, letterSpacing: "-0.01em", fontVariantNumeric: "tabular-nums" }}>
             {completed}/{totalSites} <span className="text-[11px]" style={{ color: "#8B95A8", fontWeight: 600 }}>· {progressPct}%</span>
@@ -383,7 +400,7 @@ function RolloutCard({ project, dashboard, orgsMap, onClick }) {
 
         <div className="grid grid-cols-2 gap-2 text-[11px] mt-3">
           <div className="px-3 py-2 rounded-sm" style={{ background: "#F7F8FA", border: "1px solid #E2E5EC" }}>
-            <p className="text-[9px] font-jakarta uppercase" style={{ color: "#8B95A8", fontWeight: 700, letterSpacing: "0.1em" }}>Activas</p>
+            <p className="text-[9px] font-jakarta uppercase" style={{ color: "#8B95A8", fontWeight: 700, letterSpacing: "0.1em" }}>{t("page_rollouts_list.active")}</p>
             <p className="font-jakarta" style={{ fontSize: 18, color: "#0A1628", fontWeight: 800, fontVariantNumeric: "tabular-nums" }}>{active}</p>
           </div>
           <div
@@ -395,7 +412,7 @@ function RolloutCard({ project, dashboard, orgsMap, onClick }) {
               borderLeftColor: incidents > 0 ? "#D63944" : "#16A34A",
             }}
           >
-            <p className="text-[9px] font-jakarta uppercase" style={{ color: incidents > 0 ? "#8E1F2A" : "#8B95A8", fontWeight: 700, letterSpacing: "0.1em" }}>Incidentes</p>
+            <p className="text-[9px] font-jakarta uppercase" style={{ color: incidents > 0 ? "#8E1F2A" : "#8B95A8", fontWeight: 700, letterSpacing: "0.1em" }}>{t("page_rollouts_list.incidents")}</p>
             <p
               className="font-jakarta"
               style={{ fontSize: 18, color: incidents > 0 ? "#D63944" : "#16A34A", fontWeight: 800, fontVariantNumeric: "tabular-nums" }}
@@ -407,7 +424,7 @@ function RolloutCard({ project, dashboard, orgsMap, onClick }) {
       </div>
 
       <div className="mt-3 pt-2 flex items-center justify-between text-[11px]" style={{ borderTop: "1px solid #E2E5EC", color: "#0A1628" }}>
-        <span className="font-jakarta uppercase" style={{ fontWeight: 700, letterSpacing: "0.08em" }}>Abrir rollout</span>
+        <span className="font-jakarta uppercase" style={{ fontWeight: 700, letterSpacing: "0.08em" }}>{t("page_rollouts_list.open_rollout")}</span>
         <Icon icon={ICONS.arrowRight} size={12} />
       </div>
     </article>

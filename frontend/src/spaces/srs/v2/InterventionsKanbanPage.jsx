@@ -23,6 +23,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
 /* Persist Set state (multi-select filters) across page reloads. */
@@ -94,18 +95,25 @@ const COL_DEFAULT_STAGE = {
   canceladas:  "cancelled",
 };
 
-const COLUMNS = [
-  { id: "solicitadas", title: "Solicitadas" },
-  { id: "preparando",  title: "Preparando" },
-  { id: "en_campo",    title: "En campo" },
-  { id: "cerrando",    title: "Cerrando" },
-  { id: "cerradas",    title: "Cerradas" },
-  { id: "canceladas",  title: "Canceladas", hidden: true },
+const COLUMN_KEYS = [
+  { id: "solicitadas", i18n: "col_requested" },
+  { id: "preparando",  i18n: "col_preparing" },
+  { id: "en_campo",    i18n: "col_in_field" },
+  { id: "cerrando",    i18n: "col_closing" },
+  { id: "cerradas",    i18n: "col_closed" },
+  { id: "canceladas",  i18n: "col_cancelled_title", hidden: true },
 ];
 
-const COL_LABEL = COLUMNS.reduce((acc, c) => ({ ...acc, [c.id]: c.title }), {});
-
 export default function InterventionsKanbanPage({ scope = "srs" }) {
+  const { t } = useTranslation("common");
+  const COLUMNS = useMemo(
+    () => COLUMN_KEYS.map((c) => ({ ...c, title: t(`page_kanban.${c.i18n}`) })),
+    [t]
+  );
+  const COL_LABEL = useMemo(
+    () => COLUMNS.reduce((acc, c) => ({ ...acc, [c.id]: c.title }), {}),
+    [COLUMNS]
+  );
   const { markRefreshing, markFresh } = useRefresh();
   const { user } = useAuth();
   const clientOrgId = scope === "client" ? getClientOrgId(user) : null;
@@ -305,14 +313,18 @@ export default function InterventionsKanbanPage({ scope = "srs" }) {
       try {
         await api.post(`/work-orders/${woId}/advance`, { to_status: newStage });
         toast.success(
-          `${wo.code || woId.slice(-8).toUpperCase()} movida: ${COL_LABEL[currentColId]} → ${COL_LABEL[targetColId]}`
+          t("page_kanban.wo_moved", {
+            code: wo.code || woId.slice(-8).toUpperCase(),
+            from: COL_LABEL[currentColId],
+            to: COL_LABEL[targetColId],
+          })
         );
         // Re-fetch para sincronizar timestamps + ball-in-court actualizados
         load();
       } catch (err) {
         // Rollback
         setWos((prev) => prev.map((w) => (w.id === woId ? { ...w, status: wo.status } : w)));
-        toast.error(`No se pudo mover ${wo.code || ""}: ${err?.message || "error servidor"}`);
+        toast.error(t("page_kanban.move_failed", { code: wo.code || "", message: err?.message || t("page_kanban.server_error") }));
       }
     },
     [wos, load]
@@ -332,7 +344,7 @@ export default function InterventionsKanbanPage({ scope = "srs" }) {
   const handleAdvance = useCallback(
     async (toStatus, action) => {
       if (action === "download") {
-        toast.info(`Descargando informe ${modalWo?.code || ""}...`);
+        toast.info(t("page_kanban.downloading_report", { code: modalWo?.code || "" }));
         return;
       }
       if (!toStatus || !modalWo) return;
@@ -344,13 +356,13 @@ export default function InterventionsKanbanPage({ scope = "srs" }) {
       setModalWoId(null);
       try {
         await api.post(`/work-orders/${modalWo.id}/advance`, { to_status: toStatus });
-        toast.success(`${modalWo.code || ""} avanzada a ${toStatus}`);
+        toast.success(t("page_kanban.advanced_to", { code: modalWo.code || "", stage: toStatus }));
         load();
       } catch (err) {
         setWos((prev) =>
           prev.map((w) => (w.id === modalWo.id ? { ...w, status: fromStatus } : w))
         );
-        toast.error(`No se pudo avanzar: ${err?.message || "error servidor"}`);
+        toast.error(t("page_kanban.advance_failed", { message: err?.message || t("page_kanban.server_error") }));
       }
     },
     [modalWo, load]
@@ -374,7 +386,7 @@ export default function InterventionsKanbanPage({ scope = "srs" }) {
           />
           <input
             type="text"
-            placeholder="Buscar WO, site, cliente, técnico..."
+            placeholder={t("page_kanban.search_placeholder")}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="bg-cl-surface text-[13px] text-cl-text font-jakarta"
@@ -405,25 +417,25 @@ export default function InterventionsKanbanPage({ scope = "srs" }) {
 
         {/* Filter dropdowns funcionales · multi-select con popover */}
         <MultiSelectDropdown
-          label="Prioridad"
+          label={t("page_kanban.filter_priority")}
           options={prioOptions}
           selected={filterPrio}
           onChange={setFilterPrio}
         />
         <MultiSelectDropdown
-          label="Cliente"
+          label={t("page_kanban.filter_client")}
           options={clientOptions}
           selected={filterClient}
           onChange={setFilterClient}
         />
         <MultiSelectDropdown
-          label="Shield"
+          label={t("page_kanban.filter_shield")}
           options={shieldOptions}
           selected={filterShield}
           onChange={setFilterShield}
         />
         <MultiSelectDropdown
-          label="Técnico"
+          label={t("page_kanban.filter_tech")}
           options={techOptions}
           selected={filterTech}
           onChange={setFilterTech}
@@ -439,7 +451,7 @@ export default function InterventionsKanbanPage({ scope = "srs" }) {
             onChange={(e) => setShowCancelled(e.target.checked)}
             style={{ accentColor: "#0A1628" }}
           />
-          Ver canceladas
+          {t("page_kanban.show_cancelled")}
         </label>
 
         {/* Refresh · squared navy 1.5px (Iter 2.19 A · SQUARED OPS) */}
@@ -454,7 +466,7 @@ export default function InterventionsKanbanPage({ scope = "srs" }) {
             border: "1.5px solid #0A1628",
             color: "#0A1628",
           }}
-          title="Refrescar"
+          title={t("page_kanban.refresh_tooltip")}
           onMouseEnter={(e) => {
             e.currentTarget.style.background = "#0A1628";
             e.currentTarget.style.color = "#FFFFFF";
@@ -491,7 +503,7 @@ export default function InterventionsKanbanPage({ scope = "srs" }) {
             e.currentTarget.style.borderColor = "#0A1628";
             e.currentTarget.style.boxShadow = "0 2px 6px -1px rgba(10, 22, 40, 0.32)";
           }}
-          onClick={() => toast.info("Crear nueva solicitud · disponible en próxima fase")}
+          onClick={() => toast.info(t("page_kanban.create_request_disabled"))}
         >
           + Nueva solicitud
         </button>

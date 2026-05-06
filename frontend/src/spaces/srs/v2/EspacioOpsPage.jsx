@@ -19,7 +19,9 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import i18n from "../../../i18n";
 import { api } from "../../../lib/api";
 import { useRefresh } from "../../../contexts/RefreshContext";
 import { useAuth } from "../../../contexts/AuthContext";
@@ -148,14 +150,15 @@ function buildQuickPopupHtml({ wo, site, tech, client, warning }) {
 
       <!-- Actions · navy strong primary + outline -->
       <div style="padding:0 14px 12px;display:flex;gap:6px;">
-        <button data-action="view-detail" data-wo-id="${wo?.id || ""}" style="flex:1;height:32px;background:#0A1628;color:#FFFFFF;border:1px solid #0A1628;border-radius:4px;font-family:'Plus Jakarta Sans',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 2px 6px -1px rgba(10,22,40,0.18);">Ver detalle →</button>
-        ${techName ? `<button data-action="contact-tech" data-tech="${techName}" style="flex:1;height:32px;background:#FFFFFF;color:#3D4A66;border:1px solid #C8CDD8;border-radius:4px;font-family:'Plus Jakarta Sans',sans-serif;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;">Contactar tech</button>` : ""}
+        <button data-action="view-detail" data-wo-id="${wo?.id || ""}" style="flex:1;height:32px;background:#0A1628;color:#FFFFFF;border:1px solid #0A1628;border-radius:4px;font-family:'Plus Jakarta Sans',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 2px 6px -1px rgba(10,22,40,0.18);">${i18n.t("page_espacio_ops.popup_view_detail")}</button>
+        ${techName ? `<button data-action="contact-tech" data-tech="${techName}" style="flex:1;height:32px;background:#FFFFFF;color:#3D4A66;border:1px solid #C8CDD8;border-radius:4px;font-family:'Plus Jakarta Sans',sans-serif;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;">${i18n.t("page_espacio_ops.popup_contact_tech")}</button>` : ""}
       </div>
     </div>
   `;
 }
 
 export default function EspacioOpsPage({ scope = "srs" }) {
+  const { t } = useTranslation("common");
   const { markRefreshing, markFresh } = useRefresh();
   const { user } = useAuth();
   const clientOrgId = scope === "client" ? getClientOrgId(user) : null;
@@ -488,7 +491,7 @@ export default function EspacioOpsPage({ scope = "srs" }) {
       {/* Mapa */}
       <div className="flex-1 relative" style={{ minHeight: 400 }}>
         <div className="absolute top-3 left-5 z-[400] flex items-center gap-3 pointer-events-none">
-          <p className="label-caps-v2">Mapa operativo</p>
+          <p className="label-caps-v2">{t("page_espacio_ops.operational_map")}</p>
           <span className="font-mono text-[11px] text-cl-text">
             {filteredWos.length} {filteredWos.length === 1 ? "intervención" : "intervenciones"} visibles
           </span>
@@ -511,12 +514,12 @@ export default function EspacioOpsPage({ scope = "srs" }) {
 
         {/* Legend inferior izq · estados de intervención */}
         <div className="absolute bottom-3 left-5 z-[400] bg-cl-surface/95 border border-cl-border rounded-sm px-3 py-2 flex items-center gap-3 text-[10px] backdrop-blur-sm pointer-events-none">
-          <p className="label-caps-v2">Estado</p>
-          <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ background: "#3B82F6" }}/><span className="text-cl-text-mid">Entrada</span></span>
-          <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ background: "#8B5CF6" }}/><span className="text-cl-text-mid">Preparando</span></span>
-          <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ background: "#0A1628" }}/><span className="text-cl-text-mid">En ruta</span></span>
-          <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ background: "#EA580C" }}/><span className="text-cl-text-mid">En sitio</span></span>
-          <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ background: "#22C55E" }}/><span className="text-cl-text-mid">Resuelta</span></span>
+          <p className="label-caps-v2">{t("page_espacio_ops.status_label")}</p>
+          <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ background: "#3B82F6" }}/><span className="text-cl-text-mid">{t("page_espacio_ops.legend_intake")}</span></span>
+          <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ background: "#8B5CF6" }}/><span className="text-cl-text-mid">{t("page_espacio_ops.legend_preparing")}</span></span>
+          <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ background: "#0A1628" }}/><span className="text-cl-text-mid">{t("page_espacio_ops.legend_en_route")}</span></span>
+          <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ background: "#EA580C" }}/><span className="text-cl-text-mid">{t("page_espacio_ops.legend_on_site")}</span></span>
+          <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ background: "#22C55E" }}/><span className="text-cl-text-mid">{t("page_espacio_ops.legend_resolved")}</span></span>
         </div>
 
         {!window.L && (
@@ -530,15 +533,15 @@ export default function EspacioOpsPage({ scope = "srs" }) {
       <section className="border-t border-cl-border bg-cl-bg flex flex-col" style={{ maxHeight: "38%" }}>
         <header className="px-6 py-3 flex items-center justify-between border-b border-cl-border flex-shrink-0">
           <div className="flex items-center gap-3">
-            <p className="label-caps-v2">Intervenciones en marcha</p>
+            <p className="label-caps-v2">{t("page_espacio_ops.in_progress")}</p>
             <span className="font-mono text-[11px] text-cl-text">{filteredWos.length}</span>
             {activeFilter && (
               <span className="ml-3 inline-flex items-center gap-2 pl-3 border-l border-cl-border">
-                <span className="label-caps-v2" style={{ color: "#0A1628" }}>Filtro activo</span>
+                <span className="label-caps-v2" style={{ color: "#0A1628" }}>{t("page_espacio_ops.active_filter")}</span>
                 <button
                   onClick={() => setActiveFilter(null)}
                   className="text-cl-text-dim hover:text-cl-orange transition"
-                  title="Quitar filtro"
+                  title={t("page_espacio_ops.remove_filter_tooltip")}
                 >
                   <Icon icon={ICONS.close} size={14} />
                 </button>
@@ -567,9 +570,8 @@ export default function EspacioOpsPage({ scope = "srs" }) {
             <div className="col-span-full">
               <EmptyState
                 icon={activeFilter ? "magniferBug" : "inbox"}
-                title={activeFilter ? "Sin intervenciones para el filtro actual" : "Sin intervenciones activas"}
-                sublabel={activeFilter ? "Ajusta los criterios o quita el filtro." : null}
-                action={activeFilter ? { label: "Quitar filtro", onClick: () => setActiveFilter(null) } : null}
+                title={activeFilter ? t("page_cockpit.empty_filter_match") : t("page_cockpit.empty_no_active")}
+                action={activeFilter ? { label: t("page_espacio_ops.remove_filter_tooltip"), onClick: () => setActiveFilter(null) } : null}
               />
             </div>
           ) : (
@@ -617,11 +619,11 @@ export default function EspacioOpsPage({ scope = "srs" }) {
           setEscalating(true);
           try {
             await api.post(`/work-orders/${detailWoId}/threads/shared/messages`, {
-              text: "Intervención escalada al cliente — acción requerida de su parte.",
+              text: t("page_espacio_ops.escalated_message"),
             });
-            toast.success("Ball escalado al cliente");
+            toast.success(t("page_espacio_ops.escalated_toast"));
           } catch {
-            toast.error("No se pudo escalar — intenta de nuevo");
+            toast.error(t("page_espacio_ops.escalate_failed"));
           } finally {
             setEscalating(false);
             setDetailOpen(false);

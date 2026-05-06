@@ -29,6 +29,8 @@
  *   - Modal Programar + Botón Exportar: stubs marcados como próxima iteración
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import i18n from "../../../i18n";
 
 /**
  * useLocalStorageState — hook genérico para persistir state en localStorage.
@@ -65,11 +67,11 @@ import EmptyState from "../../../components/v2-shared/EmptyState";
 import { SkeletonKpiCard } from "../../../components/v2-shared/Skeleton";
 import RolloutNotesPanel from "../../../components/rollout-v2/RolloutNotesPanel";
 
-const TABS = [
-  { key: "mapa",     label: "Mapa",            icon: ICONS.map },
-  { key: "kanban",   label: "Kanban",          icon: ICONS.kanban },
-  { key: "cuadro",   label: "Cuadro de Mando", icon: ICONS.gauge },
-  { key: "timeline", label: "Timeline",        icon: ICONS.calendar },
+const TAB_KEYS = [
+  { key: "mapa",     i18n: "tab_map",       icon: ICONS.map },
+  { key: "kanban",   i18n: "tab_kanban",    icon: ICONS.kanban },
+  { key: "cuadro",   i18n: "tab_dashboard", icon: ICONS.gauge },
+  { key: "timeline", i18n: "tab_timeline",  icon: ICONS.calendar },
 ];
 
 // Banderita SVG · 3 estados según dictado del owner
@@ -124,6 +126,11 @@ function flagMarkerHtml(color, flagKind) {
 }
 
 export default function RolloutDetailPage() {
+  const { t } = useTranslation("common");
+  const TABS = useMemo(
+    () => TAB_KEYS.map((tab) => ({ ...tab, label: t(`page_rollout_detail.${tab.i18n}`) })),
+    [t]
+  );
   const { project_id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -211,9 +218,9 @@ export default function RolloutDetailPage() {
       <div className="h-full flex items-center justify-center">
         <EmptyState
           icon="magniferBug"
-          title="Rollout no encontrado"
+          title={t("page_rollout_detail.not_found_title")}
           sublabel={`project_id: ${project_id}`}
-          action={{ label: "Volver a la lista", onClick: () => navigate("/srs/rollouts") }}
+          action={{ label: t("page_rollout_detail.back_to_list"), onClick: () => navigate("/srs/rollouts") }}
         />
       </div>
     );
@@ -230,7 +237,7 @@ export default function RolloutDetailPage() {
         <div className="px-10 py-4 flex items-start justify-between gap-4">
           <div className="min-w-0">
             <div className="flex items-center gap-2.5 mb-1 flex-wrap">
-              <p className="label-caps-v2" style={{ color: "#0A1628", fontWeight: 800 }}>Rollout</p>
+              <p className="label-caps-v2" style={{ color: "#0A1628", fontWeight: 800 }}>{t("page_rollout_detail.label_rollout")}</p>
               <span className="font-mono text-[11px] text-cl-text-dim">{project.code}</span>
               <span
                 className="font-jakarta text-[10px] uppercase px-2 py-0.5 rounded-sm"
@@ -320,7 +327,7 @@ export default function RolloutDetailPage() {
           {/* Filter rápido (solo en Mapa y Kanban) · pills outline navy strong */}
           {(activeTab === "mapa" || activeTab === "kanban") && (
             <div className="ml-auto flex items-center gap-2 py-2">
-              <span className="font-jakarta uppercase" style={{ fontSize: 10, color: "#3D4A66", fontWeight: 700, letterSpacing: "0.12em" }}>Ver:</span>
+              <span className="font-jakarta uppercase" style={{ fontSize: 10, color: "#3D4A66", fontWeight: 700, letterSpacing: "0.12em" }}>{t("page_rollout_detail.view_label")}</span>
               {[
                 { key: "all", label: "Todos" },
                 { key: "problems", label: `Problemas (${counts.problem})`, color: FLAG_COLORS.problem },
@@ -691,6 +698,7 @@ function BulkRescheduleModal({ wos, sites, users, onClose, onDone }) {
 
 /* ─────────────────────── Botón Notas (Iter 2.7) ─────────────────────── */
 function NotesButton({ onClick }) {
+  const { t } = useTranslation("common");
   return (
     <button
       onClick={onClick}
@@ -713,10 +721,10 @@ function NotesButton({ onClick }) {
         e.currentTarget.style.borderColor = "#C8CDD8";
         e.currentTarget.style.color = "#3D4A66";
       }}
-      title="Notas internas del rollout"
+      title={t("page_rollout_detail.notes_btn_tooltip")}
     >
       <Icon icon={ICONS.document} size={14} />
-      Notas
+      {t("page_rollout_detail.notes_btn")}
     </button>
   );
 }

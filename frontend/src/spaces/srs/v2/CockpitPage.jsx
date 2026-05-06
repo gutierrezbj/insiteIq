@@ -20,6 +20,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { api } from "../../../lib/api";
 import { useRefresh } from "../../../contexts/RefreshContext";
 import { useAuth } from "../../../contexts/AuthContext";
@@ -61,6 +62,7 @@ function severityRank(s) {
 }
 
 export default function V2CockpitPage({ scope = "srs" }) {
+  const { t } = useTranslation("common");
   const navigate = useNavigate();
   const { markRefreshing, markFresh } = useRefresh();
   const { user } = useAuth();
@@ -328,7 +330,7 @@ export default function V2CockpitPage({ scope = "srs" }) {
           <section>
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-3">
-                <p className="label-caps-v2" style={{ color: "#0A1628" }}>Intervenciones en curso</p>
+                <p className="label-caps-v2" style={{ color: "#0A1628" }}>{t("page_cockpit.active_interventions")}</p>
                 <span
                   className="font-jakarta"
                   style={{
@@ -355,14 +357,14 @@ export default function V2CockpitPage({ scope = "srs" }) {
                 onMouseEnter={(e) => (e.currentTarget.style.color = "#FF6B35")}
                 onMouseLeave={(e) => (e.currentTarget.style.color = "#0A1628")}
               >
-                Ver todas →
+                {t("page_cockpit.view_all")}
               </button>
             </div>
             {inCurseInterventions.length === 0 ? (
               <EmptyState
                 icon={activeFilter ? "magniferBug" : "inbox"}
-                title={activeFilter ? "Sin intervenciones para el filtro actual" : "Sin intervenciones en curso"}
-                action={activeFilter ? { label: "Quitar filtro", onClick: () => setActiveFilter(null) } : null}
+                title={activeFilter ? t("page_cockpit.empty_filter_match") : t("page_cockpit.empty_no_active")}
+                action={activeFilter ? { label: t("page_cockpit.remove_filter"), onClick: () => setActiveFilter(null) } : null}
               />
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
@@ -389,7 +391,7 @@ export default function V2CockpitPage({ scope = "srs" }) {
           <section>
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-3">
-                <p className="label-caps-v2" style={{ color: "#0A1628" }}>Historial reciente</p>
+                <p className="label-caps-v2" style={{ color: "#0A1628" }}>{t("page_cockpit.recent_history")}</p>
                 <span
                   className="font-jakarta"
                   style={{
@@ -416,13 +418,13 @@ export default function V2CockpitPage({ scope = "srs" }) {
                 onMouseEnter={(e) => (e.currentTarget.style.color = "#FF6B35")}
                 onMouseLeave={(e) => (e.currentTarget.style.color = "#0A1628")}
               >
-                Ver todas →
+                {t("page_cockpit.view_all")}
               </button>
             </div>
             {recentHistory.length === 0 ? (
               <EmptyState
                 icon={activeFilter ? "magniferBug" : "inbox"}
-                title={activeFilter ? "Sin coincidencias para el filtro" : "Sin intervenciones recientes"}
+                title={activeFilter ? t("page_cockpit.empty_filter_history") : t("page_cockpit.empty_no_history")}
               />
             ) : (
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
