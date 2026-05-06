@@ -10,6 +10,7 @@
  */
 import { useMemo } from "react";
 import { Link, useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useFetch } from "../../../lib/useFetch";
 import {
   WoStatusPill,
@@ -23,6 +24,7 @@ import MetaRow from "../../../components/v2-shared/MetaRow";
 import { JAKARTA, MONO_CAPS } from "../../../components/v2-shared/typography";
 
 export default function SiteDetailPage() {
+  const { t } = useTranslation("common");
   const { site_id } = useParams();
 
   const { data: site, loading, error } = useFetch(`/sites/${site_id}`, {
@@ -42,13 +44,13 @@ export default function SiteDetailPage() {
     .filter((w) => ["closed", "cancelled"].includes(w.status))
     .slice(0, 5);
 
-  if (loading) return <CenteredMessage text="cargando…" />;
+  if (loading) return <CenteredMessage text={t("common.loading")} />;
   if (error) return <CenteredMessage text={`error: ${error.message}`} />;
   if (!site) return <CenteredMessage text="—" />;
 
   return (
     <div style={{ padding: "32px 40px", maxWidth: 1400 }}>
-      <BackLinkV2 to="/srs/sites" label="Sites" />
+      <BackLinkV2 to="/srs/sites" label={t("page_site_detail.back_label")} />
 
       {/* Header */}
       <div
@@ -60,7 +62,7 @@ export default function SiteDetailPage() {
       >
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6, flexWrap: "wrap" }}>
           <span style={{ ...MONO_CAPS, fontSize: 10, color: "#0A1628", letterSpacing: "0.16em" }}>
-            Site
+            {t("page_site_detail.kicker")}
           </span>
           {site.code && (
             <span style={{ ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.12em" }}>
@@ -111,35 +113,35 @@ export default function SiteDetailPage() {
       >
         {/* Location + cierre */}
         <SectionCard>
-          <SectionTitle>Location + cierre</SectionTitle>
+          <SectionTitle>{t("page_site_detail.section_location")}</SectionTitle>
           <dl style={{ display: "flex", flexDirection: "column" }}>
-            <MetaRow label="Country" value={site.country || "—"} />
-            <MetaRow label="City" value={site.city || "—"} />
-            <MetaRow label="Timezone" value={site.timezone || "—"} />
+            <MetaRow label={t("page_site_detail.label_country")} value={site.country || "—"} />
+            <MetaRow label={t("page_site_detail.label_city")} value={site.city || "—"} />
+            <MetaRow label={t("page_site_detail.label_timezone")} value={site.timezone || "—"} />
             <MetaRow
-              label="Cierre model"
+              label={t("page_site_detail.label_close_model")}
               value={
                 site.has_physical_resident
-                  ? "Residente físico (DC/24x7)"
-                  : "NOC remoto (default)"
+                  ? t("page_site_detail.close_model_resident")
+                  : t("page_site_detail.close_model_noc")
               }
             />
             {site.default_noc_operator_user_id && (
-              <MetaRow label="Default NOC" value={short(site.default_noc_operator_user_id)} />
+              <MetaRow label={t("page_site_detail.label_default_noc")} value={short(site.default_noc_operator_user_id)} />
             )}
             {site.lat != null && site.lng != null && (
               <MetaRow
-                label="Lat / Lng"
+                label={t("page_site_detail.label_lat_lng")}
                 value={`${site.lat.toFixed(5)} · ${site.lng.toFixed(5)}`}
               />
             )}
-            {site.site_type && <MetaRow label="Site type" value={site.site_type} />}
+            {site.site_type && <MetaRow label={t("page_site_detail.label_site_type")} value={site.site_type} />}
           </dl>
         </SectionCard>
 
         {/* Contact + access */}
         <SectionCard>
-          <SectionTitle>Contacto onsite + acceso</SectionTitle>
+          <SectionTitle>{t("page_site_detail.section_contact_access")}</SectionTitle>
           {site.onsite_contact ? (
             <div
               style={{
@@ -211,7 +213,7 @@ export default function SiteDetailPage() {
                 marginBottom: 12,
               }}
             >
-              — sin contacto onsite registrado —
+              {t("page_site_detail.empty_no_contact")}
             </div>
           )}
 
@@ -224,7 +226,7 @@ export default function SiteDetailPage() {
               marginBottom: 4,
             }}
           >
-            Access notes
+            {t("page_site_detail.label_access_notes")}
           </div>
           {site.access_notes ? (
             <p
@@ -249,8 +251,7 @@ export default function SiteDetailPage() {
                 fontWeight: 500,
               }}
             >
-              — sin notas de acceso — Site Bible en Fase 5 expandirá esto (parking,
-              QR locks, horarios, contactos de respaldo, fotos).
+              {t("page_site_detail.empty_no_access_notes")}
             </p>
           )}
         </SectionCard>
@@ -259,7 +260,7 @@ export default function SiteDetailPage() {
       {/* Notes */}
       {site.notes && (
         <SectionCard style={{ marginTop: 16 }}>
-          <SectionTitle marginBottom={8}>Notas</SectionTitle>
+          <SectionTitle marginBottom={8}>{t("page_site_detail.section_notes")}</SectionTitle>
           <p
             style={{
               fontFamily: JAKARTA,
@@ -284,7 +285,7 @@ export default function SiteDetailPage() {
           }}
         >
           <div style={{ ...MONO_CAPS, fontSize: 10, color: "#3D4A66", letterSpacing: "0.14em", marginBottom: 2 }}>
-            Work orders · activas
+            {t("page_site_detail.section_active_wos_kicker")}
           </div>
           <div
             style={{
@@ -294,7 +295,7 @@ export default function SiteDetailPage() {
               color: "#0A1628",
             }}
           >
-            {activeWos.length} <span style={{ color: "#3D4A66", fontWeight: 500 }}>abiertas</span>
+            {activeWos.length} <span style={{ color: "#3D4A66", fontWeight: 500 }}>{t("page_site_detail.active_count_suffix")}</span>
           </div>
         </header>
         <div>
@@ -308,7 +309,7 @@ export default function SiteDetailPage() {
                 letterSpacing: "0.14em",
               }}
             >
-              — sin WOs activas —
+              {t("page_site_detail.empty_no_active_wos")}
             </div>
           )}
           {activeWos.map((w) => (
@@ -367,7 +368,7 @@ export default function SiteDetailPage() {
             }}
           >
             <div style={{ ...MONO_CAPS, fontSize: 10, color: "#3D4A66", letterSpacing: "0.14em" }}>
-              Histórico reciente (últimos 5)
+              {t("page_site_detail.section_recent_history")}
             </div>
           </header>
           <div>
@@ -428,7 +429,7 @@ export default function SiteDetailPage() {
           letterSpacing: "0.14em",
         }}
       >
-        Fase 2 plumbing · Site Bible completo · Fase 5 (Domain 10)
+        {t("page_site_detail.footer_iter")}
       </p>
     </div>
   );

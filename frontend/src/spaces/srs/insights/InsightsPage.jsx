@@ -11,6 +11,7 @@
  */
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useFetch } from "../../../lib/useFetch";
 import KpiTile from "../../../components/v2-shared/KpiTile";
 import SectionCard, { SectionTitle } from "../../../components/v2-shared/SectionCard";
@@ -19,6 +20,7 @@ import { JAKARTA, MONO_CAPS } from "../../../components/v2-shared/typography";
 const MONO = "'JetBrains Mono', monospace";
 
 export default function InsightsPage() {
+  const { t } = useTranslation("common");
   const [windowDays, setWindowDays] = useState(90);
   const { data, loading, error } = useFetch(
     `/insights/dashboard?window_days=${windowDays}`,
@@ -42,7 +44,7 @@ export default function InsightsPage() {
       >
         <div>
           <div style={{ ...MONO_CAPS, fontSize: 11, color: "#8B95A8", marginBottom: 6 }}>
-            Insights · Y-b · AI learning engine
+            {t("page_insights.kicker")}
           </div>
           <h1
             style={{
@@ -54,10 +56,10 @@ export default function InsightsPage() {
               lineHeight: 1.1,
             }}
           >
-            Panorama SRS-wide · <span style={{ color: "#3D4A66", fontWeight: 600 }}>últimos {windowDays}d</span>
+            {t("page_insights.title_prefix")} <span style={{ color: "#3D4A66", fontWeight: 600 }}>{t("page_insights.title_window_label", { days: windowDays })}</span>
           </h1>
           <p style={{ fontFamily: JAKARTA, fontSize: 13, color: "#3D4A66", marginTop: 6, fontWeight: 500 }}>
-            Sin LLM · agregaciones sobre data viva · señales de anomalía expuestas. El sistema aprende de sí mismo.
+            {t("page_insights.subtitle")}
           </p>
         </div>
         <div>
@@ -65,7 +67,7 @@ export default function InsightsPage() {
             htmlFor="iw"
             style={{ ...MONO_CAPS, display: "block", fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.14em", marginBottom: 4 }}
           >
-            Window
+            {t("page_insights.label_window")}
           </label>
           <select
             id="iw"
@@ -85,16 +87,16 @@ export default function InsightsPage() {
               cursor: "pointer",
             }}
           >
-            <option value={30}>30d</option>
-            <option value={60}>60d</option>
-            <option value={90}>90d</option>
-            <option value={180}>180d</option>
-            <option value={365}>1 año</option>
+            <option value={30}>{t("page_insights.window_30d")}</option>
+            <option value={60}>{t("page_insights.window_60d")}</option>
+            <option value={90}>{t("page_insights.window_90d")}</option>
+            <option value={180}>{t("page_insights.window_180d")}</option>
+            <option value={365}>{t("page_insights.window_1y")}</option>
           </select>
         </div>
       </div>
 
-      {loading && <Empty text="computando…" />}
+      {loading && <Empty text={t("page_insights.computing")} />}
       {error && <Empty text={`error · ${error.message}`} />}
 
       {data && (
@@ -107,7 +109,7 @@ export default function InsightsPage() {
           </div>
           <FinanceSnapshot snapshot={data.finance_snapshot} />
           <p style={{ ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em", paddingTop: 4 }}>
-            Y-b · compute on-demand · Y-c LLM enrichment · Y-d Pain Log auto-detect
+            {t("page_insights.footer_iter")}
           </p>
         </div>
       )}
@@ -118,11 +120,12 @@ export default function InsightsPage() {
 /* ─── Overview ─────────────────────────────────────────────────── */
 
 function OverviewSection({ overview: o }) {
+  const { t } = useTranslation("common");
   if (!o) return null;
   const warnSla = o.sla_compliance_pct != null && o.sla_compliance_pct < 80;
   return (
     <SectionCard>
-      <SectionTitle>Overview</SectionTitle>
+      <SectionTitle>{t("page_insights.section_overview")}</SectionTitle>
       <div
         style={{
           display: "grid",
@@ -131,33 +134,33 @@ function OverviewSection({ overview: o }) {
           marginBottom: 18,
         }}
       >
-        <KpiTile label="Total WOs" value={o.wo_total} tone="primary" />
+        <KpiTile label={t("page_insights.kpi_total_wos")} value={o.wo_total} tone="primary" />
         <KpiTile
-          label="SLA compliance"
+          label={t("page_insights.kpi_sla_compliance")}
           value={o.sla_compliance_pct != null ? `${o.sla_compliance_pct}%` : "—"}
-          hint={`${o.sla_compliant}/${o.sla_applicable} closed on-time`}
+          hint={t("page_insights.kpi_sla_hint", { compliant: o.sla_compliant, applicable: o.sla_applicable })}
           tone={warnSla ? "danger" : "success"}
         />
         <KpiTile
-          label="After-hours"
+          label={t("page_insights.kpi_after_hours")}
           value={`${o.after_hours_pct}%`}
-          hint="nights/weekends"
+          hint={t("page_insights.kpi_after_hours_hint")}
           tone={o.after_hours_pct >= 30 ? "warning" : "default"}
         />
         <KpiTile
-          label="Avg resolve"
+          label={t("page_insights.kpi_avg_resolve")}
           value={o.avg_resolution_minutes != null ? formatMin(o.avg_resolution_minutes) : "—"}
           hint={
             o.median_resolution_minutes != null
-              ? `median ${formatMin(o.median_resolution_minutes)}`
+              ? t("page_insights.kpi_avg_resolve_hint", { value: formatMin(o.median_resolution_minutes) })
               : null
           }
         />
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 18 }}>
-        <CountBreakdown label="Por status" data={o.wo_by_status} />
-        <CountBreakdown label="Por severity" data={o.wo_by_severity} />
-        <CountBreakdown label="Por shield" data={o.wo_by_shield} />
+        <CountBreakdown label={t("page_insights.breakdown_status")} data={o.wo_by_status} />
+        <CountBreakdown label={t("page_insights.breakdown_severity")} data={o.wo_by_severity} />
+        <CountBreakdown label={t("page_insights.breakdown_shield")} data={o.wo_by_shield} />
       </div>
     </SectionCard>
   );
@@ -224,15 +227,16 @@ function CountBreakdown({ label, data }) {
 /* ─── Clients top ──────────────────────────────────────────────── */
 
 function ClientsSection({ clients }) {
+  const { t } = useTranslation("common");
   if (!clients || clients.length === 0) return null;
   return (
     <SectionCard padding={0}>
       <header style={{ padding: "14px 18px", borderBottom: "1px solid #E2E5EC" }}>
         <div style={{ ...MONO_CAPS, fontSize: 10, color: "#3D4A66", letterSpacing: "0.14em", marginBottom: 2 }}>
-          Clientes · top por volumen
+          {t("page_insights.section_clients_kicker")}
         </div>
         <div style={{ fontFamily: JAKARTA, fontSize: 16, fontWeight: 700, color: "#0A1628" }}>
-          {clients.length} <span style={{ color: "#3D4A66", fontWeight: 500 }}>clientes activos en el período</span>
+          {clients.length} <span style={{ color: "#3D4A66", fontWeight: 500 }}>{t("page_insights.section_clients_count_suffix")}</span>
         </div>
       </header>
       <div
@@ -249,11 +253,11 @@ function ClientsSection({ clients }) {
           letterSpacing: "0.14em",
         }}
       >
-        <div>Cliente</div>
-        <div style={{ textAlign: "right" }}>WOs</div>
-        <div style={{ textAlign: "right" }}>Avg resolve</div>
-        <div style={{ textAlign: "right" }}>SLA</div>
-        <div style={{ textAlign: "right" }}>After-hours</div>
+        <div>{t("page_insights.col_client")}</div>
+        <div style={{ textAlign: "right" }}>{t("page_insights.col_wos")}</div>
+        <div style={{ textAlign: "right" }}>{t("page_insights.col_avg_resolve")}</div>
+        <div style={{ textAlign: "right" }}>{t("page_insights.col_sla")}</div>
+        <div style={{ textAlign: "right" }}>{t("page_insights.col_after_hours")}</div>
       </div>
       <div>
         {clients.map((c) => {
@@ -300,7 +304,7 @@ function ClientsSection({ clients }) {
                   {c.wo_count}
                 </div>
                 <div style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.14em" }}>
-                  {c.closed_count} closed
+                  {t("page_insights.client_closed_count", { count: c.closed_count })}
                 </div>
               </div>
               <div
@@ -350,19 +354,20 @@ function ClientsSection({ clients }) {
 /* ─── Repeat sites (root cause signal) ─────────────────────────── */
 
 function RepeatSitesSection({ sites }) {
+  const { t } = useTranslation("common");
   if (!sites) return null;
   return (
     <SectionCard padding={0}>
       <header style={{ padding: "14px 18px", borderBottom: "1px solid #E2E5EC" }}>
         <div style={{ ...MONO_CAPS, fontSize: 10, color: "#3D4A66", letterSpacing: "0.14em", marginBottom: 2 }}>
-          Sites · repeat 30d
+          {t("page_insights.section_repeat_sites_kicker")}
         </div>
         <div style={{ fontFamily: JAKARTA, fontSize: 14, fontWeight: 700, color: "#0A1628" }}>
-          Posible root-cause sin resolver
+          {t("page_insights.section_repeat_sites_title")}
         </div>
       </header>
       <div>
-        {sites.length === 0 && <Empty text="— sin repeats significativos —" />}
+        {sites.length === 0 && <Empty text={t("page_insights.empty_no_repeats")} />}
         {sites.map((s) => (
           <Link
             key={s.site_id}
@@ -419,7 +424,7 @@ function RepeatSitesSection({ sites }) {
                     marginTop: 2,
                   }}
                 >
-                  {s.anomaly ? "· anomaly" : "WOs/30d"}
+                  {s.anomaly ? t("page_insights.anomaly_label") : t("page_insights.wos_per_30d")}
                 </div>
               </div>
             </div>
@@ -433,23 +438,24 @@ function RepeatSitesSection({ sites }) {
 /* ─── Tech drift ───────────────────────────────────────────────── */
 
 function TechDriftSection({ techs }) {
+  const { t } = useTranslation("common");
   if (!techs) return null;
   return (
     <SectionCard padding={0}>
       <header style={{ padding: "14px 18px", borderBottom: "1px solid #E2E5EC" }}>
         <div style={{ ...MONO_CAPS, fontSize: 10, color: "#3D4A66", letterSpacing: "0.14em", marginBottom: 2 }}>
-          Tech rating · drift detection
+          {t("page_insights.section_tech_drift_kicker")}
         </div>
         <div style={{ fontFamily: JAKARTA, fontSize: 14, fontWeight: 700, color: "#0A1628" }}>
-          Últimos 3 ratings vs lifetime
+          {t("page_insights.section_tech_drift_title")}
         </div>
       </header>
       <div>
-        {techs.length === 0 && <Empty text="— sin ratings —" />}
-        {techs.map((t) => (
+        {techs.length === 0 && <Empty text={t("page_insights.empty_no_ratings")} />}
+        {techs.map((tech) => (
           <Link
-            key={t.tech_user_id}
-            to={`/srs/techs/${t.tech_user_id}`}
+            key={tech.tech_user_id}
+            to={`/srs/techs/${tech.tech_user_id}`}
             style={{
               display: "block",
               padding: "12px 18px",
@@ -473,10 +479,10 @@ function TechDriftSection({ techs }) {
                     textOverflow: "ellipsis",
                   }}
                 >
-                  {t.full_name || t.tech_user_id.slice(-6)}
+                  {tech.full_name || tech.tech_user_id.slice(-6)}
                 </div>
                 <div style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.12em", marginTop: 2 }}>
-                  {t.employment_type || "—"} · {t.wo_count} WOs · {t.lifetime_rating_count} ratings
+                  {t("page_insights.tech_meta", { employment: tech.employment_type || "—", wos: tech.wo_count, ratings: tech.lifetime_rating_count })}
                 </div>
               </div>
               <div style={{ textAlign: "right", flexShrink: 0 }}>
@@ -490,9 +496,9 @@ function TechDriftSection({ techs }) {
                       fontVariantNumeric: "tabular-nums",
                     }}
                   >
-                    {t.last3_avg ?? "—"}
+                    {tech.last3_avg ?? "—"}
                   </span>
-                  {t.lifetime_avg != null && (
+                  {tech.lifetime_avg != null && (
                     <span
                       style={{
                         fontFamily: MONO,
@@ -501,23 +507,23 @@ function TechDriftSection({ techs }) {
                         fontVariantNumeric: "tabular-nums",
                       }}
                     >
-                      / {t.lifetime_avg}
+                      / {tech.lifetime_avg}
                     </span>
                   )}
                 </div>
-                {t.drift != null && (
+                {tech.drift != null && (
                   <div
                     style={{
                       ...MONO_CAPS,
                       fontSize: 9,
                       letterSpacing: "0.14em",
                       marginTop: 2,
-                      color: t.drift_warning ? "#991B1B" : t.drift > 0 ? "#0A6131" : "#8B95A8",
+                      color: tech.drift_warning ? "#991B1B" : tech.drift > 0 ? "#0A6131" : "#8B95A8",
                     }}
                   >
-                    {t.drift >= 0 ? "+" : ""}
-                    {t.drift}
-                    {t.drift_warning && " ⚠"}
+                    {tech.drift >= 0 ? "+" : ""}
+                    {tech.drift}
+                    {tech.drift_warning && " ⚠"}
                   </div>
                 )}
               </div>
@@ -532,16 +538,17 @@ function TechDriftSection({ techs }) {
 /* ─── Finance snapshot ─────────────────────────────────────────── */
 
 function FinanceSnapshot({ snapshot }) {
+  const { t } = useTranslation("common");
   if (!snapshot) return null;
   return (
     <SectionCard>
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
         <div>
           <div style={{ ...MONO_CAPS, fontSize: 10, color: "#3D4A66", letterSpacing: "0.14em", marginBottom: 4 }}>
-            Finance snapshot
+            {t("page_insights.section_finance_kicker")}
           </div>
           <div style={{ fontFamily: JAKARTA, fontSize: 14, fontWeight: 700, color: "#0A1628" }}>
-            Estado actual AR + AP
+            {t("page_insights.section_finance_title")}
           </div>
         </div>
         <Link
@@ -557,7 +564,7 @@ function FinanceSnapshot({ snapshot }) {
             fontWeight: 800,
           }}
         >
-          Finance tab →
+          {t("page_insights.finance_link")}
         </Link>
       </div>
       <div
@@ -568,17 +575,17 @@ function FinanceSnapshot({ snapshot }) {
           marginTop: 14,
         }}
       >
-        <KpiTile label="AR pending" value={snapshot.pending_ar_invoices} hint="draft+sent" />
+        <KpiTile label={t("page_insights.kpi_ar_pending")} value={snapshot.pending_ar_invoices} hint={t("page_insights.kpi_ar_pending_hint")} />
         <KpiTile
-          label="AR overdue"
+          label={t("page_insights.kpi_ar_overdue")}
           value={snapshot.overdue_ar_invoices}
-          hint="past due_date"
+          hint={t("page_insights.kpi_ar_overdue_hint")}
           tone={snapshot.overdue_ar_invoices > 0 ? "danger" : "default"}
         />
         <KpiTile
-          label="AP pending"
+          label={t("page_insights.kpi_ap_pending")}
           value={snapshot.pending_ap_invoices}
-          hint="unpaid vendor invoices"
+          hint={t("page_insights.kpi_ap_pending_hint")}
           tone={snapshot.pending_ap_invoices > 0 ? "warning" : "default"}
         />
       </div>

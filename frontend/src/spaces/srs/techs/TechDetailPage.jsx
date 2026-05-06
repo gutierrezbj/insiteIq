@@ -12,6 +12,7 @@
  */
 import { useMemo } from "react";
 import { Link, useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useFetch } from "../../../lib/useFetch";
 import { formatAge } from "../../../components/ui/Badges";
 import {
@@ -41,6 +42,7 @@ function LevelPill({ level }) {
 }
 
 export default function TechDetailPage() {
+  const { t } = useTranslation("common");
   const { user_id } = useParams();
   const { data: users } = useFetch("/users");
   const user = useMemo(
@@ -65,18 +67,18 @@ export default function TechDetailPage() {
     .filter((w) => ["closed", "cancelled"].includes(w.status))
     .slice(0, 5);
 
-  if (ploading) return <Centered text="cargando…" />;
-  if (!passport) return <Centered text="— passport no disponible —" />;
+  if (ploading) return <Centered text={t("page_tech_detail.loading")} />;
+  if (!passport) return <Centered text={t("page_tech_detail.passport_unavailable")} />;
 
   return (
     <div style={{ padding: "32px 40px", maxWidth: 1400 }}>
-      <BackLinkV2 to="/srs/techs" label="Techs" />
+      <BackLinkV2 to="/srs/techs" label={t("page_tech_detail.back_label")} />
 
       {/* Header */}
       <div style={{ paddingLeft: 16, borderLeft: "3px solid #0A1628", marginBottom: 22 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6, flexWrap: "wrap" }}>
           <span style={{ ...MONO_CAPS, fontSize: 10, color: "#0A1628", letterSpacing: "0.16em" }}>
-            Tech · Skill Passport
+            {t("page_tech_detail.kicker")}
           </span>
           <LevelPill level={passport.level} />
           <span style={{ ...MONO_CAPS, fontSize: 10, color: "#3D4A66", letterSpacing: "0.14em" }}>
@@ -107,7 +109,7 @@ export default function TechDetailPage() {
           {user?.email || "—"}
           {passport.last_active_at && (
             <span style={{ ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em", marginLeft: 10 }}>
-              · activo {formatAge(passport.last_active_at)} ago
+              {t("page_tech_detail.active_ago", { age: formatAge(passport.last_active_at) })}
             </span>
           )}
         </p>
@@ -122,15 +124,18 @@ export default function TechDetailPage() {
           marginBottom: 18,
         }}
       >
-        <KpiTile label="Jobs done" value={passport.jobs_completed} tone="primary" />
+        <KpiTile label={t("page_tech_detail.kpi_jobs")} value={passport.jobs_completed} tone="primary" />
         <KpiTile
-          label="Rating avg"
+          label={t("page_tech_detail.kpi_rating_avg")}
           value={passport.rating_count ? passport.rating_avg.toFixed(2) : "—"}
-          hint={`${passport.rating_count} rating${passport.rating_count === 1 ? "" : "s"}`}
+          hint={t(
+            passport.rating_count === 1 ? "page_tech_detail.kpi_rating_one" : "page_tech_detail.kpi_rating_other",
+            { count: passport.rating_count }
+          )}
           tone={passport.rating_count && passport.rating_avg >= 4 ? "success" : "default"}
         />
-        <KpiTile label="Certs" value={passport.certifications?.length || 0} />
-        <KpiTile label="Skills" value={passport.skills?.length || 0} />
+        <KpiTile label={t("page_tech_detail.kpi_certs")} value={passport.certifications?.length || 0} />
+        <KpiTile label={t("page_tech_detail.kpi_skills")} value={passport.skills?.length || 0} />
       </div>
 
       {/* Body grid · Skills/Certs · Cobertura/Quality/Bio */}
@@ -142,10 +147,10 @@ export default function TechDetailPage() {
         }}
       >
         <SectionCard>
-          <SectionTitle>Skills</SectionTitle>
+          <SectionTitle>{t("page_tech_detail.section_skills")}</SectionTitle>
           {(passport.skills || []).length === 0 ? (
             <div style={{ ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em" }}>
-              — sin skills registradas —
+              {t("page_tech_detail.empty_no_skills")}
             </div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -168,7 +173,7 @@ export default function TechDetailPage() {
                   </div>
                   <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.12em" }}>
                     {s.tier}
-                    {s.endorsed_count != null && ` · ${s.endorsed_count} endorsed`}
+                    {s.endorsed_count != null && ` · ${s.endorsed_count}${t("page_tech_detail.endorsed_suffix")}`}
                   </div>
                 </div>
               ))}
@@ -176,11 +181,11 @@ export default function TechDetailPage() {
           )}
 
           <div style={{ ...MONO_CAPS, fontSize: 10, color: "#3D4A66", letterSpacing: "0.14em", marginTop: 18, marginBottom: 10 }}>
-            Certifications
+            {t("page_tech_detail.section_certs")}
           </div>
           {(passport.certifications || []).length === 0 ? (
             <div style={{ ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em" }}>
-              — sin certs registradas —
+              {t("page_tech_detail.empty_no_certs")}
             </div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -200,7 +205,7 @@ export default function TechDetailPage() {
                   <div style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.12em", marginTop: 2 }}>
                     {c.issuer || "—"}
                     {c.credential_id && ` · ${c.credential_id}`}
-                    {c.verified_by_user_id && " · verified"}
+                    {c.verified_by_user_id && t("page_tech_detail.verified_suffix")}
                   </div>
                 </div>
               ))}
@@ -209,10 +214,10 @@ export default function TechDetailPage() {
         </SectionCard>
 
         <SectionCard>
-          <SectionTitle>Cobertura</SectionTitle>
+          <SectionTitle>{t("page_tech_detail.section_coverage")}</SectionTitle>
           <div style={{ marginBottom: 12 }}>
             <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.14em", marginBottom: 6 }}>
-              Countries
+              {t("page_tech_detail.section_countries")}
             </div>
             {(passport.countries_covered || []).length > 0 ? (
               <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
@@ -240,7 +245,7 @@ export default function TechDetailPage() {
 
           <div style={{ marginBottom: 12 }}>
             <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.14em", marginBottom: 6 }}>
-              Languages
+              {t("page_tech_detail.section_languages")}
             </div>
             {(passport.languages || []).length > 0 ? (
               <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
@@ -267,11 +272,11 @@ export default function TechDetailPage() {
           </div>
 
           <div style={{ ...MONO_CAPS, fontSize: 10, color: "#3D4A66", letterSpacing: "0.14em", marginTop: 18, marginBottom: 8 }}>
-            Quality marks
+            {t("page_tech_detail.section_quality_marks")}
           </div>
           {(passport.quality_marks || []).length === 0 ? (
             <div style={{ ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em" }}>
-              — sin quality marks —
+              {t("page_tech_detail.empty_no_quality_marks")}
             </div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -301,7 +306,7 @@ export default function TechDetailPage() {
           {passport.bio && (
             <>
               <div style={{ ...MONO_CAPS, fontSize: 10, color: "#3D4A66", letterSpacing: "0.14em", marginTop: 18, marginBottom: 8 }}>
-                Bio
+                {t("page_tech_detail.section_bio")}
               </div>
               <p
                 style={{
@@ -324,13 +329,13 @@ export default function TechDetailPage() {
       <SectionCard padding={0} style={{ marginTop: 16 }}>
         <header style={{ padding: "14px 18px", borderBottom: "1px solid #E2E5EC" }}>
           <div style={{ ...MONO_CAPS, fontSize: 10, color: "#3D4A66", letterSpacing: "0.14em" }}>
-            WOs activas · {activeWos.length}
+            {t("page_tech_detail.section_active_wos", { count: activeWos.length })}
           </div>
         </header>
         <div>
           {activeWos.length === 0 && (
             <div style={{ padding: "20px 18px", ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em" }}>
-              — sin activas —
+              {t("page_tech_detail.empty_no_active_wos")}
             </div>
           )}
           {activeWos.map((w) => <WoLink key={w.id} wo={w} />)}
@@ -341,7 +346,7 @@ export default function TechDetailPage() {
         <SectionCard padding={0} style={{ marginTop: 16 }}>
           <header style={{ padding: "14px 18px", borderBottom: "1px solid #E2E5EC" }}>
             <div style={{ ...MONO_CAPS, fontSize: 10, color: "#3D4A66", letterSpacing: "0.14em" }}>
-              Histórico reciente (últimas 5)
+              {t("page_tech_detail.section_recent_history")}
             </div>
           </header>
           <div>
@@ -351,7 +356,7 @@ export default function TechDetailPage() {
       )}
 
       <p style={{ marginTop: 24, ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em" }}>
-        Iter 2.25 · edición de skills/certs/quality marks Fase 3 (Admin)
+        {t("page_tech_detail.footer_iter")}
       </p>
     </div>
   );
