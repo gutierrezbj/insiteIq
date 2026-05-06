@@ -3,6 +3,7 @@
  * El stream oculto Panama $154K/año vive aqui.
  */
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { api } from "../../lib/api";
 import { useFetch } from "../../lib/useFetch";
 import ActionDialog, {
@@ -19,6 +20,7 @@ function firstOfNextMonth() {
 }
 
 export default function CreateSubscriptionAction({ onCreated }) {
+  const { t } = useTranslation("common");
   const [open, setOpen] = useState(false);
   const [orgId, setOrgId] = useState("");
   const [agreementId, setAgreementId] = useState("");
@@ -104,26 +106,26 @@ export default function CreateSubscriptionAction({ onCreated }) {
         onClick={() => setOpen(true)}
         className="btn-trigger-v2"
       >
-        + Subscription
+        {t("modal_create_subscription.btn_trigger")}
       </button>
 
       <ActionDialog
         open={open}
         onClose={() => setOpen(false)}
-        title="Recurring billing subscription"
-        subtitle="Stream fijo · genera Invoice draft automatico cada cadencia"
-        submitLabel="Crear"
+        title={t("modal_create_subscription.title")}
+        subtitle={t("modal_create_subscription.subtitle")}
+        submitLabel={t("modal_create_subscription.btn_submit")}
         submitDisabled={!canSubmit}
         onSubmit={submit}
       >
         <div>
-          <DialogLabel htmlFor="cs-org">Cliente</DialogLabel>
+          <DialogLabel htmlFor="cs-org">{t("modal_create_subscription.label_org")}</DialogLabel>
           <DialogSelect
             id="cs-org"
             value={orgId}
             onChange={setOrgId}
             options={[
-              { v: "", l: "— elegir —" },
+              { v: "", l: t("modal_create_subscription.option_choose") },
               ...clientOrgs.map((o) => ({
                 v: o.id,
                 l: `${o.legal_name}${o.country ? ` · ${o.country}` : ""}`,
@@ -132,14 +134,14 @@ export default function CreateSubscriptionAction({ onCreated }) {
           />
         </div>
         <div>
-          <DialogLabel htmlFor="cs-ag">Service agreement</DialogLabel>
+          <DialogLabel htmlFor="cs-ag">{t("modal_create_subscription.label_agreement")}</DialogLabel>
           <DialogSelect
             id="cs-ag"
             value={agreementId}
             onChange={setAgreementId}
             disabled={!orgId}
             options={[
-              { v: "", l: orgId ? "— elegir —" : "(elegi cliente primero)" },
+              { v: "", l: orgId ? t("modal_create_subscription.option_choose") : t("modal_create_subscription.agreement_pick_client_first") },
               ...orgAgreements.map((a) => ({
                 v: a.id,
                 l: `${a.title} · ${a.shield_level}`,
@@ -148,18 +150,18 @@ export default function CreateSubscriptionAction({ onCreated }) {
           />
         </div>
         <div>
-          <DialogLabel htmlFor="cs-title">Titulo</DialogLabel>
+          <DialogLabel htmlFor="cs-title">{t("modal_create_subscription.label_title")}</DialogLabel>
           <DialogInput
             id="cs-title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="Arcos Panama ops mensualidad"
+            placeholder={t("modal_create_subscription.placeholder_title")}
             required
           />
         </div>
         <div>
           <DialogLabel htmlFor="cs-desc" optional>
-            Descripcion
+            {t("modal_create_subscription.label_desc")}
           </DialogLabel>
           <DialogTextarea
             id="cs-desc"
@@ -170,7 +172,7 @@ export default function CreateSubscriptionAction({ onCreated }) {
         </div>
         <div className="grid grid-cols-3 gap-2">
           <div>
-            <DialogLabel htmlFor="cs-amt">Amount</DialogLabel>
+            <DialogLabel htmlFor="cs-amt">{t("modal_create_subscription.label_amount")}</DialogLabel>
             <DialogInput
               id="cs-amt"
               type="number"
@@ -178,23 +180,23 @@ export default function CreateSubscriptionAction({ onCreated }) {
               min="0.01"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              placeholder="12833.33"
+              placeholder={t("modal_create_subscription.placeholder_amount")}
               required
             />
           </div>
           <div>
-            <DialogLabel htmlFor="cs-cur">Currency</DialogLabel>
+            <DialogLabel htmlFor="cs-cur">{t("modal_create_subscription.label_currency")}</DialogLabel>
             <DialogInput
               id="cs-cur"
               value={currency}
               onChange={(e) => setCurrency(e.target.value.toUpperCase())}
-              placeholder="USD"
+              placeholder={t("modal_create_subscription.placeholder_currency")}
               maxLength={3}
             />
           </div>
           <div>
             <DialogLabel htmlFor="cs-tax" optional>
-              Tax %
+              {t("modal_create_subscription.label_tax")}
             </DialogLabel>
             <DialogInput
               id="cs-tax"
@@ -208,7 +210,7 @@ export default function CreateSubscriptionAction({ onCreated }) {
         </div>
         <div className="grid grid-cols-3 gap-2">
           <div>
-            <DialogLabel htmlFor="cs-cad">Cadence</DialogLabel>
+            <DialogLabel htmlFor="cs-cad">{t("modal_create_subscription.label_cadence")}</DialogLabel>
             <DialogSelect
               id="cs-cad"
               value={cadence}
@@ -221,7 +223,7 @@ export default function CreateSubscriptionAction({ onCreated }) {
             />
           </div>
           <div>
-            <DialogLabel htmlFor="cs-next">First run</DialogLabel>
+            <DialogLabel htmlFor="cs-next">{t("modal_create_subscription.label_first_run")}</DialogLabel>
             <DialogInput
               id="cs-next"
               type="date"
@@ -231,7 +233,7 @@ export default function CreateSubscriptionAction({ onCreated }) {
             />
           </div>
           <div>
-            <DialogLabel htmlFor="cs-due">Due days</DialogLabel>
+            <DialogLabel htmlFor="cs-due">{t("modal_create_subscription.label_due_days")}</DialogLabel>
             <DialogInput
               id="cs-due"
               type="number"
@@ -243,7 +245,7 @@ export default function CreateSubscriptionAction({ onCreated }) {
         </div>
         <div>
           <DialogLabel htmlFor="cs-notes" optional>
-            Notas
+            {t("modal_create_subscription.label_notes")}
           </DialogLabel>
           <DialogTextarea
             id="cs-notes"

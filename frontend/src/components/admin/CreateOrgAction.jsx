@@ -3,6 +3,7 @@
  * una partner_relationship activa (cliente / channel partner / vendor / etc).
  */
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { api } from "../../lib/api";
 import ActionDialog, {
   DialogInput,
@@ -23,6 +24,7 @@ const PARTNER_TYPES = [
 ];
 
 export default function CreateOrgAction({ onCreated }) {
+  const { t } = useTranslation("common");
   const [open, setOpen] = useState(false);
   const [legalName, setLegalName] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -75,94 +77,94 @@ export default function CreateOrgAction({ onCreated }) {
         onClick={() => setOpen(true)}
         className="btn-trigger-v2"
       >
-        + Add org
+        {t("modal_create_org.btn_trigger")}
       </button>
 
       <ActionDialog
         open={open}
         onClose={close}
-        title="Crear organizacion"
-        subtitle="Mas partner_relationships se suman via update. Una sola para arrancar."
-        submitLabel="Crear"
+        title={t("modal_create_org.title")}
+        subtitle={t("modal_create_org.subtitle")}
+        submitLabel={t("modal_create_org.btn_submit")}
         submitDisabled={!canSubmit}
         onSubmit={submit}
       >
         <div>
-          <DialogLabel htmlFor="co-legal">Legal name</DialogLabel>
+          <DialogLabel htmlFor="co-legal">{t("modal_create_org.label_legal")}</DialogLabel>
           <DialogInput
             id="co-legal"
             value={legalName}
             onChange={(e) => setLegalName(e.target.value)}
-            placeholder="Fractalia Systems S.L."
+            placeholder={t("modal_create_org.placeholder_legal")}
             required
           />
         </div>
         <div>
           <DialogLabel htmlFor="co-display" optional>
-            Display name
+            {t("modal_create_org.label_display")}
           </DialogLabel>
           <DialogInput
             id="co-display"
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
-            placeholder="Fractalia"
+            placeholder={t("modal_create_org.placeholder_display")}
           />
         </div>
         <div className="grid grid-cols-2 gap-2">
           <div>
             <DialogLabel htmlFor="co-country" optional>
-              Country (ISO-2)
+              {t("modal_create_org.label_country")}
             </DialogLabel>
             <DialogInput
               id="co-country"
               value={country}
               onChange={(e) => setCountry(e.target.value.toUpperCase())}
-              placeholder="ES"
+              placeholder={t("modal_create_org.placeholder_country")}
               maxLength={2}
             />
           </div>
           <div>
             <DialogLabel htmlFor="co-jur" optional>
-              Jurisdiction
+              {t("modal_create_org.label_jurisdiction")}
             </DialogLabel>
             <DialogInput
               id="co-jur"
               value={jurisdiction}
               onChange={(e) => setJurisdiction(e.target.value)}
-              placeholder="Madrid"
+              placeholder={t("modal_create_org.placeholder_jurisdiction")}
             />
           </div>
         </div>
         <div>
           <DialogLabel htmlFor="co-tax" optional>
-            Tax ID primary
+            {t("modal_create_org.label_tax")}
           </DialogLabel>
           <DialogInput
             id="co-tax"
             value={taxId}
             onChange={(e) => setTaxId(e.target.value)}
-            placeholder="CIF / VAT / RFC / RUC / EIN"
+            placeholder={t("modal_create_org.placeholder_tax")}
           />
         </div>
         <div>
-          <DialogLabel htmlFor="co-partner">Partner relationship</DialogLabel>
+          <DialogLabel htmlFor="co-partner">{t("modal_create_org.label_partner")}</DialogLabel>
           <DialogSelect
             id="co-partner"
             value={partnerType}
             onChange={setPartnerType}
-            options={PARTNER_TYPES.map((t) => ({ v: t, l: t }))}
+            options={PARTNER_TYPES.map((pt) => ({ v: pt, l: pt }))}
           />
         </div>
         <div>
           <DialogLabel htmlFor="co-notes" optional>
-            Notas
+            {t("modal_create_org.label_notes")}
           </DialogLabel>
           <DialogTextarea
             id="co-notes"
             rows={2}
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="Contexto interno · contactos clave · historial comercial"
+            placeholder={t("modal_create_org.placeholder_notes")}
           />
         </div>
       </ActionDialog>

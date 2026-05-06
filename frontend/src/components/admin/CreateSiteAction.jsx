@@ -3,6 +3,7 @@
  * Domain 10 Site Bible completo (known_issues, device_bible refs) sigue en Fase 5.
  */
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { api } from "../../lib/api";
 import { useFetch } from "../../lib/useFetch";
@@ -16,6 +17,7 @@ import ActionDialog, {
 } from "../ui/ActionDialog";
 
 export default function CreateSiteAction({ onCreated }) {
+  const { t } = useTranslation("common");
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -107,26 +109,26 @@ export default function CreateSiteAction({ onCreated }) {
         onClick={() => setOpen(true)}
         className="btn-trigger-v2"
       >
-        + New site
+        {t("modal_create_site.btn_trigger")}
       </button>
 
       <ActionDialog
         open={open}
         onClose={close}
-        title="Crear site"
-        subtitle="Site Bible completo (known_issues, device_bible, confidence) expande en Fase 5."
-        submitLabel="Crear"
+        title={t("modal_create_site.title")}
+        subtitle={t("modal_create_site.subtitle")}
+        submitLabel={t("modal_create_site.btn_submit")}
         submitDisabled={!canSubmit}
         onSubmit={submit}
       >
         <div>
-          <DialogLabel htmlFor="cs-org">Organización</DialogLabel>
+          <DialogLabel htmlFor="cs-org">{t("modal_create_site.label_org")}</DialogLabel>
           <DialogSelect
             id="cs-org"
             value={orgId}
             onChange={setOrgId}
             options={[
-              { v: "", l: "— elegir —" },
+              { v: "", l: t("modal_create_site.option_choose") },
               ...clientOrgs.map((o) => ({
                 v: o.id,
                 l: `${o.legal_name}${o.country ? ` · ${o.country}` : ""}`,
@@ -137,90 +139,90 @@ export default function CreateSiteAction({ onCreated }) {
         </div>
         <div className="grid grid-cols-3 gap-2">
           <div className="col-span-1">
-            <DialogLabel htmlFor="cs-code" optional>Code</DialogLabel>
+            <DialogLabel htmlFor="cs-code" optional>{t("modal_create_site.label_code")}</DialogLabel>
             <DialogInput
               id="cs-code"
               value={code}
               onChange={(e) => setCode(e.target.value)}
-              placeholder="ZARA-TAL-01"
+              placeholder={t("modal_create_site.placeholder_code")}
             />
           </div>
           <div className="col-span-2">
-            <DialogLabel htmlFor="cs-name">Nombre</DialogLabel>
+            <DialogLabel htmlFor="cs-name">{t("modal_create_site.label_name")}</DialogLabel>
             <DialogInput
               id="cs-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="ZARA Mall Plaza Trebol"
+              placeholder={t("modal_create_site.placeholder_name")}
               required
             />
           </div>
         </div>
         <div className="grid grid-cols-3 gap-2">
           <div>
-            <DialogLabel htmlFor="cs-country">Country (ISO-2)</DialogLabel>
+            <DialogLabel htmlFor="cs-country">{t("modal_create_site.label_country")}</DialogLabel>
             <DialogInput
               id="cs-country"
               value={country}
               onChange={(e) => setCountry(e.target.value.toUpperCase())}
-              placeholder="CL"
+              placeholder={t("modal_create_site.placeholder_country")}
               maxLength={2}
               required
             />
           </div>
           <div>
-            <DialogLabel htmlFor="cs-city" optional>City</DialogLabel>
+            <DialogLabel htmlFor="cs-city" optional>{t("modal_create_site.label_city")}</DialogLabel>
             <DialogInput
               id="cs-city"
               value={city}
               onChange={(e) => setCity(e.target.value)}
-              placeholder="Talcahuano"
+              placeholder={t("modal_create_site.placeholder_city")}
             />
           </div>
           <div>
-            <DialogLabel htmlFor="cs-tz" optional>Timezone (IANA)</DialogLabel>
+            <DialogLabel htmlFor="cs-tz" optional>{t("modal_create_site.label_tz")}</DialogLabel>
             <DialogInput
               id="cs-tz"
               value={tz}
               onChange={(e) => setTz(e.target.value)}
-              placeholder="America/Santiago"
+              placeholder={t("modal_create_site.placeholder_tz")}
             />
           </div>
         </div>
         <div>
-          <DialogLabel htmlFor="cs-addr" optional>Address</DialogLabel>
+          <DialogLabel htmlFor="cs-addr" optional>{t("modal_create_site.label_address")}</DialogLabel>
           <DialogInput
             id="cs-addr"
             value={address}
             onChange={(e) => setAddress(e.target.value)}
-            placeholder="Av Colon 4000, Talcahuano"
+            placeholder={t("modal_create_site.placeholder_address")}
           />
         </div>
 
-        <DialogPanel label="Contacto onsite (opcional)">
+        <DialogPanel label={t("modal_create_site.panel_contact")}>
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <DialogLabel htmlFor="cs-cn" optional>Nombre</DialogLabel>
+              <DialogLabel htmlFor="cs-cn" optional>{t("modal_create_site.label_contact_name")}</DialogLabel>
               <DialogInput
                 id="cs-cn"
                 value={contactName}
                 onChange={(e) => setContactName(e.target.value)}
-                placeholder="Pedro Castro"
+                placeholder={t("modal_create_site.placeholder_contact_name")}
               />
             </div>
             <div>
-              <DialogLabel htmlFor="cs-cr" optional>Rol</DialogLabel>
+              <DialogLabel htmlFor="cs-cr" optional>{t("modal_create_site.label_contact_role")}</DialogLabel>
               <DialogInput
                 id="cs-cr"
                 value={contactRole}
                 onChange={(e) => setContactRole(e.target.value)}
-                placeholder="store_manager"
+                placeholder={t("modal_create_site.placeholder_contact_role")}
               />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <DialogLabel htmlFor="cs-cp" optional>Phone</DialogLabel>
+              <DialogLabel htmlFor="cs-cp" optional>{t("modal_create_site.label_contact_phone")}</DialogLabel>
               <DialogInput
                 id="cs-cp"
                 value={contactPhone}
@@ -228,7 +230,7 @@ export default function CreateSiteAction({ onCreated }) {
               />
             </div>
             <div>
-              <DialogLabel htmlFor="cs-ce" optional>Email</DialogLabel>
+              <DialogLabel htmlFor="cs-ce" optional>{t("modal_create_site.label_contact_email")}</DialogLabel>
               <DialogInput
                 id="cs-ce"
                 value={contactEmail}
@@ -240,21 +242,21 @@ export default function CreateSiteAction({ onCreated }) {
 
         <DialogCheckbox
           id="cs-resident"
-          label="Residente fisico (DC / 24x7 staffed)"
+          label={t("modal_create_site.checkbox_resident")}
           checked={hasResident}
           onChange={setHasResident}
         />
 
         <div>
           <DialogLabel htmlFor="cs-access" optional>
-            Access notes
+            {t("modal_create_site.label_access")}
           </DialogLabel>
           <DialogTextarea
             id="cs-access"
             rows={3}
             value={accessNotes}
             onChange={(e) => setAccessNotes(e.target.value)}
-            placeholder="Horarios, instrucciones de ingreso, parking, security desk, QR locks…"
+            placeholder={t("modal_create_site.placeholder_access")}
           />
         </div>
       </ActionDialog>

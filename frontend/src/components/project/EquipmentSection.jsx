@@ -12,6 +12,7 @@
  *   conflicto    planned para site A, scaneado en site B
  */
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { api } from "../../lib/api";
 import { useFetch } from "../../lib/useFetch";
 import ActionDialog from "../ui/ActionDialog";
@@ -20,17 +21,18 @@ import SectionCard, { SectionTitle } from "../v2-shared/SectionCard";
 import { JAKARTA, MONO, MONO_CAPS } from "../v2-shared/typography";
 
 const STATUS_STYLES = {
-  planned:     { dot: "#C8CDD8", color: "#8B95A8", label: "planned" },
-  match:       { dot: "#16A34A", color: "#0A6131", label: "match" },
-  substituted: { dot: "#1E3A8A", color: "#1E40AF", label: "substituted" },
-  missing:     { dot: "#E8A33D", color: "#7E5212", label: "missing" },
-  sin_plan:    { dot: "#0A1628", color: "#0A1628", label: "sin plan" },
-  conflicto:   { dot: "#DC2626", color: "#991B1B", label: "conflicto" },
+  planned:     { dot: "#C8CDD8", color: "#8B95A8", labelKey: "comp_equipment.status_planned" },
+  match:       { dot: "#16A34A", color: "#0A6131", labelKey: "comp_equipment.status_match" },
+  substituted: { dot: "#1E3A8A", color: "#1E40AF", labelKey: "comp_equipment.status_substituted" },
+  missing:     { dot: "#E8A33D", color: "#7E5212", labelKey: "comp_equipment.status_missing" },
+  sin_plan:    { dot: "#0A1628", color: "#0A1628", labelKey: "comp_equipment.status_sin_plan" },
+  conflicto:   { dot: "#DC2626", color: "#991B1B", labelKey: "comp_equipment.status_conflicto" },
 };
 
 const COUNT_ORDER = ["match", "substituted", "missing", "conflicto", "sin_plan", "planned"];
 
 export default function EquipmentSection({ project, isSrs }) {
+  const { t } = useTranslation("common");
   const { data, loading, error, reload } = useFetch(
     `/projects/${project.id}/reconciliation`,
     { deps: [project.id] }
@@ -68,15 +70,15 @@ export default function EquipmentSection({ project, isSrs }) {
         }}
       >
         <div>
-          <SectionTitle marginBottom={4}>Equipment · plan vs scan</SectionTitle>
+          <SectionTitle marginBottom={4}>{t("comp_equipment.section_title")}</SectionTitle>
           <div style={{ fontFamily: JAKARTA, fontSize: 14, fontWeight: 700, color: "#0A1628" }}>
             {planEntries.length}{" "}
             <span style={{ color: "#3D4A66", fontWeight: 500 }}>
-              item{planEntries.length === 1 ? "" : "s"} planeado{planEntries.length === 1 ? "" : "s"}
+              {t(planEntries.length === 1 ? "comp_equipment.items_planned_one" : "comp_equipment.items_planned_other")}
             </span>
             {lastReconciledAt && (
               <span style={{ ...MONO_CAPS, fontSize: 9.5, color: "#8B95A8", letterSpacing: "0.12em", marginLeft: 10 }}>
-                · reconciled {formatAge(lastReconciledAt)} ago
+                {t("comp_equipment.reconciled_ago", { age: formatAge(lastReconciledAt) })}
               </span>
             )}
           </div>
@@ -99,7 +101,7 @@ export default function EquipmentSection({ project, isSrs }) {
         ))}
         {Object.keys(counts).length === 0 && (
           <div style={{ ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em" }}>
-            — sin plan entries todavía —
+            {t("comp_equipment.empty_no_plan")}
           </div>
         )}
       </div>
@@ -121,11 +123,11 @@ export default function EquipmentSection({ project, isSrs }) {
               letterSpacing: "0.14em",
             }}
           >
-            <div>Status</div>
-            <div>Serial</div>
-            <div>Make / Model</div>
-            <div>Site</div>
-            <div style={{ textAlign: "right" }}>Source</div>
+            <div>{t("comp_equipment.col_status")}</div>
+            <div>{t("comp_equipment.col_serial")}</div>
+            <div>{t("comp_equipment.col_make_model")}</div>
+            <div>{t("comp_equipment.col_site")}</div>
+            <div style={{ textAlign: "right" }}>{t("comp_equipment.col_source")}</div>
           </div>
           <div style={{ maxHeight: "60vh", overflowY: "auto" }}>
             {planEntries.map((pe) => <PlanRow key={pe.id} pe={pe} />)}
@@ -135,7 +137,7 @@ export default function EquipmentSection({ project, isSrs }) {
 
       {loading && (
         <div style={{ padding: "12px 18px", ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em" }}>
-          cargando…
+          {t("common.loading")}
         </div>
       )}
       {error && (
@@ -148,6 +150,7 @@ export default function EquipmentSection({ project, isSrs }) {
 }
 
 function CountPill({ status, count }) {
+  const { t } = useTranslation("common");
   const s = STATUS_STYLES[status] || STATUS_STYLES.planned;
   return (
     <div
@@ -164,7 +167,7 @@ function CountPill({ status, count }) {
       <span style={{ width: 8, height: 8, borderRadius: "50%", background: s.dot }} />
       <div>
         <div style={{ ...MONO_CAPS, fontSize: 9.5, color: s.color, letterSpacing: "0.12em" }}>
-          {s.label}
+          {t(s.labelKey)}
         </div>
         <div
           style={{
@@ -185,6 +188,7 @@ function CountPill({ status, count }) {
 }
 
 function PlanRow({ pe }) {
+  const { t } = useTranslation("common");
   const s = STATUS_STYLES[pe.status] || STATUS_STYLES.planned;
   const makeModel = [pe.make, pe.model].filter(Boolean).join(" · ") || "—";
   return (
@@ -211,7 +215,7 @@ function PlanRow({ pe }) {
             textOverflow: "ellipsis",
           }}
         >
-          {s.label}
+          {t(s.labelKey)}
         </span>
       </div>
       <div style={{ minWidth: 0 }}>
@@ -241,7 +245,7 @@ function PlanRow({ pe }) {
               textOverflow: "ellipsis",
             }}
           >
-            tag {pe.asset_tag}
+            {t("comp_equipment.tag_prefix", { tag: pe.asset_tag })}
           </div>
         )}
       </div>
@@ -309,6 +313,7 @@ function PlanRow({ pe }) {
 }
 
 function ReconcileAction({ project, reload }) {
+  const { t } = useTranslation("common");
   const [open, setOpen] = useState(false);
   const [result, setResult] = useState(null);
 
@@ -323,29 +328,30 @@ function ReconcileAction({ project, reload }) {
     setResult(null);
   }
 
+  const sinPlanCount = result?.sin_plan_asset_ids?.length || 0;
+
   return (
     <>
       <button type="button" onClick={() => setOpen(true)} className="btn-trigger-v2">
-        Run reconcile
+        {t("comp_equipment.btn_run")}
       </button>
       <ActionDialog
         open={open}
         onClose={close}
-        title="Run reconciliation"
-        subtitle="Plan (Excel/email/portal) vs scans on-site. Produce match / substituted / missing / sin_plan / conflicto."
-        submitLabel={result ? "Cerrar" : "Reconcile"}
+        title={t("comp_equipment.modal_title")}
+        subtitle={t("comp_equipment.modal_subtitle")}
+        submitLabel={result ? t("comp_equipment.btn_close") : t("comp_equipment.btn_reconcile")}
         onSubmit={result ? close : submit}
       >
         {!result && (
           <p style={{ fontFamily: JAKARTA, fontSize: 13, color: "#3D4A66", lineHeight: 1.55, fontWeight: 500 }}>
-            Este cálculo no es destructivo: actualiza status + reconciled_with en cada plan entry.
-            Corre tantas veces como quieras conforme el tech va haciendo scans.
+            {t("comp_equipment.modal_intro")}
           </p>
         )}
         {result && (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <div style={{ fontFamily: JAKARTA, fontSize: 13, color: "#0A1628", fontWeight: 500 }}>
-              Reconciliation completada con {result.plan_count} planned · {result.scan_count} scanned.
+              {t("comp_equipment.result_completed", { plan: result.plan_count, scan: result.scan_count })}
             </div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
               {COUNT_ORDER.filter((k) => (result.counts?.[k] || 0) > 0).map((k) => (
@@ -353,8 +359,7 @@ function ReconcileAction({ project, reload }) {
               ))}
             </div>
             <div style={{ ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em" }}>
-              {result.sin_plan_asset_ids?.length || 0} asset
-              {(result.sin_plan_asset_ids?.length || 0) === 1 ? "" : "s"} sin_plan registrados
+              {t(sinPlanCount === 1 ? "comp_equipment.result_sin_plan_one" : "comp_equipment.result_sin_plan_other", { count: sinPlanCount })}
             </div>
           </div>
         )}

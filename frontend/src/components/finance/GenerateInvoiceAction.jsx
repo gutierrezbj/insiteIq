@@ -10,6 +10,7 @@
  *  - client_ref para cross-reference con PO cliente
  */
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { api } from "../../lib/api";
 import { useFetch } from "../../lib/useFetch";
@@ -32,6 +33,7 @@ function isoDate(d) {
 }
 
 export default function GenerateInvoiceAction({ defaultOrgId, onGenerated }) {
+  const { t } = useTranslation("common");
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -105,26 +107,26 @@ export default function GenerateInvoiceAction({ defaultOrgId, onGenerated }) {
         onClick={() => setOpen(true)}
         className="btn-trigger-v2"
       >
-        + Generate invoice
+        {t("modal_generate_invoice.btn_trigger")}
       </button>
 
       <ActionDialog
         open={open}
         onClose={() => setOpen(false)}
-        title="Generate invoice"
-        subtitle="Agrupa closed WOs del periodo × agreement aplicando rate_card"
-        submitLabel="Generar draft"
+        title={t("modal_generate_invoice.title")}
+        subtitle={t("modal_generate_invoice.subtitle")}
+        submitLabel={t("modal_generate_invoice.btn_submit")}
         submitDisabled={!canSubmit}
         onSubmit={submit}
       >
         <div>
-          <DialogLabel htmlFor="gi-org">Cliente</DialogLabel>
+          <DialogLabel htmlFor="gi-org">{t("modal_generate_invoice.label_org")}</DialogLabel>
           <DialogSelect
             id="gi-org"
             value={orgId}
             onChange={setOrgId}
             options={[
-              { v: "", l: "— elegir —" },
+              { v: "", l: t("modal_generate_invoice.option_choose") },
               ...clientOrgs.map((o) => ({
                 v: o.id,
                 l: `${o.legal_name}${o.country ? ` · ${o.country}` : ""}`,
@@ -134,7 +136,7 @@ export default function GenerateInvoiceAction({ defaultOrgId, onGenerated }) {
           />
         </div>
         <div>
-          <DialogLabel htmlFor="gi-ag">Service Agreement</DialogLabel>
+          <DialogLabel htmlFor="gi-ag">{t("modal_generate_invoice.label_agreement")}</DialogLabel>
           <DialogSelect
             id="gi-ag"
             value={agreementId}
@@ -144,10 +146,10 @@ export default function GenerateInvoiceAction({ defaultOrgId, onGenerated }) {
               {
                 v: "",
                 l: orgAgreements.length
-                  ? "— elegir —"
+                  ? t("modal_generate_invoice.option_choose")
                   : orgId
-                  ? "(sin agreements con rate_card)"
-                  : "(elegi cliente primero)",
+                  ? t("modal_generate_invoice.agreement_no_rate_cards")
+                  : t("modal_generate_invoice.agreement_pick_client_first"),
               },
               ...orgAgreements.map((a) => ({
                 v: a.id,
@@ -159,7 +161,7 @@ export default function GenerateInvoiceAction({ defaultOrgId, onGenerated }) {
         </div>
         <div className="grid grid-cols-2 gap-2">
           <div>
-            <DialogLabel htmlFor="gi-ps">Period start</DialogLabel>
+            <DialogLabel htmlFor="gi-ps">{t("modal_generate_invoice.label_period_start")}</DialogLabel>
             <DialogInput
               id="gi-ps"
               type="date"
@@ -169,7 +171,7 @@ export default function GenerateInvoiceAction({ defaultOrgId, onGenerated }) {
             />
           </div>
           <div>
-            <DialogLabel htmlFor="gi-pe">Period end</DialogLabel>
+            <DialogLabel htmlFor="gi-pe">{t("modal_generate_invoice.label_period_end")}</DialogLabel>
             <DialogInput
               id="gi-pe"
               type="date"
@@ -182,7 +184,7 @@ export default function GenerateInvoiceAction({ defaultOrgId, onGenerated }) {
         <div className="grid grid-cols-2 gap-2">
           <div>
             <DialogLabel htmlFor="gi-tax" optional>
-              Tax rate %
+              {t("modal_generate_invoice.label_tax")}
             </DialogLabel>
             <DialogInput
               id="gi-tax"
@@ -191,31 +193,31 @@ export default function GenerateInvoiceAction({ defaultOrgId, onGenerated }) {
               min="0"
               value={taxRate}
               onChange={(e) => setTaxRate(e.target.value)}
-              placeholder="21 ES · 16 MX · 0 US"
+              placeholder={t("modal_generate_invoice.placeholder_tax")}
             />
           </div>
           <div>
             <DialogLabel htmlFor="gi-cr" optional>
-              Client PO/BPA ref
+              {t("modal_generate_invoice.label_client_ref")}
             </DialogLabel>
             <DialogInput
               id="gi-cr"
               value={clientRef}
               onChange={(e) => setClientRef(e.target.value)}
-              placeholder="PA-1000066 / PO-1004018"
+              placeholder={t("modal_generate_invoice.placeholder_client_ref")}
             />
           </div>
         </div>
         <div>
           <DialogLabel htmlFor="gi-notes" optional>
-            Notas
+            {t("modal_generate_invoice.label_notes")}
           </DialogLabel>
           <DialogTextarea
             id="gi-notes"
             rows={2}
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="Cualquier comentario que deba aparecer en la factura"
+            placeholder={t("modal_generate_invoice.placeholder_notes")}
           />
         </div>
       </ActionDialog>

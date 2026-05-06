@@ -17,6 +17,7 @@
  * agregar un nuevo preset acá — NO duplicar inline en pages.
  */
 
+import { useTranslation } from "react-i18next";
 import { MONO_CAPS } from "./typography";
 
 /* ─── Pill base ────────────────────────────────────────────────── */
@@ -54,18 +55,20 @@ export function Pill({
 /* ─── Project status ───────────────────────────────────────────── */
 
 const PROJECT_STATUS_STYLES = {
-  draft:     { bg: "#F0F2F7", border: "#C8CDD8", color: "#3D4A66" },
-  active:    { bg: "#D9F1E5", border: "#16A34A", color: "#0A6131" },
-  paused:    { bg: "#FCF1DC", border: "#E8A33D", color: "#7E5212" },
-  completed: { bg: "#DBEAFE", border: "#2563EB", color: "#1E3A8A" },
-  cancelled: { bg: "#FEE2E2", border: "#DC2626", color: "#7F1D1D" },
+  draft:     { bg: "#F0F2F7", border: "#C8CDD8", color: "#3D4A66", labelKey: "comp_pills.project_draft" },
+  active:    { bg: "#D9F1E5", border: "#16A34A", color: "#0A6131", labelKey: "comp_pills.project_active" },
+  paused:    { bg: "#FCF1DC", border: "#E8A33D", color: "#7E5212", labelKey: "comp_pills.project_paused" },
+  completed: { bg: "#DBEAFE", border: "#2563EB", color: "#1E3A8A", labelKey: "comp_pills.project_completed" },
+  cancelled: { bg: "#FEE2E2", border: "#DC2626", color: "#7F1D1D", labelKey: "comp_pills.project_cancelled" },
 };
 
 export function ProjectStatusPill({ status }) {
+  const { t } = useTranslation("common");
   const s = PROJECT_STATUS_STYLES[status] || PROJECT_STATUS_STYLES.draft;
+  const labelKey = PROJECT_STATUS_STYLES[status]?.labelKey;
   return (
     <Pill bg={s.bg} border={s.border} color={s.color}>
-      {status}
+      {labelKey ? t(labelKey) : status}
     </Pill>
   );
 }
@@ -73,22 +76,25 @@ export function ProjectStatusPill({ status }) {
 /* ─── WO status ────────────────────────────────────────────────── */
 
 const WO_STATUS_STYLES = {
-  intake:     { bg: "#F0F2F7", color: "#3D4A66" },
-  triage:     { bg: "#DBEAFE", color: "#1E3A8A" },
-  pre_flight: { bg: "#DBEAFE", color: "#1E3A8A" },
-  dispatched: { bg: "#DBEAFE", color: "#1E40AF" },
-  en_route:   { bg: "#E0E7FF", color: "#0A1628" },
-  on_site:    { bg: "#E0E7FF", color: "#0A1628" },
-  resolved:   { bg: "#D9F1E5", color: "#0A6131" },
-  closed:     { bg: "#F0F2F7", color: "#8B95A8" },
-  cancelled:  { bg: "#FEE2E2", color: "#7F1D1D" },
+  intake:     { bg: "#F0F2F7", color: "#3D4A66", labelKey: "comp_pills.wo_intake" },
+  triage:     { bg: "#DBEAFE", color: "#1E3A8A", labelKey: "comp_pills.wo_triage" },
+  pre_flight: { bg: "#DBEAFE", color: "#1E3A8A", labelKey: "comp_pills.wo_pre_flight" },
+  dispatched: { bg: "#DBEAFE", color: "#1E40AF", labelKey: "comp_pills.wo_dispatched" },
+  en_route:   { bg: "#E0E7FF", color: "#0A1628", labelKey: "comp_pills.wo_en_route" },
+  on_site:    { bg: "#E0E7FF", color: "#0A1628", labelKey: "comp_pills.wo_on_site" },
+  resolved:   { bg: "#D9F1E5", color: "#0A6131", labelKey: "comp_pills.wo_resolved" },
+  closed:     { bg: "#F0F2F7", color: "#8B95A8", labelKey: "comp_pills.wo_closed" },
+  cancelled:  { bg: "#FEE2E2", color: "#7F1D1D", labelKey: "comp_pills.wo_cancelled" },
 };
 
 export function WoStatusPill({ status }) {
-  const s = WO_STATUS_STYLES[status] || WO_STATUS_STYLES.intake;
+  const { t } = useTranslation("common");
+  const known = WO_STATUS_STYLES[status];
+  const s = known || WO_STATUS_STYLES.intake;
+  const label = known ? t(known.labelKey) : (status || "").replace("_", " ");
   return (
     <Pill bg={s.bg} color={s.color} padding="2px 7px" borderRadius={3} fontSize={9.5}>
-      {(status || "").replace("_", " ")}
+      {label}
     </Pill>
   );
 }
@@ -102,8 +108,17 @@ const SEVERITY_COLORS = {
   critical: "#DC2626",
 };
 
+const SEVERITY_LABEL_KEYS = {
+  low: "comp_pills.severity_low",
+  normal: "comp_pills.severity_normal",
+  high: "comp_pills.severity_high",
+  critical: "comp_pills.severity_critical",
+};
+
 export function SeverityPill({ severity }) {
+  const { t } = useTranslation("common");
   const color = SEVERITY_COLORS[severity] || SEVERITY_COLORS.normal;
+  const labelKey = SEVERITY_LABEL_KEYS[severity] || SEVERITY_LABEL_KEYS.normal;
   return (
     <span
       style={{
@@ -113,7 +128,7 @@ export function SeverityPill({ severity }) {
         letterSpacing: "0.12em",
       }}
     >
-      {severity || "normal"}
+      {t(labelKey)}
     </span>
   );
 }
@@ -121,13 +136,14 @@ export function SeverityPill({ severity }) {
 /* ─── Shield (brand · amber legítimo del Bronze tier preserved) ── */
 
 const SHIELD_STYLES = {
-  bronze:      { dot: "#A16207", label: "BRONZE" },
-  bronze_plus: { dot: "#D97706", label: "BRONZE+" },
-  silver:      { dot: "#94A3B8", label: "SILVER" },
-  gold:        { dot: "#CA8A04", label: "GOLD" },
+  bronze:      { dot: "#A16207", labelKey: "comp_pills.shield_bronze" },
+  bronze_plus: { dot: "#D97706", labelKey: "comp_pills.shield_bronze_plus" },
+  silver:      { dot: "#94A3B8", labelKey: "comp_pills.shield_silver" },
+  gold:        { dot: "#CA8A04", labelKey: "comp_pills.shield_gold" },
 };
 
 export function ShieldPill({ level }) {
+  const { t } = useTranslation("common");
   const s = SHIELD_STYLES[level] || SHIELD_STYLES.bronze;
   return (
     <span
@@ -141,7 +157,7 @@ export function ShieldPill({ level }) {
       }}
     >
       <span style={{ width: 6, height: 6, borderRadius: "50%", background: s.dot }} />
-      {s.label}
+      {t(s.labelKey)}
     </span>
   );
 }
@@ -149,16 +165,17 @@ export function ShieldPill({ level }) {
 /* ─── Ball-in-court ────────────────────────────────────────────── */
 
 const BALL_STYLES = {
-  srs:    { bg: "#E0E7FF", color: "#0A1628", label: "SRS" },
-  tech:   { bg: "#DBEAFE", color: "#1E3A8A", label: "TECH" },
-  client: { bg: "#FCF1DC", color: "#7E5212", label: "CLIENT" },
+  srs:    { bg: "#E0E7FF", color: "#0A1628", labelKey: "comp_pills.ball_srs" },
+  tech:   { bg: "#DBEAFE", color: "#1E3A8A", labelKey: "comp_pills.ball_tech" },
+  client: { bg: "#FCF1DC", color: "#7E5212", labelKey: "comp_pills.ball_client" },
 };
 
 export function BallPill({ side }) {
+  const { t } = useTranslation("common");
   const s = BALL_STYLES[side] || BALL_STYLES.srs;
   return (
     <Pill bg={s.bg} color={s.color} padding="2px 7px" borderRadius={3} fontSize={9.5}>
-      {s.label}
+      {t(s.labelKey)}
     </Pill>
   );
 }
@@ -166,13 +183,16 @@ export function BallPill({ side }) {
 /* ─── Site status (binario active vs other + bullet dot) ───────── */
 
 const SITE_STATUS_STYLES = {
-  active:   { dot: "#16A34A", color: "#0A6131" },
-  inactive: { dot: "#8B95A8", color: "#8B95A8" },
-  pending:  { dot: "#E8A33D", color: "#7E5212" },
+  active:   { dot: "#16A34A", color: "#0A6131", labelKey: "comp_pills.site_active" },
+  inactive: { dot: "#8B95A8", color: "#8B95A8", labelKey: "comp_pills.site_inactive" },
+  pending:  { dot: "#E8A33D", color: "#7E5212", labelKey: "comp_pills.site_pending" },
 };
 
 export function SiteStatusPill({ status }) {
-  const s = SITE_STATUS_STYLES[status] || SITE_STATUS_STYLES.inactive;
+  const { t } = useTranslation("common");
+  const known = SITE_STATUS_STYLES[status];
+  const s = known || SITE_STATUS_STYLES.inactive;
+  const label = known ? t(known.labelKey) : (status || "—");
   return (
     <span
       style={{
@@ -186,7 +206,7 @@ export function SiteStatusPill({ status }) {
       }}
     >
       <span style={{ width: 6, height: 6, borderRadius: "50%", background: s.dot }} />
-      {status || "—"}
+      {label}
     </span>
   );
 }

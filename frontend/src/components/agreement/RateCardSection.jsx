@@ -11,6 +11,7 @@
  * Edit limitado a SRS owner/director (backend enforce). Cliente solo ve.
  */
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { api } from "../../lib/api";
 import ActionDialog, {
   DialogCheckbox,
@@ -22,6 +23,7 @@ import SectionCard, { SectionTitle } from "../v2-shared/SectionCard";
 import { JAKARTA, MONO, MONO_CAPS } from "../v2-shared/typography";
 
 export default function RateCardSection({ agreement, isSrs, reload }) {
+  const { t } = useTranslation("common");
   const rc = agreement.rate_card;
   const currency = agreement.currency || "USD";
 
@@ -39,9 +41,9 @@ export default function RateCardSection({ agreement, isSrs, reload }) {
         }}
       >
         <div>
-          <SectionTitle marginBottom={2}>Rate card</SectionTitle>
+          <SectionTitle marginBottom={2}>{t("comp_rate_card.section_title")}</SectionTitle>
           <div style={{ fontFamily: JAKARTA, fontSize: 14, fontWeight: 700, color: "#0A1628" }}>
-            Tarifas del contrato
+            {t("comp_rate_card.header_subtitle")}
           </div>
         </div>
         {isSrs && <EditRatesAction agreement={agreement} reload={reload} />}
@@ -58,11 +60,11 @@ export default function RateCardSection({ agreement, isSrs, reload }) {
             lineHeight: 1.55,
           }}
         >
-          Sin rate card cargada.{" "}
+          {t("comp_rate_card.empty_main")}{" "}
           <span style={{ color: "#8B95A8" }}>
             {isSrs
-              ? "Cárgala con el botón de arriba — necesaria para pre-invoice y P&L."
-              : "Pendiente de carga por SRS."}
+              ? t("comp_rate_card.empty_hint_srs")
+              : t("comp_rate_card.empty_hint_client")}
           </span>
         </div>
       )}
@@ -80,34 +82,34 @@ export default function RateCardSection({ agreement, isSrs, reload }) {
           >
             {rc.base_price_per_wo != null && (
               <PriceCard
-                label="Per work order"
+                label={t("comp_rate_card.price_per_wo")}
                 value={rc.base_price_per_wo}
                 currency={currency}
-                suffix="/WO"
+                suffix={t("comp_rate_card.price_per_wo_suffix")}
               />
             )}
             {rc.hourly_rate != null && (
               <PriceCard
-                label="Hourly rate"
+                label={t("comp_rate_card.price_hourly")}
                 value={rc.hourly_rate}
                 currency={currency}
-                suffix="/h"
+                suffix={t("comp_rate_card.price_hourly_suffix")}
               />
             )}
             {rc.monthly_fee != null && (
               <PriceCard
-                label="Monthly fee"
+                label={t("comp_rate_card.price_monthly")}
                 value={rc.monthly_fee}
                 currency={currency}
-                suffix="/mes"
+                suffix={t("comp_rate_card.price_monthly_suffix")}
               />
             )}
             {rc.quarterly_fee != null && (
               <PriceCard
-                label="Quarterly fee"
+                label={t("comp_rate_card.price_quarterly")}
                 value={rc.quarterly_fee}
                 currency={currency}
-                suffix="/Q"
+                suffix={t("comp_rate_card.price_quarterly_suffix")}
               />
             )}
           </div>
@@ -121,38 +123,38 @@ export default function RateCardSection({ agreement, isSrs, reload }) {
             }}
           >
             <Stat
-              label="Parts markup"
+              label={t("comp_rate_card.stat_parts_markup")}
               value={`${rc.parts_markup_pct}%`}
               hint={
                 rc.parts_pass_through
-                  ? "pass-through (cliente provee)"
-                  : "srs procures + markup"
+                  ? t("comp_rate_card.stat_parts_pass_through")
+                  : t("comp_rate_card.stat_parts_srs_procures")
               }
             />
             <Stat
-              label="Travel"
-              value={rc.travel_included ? "incluido" : "extra"}
+              label={t("comp_rate_card.stat_travel")}
+              value={rc.travel_included ? t("comp_rate_card.stat_travel_included") : t("comp_rate_card.stat_travel_extra")}
               hint={
                 !rc.travel_included && rc.travel_flat_fee
-                  ? `${currency} ${rc.travel_flat_fee} flat`
+                  ? t("comp_rate_card.stat_travel_flat_suffix", { currency, value: rc.travel_flat_fee })
                   : rc.mileage_rate_per_km
-                  ? `${currency} ${rc.mileage_rate_per_km}/km`
+                  ? t("comp_rate_card.stat_travel_per_km_suffix", { currency, value: rc.mileage_rate_per_km })
                   : null
               }
             />
             <Stat
-              label="After hours"
+              label={t("comp_rate_card.stat_after_hours")}
               value={
                 rc.after_hours_multiplier
                   ? `×${rc.after_hours_multiplier.toFixed(2)}`
                   : "—"
               }
-              hint={rc.after_hours_multiplier ? "uplift nocturno/fines" : null}
+              hint={rc.after_hours_multiplier ? t("comp_rate_card.stat_after_hours_hint") : null}
             />
             <Stat
-              label="Threshold partes"
+              label={t("comp_rate_card.stat_threshold")}
               value={`${currency} ${agreement.parts_approval_threshold_usd?.toFixed(0) || "—"}`}
-              hint="auto-approved bajo este monto"
+              hint={t("comp_rate_card.stat_threshold_hint")}
             />
           </div>
 
@@ -167,7 +169,7 @@ export default function RateCardSection({ agreement, isSrs, reload }) {
               }}
             >
               <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.14em", marginBottom: 6 }}>
-                Notas
+                {t("comp_rate_card.notes_label")}
               </div>
               <p
                 style={{
@@ -197,7 +199,7 @@ export default function RateCardSection({ agreement, isSrs, reload }) {
             letterSpacing: "0.14em",
           }}
         >
-          X-a · Fase 3 Admin/Finance · invoice auto-gen en X-b
+          {t("comp_rate_card.footer")}
         </div>
       )}
     </SectionCard>
@@ -264,6 +266,7 @@ function Stat({ label, value, hint }) {
 /* ─── Edit action ──────────────────────────────────────────────── */
 
 function EditRatesAction({ agreement, reload }) {
+  const { t } = useTranslation("common");
   const [open, setOpen] = useState(false);
   const rc = agreement.rate_card || {};
 
@@ -327,23 +330,27 @@ function EditRatesAction({ agreement, reload }) {
   return (
     <>
       <button type="button" onClick={() => setOpen(true)} className="btn-trigger-v2">
-        {agreement.rate_card ? "Editar tarifas" : "+ Cargar tarifas"}
+        {agreement.rate_card ? t("comp_rate_card.btn_edit") : t("comp_rate_card.btn_load")}
       </button>
 
       <ActionDialog
         open={open}
         onClose={() => setOpen(false)}
-        title="Rate card · editar tarifas"
-        subtitle={`${agreement.title} · ${agreement.currency || "USD"} · shield ${agreement.shield_level}`}
-        submitLabel="Guardar"
+        title={t("comp_rate_card.modal_title")}
+        subtitle={t("comp_rate_card.modal_subtitle", {
+          title: agreement.title,
+          currency: agreement.currency || "USD",
+          shield: agreement.shield_level,
+        })}
+        submitLabel={t("common.save")}
         submitDisabled={!anyPrimary}
         onSubmit={submit}
       >
-        <FieldGroup label="Precios primarios" hint="Completa el que aplique. Al menos uno requerido.">
+        <FieldGroup label={t("comp_rate_card.group_primary")} hint={t("comp_rate_card.group_primary_hint")}>
           <Grid2>
             <div>
               <DialogLabel htmlFor="rc-base" optional>
-                Per WO ({agreement.currency || "USD"})
+                {t("comp_rate_card.label_per_wo", { currency: agreement.currency || "USD" })}
               </DialogLabel>
               <DialogInput
                 id="rc-base"
@@ -352,12 +359,12 @@ function EditRatesAction({ agreement, reload }) {
                 min="0"
                 value={basePrice}
                 onChange={(e) => setBasePrice(e.target.value)}
-                placeholder="break-fix volume"
+                placeholder={t("comp_rate_card.placeholder_per_wo")}
               />
             </div>
             <div>
               <DialogLabel htmlFor="rc-hr" optional>
-                Hourly ({agreement.currency || "USD"}/h)
+                {t("comp_rate_card.label_hourly", { currency: agreement.currency || "USD" })}
               </DialogLabel>
               <DialogInput
                 id="rc-hr"
@@ -366,12 +373,12 @@ function EditRatesAction({ agreement, reload }) {
                 min="0"
                 value={hourlyRate}
                 onChange={(e) => setHourlyRate(e.target.value)}
-                placeholder="audit / survey / migration"
+                placeholder={t("comp_rate_card.placeholder_hourly")}
               />
             </div>
             <div>
               <DialogLabel htmlFor="rc-mo" optional>
-                Monthly ({agreement.currency || "USD"}/mes)
+                {t("comp_rate_card.label_monthly", { currency: agreement.currency || "USD" })}
               </DialogLabel>
               <DialogInput
                 id="rc-mo"
@@ -380,12 +387,12 @@ function EditRatesAction({ agreement, reload }) {
                 min="0"
                 value={monthlyFee}
                 onChange={(e) => setMonthlyFee(e.target.value)}
-                placeholder="recurring / subscription"
+                placeholder={t("comp_rate_card.placeholder_monthly")}
               />
             </div>
             <div>
               <DialogLabel htmlFor="rc-qt" optional>
-                Quarterly
+                {t("comp_rate_card.label_quarterly")}
               </DialogLabel>
               <DialogInput
                 id="rc-qt"
@@ -394,16 +401,16 @@ function EditRatesAction({ agreement, reload }) {
                 min="0"
                 value={quarterlyFee}
                 onChange={(e) => setQuarterlyFee(e.target.value)}
-                placeholder="menos común"
+                placeholder={t("comp_rate_card.placeholder_quarterly")}
               />
             </div>
           </Grid2>
         </FieldGroup>
 
-        <FieldGroup label="Partes y materiales">
+        <FieldGroup label={t("comp_rate_card.group_parts")}>
           <Grid2>
             <div>
-              <DialogLabel htmlFor="rc-pm">Markup % (default 60)</DialogLabel>
+              <DialogLabel htmlFor="rc-pm">{t("comp_rate_card.label_markup")}</DialogLabel>
               <DialogInput
                 id="rc-pm"
                 type="number"
@@ -414,7 +421,7 @@ function EditRatesAction({ agreement, reload }) {
               />
             </div>
             <div>
-              <DialogLabel htmlFor="rc-thr">Threshold auto-approve</DialogLabel>
+              <DialogLabel htmlFor="rc-thr">{t("comp_rate_card.label_threshold")}</DialogLabel>
               <DialogInput
                 id="rc-thr"
                 type="number"
@@ -428,16 +435,16 @@ function EditRatesAction({ agreement, reload }) {
           </Grid2>
           <DialogCheckbox
             id="rc-pass"
-            label="Parts pass-through (cliente provee, SRS no markup)"
+            label={t("comp_rate_card.checkbox_pass_through")}
             checked={partsPassThrough}
             onChange={setPartsPassThrough}
           />
         </FieldGroup>
 
-        <FieldGroup label="Travel">
+        <FieldGroup label={t("comp_rate_card.group_travel")}>
           <DialogCheckbox
             id="rc-tinc"
-            label="Travel incluido en tarifa base"
+            label={t("comp_rate_card.checkbox_travel_included")}
             checked={travelIncluded}
             onChange={setTravelIncluded}
           />
@@ -445,7 +452,7 @@ function EditRatesAction({ agreement, reload }) {
             <Grid2>
               <div>
                 <DialogLabel htmlFor="rc-tflat" optional>
-                  Flat por visita
+                  {t("comp_rate_card.label_travel_flat")}
                 </DialogLabel>
                 <DialogInput
                   id="rc-tflat"
@@ -458,7 +465,7 @@ function EditRatesAction({ agreement, reload }) {
               </div>
               <div>
                 <DialogLabel htmlFor="rc-mile" optional>
-                  Rate per km
+                  {t("comp_rate_card.label_mileage")}
                 </DialogLabel>
                 <DialogInput
                   id="rc-mile"
@@ -475,7 +482,7 @@ function EditRatesAction({ agreement, reload }) {
 
         <div>
           <DialogLabel htmlFor="rc-ah" optional>
-            After-hours multiplier (ej. 1.25 = +25% noches/fines)
+            {t("comp_rate_card.label_after_hours")}
           </DialogLabel>
           <DialogInput
             id="rc-ah"
@@ -490,14 +497,14 @@ function EditRatesAction({ agreement, reload }) {
 
         <div>
           <DialogLabel htmlFor="rc-notes" optional>
-            Notas / condiciones del rate card
+            {t("comp_rate_card.label_notes")}
           </DialogLabel>
           <DialogTextarea
             id="rc-notes"
             rows={3}
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="Cobertura geográfica · items incluidos/excluidos · cap facturación · caveats"
+            placeholder={t("comp_rate_card.placeholder_notes")}
           />
         </div>
       </ActionDialog>

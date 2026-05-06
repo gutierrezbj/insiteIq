@@ -17,6 +17,7 @@
  * cadena.
  */
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 const JAKARTA = "'Plus Jakarta Sans', sans-serif";
 const MONO = "'JetBrains Mono', monospace";
@@ -33,15 +34,18 @@ export default function ActionDialog({
   onClose,
   title,
   subtitle,
-  submitLabel = "Confirmar",
+  submitLabel,
   submitDisabled = false,
   onSubmit,
   destructive = false,
   children,
 }) {
+  const { t } = useTranslation("common");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const dialogRef = useRef(null);
+
+  const effectiveSubmitLabel = submitLabel ?? t("common.confirm");
 
   useEffect(() => {
     if (!open) {
@@ -68,7 +72,7 @@ export default function ActionDialog({
       await onSubmit?.();
       onClose?.();
     } catch (err) {
-      setError(err?.message || "Acción falló");
+      setError(err?.message || t("common.action_failed"));
     } finally {
       setBusy(false);
     }
@@ -119,7 +123,7 @@ export default function ActionDialog({
             marginBottom: 6,
           }}
         >
-          {destructive ? "Acción destructiva" : "Acción"}
+          {destructive ? t("common.destructive_action") : t("common.action")}
         </div>
         <h2
           style={{
@@ -181,7 +185,7 @@ export default function ActionDialog({
             onMouseEnter={(e) => { if (!busy) e.currentTarget.style.color = "#0A1628"; }}
             onMouseLeave={(e) => { if (!busy) e.currentTarget.style.color = "#3D4A66"; }}
           >
-            Cancelar
+            {t("common.cancel")}
           </button>
           <button
             type="submit"
@@ -213,7 +217,7 @@ export default function ActionDialog({
               e.currentTarget.style.boxShadow = `0 2px 6px -1px ${submitColors.shadow}`;
             }}
           >
-            {busy ? "Ejecutando…" : submitLabel}
+            {busy ? t("common.executing") : effectiveSubmitLabel}
           </button>
         </div>
       </form>
@@ -224,6 +228,7 @@ export default function ActionDialog({
 /* ─── Reusable inputs (paleta F · API preservada) ────────────── */
 
 export function DialogLabel({ htmlFor, children, optional }) {
+  const { t } = useTranslation("common");
   return (
     <label
       htmlFor={htmlFor}
@@ -247,7 +252,7 @@ export function DialogLabel({ htmlFor, children, optional }) {
             fontWeight: 500,
           }}
         >
-          (opcional)
+          {t("common.optional_suffix")}
         </span>
       )}
     </label>

@@ -11,11 +11,13 @@
  *   uso real lo demanda.
  */
 import { useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { api } from "../../lib/api";
 import { Icon, ICONS } from "../../lib/icons";
 
 export default function RolloutNotesPanel({ projectId, currentUser, onClose }) {
+  const { t } = useTranslation("common");
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [composer, setComposer] = useState("");
@@ -30,11 +32,11 @@ export default function RolloutNotesPanel({ projectId, currentUser, onClose }) {
       const items = Array.isArray(data) ? data : data?.items || [];
       setNotes(items);
     } catch (err) {
-      toast.error(`Error cargando notas: ${err.message || err}`);
+      toast.error(t("comp_rollout_notes.toast_load_error", { message: err.message || err }));
     } finally {
       setLoading(false);
     }
-  }, [projectId]);
+  }, [projectId, t]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -48,7 +50,7 @@ export default function RolloutNotesPanel({ projectId, currentUser, onClose }) {
   async function submitNew() {
     const body = composer.trim();
     if (!body) {
-      toast.error("Escribí algo antes de guardar");
+      toast.error(t("comp_rollout_notes.toast_empty"));
       return;
     }
     setSubmitting(true);
@@ -56,10 +58,10 @@ export default function RolloutNotesPanel({ projectId, currentUser, onClose }) {
       await api.post(`/projects/${projectId}/notes`, { body, visibility: composerVisibility });
       setComposer("");
       setComposerVisibility("srs_internal");
-      toast.success("Nota guardada");
+      toast.success(t("comp_rollout_notes.toast_save_success"));
       await load();
     } catch (err) {
-      toast.error(`Error guardando: ${err.message || err}`);
+      toast.error(t("comp_rollout_notes.toast_save_error", { message: err.message || err }));
     } finally {
       setSubmitting(false);
     }
@@ -73,17 +75,17 @@ export default function RolloutNotesPanel({ projectId, currentUser, onClose }) {
   async function saveEdit(noteId) {
     const body = editingBody.trim();
     if (!body) {
-      toast.error("Texto vacío");
+      toast.error(t("comp_rollout_notes.toast_empty_text"));
       return;
     }
     try {
       await api.patch(`/projects/${projectId}/notes/${noteId}`, { body });
       setEditingId(null);
       setEditingBody("");
-      toast.success("Nota actualizada");
+      toast.success(t("comp_rollout_notes.toast_update_success"));
       await load();
     } catch (err) {
-      toast.error(`Error: ${err.message || err}`);
+      toast.error(t("comp_rollout_notes.toast_error", { message: err.message || err }));
     }
   }
 
@@ -91,21 +93,21 @@ export default function RolloutNotesPanel({ projectId, currentUser, onClose }) {
     const next = note.visibility === "srs_internal" ? "shared" : "srs_internal";
     try {
       await api.patch(`/projects/${projectId}/notes/${note.id}`, { visibility: next });
-      toast.success(`Visibilidad → ${next === "shared" ? "Compartida" : "SRS interna"}`);
+      toast.success(t(next === "shared" ? "comp_rollout_notes.toast_vis_shared" : "comp_rollout_notes.toast_vis_internal"));
       await load();
     } catch (err) {
-      toast.error(`Error: ${err.message || err}`);
+      toast.error(t("comp_rollout_notes.toast_error", { message: err.message || err }));
     }
   }
 
   async function deleteNote(noteId) {
-    if (!window.confirm("¿Eliminar esta nota? (soft delete · auditoría preserva el histórico)")) return;
+    if (!window.confirm(t("comp_rollout_notes.confirm_delete"))) return;
     try {
       await api.delete(`/projects/${projectId}/notes/${noteId}`);
-      toast.success("Nota eliminada");
+      toast.success(t("comp_rollout_notes.toast_delete_success"));
       await load();
     } catch (err) {
-      toast.error(`Error: ${err.message || err}`);
+      toast.error(t("comp_rollout_notes.toast_error", { message: err.message || err }));
     }
   }
 
@@ -131,15 +133,17 @@ export default function RolloutNotesPanel({ projectId, currentUser, onClose }) {
         {/* Header · navy strong title */}
         <header className="px-5 py-4 flex items-start justify-between gap-3 flex-shrink-0" style={{ borderBottom: "1px solid #C8CDD8", background: "#F7F8FA" }}>
           <div>
-            <p className="label-caps-v2 mb-0.5" style={{ color: "#0A1628", fontWeight: 800 }}>Notas internas</p>
+            <p className="label-caps-v2 mb-0.5" style={{ color: "#0A1628", fontWeight: 800 }}>{t("comp_rollout_notes.title")}</p>
             <p className="text-[12px] font-mono" style={{ color: "#3D4A66", fontWeight: 500 }}>
-              {loading ? "Cargando…" : `${notes.length} ${notes.length === 1 ? "nota" : "notas"}`}
+              {loading
+                ? t("comp_rollout_notes.loading")
+                : t(notes.length === 1 ? "comp_rollout_notes.count_one" : "comp_rollout_notes.count_other", { count: notes.length })}
             </p>
           </div>
           <button
             onClick={onClose}
             className="transition rounded p-1"
-            title="Cerrar (Esc)"
+            title={t("comp_rollout_notes.close_title")}
             style={{ color: "#8B95A8" }}
             onMouseEnter={(e) => {
               e.currentTarget.style.color = "#0A1628";
@@ -159,7 +163,7 @@ export default function RolloutNotesPanel({ projectId, currentUser, onClose }) {
           <textarea
             value={composer}
             onChange={(e) => setComposer(e.target.value)}
-            placeholder="Anotá contexto del rollout…"
+            placeholder={t("comp_rollout_notes.composer_placeholder")}
             rows={3}
             className="w-full rounded-sm px-3 py-2 text-[13px] font-jakarta resize-none"
             style={{
@@ -190,9 +194,9 @@ export default function RolloutNotesPanel({ projectId, currentUser, onClose }) {
                   background: composerVisibility === "srs_internal" ? "#0A1628" : "#FFFFFF",
                   fontWeight: composerVisibility === "srs_internal" ? 700 : 600,
                 }}
-                title="Solo visible para SRS (ropa en casa)"
+                title={t("comp_rollout_notes.vis_internal_title")}
               >
-                SRS interna
+                {t("comp_rollout_notes.vis_internal")}
               </button>
               <button
                 onClick={() => setComposerVisibility("shared")}
@@ -203,9 +207,9 @@ export default function RolloutNotesPanel({ projectId, currentUser, onClose }) {
                   background: composerVisibility === "shared" ? "#0A1628" : "#FFFFFF",
                   fontWeight: composerVisibility === "shared" ? 700 : 600,
                 }}
-                title="Visible también para client coordinator"
+                title={t("comp_rollout_notes.vis_shared_title")}
               >
-                Compartida
+                {t("comp_rollout_notes.vis_shared")}
               </button>
             </div>
             <button
@@ -222,7 +226,7 @@ export default function RolloutNotesPanel({ projectId, currentUser, onClose }) {
                 boxShadow: submitting || !composer.trim() ? "none" : "0 2px 6px -1px rgba(10, 22, 40, 0.18)",
               }}
             >
-              {submitting ? "Guardando…" : "Guardar"}
+              {submitting ? t("comp_rollout_notes.btn_saving") : t("comp_rollout_notes.btn_save")}
             </button>
           </div>
         </div>
@@ -230,11 +234,11 @@ export default function RolloutNotesPanel({ projectId, currentUser, onClose }) {
         {/* Lista */}
         <div className="flex-1 overflow-y-auto wr-scroll">
           {loading ? (
-            <div className="px-5 py-8 text-[11px] text-cl-text-mid font-mono text-center">Cargando notas…</div>
+            <div className="px-5 py-8 text-[11px] text-cl-text-mid font-mono text-center">{t("comp_rollout_notes.loading_notes")}</div>
           ) : notes.length === 0 ? (
             <div className="px-5 py-12 text-center">
-              <p className="text-[11px] text-cl-text-dim font-mono">Sin notas todavía.</p>
-              <p className="text-[10px] text-cl-text-dim mt-1">La primera nota abre el cuaderno del rollout.</p>
+              <p className="text-[11px] text-cl-text-dim font-mono">{t("comp_rollout_notes.empty_main")}</p>
+              <p className="text-[10px] text-cl-text-dim mt-1">{t("comp_rollout_notes.empty_hint")}</p>
             </div>
           ) : (
             <ul className="divide-y divide-cl-border">
@@ -248,7 +252,7 @@ export default function RolloutNotesPanel({ projectId, currentUser, onClose }) {
                         <p className="text-[11px] text-cl-text font-medium truncate">{n.author_full_name}</p>
                         <p className="text-[9px] text-cl-text-dim font-mono mt-0.5">
                           {n.created_at ? new Date(n.created_at).toLocaleString("es-ES", { dateStyle: "medium", timeStyle: "short" }) : ""}
-                          {n.updated_at && n.updated_at !== n.created_at ? " · editada" : ""}
+                          {n.updated_at && n.updated_at !== n.created_at ? t("comp_rollout_notes.edited_suffix") : ""}
                         </p>
                       </div>
                       <button
@@ -261,9 +265,9 @@ export default function RolloutNotesPanel({ projectId, currentUser, onClose }) {
                           letterSpacing: "0.1em",
                           cursor: isOwn ? "pointer" : "default",
                         }}
-                        title={isOwn ? "Click para cambiar visibilidad" : "Solo el autor puede cambiar"}
+                        title={isOwn ? t("comp_rollout_notes.vis_toggle_owner") : t("comp_rollout_notes.vis_toggle_other")}
                       >
-                        {n.visibility === "shared" ? "compartida" : "srs interna"}
+                        {n.visibility === "shared" ? t("comp_rollout_notes.vis_label_shared") : t("comp_rollout_notes.vis_label_internal")}
                       </button>
                     </div>
 
@@ -282,14 +286,14 @@ export default function RolloutNotesPanel({ projectId, currentUser, onClose }) {
                             className="text-[10px] uppercase font-medium px-2 py-1 rounded-sm"
                             style={{ background: "#0A1628", color: "#FFFFFF", letterSpacing: "0.08em" }}
                           >
-                            Guardar
+                            {t("comp_rollout_notes.btn_edit_save")}
                           </button>
                           <button
                             onClick={() => { setEditingId(null); setEditingBody(""); }}
                             className="text-[10px] text-cl-text-dim hover:text-cl-text uppercase px-2 py-1"
                             style={{ letterSpacing: "0.08em" }}
                           >
-                            Cancelar
+                            {t("comp_rollout_notes.btn_edit_cancel")}
                           </button>
                         </div>
                       </div>
@@ -306,14 +310,14 @@ export default function RolloutNotesPanel({ projectId, currentUser, onClose }) {
                           className="text-[10px] text-cl-text-dim hover:text-cl-amber transition uppercase"
                           style={{ letterSpacing: "0.08em" }}
                         >
-                          Editar
+                          {t("comp_rollout_notes.btn_action_edit")}
                         </button>
                         <button
                           onClick={() => deleteNote(n.id)}
                           className="text-[10px] text-cl-text-dim hover:text-red-500 transition uppercase"
                           style={{ letterSpacing: "0.08em" }}
                         >
-                          Eliminar
+                          {t("comp_rollout_notes.btn_action_delete")}
                         </button>
                       </div>
                     )}

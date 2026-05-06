@@ -6,6 +6,7 @@
  * cerrar, no hay forma de recuperarlo sin resetear.
  */
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { api } from "../../lib/api";
 import { useFetch } from "../../lib/useFetch";
 import ActionDialog, {
@@ -16,21 +17,22 @@ import ActionDialog, {
   DialogSelect,
 } from "../ui/ActionDialog";
 
-const AUTHORITY_OPTIONS = [
-  { v: "reports_only", l: "reports_only (read-only observer)" },
-  { v: "contractor", l: "contractor (external exec)" },
-  { v: "approval_on_site", l: "approval_on_site (LCON)" },
-  { v: "mid_manager", l: "mid_manager (default)" },
-  { v: "director", l: "director" },
-  { v: "owner", l: "owner" },
+const AUTHORITY_KEYS = [
+  { v: "reports_only", k: "modal_create_user.auth_reports_only" },
+  { v: "contractor", k: "modal_create_user.auth_contractor" },
+  { v: "approval_on_site", k: "modal_create_user.auth_approval_on_site" },
+  { v: "mid_manager", k: "modal_create_user.auth_mid_manager" },
+  { v: "director", k: "modal_create_user.auth_director" },
+  { v: "owner", k: "modal_create_user.auth_owner" },
 ];
 
-const EMPLOYMENT_OPTIONS = [
-  { v: "plantilla", l: "plantilla (SRS staff)" },
-  { v: "external_sub", l: "external_sub (contractor)" },
+const EMPLOYMENT_KEYS = [
+  { v: "plantilla", k: "modal_create_user.emp_plantilla" },
+  { v: "external_sub", k: "modal_create_user.emp_external_sub" },
 ];
 
 export default function CreateUserAction({ onCreated }) {
+  const { t } = useTranslation("common");
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
@@ -121,12 +123,15 @@ export default function CreateUserAction({ onCreated }) {
     if (!created?.temp_password) return;
     try {
       await navigator.clipboard.writeText(created.temp_password);
-      setCopyFeedback("copiada");
+      setCopyFeedback(t("modal_create_user.copy_success"));
       setTimeout(() => setCopyFeedback(null), 1500);
     } catch {
-      setCopyFeedback("no se pudo copiar");
+      setCopyFeedback(t("modal_create_user.copy_error"));
     }
   }
+
+  const authorityOptions = AUTHORITY_KEYS.map((o) => ({ v: o.v, l: t(o.k) }));
+  const employmentOptions = EMPLOYMENT_KEYS.map((o) => ({ v: o.v, l: t(o.k) }));
 
   return (
     <>
@@ -135,129 +140,129 @@ export default function CreateUserAction({ onCreated }) {
         onClick={() => setOpen(true)}
         className="btn-trigger-v2"
       >
-        + Add user
+        {t("modal_create_user.btn_trigger")}
       </button>
 
       <ActionDialog
         open={open}
         onClose={close}
-        title={created ? "Usuario creado" : "Crear usuario"}
+        title={created ? t("modal_create_user.title_created") : t("modal_create_user.title_create")}
         subtitle={
           created
-            ? "Copia la contrasena temporal — solo se muestra una vez"
-            : "Password temporal se genera automaticamente. Rotacion forzada al primer login."
+            ? t("modal_create_user.subtitle_created")
+            : t("modal_create_user.subtitle_create")
         }
-        submitLabel={created ? "Cerrar" : "Crear"}
+        submitLabel={created ? t("modal_create_user.btn_close") : t("modal_create_user.btn_create")}
         submitDisabled={!canSubmit && !created}
         onSubmit={created ? close : submit}
       >
         {!created && (
           <>
             <div>
-              <DialogLabel htmlFor="cu-email">Email</DialogLabel>
+              <DialogLabel htmlFor="cu-email">{t("modal_create_user.label_email")}</DialogLabel>
               <DialogInput
                 id="cu-email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="user@systemrapid.com"
+                placeholder={t("modal_create_user.placeholder_email")}
                 autoComplete="off"
                 required
               />
             </div>
             <div>
-              <DialogLabel htmlFor="cu-name">Nombre completo</DialogLabel>
+              <DialogLabel htmlFor="cu-name">{t("modal_create_user.label_name")}</DialogLabel>
               <DialogInput
                 id="cu-name"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                placeholder="Ej: Maria Lopez Torres"
+                placeholder={t("modal_create_user.placeholder_name")}
                 required
               />
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <DialogLabel htmlFor="cu-phone" optional>Phone</DialogLabel>
+                <DialogLabel htmlFor="cu-phone" optional>{t("modal_create_user.label_phone")}</DialogLabel>
                 <DialogInput
                   id="cu-phone"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  placeholder="+34 600 ..."
+                  placeholder={t("modal_create_user.placeholder_phone")}
                 />
               </div>
               <div>
-                <DialogLabel htmlFor="cu-country" optional>Country (ISO)</DialogLabel>
+                <DialogLabel htmlFor="cu-country" optional>{t("modal_create_user.label_country")}</DialogLabel>
                 <DialogInput
                   id="cu-country"
                   value={country}
                   onChange={(e) => setCountry(e.target.value.toUpperCase())}
-                  placeholder="ES"
+                  placeholder={t("modal_create_user.placeholder_country")}
                   maxLength={2}
                 />
               </div>
             </div>
             <div>
-              <DialogLabel htmlFor="cu-emp">Employment type</DialogLabel>
+              <DialogLabel htmlFor="cu-emp">{t("modal_create_user.label_employment")}</DialogLabel>
               <DialogSelect
                 id="cu-emp"
                 value={employmentType}
                 onChange={setEmploymentType}
-                options={EMPLOYMENT_OPTIONS}
+                options={employmentOptions}
               />
             </div>
             {employmentType === "external_sub" && (
               <DialogCheckbox
                 id="cu-prov"
-                label="Email @systemrapid.com provisionado por contrato"
+                label={t("modal_create_user.checkbox_provisioned")}
                 checked={emailProvisioned}
                 onChange={setEmailProvisioned}
               />
             )}
 
-            <DialogPanel label="Membership">
+            <DialogPanel label={t("modal_create_user.panel_membership")}>
               <div>
-                <DialogLabel htmlFor="cu-space">Space</DialogLabel>
+                <DialogLabel htmlFor="cu-space">{t("modal_create_user.label_space")}</DialogLabel>
                 <DialogSelect
                   id="cu-space"
                   value={space}
                   onChange={setSpace}
                   options={[
-                    { v: "srs_coordinators", l: "SRS Coordinators" },
-                    { v: "tech_field", l: "Tech Field" },
-                    { v: "client_coordinator", l: "Client Coordinator" },
+                    { v: "srs_coordinators", l: t("modal_create_user.space_srs") },
+                    { v: "tech_field", l: t("modal_create_user.space_tech") },
+                    { v: "client_coordinator", l: t("modal_create_user.space_client") },
                   ]}
                 />
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <DialogLabel htmlFor="cu-role">Role label</DialogLabel>
+                  <DialogLabel htmlFor="cu-role">{t("modal_create_user.label_role")}</DialogLabel>
                   <DialogInput
                     id="cu-role"
                     value={role}
                     onChange={(e) => setRole(e.target.value)}
-                    placeholder="ops_lead / tech_senior / finance / account_lead"
+                    placeholder={t("modal_create_user.placeholder_role")}
                     required
                   />
                 </div>
                 <div>
-                  <DialogLabel htmlFor="cu-auth">Authority level</DialogLabel>
+                  <DialogLabel htmlFor="cu-auth">{t("modal_create_user.label_authority")}</DialogLabel>
                   <DialogSelect
                     id="cu-auth"
                     value={authority}
                     onChange={setAuthority}
-                    options={AUTHORITY_OPTIONS}
+                    options={authorityOptions}
                   />
                 </div>
               </div>
               {needsOrg && (
                 <div>
-                  <DialogLabel htmlFor="cu-org">Organización (requerida)</DialogLabel>
+                  <DialogLabel htmlFor="cu-org">{t("modal_create_user.label_org")}</DialogLabel>
                   <DialogSelect
                     id="cu-org"
                     value={orgId}
                     onChange={setOrgId}
                     options={[
-                      { v: "", l: "— elegir —" },
+                      { v: "", l: t("modal_create_user.option_choose") },
                       ...filteredOrgs.map((o) => ({
                         v: o.id,
                         l: `${o.legal_name}${o.country ? ` · ${o.country}` : ""}`,
@@ -273,7 +278,7 @@ export default function CreateUserAction({ onCreated }) {
 
         {created && (
           <div className="space-y-3">
-            <DialogPanel label="Email">
+            <DialogPanel label={t("modal_create_user.panel_email")}>
               <div
                 style={{
                   fontFamily: "'Plus Jakarta Sans', sans-serif",
@@ -295,7 +300,7 @@ export default function CreateUserAction({ onCreated }) {
                   marginTop: 6,
                 }}
               >
-                Temp password
+                {t("modal_create_user.label_temp_password")}
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <code
@@ -342,7 +347,7 @@ export default function CreateUserAction({ onCreated }) {
                     e.currentTarget.style.background = "#FFFFFF";
                   }}
                 >
-                  {copyFeedback || "copy"}
+                  {copyFeedback || t("modal_create_user.btn_copy")}
                 </button>
               </div>
               <p
@@ -355,7 +360,7 @@ export default function CreateUserAction({ onCreated }) {
                   textTransform: "uppercase",
                 }}
               >
-                forced rotation on first login
+                {t("modal_create_user.footer_rotation")}
               </p>
             </DialogPanel>
           </div>

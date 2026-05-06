@@ -3,6 +3,7 @@
  * El vendor debe tener partner_relationship.type=vendor_* activo en su org.
  */
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { api } from "../../lib/api";
 import { useFetch } from "../../lib/useFetch";
@@ -15,6 +16,7 @@ import ActionDialog, {
 } from "../ui/ActionDialog";
 
 export default function CreateVendorInvoiceAction({ onCreated }) {
+  const { t } = useTranslation("common");
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -69,14 +71,14 @@ export default function CreateVendorInvoiceAction({ onCreated }) {
       .map((s) => s.trim())
       .filter(Boolean);
     const ids = [];
-    for (const t of tokens) {
+    for (const tok of tokens) {
       // if looks like an ObjectId (24 hex chars) use as-is
-      if (/^[a-f0-9]{24}$/i.test(t)) {
-        ids.push(t);
+      if (/^[a-f0-9]{24}$/i.test(tok)) {
+        ids.push(tok);
         continue;
       }
       // else try matching by reference
-      const hit = wos.find((w) => w.reference === t);
+      const hit = wos.find((w) => w.reference === tok);
       if (hit) ids.push(hit.id);
     }
     return ids;
@@ -134,26 +136,26 @@ export default function CreateVendorInvoiceAction({ onCreated }) {
         onClick={() => setOpen(true)}
         className="btn-trigger-v2"
       >
-        + Registrar factura vendor
+        {t("modal_create_vendor_invoice.btn_trigger")}
       </button>
 
       <ActionDialog
         open={open}
         onClose={() => setOpen(false)}
-        title="Vendor invoice · registrar deuda"
-        subtitle="AP · trazabilidad de lo que SRS debe a proveedores"
-        submitLabel="Registrar"
+        title={t("modal_create_vendor_invoice.title")}
+        subtitle={t("modal_create_vendor_invoice.subtitle")}
+        submitLabel={t("modal_create_vendor_invoice.btn_submit")}
         submitDisabled={!canSubmit}
         onSubmit={submit}
       >
         <div>
-          <DialogLabel htmlFor="cv-vendor">Vendor</DialogLabel>
+          <DialogLabel htmlFor="cv-vendor">{t("modal_create_vendor_invoice.label_vendor")}</DialogLabel>
           <DialogSelect
             id="cv-vendor"
             value={vendorId}
             onChange={setVendorId}
             options={[
-              { v: "", l: "— elegir vendor (con rol vendor_*) —" },
+              { v: "", l: t("modal_create_vendor_invoice.option_choose_vendor") },
               ...vendorOrgs.map((o) => ({
                 v: o.id,
                 l: `${o.legal_name}${o.country ? ` · ${o.country}` : ""}`,
@@ -163,17 +165,17 @@ export default function CreateVendorInvoiceAction({ onCreated }) {
         </div>
         <div className="grid grid-cols-2 gap-2">
           <div>
-            <DialogLabel htmlFor="cv-num">Vendor invoice #</DialogLabel>
+            <DialogLabel htmlFor="cv-num">{t("modal_create_vendor_invoice.label_invoice_number")}</DialogLabel>
             <DialogInput
               id="cv-num"
               value={invoiceNumber}
               onChange={(e) => setInvoiceNumber(e.target.value)}
-              placeholder="FERVI-2026-0421"
+              placeholder={t("modal_create_vendor_invoice.placeholder_invoice_number")}
               required
             />
           </div>
           <div>
-            <DialogLabel htmlFor="cv-cur">Currency</DialogLabel>
+            <DialogLabel htmlFor="cv-cur">{t("modal_create_vendor_invoice.label_currency")}</DialogLabel>
             <DialogInput
               id="cv-cur"
               value={currency}
@@ -184,7 +186,7 @@ export default function CreateVendorInvoiceAction({ onCreated }) {
         </div>
         <div className="grid grid-cols-2 gap-2">
           <div>
-            <DialogLabel htmlFor="cv-iss">Issued at</DialogLabel>
+            <DialogLabel htmlFor="cv-iss">{t("modal_create_vendor_invoice.label_issued")}</DialogLabel>
             <DialogInput
               id="cv-iss"
               type="date"
@@ -193,7 +195,7 @@ export default function CreateVendorInvoiceAction({ onCreated }) {
             />
           </div>
           <div>
-            <DialogLabel htmlFor="cv-due">Due date</DialogLabel>
+            <DialogLabel htmlFor="cv-due">{t("modal_create_vendor_invoice.label_due")}</DialogLabel>
             <DialogInput
               id="cv-due"
               type="date"
@@ -204,7 +206,7 @@ export default function CreateVendorInvoiceAction({ onCreated }) {
         </div>
         <div className="grid grid-cols-3 gap-2">
           <div>
-            <DialogLabel htmlFor="cv-sub">Subtotal</DialogLabel>
+            <DialogLabel htmlFor="cv-sub">{t("modal_create_vendor_invoice.label_subtotal")}</DialogLabel>
             <DialogInput
               id="cv-sub"
               type="number"
@@ -217,7 +219,7 @@ export default function CreateVendorInvoiceAction({ onCreated }) {
           </div>
           <div>
             <DialogLabel htmlFor="cv-tax" optional>
-              Tax %
+              {t("modal_create_vendor_invoice.label_tax")}
             </DialogLabel>
             <DialogInput
               id="cv-tax"
@@ -229,7 +231,7 @@ export default function CreateVendorInvoiceAction({ onCreated }) {
             />
           </div>
           <div>
-            <DialogLabel>Total</DialogLabel>
+            <DialogLabel>{t("modal_create_vendor_invoice.label_total")}</DialogLabel>
             <div
               style={{
                 width: "100%",
@@ -251,45 +253,45 @@ export default function CreateVendorInvoiceAction({ onCreated }) {
 
         <div>
           <DialogLabel htmlFor="cv-wos" optional>
-            Linked WO refs (coma-separadas) — IDs o references
+            {t("modal_create_vendor_invoice.label_linked_wos")}
           </DialogLabel>
           <DialogInput
             id="cv-wos"
             value={linkedWos}
             onChange={(e) => setLinkedWos(e.target.value)}
-            placeholder="FRAC-CS-0000101, 69e3fde5..."
+            placeholder={t("modal_create_vendor_invoice.placeholder_linked_wos")}
           />
           {parsedWos.length > 0 && (
             <div className="font-mono text-2xs uppercase tracking-widest-srs text-success mt-1">
-              · {parsedWos.length} WO{parsedWos.length === 1 ? "" : "s"} matched
+              {t(parsedWos.length === 1 ? "modal_create_vendor_invoice.matched_wos_one" : "modal_create_vendor_invoice.matched_wos_other", { count: parsedWos.length })}
             </div>
           )}
         </div>
         <div>
           <DialogLabel htmlFor="cv-bas" optional>
-            Linked PO (budget_approval IDs) coma-separados
+            {t("modal_create_vendor_invoice.label_linked_bas")}
           </DialogLabel>
           <DialogInput
             id="cv-bas"
             value={linkedBas}
             onChange={(e) => setLinkedBas(e.target.value)}
-            placeholder="69e3fde5..."
+            placeholder={t("modal_create_vendor_invoice.placeholder_linked_bas")}
           />
           <p className="font-mono text-2xs uppercase tracking-widest-srs text-text-tertiary mt-1">
-            Necesario para three-way match efectivo
+            {t("modal_create_vendor_invoice.linked_bas_hint")}
           </p>
         </div>
 
         <div>
           <DialogLabel htmlFor="cv-notes" optional>
-            Notas internas
+            {t("modal_create_vendor_invoice.label_notes")}
           </DialogLabel>
           <DialogTextarea
             id="cv-notes"
             rows={2}
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="Contexto · escalaciones · referencia email vendor"
+            placeholder={t("modal_create_vendor_invoice.placeholder_notes")}
           />
         </div>
       </ActionDialog>
