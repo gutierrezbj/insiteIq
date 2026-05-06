@@ -13,27 +13,33 @@
  *   GET /api/audit-log?limit=200&action_prefix=&action=
  */
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useFetch } from "../../../lib/useFetch";
 import { formatAge } from "../../../components/ui/Badges";
 import CreateUserAction from "../../../components/admin/CreateUserAction";
 import CreateOrgAction from "../../../components/admin/CreateOrgAction";
 import { JAKARTA, MONO, MONO_CAPS } from "../../../components/v2-shared/typography";
 
-const TABS = [
-  { key: "users", label: "Users" },
-  { key: "orgs", label: "Organizations" },
-  { key: "audit", label: "Audit log" },
+const TAB_KEYS = [
+  { key: "users", i18n: "tab_users" },
+  { key: "orgs",  i18n: "tab_orgs" },
+  { key: "audit", i18n: "tab_audit" },
 ];
 
 export default function AdminPage() {
+  const { t } = useTranslation("common");
   const [tab, setTab] = useState("users");
+  const TABS = useMemo(
+    () => TAB_KEYS.map((it) => ({ ...it, label: t(`page_admin.${it.i18n}`) })),
+    [t]
+  );
 
   return (
     <div style={{ padding: "32px 40px", maxWidth: 1400 }}>
       {/* Header */}
       <div style={{ paddingLeft: 16, borderLeft: "3px solid #0A1628", marginBottom: 22 }}>
         <div style={{ ...MONO_CAPS, fontSize: 11, color: "#8B95A8", marginBottom: 6 }}>
-          Admin
+          {t("page_admin.kicker")}
         </div>
         <h1
           style={{
@@ -45,10 +51,10 @@ export default function AdminPage() {
             lineHeight: 1.1,
           }}
         >
-          Directorio operativo
+          {t("page_admin.title")}
         </h1>
         <p style={{ fontFamily: JAKARTA, fontSize: 13, color: "#3D4A66", marginTop: 6, fontWeight: 500 }}>
-          Fase 2 plumbing · lectura de users + orgs + audit. Write ops Fase 3.
+          {t("page_admin.subtitle")}
         </p>
       </div>
 
@@ -64,13 +70,13 @@ export default function AdminPage() {
           marginBottom: 16,
         }}
       >
-        {TABS.map((t) => {
-          const isActive = tab === t.key;
+        {TABS.map((it) => {
+          const isActive = tab === it.key;
           return (
             <button
-              key={t.key}
+              key={it.key}
               type="button"
-              onClick={() => setTab(t.key)}
+              onClick={() => setTab(it.key)}
               style={{
                 padding: "8px 16px",
                 ...MONO_CAPS,
@@ -96,7 +102,7 @@ export default function AdminPage() {
                 }
               }}
             >
-              {t.label}
+              {it.label}
             </button>
           );
         })}
@@ -112,6 +118,7 @@ export default function AdminPage() {
 /* ─── Users tab ────────────────────────────────────────────────── */
 
 function UsersTab() {
+  const { t } = useTranslation("common");
   const { data: users, loading, reload } = useFetch("/users");
   const [query, setQuery] = useState("");
   const [spaceFilter, setSpaceFilter] = useState("");
@@ -150,7 +157,7 @@ function UsersTab() {
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="nombre, email…"
+          placeholder={t("page_admin.users_search_placeholder")}
           style={{ ...inputStyle, width: 220 }}
           onFocus={focusInput}
           onBlur={blurInput}
@@ -160,10 +167,10 @@ function UsersTab() {
           onChange={(e) => setSpaceFilter(e.target.value)}
           style={selectStyle}
         >
-          <option value="">todos los espacios</option>
-          <option value="srs_coordinators">SRS coordinators</option>
-          <option value="tech_field">Tech field</option>
-          <option value="client_coordinator">Client coordinator</option>
+          <option value="">{t("page_admin.users_filter_all_spaces")}</option>
+          <option value="srs_coordinators">{t("page_admin.users_space_srs")}</option>
+          <option value="tech_field">{t("page_admin.users_space_tech")}</option>
+          <option value="client_coordinator">{t("page_admin.users_space_client")}</option>
         </select>
         <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 14 }}>
           <span
@@ -196,16 +203,16 @@ function UsersTab() {
           letterSpacing: "0.14em",
         }}
       >
-        <div>Name</div>
-        <div>Email</div>
-        <div>Type</div>
-        <div>Memberships</div>
-        <div style={{ textAlign: "right" }}>Status</div>
+        <div>{t("page_admin.users_col_name")}</div>
+        <div>{t("page_admin.users_col_email")}</div>
+        <div>{t("page_admin.users_col_type")}</div>
+        <div>{t("page_admin.users_col_memberships")}</div>
+        <div style={{ textAlign: "right" }}>{t("page_admin.users_col_status")}</div>
       </div>
 
       <div style={{ maxHeight: "65vh", overflowY: "auto" }}>
-        {loading && <Empty text="cargando…" />}
-        {!loading && filtered.length === 0 && <Empty text="— nada match —" />}
+        {loading && <Empty text={t("common.loading")} />}
+        {!loading && filtered.length === 0 && <Empty text={t("page_admin.empty_no_match")} />}
         {filtered.map((u) => (
           <div
             key={u.id}
@@ -276,6 +283,7 @@ function UsersTab() {
 /* ─── Organizations tab ────────────────────────────────────────── */
 
 function OrgsTab() {
+  const { t } = useTranslation("common");
   const { data: orgs, loading, reload } = useFetch("/organizations");
   const [query, setQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
@@ -312,13 +320,13 @@ function OrgsTab() {
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="nombre, país…"
+          placeholder={t("page_admin.orgs_search_placeholder")}
           style={{ ...inputStyle, width: 220 }}
           onFocus={focusInput}
           onBlur={blurInput}
         />
         <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)} style={selectStyle}>
-          <option value="">todos los roles</option>
+          <option value="">{t("page_admin.orgs_filter_all_roles")}</option>
           <option value="client">client</option>
           <option value="channel_partner">channel_partner</option>
           <option value="joint_venture_partner">joint_venture_partner</option>
@@ -346,8 +354,8 @@ function OrgsTab() {
       </header>
 
       <div style={{ maxHeight: "65vh", overflowY: "auto" }}>
-        {loading && <Empty text="cargando…" />}
-        {!loading && filtered.length === 0 && <Empty text="— nada match —" />}
+        {loading && <Empty text={t("common.loading")} />}
+        {!loading && filtered.length === 0 && <Empty text={t("page_admin.empty_no_match")} />}
         {filtered.map((o) => <OrgRow key={o.id} o={o} />)}
       </div>
     </section>
@@ -355,6 +363,7 @@ function OrgsTab() {
 }
 
 function OrgRow({ o }) {
+  const { t } = useTranslation("common");
   return (
     <div style={{ padding: "14px 18px", borderBottom: "1px solid #F0F2F7" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 6 }}>
@@ -426,14 +435,14 @@ function OrgRow({ o }) {
             .filter((r) => r.commission_rule)
             .map((r, i) => (
               <span key={`c${i}`}>
-                · {r.type} commission {JSON.stringify(r.commission_rule)}
+                · {t("page_admin.audit_commission_label", { type: r.type, rule: JSON.stringify(r.commission_rule) })}
               </span>
             ))}
           {o.partner_relationships
             .filter((r) => r.revenue_split_pct != null)
             .map((r, i) => (
               <span key={`r${i}`}>
-                · {r.type} rev split {r.revenue_split_pct}%
+                · {t("page_admin.audit_revsplit_label", { type: r.type, pct: r.revenue_split_pct })}
               </span>
             ))}
         </div>
@@ -445,6 +454,7 @@ function OrgRow({ o }) {
 /* ─── Audit log tab ────────────────────────────────────────────── */
 
 function AuditTab() {
+  const { t } = useTranslation("common");
   const [actionFilter, setActionFilter] = useState("");
   const [prefix, setPrefix] = useState("");
 
@@ -482,14 +492,14 @@ function AuditTab() {
             htmlFor="af"
             style={{ ...MONO_CAPS, display: "block", fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.14em", marginBottom: 4 }}
           >
-            Action exacta
+            {t("page_admin.audit_label_action")}
           </label>
           <input
             id="af"
             type="text"
             value={actionFilter}
             onChange={(e) => setActionFilter(e.target.value)}
-            placeholder="work_order.advance.triage"
+            placeholder={t("page_admin.audit_placeholder_action")}
             style={{ ...inputStyle, width: 240 }}
             onFocus={focusInput}
             onBlur={blurInput}
@@ -500,7 +510,7 @@ function AuditTab() {
             htmlFor="pref"
             style={{ ...MONO_CAPS, display: "block", fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.14em", marginBottom: 4 }}
           >
-            Prefix
+            {t("page_admin.audit_label_prefix")}
           </label>
           <input
             id="pref"
@@ -510,7 +520,7 @@ function AuditTab() {
               setPrefix(e.target.value);
               setActionFilter("");
             }}
-            placeholder="work_order."
+            placeholder={t("page_admin.audit_placeholder_prefix")}
             style={{ ...inputStyle, width: 200 }}
             onFocus={focusInput}
             onBlur={blurInput}
@@ -543,7 +553,7 @@ function AuditTab() {
             e.currentTarget.style.background = "#FFFFFF";
           }}
         >
-          Refresh
+          {t("page_admin.audit_btn_refresh")}
         </button>
       </header>
 
@@ -561,16 +571,16 @@ function AuditTab() {
           letterSpacing: "0.14em",
         }}
       >
-        <div>Age</div>
-        <div>Action</div>
-        <div>Actor</div>
-        <div>Entity</div>
-        <div style={{ textAlign: "right" }}>Method · IP</div>
+        <div>{t("page_admin.audit_col_age")}</div>
+        <div>{t("page_admin.audit_col_action")}</div>
+        <div>{t("page_admin.audit_col_actor")}</div>
+        <div>{t("page_admin.audit_col_entity")}</div>
+        <div style={{ textAlign: "right" }}>{t("page_admin.audit_col_method_ip")}</div>
       </div>
 
       <div style={{ maxHeight: "65vh", overflowY: "auto" }}>
-        {loading && <Empty text="cargando…" />}
-        {!loading && list.length === 0 && <Empty text="— nada registrado —" />}
+        {loading && <Empty text={t("common.loading")} />}
+        {!loading && list.length === 0 && <Empty text={t("page_admin.audit_empty")} />}
         {list.map((e) => <AuditRow key={e.id} e={e} usersById={usersById} />)}
       </div>
     </section>
@@ -578,8 +588,9 @@ function AuditTab() {
 }
 
 function AuditRow({ e, usersById }) {
+  const { t } = useTranslation("common");
   const actor = e.actor_user_id ? usersById.get(e.actor_user_id) : null;
-  const actorLabel = actor?.full_name || (e.actor_user_id ? shortId(e.actor_user_id) : "system");
+  const actorLabel = actor?.full_name || (e.actor_user_id ? shortId(e.actor_user_id) : t("page_admin.audit_actor_system"));
   const firstRef = (e.entity_refs || [])[0];
   const actionColor = actionTint(e.action);
 

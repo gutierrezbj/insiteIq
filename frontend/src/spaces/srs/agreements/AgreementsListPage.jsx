@@ -13,11 +13,13 @@
  */
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useFetch } from "../../../lib/useFetch";
 import { ShieldPill } from "../../../components/v2-shared/Pills";
 import { JAKARTA, MONO_CAPS } from "../../../components/v2-shared/typography";
 
 export default function AgreementsListPage() {
+  const { t } = useTranslation("common");
   const { data: agreements, loading } = useFetch("/service-agreements");
   const { data: orgs } = useFetch("/organizations");
   const { data: shieldCatalog } = useFetch("/service-agreements/shield-levels");
@@ -46,7 +48,7 @@ export default function AgreementsListPage() {
         }}
       >
         <div style={{ ...MONO_CAPS, fontSize: 11, color: "#8B95A8", marginBottom: 6 }}>
-          Service Agreements
+          {t("page_agreements.kicker")}
         </div>
         <h1
           style={{
@@ -58,10 +60,13 @@ export default function AgreementsListPage() {
             lineHeight: 1.1,
           }}
         >
-          {list.length} <span style={{ color: "#3D4A66", fontWeight: 600 }}>contratos activos</span>
+          {list.length}{" "}
+          <span style={{ color: "#3D4A66", fontWeight: 600 }}>
+            {t("page_agreements.title_count_suffix")}
+          </span>
         </h1>
         <p style={{ fontFamily: JAKARTA, fontSize: 13, color: "#3D4A66", marginTop: 6, fontWeight: 500 }}>
-          Shield snapshot al intake — Decision #3 Modo 1. SLA por work_order se fija acá.
+          {t("page_agreements.subtitle")}
         </p>
       </div>
 
@@ -78,7 +83,7 @@ export default function AgreementsListPage() {
           }}
         >
           <div style={{ ...MONO_CAPS, fontSize: 10, color: "#3D4A66", letterSpacing: "0.14em", marginBottom: 14 }}>
-            Shield catalog · SLA defaults
+            {t("page_agreements.shield_catalog_title")}
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12 }}>
             {Object.entries(shieldCatalog.levels).map(([level, sla]) => (
@@ -108,7 +113,7 @@ export default function AgreementsListPage() {
             htmlFor="sfilter"
             style={{ ...MONO_CAPS, display: "block", fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.14em", marginBottom: 4 }}
           >
-            Shield
+            {t("page_agreements.filter_shield_label")}
           </label>
           <select
             id="sfilter"
@@ -128,7 +133,7 @@ export default function AgreementsListPage() {
               cursor: "pointer",
             }}
           >
-            <option value="">todos</option>
+            <option value="">{t("page_agreements.filter_all")}</option>
             <option value="bronze">bronze</option>
             <option value="bronze_plus">bronze_plus</option>
             <option value="silver">silver</option>
@@ -174,15 +179,15 @@ export default function AgreementsListPage() {
             letterSpacing: "0.14em",
           }}
         >
-          <div>Contract</div>
-          <div>Client</div>
-          <div>Shield</div>
-          <div style={{ textAlign: "right" }}>SLA resolve</div>
-          <div style={{ textAlign: "right" }}>Threshold</div>
+          <div>{t("page_agreements.col_contract")}</div>
+          <div>{t("page_agreements.col_client")}</div>
+          <div>{t("page_agreements.col_shield")}</div>
+          <div style={{ textAlign: "right" }}>{t("page_agreements.col_sla_resolve")}</div>
+          <div style={{ textAlign: "right" }}>{t("page_agreements.col_threshold")}</div>
         </div>
 
-        {loading && <Empty text="cargando…" />}
-        {!loading && filtered.length === 0 && <Empty text="— nada match —" />}
+        {loading && <Empty text={t("common.loading")} />}
+        {!loading && filtered.length === 0 && <Empty text={t("page_agreements.empty_no_match")} />}
         {filtered.map((a) => (
           <Link
             key={a.id}
@@ -228,7 +233,7 @@ export default function AgreementsListPage() {
               >
                 {a.contract_ref}
                 {a.active === false && (
-                  <span style={{ marginLeft: 8, color: "#DC2626" }}>· inactive</span>
+                  <span style={{ marginLeft: 8, color: "#DC2626" }}>{t("page_agreements.inactive_suffix")}</span>
                 )}
               </div>
             </div>
@@ -263,7 +268,7 @@ export default function AgreementsListPage() {
                 {formatMinutes(a.sla_spec?.resolve_minutes)}
               </div>
               <div style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.14em" }}>
-                recv {formatMinutes(a.sla_spec?.receive_minutes)}
+                {t("page_agreements.recv_short")} {formatMinutes(a.sla_spec?.receive_minutes)}
               </div>
             </div>
             <div style={{ textAlign: "right" }}>
@@ -290,6 +295,7 @@ export default function AgreementsListPage() {
 }
 
 function ShieldCatalogCard({ level, sla }) {
+  const { t } = useTranslation("common");
   return (
     <div
       style={{
@@ -304,7 +310,7 @@ function ShieldCatalogCard({ level, sla }) {
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8 }}>
-          <span style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.14em" }}>recv</span>
+          <span style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.14em" }}>{t("page_agreements.recv_short")}</span>
           <span
             style={{
               fontFamily: "'JetBrains Mono', monospace",
@@ -318,7 +324,7 @@ function ShieldCatalogCard({ level, sla }) {
           </span>
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8 }}>
-          <span style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.14em" }}>resolve</span>
+          <span style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.14em" }}>{t("page_agreements.resolve_short")}</span>
           <span
             style={{
               fontFamily: "'JetBrains Mono', monospace",
@@ -333,9 +339,9 @@ function ShieldCatalogCard({ level, sla }) {
         </div>
       </div>
       <div style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.12em", marginTop: 8 }}>
-        {sla.coverage_247 && "· 24×7 "}
-        {sla.dedicated_coordinator && "· coord ded "}
-        {sla.client_copilot_readonly && "· copilot RO"}
+        {sla.coverage_247 && t("page_agreements.feature_24x7")}
+        {sla.dedicated_coordinator && t("page_agreements.feature_coord_ded")}
+        {sla.client_copilot_readonly && t("page_agreements.feature_copilot_ro")}
       </div>
     </div>
   );

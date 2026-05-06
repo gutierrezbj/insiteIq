@@ -11,6 +11,7 @@
  */
 import { useMemo } from "react";
 import { Link, useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useFetch } from "../../../lib/useFetch";
 import { useAuth } from "../../../contexts/AuthContext";
 import RateCardSection from "../../../components/agreement/RateCardSection";
@@ -26,6 +27,7 @@ import MetaRow from "../../../components/v2-shared/MetaRow";
 import { JAKARTA, MONO_CAPS } from "../../../components/v2-shared/typography";
 
 export default function AgreementDetailPage() {
+  const { t } = useTranslation("common");
   const { agreement_id } = useParams();
   const { user } = useAuth();
   const srsMem = user?.memberships?.find((m) => m.space === "srs_coordinators");
@@ -53,7 +55,7 @@ export default function AgreementDetailPage() {
     .filter((w) => ["closed", "cancelled"].includes(w.status))
     .slice(0, 5);
 
-  if (loading) return <Centered text="cargando…" />;
+  if (loading) return <Centered text={t("common.loading")} />;
   if (error) return <Centered text={`error · ${error.message}`} />;
   if (!agreement) return <Centered text="—" />;
 
@@ -61,12 +63,12 @@ export default function AgreementDetailPage() {
 
   return (
     <div style={{ padding: "32px 40px", maxWidth: 1400 }}>
-      <BackLinkV2 to="/srs/agreements" label="Service Agreements" />
+      <BackLinkV2 to="/srs/agreements" label={t("page_agreements.back_label")} />
 
       <div style={{ paddingLeft: 16, borderLeft: "3px solid #0A1628", marginBottom: 24 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6, flexWrap: "wrap" }}>
           <span style={{ ...MONO_CAPS, fontSize: 10, color: "#0A1628", letterSpacing: "0.16em" }}>
-            Agreement
+            {t("page_agreements.kicker_detail")}
           </span>
           <span style={{ ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.12em" }}>
             {agreement.contract_ref}
@@ -74,7 +76,7 @@ export default function AgreementDetailPage() {
           <ShieldPill level={agreement.shield_level} />
           {agreement.active === false && (
             <span style={{ ...MONO_CAPS, fontSize: 10, color: "#DC2626", letterSpacing: "0.14em" }}>
-              · inactive
+              {t("page_agreements.inactive_suffix")}
             </span>
           )}
         </div>
@@ -104,32 +106,32 @@ export default function AgreementDetailPage() {
         }}
       >
         <SectionCard>
-          <SectionTitle>SLA spec (snapshot al intake)</SectionTitle>
+          <SectionTitle>{t("page_agreements.section_sla_spec")}</SectionTitle>
           <dl style={{ display: "flex", flexDirection: "column" }}>
-            <MetaRow label="Receive (time to ack)" value={formatMinutes(sla.receive_minutes)} />
-            <MetaRow label="Resolve (time to fix)" value={formatMinutes(sla.resolve_minutes)} />
-            <MetaRow label="Photos required" value={sla.photos_required || "—"} />
-            <MetaRow label="Escalation role" value={sla.escalation_role || "—"} />
+            <MetaRow label={t("page_agreements.label_receive")} value={formatMinutes(sla.receive_minutes)} />
+            <MetaRow label={t("page_agreements.label_resolve")} value={formatMinutes(sla.resolve_minutes)} />
+            <MetaRow label={t("page_agreements.label_photos_required")} value={sla.photos_required || "—"} />
+            <MetaRow label={t("page_agreements.label_escalation_role")} value={sla.escalation_role || "—"} />
             <MetaRow
-              label="Escalation trigger"
+              label={t("page_agreements.label_escalation_trigger")}
               value={
                 sla.escalation_minutes != null
-                  ? formatMinutes(sla.escalation_minutes) + " sin movimiento"
+                  ? formatMinutes(sla.escalation_minutes) + t("page_agreements.no_movement_suffix")
                   : "—"
               }
             />
-            <MetaRow label="24×7" value={sla.coverage_247 ? "yes" : "no"} />
-            <MetaRow label="Coordinator dedicado" value={sla.dedicated_coordinator ? "yes" : "no"} />
-            <MetaRow label="Client Copilot read-only" value={sla.client_copilot_readonly ? "yes" : "no"} />
+            <MetaRow label={t("page_agreements.label_24x7")} value={sla.coverage_247 ? t("common.yes") : t("common.no")} />
+            <MetaRow label={t("page_agreements.label_dedicated_coord")} value={sla.dedicated_coordinator ? t("common.yes") : t("common.no")} />
+            <MetaRow label={t("page_agreements.label_copilot_ro")} value={sla.client_copilot_readonly ? t("common.yes") : t("common.no")} />
           </dl>
         </SectionCard>
 
         <SectionCard>
-          <SectionTitle>Contract meta</SectionTitle>
+          <SectionTitle>{t("page_agreements.section_contract_meta")}</SectionTitle>
           <dl style={{ display: "flex", flexDirection: "column" }}>
-            <MetaRow label="Contract ref" value={agreement.contract_ref || "—"} />
+            <MetaRow label={t("page_agreements.label_contract_ref")} value={agreement.contract_ref || "—"} />
             <MetaRow
-              label="Client org"
+              label={t("page_agreements.label_client_org")}
               value={
                 org ? (
                   <Link
@@ -148,19 +150,19 @@ export default function AgreementDetailPage() {
                 )
               }
             />
-            <MetaRow label="SRS entity" value={agreement.srs_entity_id || "—"} />
-            <MetaRow label="Currency" value={agreement.currency || "USD"} />
+            <MetaRow label={t("page_agreements.label_srs_entity")} value={agreement.srs_entity_id || "—"} />
+            <MetaRow label={t("page_agreements.label_currency")} value={agreement.currency || "USD"} />
             <MetaRow
-              label="Parts threshold USD"
+              label={t("page_agreements.label_parts_threshold")}
               value={`$${agreement.parts_approval_threshold_usd?.toFixed(2) || "—"}`}
             />
-            <MetaRow label="Starts" value={agreement.starts_at || "—"} />
-            <MetaRow label="Ends" value={agreement.ends_at || "— open-ended —"} />
+            <MetaRow label={t("page_agreements.label_starts")} value={agreement.starts_at || "—"} />
+            <MetaRow label={t("page_agreements.label_ends")} value={agreement.ends_at || t("page_agreements.ends_open")} />
           </dl>
           {agreement.notes && (
             <>
               <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.14em", marginTop: 16, marginBottom: 6 }}>
-                Notas
+                {t("page_agreements.label_notes")}
               </div>
               <p
                 style={{
@@ -186,13 +188,13 @@ export default function AgreementDetailPage() {
       <SectionCard padding={0} style={{ marginTop: 16 }}>
         <header style={{ padding: "14px 18px", borderBottom: "1px solid #E2E5EC" }}>
           <div style={{ ...MONO_CAPS, fontSize: 10, color: "#3D4A66", letterSpacing: "0.14em" }}>
-            WOs activas · {active.length}
+            {t("page_agreements.section_active_wos", { count: active.length })}
           </div>
         </header>
         <div>
           {active.length === 0 && (
             <div style={{ padding: "20px 18px", ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em" }}>
-              — sin activas —
+              {t("page_agreements.empty_no_active")}
             </div>
           )}
           {active.map((w) => <WoLink key={w.id} wo={w} />)}
@@ -203,7 +205,7 @@ export default function AgreementDetailPage() {
         <SectionCard padding={0} style={{ marginTop: 16 }}>
           <header style={{ padding: "14px 18px", borderBottom: "1px solid #E2E5EC" }}>
             <div style={{ ...MONO_CAPS, fontSize: 10, color: "#3D4A66", letterSpacing: "0.14em" }}>
-              Histórico reciente (últimas 5)
+              {t("page_agreements.section_recent")}
             </div>
           </header>
           <div>
@@ -213,7 +215,7 @@ export default function AgreementDetailPage() {
       )}
 
       <p style={{ marginTop: 24, ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em" }}>
-        Iter 2.23 · edición de agreements via Admin Fase 3
+        {t("page_agreements.footer_iter")}
       </p>
     </div>
   );
