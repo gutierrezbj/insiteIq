@@ -28,7 +28,7 @@ export const VIEWER_TZ_LABEL = "Madrid";
  */
 export const TECH_REGISTRY = {
   "Agustin Rivera":   { displayName: "Agustin R",  tz: "America/New_York", tzLabel: "NY",     role: "Senior Consultant",    workStart: 9, workEnd: 18 },
-  "Andros Briceño":   { displayName: "Andros B",   tz: "Europe/Madrid",    tzLabel: "Madrid", role: "Project Manager",      workStart: 8, workEnd: 19 },
+  "Andros Briceño":   { displayName: "Andros B",   tz: "America/Montevideo", tzLabel: "Montevideo", role: "Project Manager",      workStart: 8, workEnd: 18 },
   "Adriana Bracho":   { displayName: "Adriana B",  tz: "Europe/Madrid",    tzLabel: "Madrid", role: "Accountant",           workStart: 8, workEnd: 18 },
   "Hugo M Rodriguez": { displayName: "Hugo R",     tz: "Europe/Madrid",    tzLabel: "Madrid", role: "Tech plantilla",       workStart: 8, workEnd: 19 },
   "Arlindo Ochoa":    { displayName: "Arlindo O",  tz: "America/New_York", tzLabel: "NY",     role: "Tech external sub",    workStart: 9, workEnd: 18 },
