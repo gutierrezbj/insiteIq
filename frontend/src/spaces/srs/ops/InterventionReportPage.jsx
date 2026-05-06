@@ -99,7 +99,7 @@ export default function InterventionReportPage() {
       <div style={{ paddingLeft: 16, borderLeft: "3px solid #0A1628", marginBottom: 22 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6, flexWrap: "wrap" }}>
           <span style={{ ...MONO_CAPS, fontSize: 10, color: "#0A1628", letterSpacing: "0.16em" }}>
-            Intervention report
+            {t("page_report.kicker")}
           </span>
           <span style={{ ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.12em" }}>
             {h.work_order_reference}
@@ -151,7 +151,7 @@ export default function InterventionReportPage() {
           <Stat label={t("page_report.stat_closed")} value={h.closed_at ? new Date(h.closed_at).toLocaleString() : "—"} />
           <Stat label={t("page_report.stat_severity")} value={h.severity || "—"} />
           <Stat label={t("page_report.stat_shield")} value={h.shield_level || "—"} />
-          <Stat label="Tech" value={h.tech_name || "—"} />
+          <Stat label={t("page_report.stat_tech")} value={h.tech_name || "—"} />
           <Stat label={t("page_report.stat_srs_coord")} value={h.srs_coordinator_name || "—"} />
         </div>
       </SectionCard>
@@ -166,14 +166,14 @@ export default function InterventionReportPage() {
           }}
         >
           <SlaMetric
-            label="Receive"
+            label={t("page_report.sla_label_receive")}
             ok={sla.received_within_sla}
             deadlineIso={sla.receive_deadline}
             actualIso={sla.first_action_at}
             marginMinutes={sla.receive_margin_minutes}
           />
           <SlaMetric
-            label="Resolve"
+            label={t("page_report.sla_label_resolve")}
             ok={sla.resolved_within_sla}
             deadlineIso={sla.resolve_deadline}
             actualIso={sla.resolution_at}
@@ -190,9 +190,9 @@ export default function InterventionReportPage() {
         }}
       >
         <SectionCard>
-          <SectionTitle>Timeline · {timeline.length} eventos</SectionTitle>
+          <SectionTitle>{t("page_report.timeline_section", { count: timeline.length })}</SectionTitle>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {timeline.map((t, i) => <TimelineRow key={i} t={t} />)}
+            {timeline.map((ev, i) => <TimelineRow key={i} t={ev} />)}
           </div>
         </SectionCard>
 
@@ -239,24 +239,24 @@ export default function InterventionReportPage() {
                     fontWeight: 800,
                   }}
                 >
-                  · follow-up required
+                  {t("page_report.follow_up_required")}
                 </div>
               )}
             </div>
           ) : (
             <p style={{ ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em" }}>
-              — sin capture registrado —
+              {t("page_report.empty_capture")}
             </p>
           )}
         </SectionCard>
       </div>
 
       <SectionCard style={{ marginTop: 16 }}>
-        <SectionTitle>Ball-in-court log · {ballTimeline.length} transitions</SectionTitle>
+        <SectionTitle>{t("page_report.ball_log_section", { count: ballTimeline.length })}</SectionTitle>
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           {ballTimeline.length === 0 && (
             <div style={{ ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em" }}>
-              — sin historial —
+              {t("page_report.empty_history")}
             </div>
           )}
           {ballTimeline.map((b, i) => <BallRow key={i} b={b} />)}
@@ -273,7 +273,7 @@ export default function InterventionReportPage() {
               <Stat
                 label={t("page_report.stat_internal_thread")}
                 value={threads.internal_message_count}
-                hint="solo visible a SRS"
+                hint={t("page_report.internal_thread_hint")}
               />
             )}
           </div>
@@ -286,14 +286,14 @@ export default function InterventionReportPage() {
           <div style={{ fontFamily: JAKARTA, fontSize: 14, fontWeight: 700, color: "#0A1628" }}>
             {deliveries.length}{" "}
             <span style={{ color: "#3D4A66", fontWeight: 500 }}>
-              registrada{deliveries.length === 1 ? "" : "s"}
+              {t(deliveries.length === 1 ? "page_report.deliveries_count_one" : "page_report.deliveries_count_other")}
             </span>
           </div>
         </header>
         <div>
           {deliveries.length === 0 && (
             <div style={{ padding: "16px 18px", ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em" }}>
-              — sin entregas aún —
+              {t("page_report.empty_deliveries")}
             </div>
           )}
           {deliveries.map((d, i) => <DeliveryRow key={i} d={d} />)}
@@ -301,8 +301,7 @@ export default function InterventionReportPage() {
       </SectionCard>
 
       <p style={{ marginTop: 24, ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em" }}>
-        v{report.version} · generado {formatAge(report.generated_at)} ago · supersedes{" "}
-        {report.supersedes_id ? "v previa" : "—"}
+        {t("page_report.footer_version_label", { version: report.version })} · {t("page_report.footer_generated", { age: formatAge(report.generated_at) })} · {t("page_report.footer_supersedes", { prev: report.supersedes_id ? t("page_report.supersedes_prev") : t("page_report.supersedes_none") })}
       </p>
     </div>
   );
@@ -405,6 +404,7 @@ function Block({ label, children }) {
 }
 
 function SlaMetric({ label, ok, deadlineIso, actualIso, marginMinutes }) {
+  const { t } = useTranslation("common");
   const hasData = deadlineIso || actualIso;
   const dotColor = ok === true ? "#16A34A" : ok === false ? "#DC2626" : "#C8CDD8";
   return (
@@ -425,12 +425,12 @@ function SlaMetric({ label, ok, deadlineIso, actualIso, marginMinutes }) {
       )}
       {deadlineIso && (
         <div style={{ fontFamily: MONO, fontSize: 11, color: "#8B95A8", fontWeight: 500 }}>
-          deadline · {new Date(deadlineIso).toLocaleString()}
+          {t("page_report.sla_deadline", { date: new Date(deadlineIso).toLocaleString() })}
         </div>
       )}
       {actualIso && (
         <div style={{ fontFamily: MONO, fontSize: 11, color: "#0A1628", fontWeight: 600 }}>
-          actual · {new Date(actualIso).toLocaleString()}
+          {t("page_report.sla_actual", { date: new Date(actualIso).toLocaleString() })}
         </div>
       )}
       {marginMinutes != null && (
@@ -444,15 +444,15 @@ function SlaMetric({ label, ok, deadlineIso, actualIso, marginMinutes }) {
             fontWeight: 800,
           }}
         >
-          margin {marginMinutes >= 0 ? "+" : ""}
-          {marginMinutes}min
+          {t("page_report.sla_margin", { sign: marginMinutes >= 0 ? "+" : "", minutes: marginMinutes })}
         </div>
       )}
     </div>
   );
 }
 
-function TimelineRow({ t }) {
+function TimelineRow({ t: ev }) {
+  const { t } = useTranslation("common");
   return (
     <div
       style={{
@@ -478,28 +478,28 @@ function TimelineRow({ t }) {
       <div style={{ minWidth: 0, flex: 1 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
           <span style={{ ...MONO_CAPS, fontSize: 9.5, color: "#0A1628", letterSpacing: "0.12em", fontWeight: 800 }}>
-            {t.label || t.kind}
+            {ev.label || ev.kind}
           </span>
-          {t.from_status && t.to_status && (
+          {ev.from_status && ev.to_status && (
             <span style={{ fontFamily: MONO, fontSize: 10, color: "#8B95A8", fontWeight: 600 }}>
-              {t.from_status} → {t.to_status}
+              {ev.from_status} → {ev.to_status}
             </span>
           )}
-          {t.ball_side && (
+          {ev.ball_side && (
             <span style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.12em" }}>
-              · ball {t.ball_side}
+              {t("page_report.timeline_ball_prefix", { side: ev.ball_side })}
             </span>
           )}
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 2, flexWrap: "wrap" }}>
-          {t.actor_name && (
+          {ev.actor_name && (
             <span style={{ fontFamily: JAKARTA, fontSize: 12, color: "#3D4A66", fontWeight: 600 }}>
-              {t.actor_name}
+              {ev.actor_name}
             </span>
           )}
-          {t.ts && (
+          {ev.ts && (
             <span style={{ fontFamily: MONO, fontSize: 10, color: "#8B95A8", fontWeight: 500 }}>
-              {new Date(t.ts).toLocaleString()}
+              {new Date(ev.ts).toLocaleString()}
             </span>
           )}
         </div>
@@ -540,6 +540,7 @@ function BallRow({ b }) {
 }
 
 function DeliveryRow({ d }) {
+  const { t } = useTranslation("common");
   const statusColor =
     d.status === "delivered"
       ? "#0A6131"
@@ -569,7 +570,7 @@ function DeliveryRow({ d }) {
           </span>
           {d.attempts != null && (
             <span style={{ fontFamily: MONO, fontSize: 10, color: "#8B95A8", fontWeight: 600 }}>
-              · attempts {d.attempts}
+              {t("page_report.delivery_attempts", { count: d.attempts })}
             </span>
           )}
         </div>
@@ -588,7 +589,7 @@ function DeliveryRow({ d }) {
         </div>
       </div>
       <div style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.12em", flexShrink: 0 }}>
-        {d.enqueued_at ? formatAge(d.enqueued_at) + " ago" : "—"}
+        {d.enqueued_at ? t("page_report.delivery_ago", { age: formatAge(d.enqueued_at) }) : "—"}
       </div>
     </div>
   );
@@ -647,6 +648,7 @@ function GhostBtn({ onClick, label }) {
 }
 
 function RegenerateAction({ wo_id, reload }) {
+  const { t } = useTranslation("common");
   const [open, setOpen] = useState(false);
 
   async function submit() {
@@ -656,18 +658,17 @@ function RegenerateAction({ wo_id, reload }) {
 
   return (
     <>
-      <GhostBtn onClick={() => setOpen(true)} label="Regenerate" />
+      <GhostBtn onClick={() => setOpen(true)} label={t("page_report.btn_regenerate")} />
       <ActionDialog
         open={open}
         onClose={() => setOpen(false)}
-        title="Regenerate intervention report"
-        subtitle="Re-ensambla y supersede la versión vigente. Útil si se reabrió el WO o hay correcciones."
-        submitLabel="Regenerate"
+        title={t("page_report.regenerate_title")}
+        subtitle={t("page_report.regenerate_subtitle")}
+        submitLabel={t("page_report.btn_regenerate")}
         onSubmit={submit}
       >
         <p style={{ fontFamily: JAKARTA, fontSize: 13, color: "#3D4A66", lineHeight: 1.55, fontWeight: 500 }}>
-          La versión actual queda marcada como superseded. La nueva versión hereda el número
-          siguiente y queda auditada.
+          {t("page_report.regenerate_explainer")}
         </p>
       </ActionDialog>
     </>
@@ -675,6 +676,7 @@ function RegenerateAction({ wo_id, reload }) {
 }
 
 function DispatchEmailAction({ wo_id, reload }) {
+  const { t } = useTranslation("common");
   const [open, setOpen] = useState(false);
   const [to, setTo] = useState("");
   const [cc, setCc] = useState("");
@@ -696,48 +698,48 @@ function DispatchEmailAction({ wo_id, reload }) {
   return (
     <>
       <button type="button" onClick={() => setOpen(true)} className="btn-trigger-v2">
-        Dispatch email
+        {t("page_report.dispatch_email_btn")}
       </button>
       <ActionDialog
         open={open}
         onClose={() => setOpen(false)}
-        title="Dispatch report via email"
-        subtitle="Enqueue al email_outbox — worker drena en futuro. Audit log graba."
-        submitLabel="Enqueue"
+        title={t("page_report.dispatch_email_title")}
+        subtitle={t("page_report.dispatch_email_subtitle")}
+        submitLabel={t("page_report.dispatch_submit_enqueue")}
         submitDisabled={!to.trim()}
         onSubmit={submit}
       >
         <div>
-          <DialogLabel htmlFor="em-to">To</DialogLabel>
+          <DialogLabel htmlFor="em-to">{t("page_report.email_label_to")}</DialogLabel>
           <DialogInput
             id="em-to"
             type="email"
             value={to}
             onChange={(e) => setTo(e.target.value)}
-            placeholder="diego@cliente.com"
+            placeholder={t("page_report.email_placeholder_to")}
             required
           />
         </div>
         <div>
           <DialogLabel htmlFor="em-cc" optional>
-            CC (coma-separados)
+            {t("page_report.email_label_cc")}
           </DialogLabel>
           <DialogInput
             id="em-cc"
             value={cc}
             onChange={(e) => setCc(e.target.value)}
-            placeholder="andros@systemrapid.com, rackel@fractalia.com"
+            placeholder={t("page_report.email_placeholder_cc")}
           />
         </div>
         <div>
           <DialogLabel htmlFor="em-subj" optional>
-            Subject
+            {t("page_report.email_label_subject")}
           </DialogLabel>
           <DialogInput
             id="em-subj"
             value={subject}
             onChange={(e) => setSubject(e.target.value)}
-            placeholder="(auto-generado si vacío)"
+            placeholder={t("page_report.email_placeholder_subject")}
           />
         </div>
       </ActionDialog>
@@ -746,6 +748,7 @@ function DispatchEmailAction({ wo_id, reload }) {
 }
 
 function DispatchWebhookAction({ wo_id, reload }) {
+  const { t } = useTranslation("common");
   const [open, setOpen] = useState(false);
   const [url, setUrl] = useState("");
   const [includeHtml, setIncludeHtml] = useState(false);
@@ -763,31 +766,31 @@ function DispatchWebhookAction({ wo_id, reload }) {
   return (
     <>
       <button type="button" onClick={() => setOpen(true)} className="btn-trigger-v2">
-        Dispatch webhook
+        {t("page_report.dispatch_webhook_btn")}
       </button>
       <ActionDialog
         open={open}
         onClose={() => setOpen(false)}
-        title="Dispatch report via webhook"
-        subtitle="Enqueue al webhook_outbox — POST JSON scoped al cliente."
-        submitLabel="Enqueue"
+        title={t("page_report.dispatch_webhook_title")}
+        subtitle={t("page_report.dispatch_webhook_subtitle")}
+        submitLabel={t("page_report.dispatch_submit_enqueue")}
         submitDisabled={!url.trim().startsWith("http")}
         onSubmit={submit}
       >
         <div>
-          <DialogLabel htmlFor="wh-url">URL</DialogLabel>
+          <DialogLabel htmlFor="wh-url">{t("page_report.webhook_label_url")}</DialogLabel>
           <DialogInput
             id="wh-url"
             type="url"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
-            placeholder="https://cliente.com/hooks/insiteiq"
+            placeholder={t("page_report.webhook_placeholder_url")}
             required
           />
         </div>
         <DialogCheckbox
           id="wh-html"
-          label="Incluir HTML rendered en payload"
+          label={t("page_report.webhook_label_include_html")}
           checked={includeHtml}
           onChange={setIncludeHtml}
         />
