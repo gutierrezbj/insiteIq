@@ -9,6 +9,7 @@
  * Below-threshold: auto-approved al crear, ball nunca sale de SRS.
  */
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useFetch } from "../../lib/useFetch";
 import { api } from "../../lib/api";
 import ActionDialog, {
@@ -53,6 +54,7 @@ function StatusPill({ status }) {
 }
 
 export default function PartsSection({ wo, isSrs, isClient }) {
+  const { t } = useTranslation("common");
   const { data: requests, loading, reload } = useFetch(
     `/work-orders/${wo.id}/parts`,
     { deps: [wo.id] }
@@ -75,7 +77,7 @@ export default function PartsSection({ wo, isSrs, isClient }) {
         }}
       >
         <div>
-          <SectionTitle marginBottom={4}>Parts / Budget approvals</SectionTitle>
+          <SectionTitle marginBottom={4}>{t("wo_parts.section_title")}</SectionTitle>
           <div style={{ fontFamily: JAKARTA, fontSize: 14, fontWeight: 700, color: "#0A1628" }}>
             {list.length === 0
               ? "— sin requests —"
@@ -88,7 +90,7 @@ export default function PartsSection({ wo, isSrs, isClient }) {
       <div>
         {loading && (
           <div style={{ padding: "20px 18px", ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em" }}>
-            cargando…
+            {t("common.loading")}
           </div>
         )}
         {!loading && list.length === 0 && (
@@ -268,8 +270,8 @@ function RequestRow({ req, isSrs, isClient, reload }) {
           {canSend && <SendToClientAction req={req} reload={reload} />}
           {canDecide && isClient && (
             <>
-              <ClientDecisionAction req={req} reload={reload} approve label="Aprobar" tone="success" />
-              <ClientDecisionAction req={req} reload={reload} approve={false} label="Rechazar" tone="destructive" />
+              <ClientDecisionAction req={req} reload={reload} approve label={t("wo_parts.btn_approve")} tone="success" />
+              <ClientDecisionAction req={req} reload={reload} approve={false} label={t("wo_parts.btn_reject")} tone="destructive" />
             </>
           )}
           {canDecide && !isClient && isSrs && (
@@ -279,7 +281,7 @@ function RequestRow({ req, isSrs, isClient, reload }) {
                 reload={reload}
                 approve
                 onBehalf
-                label="Aprobar (SRS-on-behalf)"
+                label={t("wo_parts.btn_approve_on_behalf")}
                 tone="soft"
               />
               <ClientDecisionAction
@@ -287,7 +289,7 @@ function RequestRow({ req, isSrs, isClient, reload }) {
                 reload={reload}
                 approve={false}
                 onBehalf
-                label="Rechazar (SRS-on-behalf)"
+                label={t("wo_parts.btn_reject_on_behalf")}
                 tone="soft"
               />
             </>
@@ -387,6 +389,7 @@ function TinyButton({ onClick, label, tone = "default" }) {
 }
 
 function SendToClientAction({ req, reload }) {
+  const { t } = useTranslation("common");
   const [open, setOpen] = useState(false);
   const [notes, setNotes] = useState("");
 
@@ -400,25 +403,25 @@ function SendToClientAction({ req, reload }) {
 
   return (
     <>
-      <TinyButton onClick={() => setOpen(true)} label="Enviar al cliente" />
+      <TinyButton onClick={() => setOpen(true)} label={t("wo_parts.btn_send_to_client")} />
       <ActionDialog
         open={open}
         onClose={() => setOpen(false)}
-        title="Enviar cotización al cliente"
-        subtitle={`$${req.total_amount_usd?.toFixed(2)} USD · ball pasa a cliente`}
-        submitLabel="Enviar"
+        title={t("wo_parts.modal_send_title")}
+        subtitle={`$${req.total_amount_usd?.toFixed(2)} USD · ball → client`}
+        submitLabel={t("wo_parts.modal_send_submit")}
         onSubmit={submit}
       >
         <div>
           <DialogLabel htmlFor="send-notes" optional>
-            Notas
+            {t("wo_modal.advance_notes_label") /* reuse "Notas" */}
           </DialogLabel>
           <DialogTextarea
             id="send-notes"
             rows={2}
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="Contexto para el cliente — entra al audit log"
+            placeholder={t("wo_parts.modal_send_placeholder")}
           />
         </div>
       </ActionDialog>
@@ -427,6 +430,7 @@ function SendToClientAction({ req, reload }) {
 }
 
 function ClientDecisionAction({ req, reload, approve, onBehalf, label, tone }) {
+  const { t } = useTranslation("common");
   const [open, setOpen] = useState(false);
   const [notes, setNotes] = useState("");
 
@@ -444,19 +448,19 @@ function ClientDecisionAction({ req, reload, approve, onBehalf, label, tone }) {
       <ActionDialog
         open={open}
         onClose={() => setOpen(false)}
-        title={approve ? "Aprobar request" : "Rechazar request"}
+        title={approve ? t("wo_parts.modal_decision_approve_title") : t("wo_parts.modal_decision_reject_title")}
         subtitle={
           onBehalf
-            ? "SRS registrando decisión del cliente (acting-on-behalf, queda audit)"
-            : `$${req.total_amount_usd?.toFixed(2)} USD · ball vuelve a SRS`
+            ? t("wo_parts.modal_decision_subtitle")
+            : `$${req.total_amount_usd?.toFixed(2)} USD · ball → SRS`
         }
-        submitLabel={approve ? "Aprobar" : "Rechazar"}
+        submitLabel={approve ? t("wo_parts.modal_decision_approve_submit") : t("wo_parts.modal_decision_reject_submit")}
         destructive={!approve}
         onSubmit={submit}
       >
         <div>
           <DialogLabel htmlFor="decision-notes" optional>
-            Notas
+            {t("wo_modal.advance_notes_label") /* reuse */}
           </DialogLabel>
           <DialogTextarea
             id="decision-notes"
@@ -465,8 +469,8 @@ function ClientDecisionAction({ req, reload, approve, onBehalf, label, tone }) {
             onChange={(e) => setNotes(e.target.value)}
             placeholder={
               approve
-                ? "Cualquier condición o comentario"
-                : "Motivo del rechazo (importante para audit)"
+                ? t("wo_parts.modal_decision_approve_placeholder")
+                : t("wo_parts.modal_decision_reject_placeholder")
             }
           />
         </div>
@@ -476,6 +480,7 @@ function ClientDecisionAction({ req, reload, approve, onBehalf, label, tone }) {
 }
 
 function AutoPurchaseAction({ req, reload }) {
+  const { t } = useTranslation("common");
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState("");
 
@@ -488,24 +493,24 @@ function AutoPurchaseAction({ req, reload }) {
 
   return (
     <>
-      <TinyButton onClick={() => setOpen(true)} label="Auto-purchase" tone="soft" />
+      <TinyButton onClick={() => setOpen(true)} label={t("wo_parts.btn_auto_purchase")} tone="soft" />
       <ActionDialog
         open={open}
         onClose={() => setOpen(false)}
-        title="Auto-purchase (urgent ops)"
-        subtitle="SRS compra ya. Queda flag auto_purchased + reason en audit."
-        submitLabel="Comprar ahora"
+        title={t("wo_parts.modal_auto_title")}
+        subtitle={t("wo_parts.modal_auto_subtitle")}
+        submitLabel={t("wo_parts.modal_auto_submit")}
         submitDisabled={!canSubmit}
         onSubmit={submit}
       >
         <div>
-          <DialogLabel htmlFor="ap-reason">Razón</DialogLabel>
+          <DialogLabel htmlFor="ap-reason">{t("wo_parts.modal_auto_reason_label")}</DialogLabel>
           <DialogTextarea
             id="ap-reason"
             rows={3}
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            placeholder="Por qué no esperamos — down-time crítico, deadline, safety"
+            placeholder={t("wo_parts.modal_auto_reason_placeholder")}
             required
           />
         </div>
@@ -527,6 +532,7 @@ const BLANK_PART = {
 };
 
 function CreateRequestAction({ wo, reload }) {
+  const { t } = useTranslation("common");
   const [open, setOpen] = useState(false);
   const [parts, setParts] = useState([{ ...BLANK_PART }]);
   const [currency, setCurrency] = useState("USD");
@@ -601,9 +607,9 @@ function CreateRequestAction({ wo, reload }) {
       <ActionDialog
         open={open}
         onClose={() => setOpen(false)}
-        title="Nuevo parts request"
-        subtitle={`WO ${wo.reference} · threshold snapshot viene del agreement`}
-        submitLabel="Crear request"
+        title={t("wo_parts.modal_new_title")}
+        subtitle={`WO ${wo.reference}`}
+        submitLabel={t("wo_parts.modal_new_submit")}
         submitDisabled={!canSubmit}
         onSubmit={submit}
       >
@@ -613,7 +619,7 @@ function CreateRequestAction({ wo, reload }) {
               key={i}
               label={
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-                  <span>Item #{i + 1}</span>
+                  <span>{t("wo_parts.item_label")} #{i + 1}</span>
                   {parts.length > 1 && (
                     <button
                       type="button"
@@ -639,7 +645,7 @@ function CreateRequestAction({ wo, reload }) {
               }
             >
               <div>
-                <DialogLabel htmlFor={`p-name-${i}`}>Nombre</DialogLabel>
+                <DialogLabel htmlFor={`p-name-${i}`}>{t("wo_parts.item_name_label")}</DialogLabel>
                 <DialogInput
                   id={`p-name-${i}`}
                   value={p.name}

@@ -6,6 +6,7 @@
  * sealed automatico al cerrar/cancelar.
  */
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { api } from "../../lib/api";
 import { useFetch } from "../../lib/useFetch";
 import { useAuth } from "../../contexts/AuthContext";
@@ -14,6 +15,7 @@ import SectionCard, { SectionTitle } from "../v2-shared/SectionCard";
 import { JAKARTA, MONO, MONO_CAPS } from "../v2-shared/typography";
 
 export default function ThreadsSection({ wo, isSrs, isClient, isAssignedTech }) {
+  const { t } = useTranslation("common");
   const canSeeInternal = isSrs;
   const [tab, setTab] = useState("shared");
 
@@ -29,7 +31,7 @@ export default function ThreadsSection({ wo, isSrs, isClient, isAssignedTech }) 
   return (
     <SectionCard padding={0} style={{ marginTop: 16 }}>
       <header style={{ padding: "14px 18px", borderBottom: "1px solid #E2E5EC" }}>
-        <SectionTitle marginBottom={10}>Threads · WhatsApp kill</SectionTitle>
+        <SectionTitle marginBottom={10}>{t("wo_threads.section_title")}</SectionTitle>
         <div
           style={{
             display: "inline-flex",
@@ -43,15 +45,15 @@ export default function ThreadsSection({ wo, isSrs, isClient, isAssignedTech }) 
           <TabButton
             active={activeTab === "shared"}
             onClick={() => setTab("shared")}
-            label="Shared"
-            hint="SRS + tech + cliente"
+            label={t("wo_threads.tab_shared")}
+            hint={t("wo_threads.tab_shared_hint")}
           />
           {canSeeInternal && (
             <TabButton
               active={activeTab === "internal"}
               onClick={() => setTab("internal")}
-              label="Internal"
-              hint="solo SRS"
+              label={t("wo_threads.tab_internal")}
+              hint="SRS"
             />
           )}
         </div>
@@ -208,8 +210,8 @@ function ThreadView({ wo, kind, usersById, canPost }) {
           }}
         >
           {["closed", "cancelled"].includes(wo.status)
-            ? "WO terminal · threads inmutables"
-            : "No tienes permiso para postear aquí"}
+            ? t("wo_threads.wo_terminal_hint")
+            : t("wo_threads.no_permission_post")}
         </div>
       )}
     </div>
@@ -317,6 +319,7 @@ function MessageRow({ m, usersById }) {
 }
 
 function Composer({ wo, kind, onPosted }) {
+  const { t } = useTranslation("common");
   const { user } = useAuth();
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
@@ -336,7 +339,7 @@ function Composer({ wo, kind, onPosted }) {
       setText("");
       onPosted?.();
     } catch (err) {
-      setError(err?.message || "No se pudo enviar");
+      setError(err?.message || t("wo_threads.send_failed"));
     } finally {
       setBusy(false);
     }
@@ -354,8 +357,8 @@ function Composer({ wo, kind, onPosted }) {
           }}
           placeholder={
             kind === "internal"
-              ? "Nota interna (no visible al cliente)…"
-              : "Mensaje visible a todo el shared thread…"
+              ? t("wo_threads.placeholder_internal")
+              : t("wo_threads.placeholder_shared")
           }
           style={{
             flex: 1,
@@ -400,7 +403,7 @@ function Composer({ wo, kind, onPosted }) {
             flexShrink: 0,
           }}
         >
-          {busy ? "…" : "Enviar"}
+          {busy ? t("wo_threads.btn_sending") : t("wo_threads.btn_send")}
         </button>
       </div>
       <div

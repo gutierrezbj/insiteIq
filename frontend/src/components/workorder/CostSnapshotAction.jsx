@@ -6,6 +6,7 @@
  * Todos opcionales; se mergea con el snapshot existente (no destructivo).
  */
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { api } from "../../lib/api";
 import ActionDialog, {
   DialogInput,
@@ -15,6 +16,7 @@ import ActionDialog, {
 } from "../ui/ActionDialog";
 
 export default function CostSnapshotAction({ wo, reload }) {
+  const { t } = useTranslation("common");
   const [open, setOpen] = useState(false);
   const existing = wo.cost_snapshot || {};
 
@@ -101,14 +103,14 @@ export default function CostSnapshotAction({ wo, reload }) {
           e.currentTarget.style.background = "#FFFFFF";
         }}
       >
-        {wo.cost_snapshot ? "Editar costo" : "Registrar costo"}
+        {wo.cost_snapshot ? t("wo_cost.btn_edit") : t("wo_cost.btn_register")}
       </button>
       <ActionDialog
         open={open}
         onClose={() => setOpen(false)}
-        title="Cost snapshot · lo que SRS gasto"
-        subtitle="Alimenta el P&L de la factura donde entra este WO"
-        submitLabel="Guardar"
+        title={t("wo_cost.modal_title")}
+        subtitle={t("wo_cost.modal_subtitle")}
+        submitLabel={t("wo_cost.modal_submit")}
         onSubmit={submit}
       >
         <div className="grid grid-cols-2 gap-2">
@@ -137,7 +139,7 @@ export default function CostSnapshotAction({ wo, reload }) {
               min="0"
               value={parts}
               onChange={(e) => setParts(e.target.value)}
-              placeholder="costo vendor, no lo que cobras"
+              placeholder={t("wo_cost.parts_placeholder")}
             />
           </div>
           <div>
@@ -168,7 +170,7 @@ export default function CostSnapshotAction({ wo, reload }) {
           </div>
         </div>
 
-        <DialogPanel label="Proxy coordination (opcional)">
+        <DialogPanel label={t("wo_cost.panel_proxy_optional")}>
           <p
             style={{
               fontFamily: "'JetBrains Mono', monospace",
@@ -206,7 +208,7 @@ export default function CostSnapshotAction({ wo, reload }) {
                 min="0"
                 value={coordRate}
                 onChange={(e) => setCoordRate(e.target.value)}
-                placeholder="40 / 60 / 85"
+                placeholder={t("wo_cost.rate_placeholder")}
               />
             </div>
           </div>
@@ -233,7 +235,7 @@ export default function CostSnapshotAction({ wo, reload }) {
             rows={2}
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="Breakdown · caveats · referencia a vendor invoice futura"
+            placeholder={t("wo_cost.notes_placeholder")}
           />
         </div>
 

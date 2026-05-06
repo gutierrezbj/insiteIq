@@ -6,6 +6,7 @@
  * History + Similar cases (Y-a) + Site metrics. Cliente no lo ve.
  */
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { api } from "../../lib/api";
 import { useFetch } from "../../lib/useFetch";
 import { formatAge } from "../ui/Badges";
@@ -17,6 +18,7 @@ import SectionCard, { SectionTitle } from "../v2-shared/SectionCard";
 import { JAKARTA, MONO, MONO_CAPS } from "../v2-shared/typography";
 
 export default function BriefingSection({ wo, isSrs, isAssignedTech }) {
+  const { t } = useTranslation("common");
   const { data, loading, error, reload } = useFetch(
     `/work-orders/${wo.id}/briefing`,
     { deps: [wo.id] }
@@ -28,7 +30,7 @@ export default function BriefingSection({ wo, isSrs, isAssignedTech }) {
     return (
       <SectionWrapper>
         <div style={{ padding: "20px 18px", ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em" }}>
-          cargando…
+          {t("common.loading")}
         </div>
       </SectionWrapper>
     );
@@ -59,11 +61,10 @@ export default function BriefingSection({ wo, isSrs, isAssignedTech }) {
             fontWeight: 500,
           }}
         >
-          Aún no hay briefing ensamblado.{" "}
           <span style={{ color: "#8B95A8" }}>
             {isSrs
-              ? "El briefing compila Site Bible + historial + device bible. Tech debe ACK antes de en_route (o emergency override)."
-              : "Pedile a SRS que lo prepare antes de salir."}
+              ? t("wo_briefing.needs_assemble_hint")
+              : t("wo_briefing.needs_assemble_tech_hint")}
           </span>
         </div>
         {isSrs && (
@@ -141,7 +142,7 @@ export default function BriefingSection({ wo, isSrs, isAssignedTech }) {
         <SiteBible s={briefing.site_bible_summary} />
         {briefing.coordinator_notes && (
           <div>
-            <Label>Notas del coordinator</Label>
+            <Label>{t("wo_briefing.label_coord_notes")}</Label>
             <div
               style={{
                 background: "#F4F6F8",
@@ -184,10 +185,11 @@ export default function BriefingSection({ wo, isSrs, isAssignedTech }) {
 }
 
 function SectionWrapper({ children }) {
+  const { t } = useTranslation("common");
   return (
     <SectionCard padding={0} style={{ marginTop: 16 }}>
       <header style={{ padding: "14px 18px", borderBottom: "1px solid #E2E5EC" }}>
-        <SectionTitle marginBottom={4}>Copilot Briefing</SectionTitle>
+        <SectionTitle marginBottom={4}>{t("wo_briefing.section_title")}</SectionTitle>
         <div style={{ fontFamily: JAKARTA, fontSize: 14, fontWeight: 700, color: "#0A1628" }}>
           Tech lee antes de salir — Decision #8 WhatsApp kill
         </div>
@@ -279,8 +281,15 @@ function SiteBible({ s }) {
     );
   }
   return (
+    <SiteBibleInner s={s} />
+  );
+}
+
+function SiteBibleInner({ s }) {
+  const { t } = useTranslation("common");
+  return (
     <div>
-      <Label>Site bible · resumen</Label>
+      <Label>{t("wo_briefing.label_site_bible")}</Label>
       <div
         style={{
           display: "grid",
@@ -321,7 +330,7 @@ function SiteBible({ s }) {
             {s.has_physical_resident ? (
               <span style={{ color: "#1E40AF", fontWeight: 800 }}>· residente físico</span>
             ) : (
-              <span style={{ color: "#8B95A8" }}>NOC remoto</span>
+              <span style={{ color: "#8B95A8" }}>{t("wo_briefing.noc_remote")}</span>
             )}
             {s.confidence && (
               <span style={{ marginLeft: 8, color: "#8B95A8" }}>· confidence {s.confidence}</span>
@@ -337,7 +346,7 @@ function SiteBible({ s }) {
             padding: "10px 12px",
           }}
         >
-          <Label>Contacto onsite</Label>
+          <Label>{t("wo_briefing.label_onsite_contact")}</Label>
           {s.onsite_contact ? (
             <div>
               <div style={{ fontFamily: JAKARTA, fontSize: 13, color: "#0A1628", fontWeight: 600 }}>
@@ -366,7 +375,7 @@ function SiteBible({ s }) {
           )}
 
           <div style={{ marginTop: 12 }}>
-            <Label>Access notes</Label>
+            <Label>{t("wo_briefing.label_access_notes")}</Label>
             {s.access_notes ? (
               <div
                 style={{
@@ -391,7 +400,7 @@ function SiteBible({ s }) {
 
       {(s.known_issues?.length || 0) > 0 && (
         <div style={{ marginTop: 14 }}>
-          <Label>Known issues</Label>
+          <Label>{t("wo_briefing.label_known_issues")}</Label>
           <ul style={{ display: "flex", flexDirection: "column", gap: 4, listStyle: "none", padding: 0 }}>
             {s.known_issues.map((issue, i) => (
               <li
@@ -415,9 +424,10 @@ function SiteBible({ s }) {
 }
 
 function History({ history }) {
+  const { t } = useTranslation("common");
   return (
     <div>
-      <Label>Histórico · últimas {history.length} intervenciones mismo site</Label>
+      <Label>{t("wo_briefing.label_history", { count: history.length })}</Label>
       {history.length === 0 && (
         <div style={{ ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em" }}>
           — sin historial previo aquí —
@@ -506,11 +516,12 @@ function HistoryRow({ h }) {
 }
 
 function SimilarCrossSite({ list }) {
+  const { t } = useTranslation("common");
   if (!list || list.length === 0) return null;
   return (
     <div>
       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 6 }}>
-        <Label>Similar cases · mismo cliente otros sites</Label>
+        <Label>{t("wo_briefing.label_similar_cases")}</Label>
         <span style={{ ...MONO_CAPS, fontSize: 9.5, color: "#0A1628", letterSpacing: "0.12em", textTransform: "none", fontWeight: 700 }}>
           · Y-a · sistema que aprende
         </span>
@@ -636,11 +647,12 @@ function SimilarCrossSite({ list }) {
 }
 
 function SiteMetrics({ m }) {
+  const { t } = useTranslation("common");
   if (!m || !m.window_days) return null;
   const warning = (m.after_hours_pct ?? 0) >= 30 || (m.repeat_count_30d ?? 0) >= 3;
   return (
     <div>
-      <Label>Site metrics · últimos {m.window_days}d</Label>
+      <Label>{t("wo_briefing.label_site_metrics", { days: m.window_days })}</Label>
       <div
         style={{
           display: "grid",
@@ -650,18 +662,18 @@ function SiteMetrics({ m }) {
       >
         <MetricCard label="WOs" value={m.wo_count_90d ?? 0} hint="en 90d" />
         <MetricCard
-          label="Avg resolve"
+          label={t("wo_briefing.stat_avg_resolve")}
           value={m.avg_resolution_minutes != null ? formatMin(m.avg_resolution_minutes) : "—"}
           hint="closed → created"
         />
         <MetricCard
-          label="Repeat 30d"
+          label={t("wo_briefing.stat_repeat_30d")}
           value={m.repeat_count_30d ?? 0}
           hint="posible root-cause"
           tone={(m.repeat_count_30d ?? 0) >= 3 ? "warning" : "default"}
         />
         <MetricCard
-          label="After-hours"
+          label={t("wo_briefing.stat_after_hours")}
           value={`${m.after_hours_pct ?? 0}%`}
           hint="noches/fines"
           tone={(m.after_hours_pct ?? 0) >= 30 ? "warning" : "default"}
@@ -769,6 +781,7 @@ function ActionBtn({ onClick, label, tone = "default" }) {
 }
 
 function AssembleAction({ wo, reload, firstTime }) {
+  const { t } = useTranslation("common");
   const [open, setOpen] = useState(false);
 
   async function submit() {
@@ -780,24 +793,25 @@ function AssembleAction({ wo, reload, firstTime }) {
     <>
       <ActionBtn
         onClick={() => setOpen(true)}
-        label={firstTime ? "Assemble briefing" : "Re-assemble"}
+        label={firstTime ? t("wo_briefing.btn_assemble") : t("wo_briefing.btn_reassemble")}
         tone={firstTime ? "primary" : "default"}
       />
       <ActionDialog
         open={open}
         onClose={() => setOpen(false)}
-        title={firstTime ? "Assemble briefing" : "Re-assemble briefing"}
+        title={firstTime ? t("wo_briefing.modal_title_assemble") : t("wo_briefing.modal_title_reassemble")}
         subtitle={
           firstTime
-            ? "Genera briefing con site summary + historial. Tech recibe para leer antes de en_route."
-            : "Supersede la versión actual. Útil si cambió el contexto del site o hay nueva info."
+            ? t("wo_briefing.modal_subtitle_assemble")
+            : t("wo_briefing.modal_subtitle_reassemble")
         }
-        submitLabel={firstTime ? "Assemble" : "Re-assemble"}
+        submitLabel={firstTime ? t("wo_briefing.submit_assemble") : t("wo_briefing.submit_reassemble")}
         onSubmit={submit}
       >
         <p style={{ fontFamily: JAKARTA, fontSize: 13, color: "#3D4A66", lineHeight: 1.55, fontWeight: 500 }}>
-          La versión actual (si existe) queda marcada superseded y el ack previo pierde validez —
-          el tech tiene que leer y confirmar de nuevo.
+          {firstTime
+            ? t("wo_briefing.modal_subtitle_assemble")
+            : t("wo_briefing.modal_subtitle_reassemble")}
         </p>
       </ActionDialog>
     </>
@@ -805,6 +819,7 @@ function AssembleAction({ wo, reload, firstTime }) {
 }
 
 function EditNotesAction({ wo, briefing, reload }) {
+  const { t } = useTranslation("common");
   const [open, setOpen] = useState(false);
   const [notes, setNotes] = useState(briefing.coordinator_notes || "");
 
@@ -823,26 +838,26 @@ function EditNotesAction({ wo, briefing, reload }) {
     <>
       <ActionBtn
         onClick={() => setOpen(true)}
-        label={briefing.coordinator_notes ? "Editar notas" : "+ notas"}
+        label={briefing.coordinator_notes ? t("wo_briefing.btn_edit_notes") : t("wo_briefing.btn_add_notes")}
       />
       <ActionDialog
         open={open}
         onClose={() => setOpen(false)}
-        title="Notas del coordinator"
-        subtitle="Contexto adicional para el tech — va arriba del briefing"
-        submitLabel="Guardar"
+        title={t("wo_briefing.modal_notes_title")}
+        subtitle={t("wo_briefing.modal_notes_subtitle")}
+        submitLabel={t("wo_briefing.modal_notes_save")}
         onSubmit={submit}
       >
         <div>
           <DialogLabel htmlFor="brief-notes" optional>
-            Notas
+            {t("wo_briefing.label_coord_notes")}
           </DialogLabel>
           <DialogTextarea
             id="brief-notes"
             rows={5}
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="Cliente pidió específicamente X · OJO con el acceso sábado · confirmar badge el día antes…"
+            placeholder={t("wo_briefing.modal_notes_placeholder")}
           />
         </div>
       </ActionDialog>

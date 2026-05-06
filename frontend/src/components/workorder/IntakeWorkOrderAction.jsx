@@ -11,6 +11,7 @@
  */
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { api } from "../../lib/api";
 import { useFetch } from "../../lib/useFetch";
 import ActionDialog, {
@@ -29,6 +30,7 @@ const SEVERITY_OPTIONS = [
 ];
 
 export default function IntakeWorkOrderAction({ onCreated }) {
+  const { t } = useTranslation("common");
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -168,16 +170,16 @@ export default function IntakeWorkOrderAction({ onCreated }) {
       <ActionDialog
         open={open}
         onClose={() => setOpen(false)}
-        title="Nueva Work Order"
-        subtitle="Intake · SLA + Shield snapshot se hace al crear segun el agreement"
-        submitLabel="Crear WO"
+        title={t("wo_intake.modal_title")}
+        subtitle={t("wo_intake.modal_subtitle")}
+        submitLabel={t("wo_intake.submit_create")}
         submitDisabled={!canSubmit}
         onSubmit={submit}
       >
         {/* Paso 1: Cliente + contrato + site */}
-        <DialogPanel label="Cliente · contrato · site">
+        <DialogPanel label={t("wo_intake.panel_client_contract_site")}>
           <div>
-            <DialogLabel htmlFor="int-org">Organizacion cliente</DialogLabel>
+            <DialogLabel htmlFor="int-org">{t("wo_intake.label_client_org")}</DialogLabel>
             <DialogSelect
               id="int-org"
               value={orgId}
@@ -194,7 +196,7 @@ export default function IntakeWorkOrderAction({ onCreated }) {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             <div>
-              <DialogLabel htmlFor="int-agreement">Service agreement</DialogLabel>
+              <DialogLabel htmlFor="int-agreement">{t("wo_intake.label_service_agreement")}</DialogLabel>
               <DialogSelect
                 id="int-agreement"
                 value={agreementId}
@@ -211,7 +213,7 @@ export default function IntakeWorkOrderAction({ onCreated }) {
               />
             </div>
             <div>
-              <DialogLabel htmlFor="int-site">Site</DialogLabel>
+              <DialogLabel htmlFor="int-site">{t("wo_intake.label_site")}</DialogLabel>
               <DialogSelect
                 id="int-site"
                 value={siteId}
@@ -234,39 +236,39 @@ export default function IntakeWorkOrderAction({ onCreated }) {
 
         {/* Paso 2: identidad del ticket */}
         <div>
-          <DialogLabel htmlFor="int-ref">Reference cliente</DialogLabel>
+          <DialogLabel htmlFor="int-ref">{t("wo_intake.label_reference")}</DialogLabel>
           <DialogInput
             id="int-ref"
             value={reference}
             onChange={(e) => setReference(e.target.value)}
-            placeholder="CS-0123456, INC-0001, WO-202604…"
+            placeholder={t("wo_intake.placeholder_reference")}
             required
           />
         </div>
         <div>
-          <DialogLabel htmlFor="int-title">Titulo</DialogLabel>
+          <DialogLabel htmlFor="int-title">{t("wo_intake.label_title")}</DialogLabel>
           <DialogInput
             id="int-title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="Ej: switch port down / impresora no conecta"
+            placeholder={t("wo_intake.placeholder_title")}
             required
           />
         </div>
         <div>
           <DialogLabel htmlFor="int-desc" optional>
-            Descripcion
+            {t("page_wo_detail.section_description") /* reuse */}
           </DialogLabel>
           <DialogTextarea
             id="int-desc"
             rows={2}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Contexto del cliente, sintomas reportados, urgencia…"
+            placeholder={t("wo_intake.placeholder_description")}
           />
         </div>
         <div>
-          <DialogLabel htmlFor="int-sev">Severity</DialogLabel>
+          <DialogLabel htmlFor="int-sev">{t("wo_intake.label_severity")}</DialogLabel>
           <DialogSelect
             id="int-sev"
             value={severity}

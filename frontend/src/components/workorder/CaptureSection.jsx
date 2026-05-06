@@ -6,6 +6,7 @@
  * time_on_site + follow_up + photos grid con lightbox + devices.
  */
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useFetch } from "../../lib/useFetch";
 import AuthImage from "../ui/AuthImage";
 import { formatAge } from "../ui/Badges";
@@ -13,6 +14,7 @@ import SectionCard, { SectionTitle } from "../v2-shared/SectionCard";
 import { JAKARTA, MONO, MONO_CAPS } from "../v2-shared/typography";
 
 export default function CaptureSection({ wo, isSrs, isAssignedTech }) {
+  const { t } = useTranslation("common");
   if (!isSrs && !isAssignedTech) return null;
 
   const { data, loading, error } = useFetch(`/work-orders/${wo.id}/capture`, {
@@ -24,9 +26,9 @@ export default function CaptureSection({ wo, isSrs, isAssignedTech }) {
   if (loading) {
     return (
       <SectionCard style={{ marginTop: 16 }}>
-        <SectionTitle marginBottom={4}>Tech Capture</SectionTitle>
+        <SectionTitle marginBottom={4}>{t("wo_capture_section.title")}</SectionTitle>
         <div style={{ ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em" }}>
-          cargando…
+          {t("common.loading")}
         </div>
       </SectionCard>
     );
@@ -37,12 +39,7 @@ export default function CaptureSection({ wo, isSrs, isAssignedTech }) {
   if (!data?.exists) {
     return (
       <SectionCard style={{ marginTop: 16 }}>
-        <SectionTitle marginBottom={4}>Tech Capture</SectionTitle>
-        <p style={{ fontFamily: JAKARTA, fontSize: 13, color: "#3D4A66", lineHeight: 1.55, fontWeight: 500 }}>
-          Sin capture submitted aún. El tech lo registra estando{" "}
-          <span style={{ fontFamily: MONO, color: "#0A1628", fontWeight: 700 }}>on_site</span>{" "}
-          antes de marcar resolved.
-        </p>
+        <SectionTitle marginBottom={4}>{t("wo_capture_section.title")}</SectionTitle>
       </SectionCard>
     );
   }
@@ -54,7 +51,7 @@ export default function CaptureSection({ wo, isSrs, isAssignedTech }) {
   return (
     <SectionCard padding={0} style={{ marginTop: 16 }}>
       <header style={{ padding: "14px 18px", borderBottom: "1px solid #E2E5EC" }}>
-        <SectionTitle marginBottom={4}>Tech Capture</SectionTitle>
+        <SectionTitle marginBottom={4}>{t("wo_capture_section.title")}</SectionTitle>
         <div style={{ fontFamily: JAKARTA, fontSize: 14, fontWeight: 700, color: "#0A1628" }}>
           Submitted{" "}
           <span style={{ color: "#3D4A66", fontWeight: 500 }}>
@@ -64,10 +61,10 @@ export default function CaptureSection({ wo, isSrs, isAssignedTech }) {
       </header>
 
       <div style={{ padding: "14px 18px", display: "flex", flexDirection: "column", gap: 14 }}>
-        <CaptureBlock label="Qué encontró" text={cap.what_found || "—"} />
-        <CaptureBlock label="Qué hizo" text={cap.what_did || "—"} />
+        <CaptureBlock label={t("wo_capture_section.block_what_found")} text={cap.what_found || "—"} />
+        <CaptureBlock label={t("wo_capture_section.block_what_did")} text={cap.what_did || "—"} />
         {cap.anything_new_about_site && (
-          <CaptureBlock label="Nuevo sobre el site" text={cap.anything_new_about_site} />
+          <CaptureBlock label={t("wo_capture_section.block_new_about_site")} text={cap.anything_new_about_site} />
         )}
 
         <div
@@ -79,11 +76,11 @@ export default function CaptureSection({ wo, isSrs, isAssignedTech }) {
           }}
         >
           <MiniStat
-            label="Time on site"
+            label={t("wo_capture_section.stat_time_on_site")}
             value={cap.time_on_site_minutes != null ? `${cap.time_on_site_minutes}min` : "—"}
           />
-          <MiniStat label="Devices touched" value={devices.length} />
-          <MiniStat label="Photos" value={photos.length} />
+          <MiniStat label={t("wo_capture_section.stat_devices_touched")} value={devices.length} />
+          <MiniStat label={t("wo_capture_section.stat_photos")} value={photos.length} />
         </div>
 
         {cap.follow_up_needed && (
