@@ -1,11 +1,10 @@
 /**
  * V2BottomStrip — Equipo de operaciones con timezone live
  *
- * Recupera el comportamiento original (lista del equipo SRS con su hora
- * local y dot de estado laboral). Cambios respecto a la versión inicial:
- *   - Label: "Equipo de operaciones" (antes "Técnicos en pista")
- *   - Dot status: ESQUINA SUPERIOR DERECHA del avatar, contenido dentro
- *     del wrapper · sin desbordar sobre el texto adyacente.
+ * Layout de la tarjeta: [dot] [avatar Solar] [nombre + hora local]
+ *   - Dot status: pequeño (7px), a la izquierda del avatar, vertical-centrado
+ *     con la fila. Pulse animation si el tech está onduty.
+ *   - Avatar Solar `user-linear` 18px en color cl-text-mid.
  *
  * Fuente de los miembros: keys de TECH_REGISTRY (lib/tz.js). Cuando el
  * registry crece (Andros, Adriana, JuanCho, etc.), aparecen automáticamente.
@@ -31,44 +30,27 @@ function TeamCard({ name }) {
 
   return (
     <div
-      className="flex items-center gap-2.5 px-3 py-2 bg-cl-surface border border-cl-border rounded-md flex-shrink-0 hover:border-cl-border-strong transition"
+      className="flex items-center gap-2 px-3 py-2 bg-cl-surface border border-cl-border rounded-md flex-shrink-0 hover:border-cl-border-strong transition"
       title={`${name} · ${info.label} · ${info.tzLabel} ${info.techTime} · ${info.offsetText}`}
     >
-      {/* Avatar wrapper 28x28: ícono anclado abajo-izquierda, dot anclado arriba-derecha.
-          Esto garantiza que dot y silueta del ícono Solar NO se solapen visualmente. */}
-      <div
+      {/* Dot status — a la izquierda del avatar, vertical-centrado, 7px (compacto). */}
+      <span
+        className={pulse ? "animate-pulse" : ""}
         style={{
-          position: "relative",
-          width: 28,
-          height: 28,
+          width: 7,
+          height: 7,
+          borderRadius: "50%",
+          background: dotColor,
           flexShrink: 0,
+          boxShadow: `0 0 0 1.5px ${dotColor}33`, // halo translúcido del mismo color
         }}
-      >
-        <span
-          style={{
-            position: "absolute",
-            left: 0,
-            bottom: 0,
-            lineHeight: 0,
-          }}
-        >
-          <Icon icon={ICONS.user} size={18} color="#3D4A66" />
-        </span>
-        <span
-          className={pulse ? "animate-pulse" : ""}
-          style={{
-            position: "absolute",
-            top: 0,
-            right: 0,
-            width: 10,
-            height: 10,
-            borderRadius: "50%",
-            background: dotColor,
-            boxShadow: "0 0 0 1.5px #FFFFFF",
-          }}
-          aria-label={info.label}
-        />
-      </div>
+        aria-label={info.label}
+      />
+      {/* Avatar Solar — muñequito persona, monocromo. */}
+      <span style={{ lineHeight: 0, flexShrink: 0 }}>
+        <Icon icon={ICONS.user} size={18} color="#3D4A66" />
+      </span>
+      {/* Nombre + hora local. */}
       <div className="leading-tight min-w-0">
         <p className="text-[12px] font-jakarta font-semibold text-cl-text truncate max-w-[160px]">
           {name}
