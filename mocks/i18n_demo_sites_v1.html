@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>InsiteIQ · i18n demo Sites EN/ES (Iter 2.55)</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #F4F6F8;
+    color: #0A1628;
+    -webkit-font-smoothing: antialiased;
+  }
+  .demo-header {
+    background: #0A1628;
+    color: #FFF;
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    border-bottom: 2px solid #D97706;
+  }
+  .demo-header h1 {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+  .demo-header h1 span {
+    color: #D97706;
+    font-weight: 800;
+  }
+  .demo-header p {
+    font-size: 11px;
+    color: #C8CDD8;
+    margin-top: 2px;
+    letter-spacing: 0.02em;
+    font-family: ui-monospace, 'JetBrains Mono', monospace;
+  }
+  .toggle-pill {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    overflow: hidden;
+    border: 1px solid #C8CDD8;
+    background: #FFFFFF;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+  }
+  .toggle-pill button {
+    padding: 4px 12px;
+    border: 0;
+    background: transparent;
+    color: #3D4A66;
+    cursor: pointer;
+    text-transform: uppercase;
+    font-family: inherit;
+    font-weight: 700;
+    transition: background 160ms, color 160ms;
+  }
+  .toggle-pill button.active {
+    background: #0A1628;
+    color: #FFFFFF;
+    cursor: default;
+  }
+  .columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: #C8CDD8;
+    min-height: calc(100vh - 60px);
+  }
+  .col {
+    background: #F4F6F8;
+    padding: 24px;
+    overflow: hidden;
+  }
+  .col-label {
+    font-family: ui-monospace, 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: #8B95A8;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    font-weight: 600;
+  }
+  .col-label span {
+    color: #0A1628;
+    font-weight: 800;
+  }
+
+  /* Replica del SitesListPage */
+  .page-header {
+    padding-left: 16px;
+    border-left: 3px solid #0A1628;
+    margin-bottom: 22px;
+  }
+  .page-eyebrow {
+    font-family: ui-monospace, 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: #8B95A8;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .page-h1 {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    color: #0A1628;
+  }
+  .page-h1 .dim {
+    color: #3D4A66;
+    font-weight: 600;
+  }
+  .page-subtitle {
+    font-size: 13px;
+    color: #3D4A66;
+    margin-top: 6px;
+    font-weight: 500;
+  }
+
+  .filter-bar {
+    background: #FFFFFF;
+    border: 1px solid #E2E5EC;
+    border-left: 3px solid #0A1628;
+    border-radius: 6px;
+    padding: 14px;
+    margin-bottom: 16px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    align-items: flex-end;
+  }
+  .filter-group label {
+    display: block;
+    font-family: ui-monospace, 'JetBrains Mono', monospace;
+    font-size: 9.5px;
+    color: #3D4A66;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .filter-group input,
+  .filter-group select,
+  .filter-group .pill-btn {
+    height: 32px;
+    border: 1px solid #C8CDD8;
+    border-radius: 6px;
+    padding: 0 10px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #0A1628;
+    font-family: inherit;
+    background: #FFFFFF;
+  }
+  .filter-group input { width: 200px; }
+  .pills-row { display: flex; gap: 4px; flex-wrap: wrap; }
+  .pill-btn {
+    height: 32px;
+    padding: 0 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    background: #FFFFFF;
+    color: #3D4A66;
+    border: 1px solid #C8CDD8;
+    display: inline-flex;
+    align-items: center;
+  }
+  .pill-btn.active {
+    background: #0A1628;
+    color: #FFFFFF;
+    border-color: #0A1628;
+  }
+  .toggle-active {
+    background: #16a34a10;
+    color: #15803d;
+    border: 1.5px solid #16a34a;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 32px;
+    padding: 0 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .toggle-active::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #16a34a;
+  }
+  .counter {
+    margin-left: auto;
+    font-family: ui-monospace, 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: #0A1628;
+    letter-spacing: 0.14em;
+    font-variant-numeric: tabular-nums;
+    text-transform: uppercase;
+  }
+  .counter b { font-weight: 800; }
+  .counter .dim { color: #8B95A8; }
+
+  .table {
+    background: #FFFFFF;
+    border: 1px solid #E2E5EC;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .table-head {
+    display: grid;
+    grid-template-columns: 3fr 2fr 1fr 2fr 1fr 1.4fr 1fr;
+    gap: 12px;
+    padding: 12px 18px;
+    background: #F4F6F8;
+    border-bottom: 1px solid #E2E5EC;
+    font-family: ui-monospace, 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: #3D4A66;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+  .table-row {
+    display: grid;
+    grid-template-columns: 3fr 2fr 1fr 2fr 1fr 1.4fr 1fr;
+    gap: 12px;
+    padding: 14px 18px;
+    border-bottom: 1px solid #E2E5EC;
+    align-items: center;
+  }
+  .row-code {
+    font-family: ui-monospace, 'JetBrains Mono', monospace;
+    font-size: 9.5px;
+    color: #8B95A8;
+    letter-spacing: 0.12em;
+    margin-bottom: 2px;
+  }
+  .row-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #0A1628;
+  }
+  .row-mono {
+    font-family: ui-monospace, 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: #3D4A66;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+  .row-text { font-size: 13px; color: #3D4A66; font-weight: 500; }
+  .type-pill {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: #F0F4F8;
+    color: #0A1628;
+    font-size: 10.5px;
+    font-weight: 600;
+    text-transform: capitalize;
+  }
+  .resident-noc {
+    font-family: ui-monospace, monospace;
+    font-size: 9.5px;
+    color: #8B95A8;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+  .status-pill {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: #16a34a15;
+    color: #15803d;
+    font-size: 10.5px;
+    font-weight: 600;
+    text-transform: capitalize;
+  }
+  .col[data-lang]:not(.show) { display: none; }
+  .footer-note {
+    background: #FFF8E1;
+    border-top: 1px solid #F0E0A0;
+    padding: 14px 24px;
+    text-align: center;
+    font-size: 12px;
+    color: #92400E;
+    font-weight: 500;
+  }
+</style>
+</head>
+<body>
+
+<div class="demo-header">
+  <div>
+    <h1>InsiteIQ · i18n demo · <span>Sites + Techs en ES / EN</span></h1>
+    <p>Iter 2.55 · deployed PROD · keys/values rendered como en código real · toggle persiste en localStorage</p>
+  </div>
+  <div class="toggle-pill" id="lang-toggle">
+    <button data-lang="es" class="active">ES</button>
+    <button data-lang="en">EN</button>
+  </div>
+</div>
+
+<div class="columns">
+
+<!-- ESPAÑOL -->
+<div class="col show" data-lang="es">
+  <div class="col-label">Vista en <span>ESPAÑOL</span> · esta es la versión que ves hoy en PROD</div>
+
+  <!-- Header de la página -->
+  <div class="page-header">
+    <div class="page-eyebrow">Sites</div>
+    <div class="page-h1">105 <span class="dim">sitios registrados</span></div>
+    <p class="page-subtitle">Fase 2 plumbing · Site Bible completo aterriza en Fase 5 (Domain 10)</p>
+  </div>
+
+  <!-- Filter bar -->
+  <div class="filter-bar">
+    <div class="filter-group">
+      <label>Buscar</label>
+      <input type="text" placeholder="nombre, code, ciudad, address…">
+    </div>
+    <div class="filter-group">
+      <label>Cliente</label>
+      <select><option>todos</option><option>Arcos Dorados</option><option>Fractalia</option></select>
+    </div>
+    <div class="filter-group">
+      <label>País</label>
+      <select style="width:90px"><option>todos</option></select>
+    </div>
+    <div class="filter-group">
+      <label>Tipo</label>
+      <div class="pills-row">
+        <button class="pill-btn">Retail</button>
+        <button class="pill-btn">DC</button>
+        <button class="pill-btn">Office</button>
+        <button class="pill-btn">Warehouse</button>
+        <button class="pill-btn">Branch</button>
+        <button class="pill-btn">Other</button>
+      </div>
+    </div>
+    <div class="filter-group">
+      <label>Status</label>
+      <div class="toggle-active">Solo activos</div>
+    </div>
+    <div class="counter"><b>89</b> <span class="dim">/ 105</span></div>
+  </div>
+
+  <!-- Tabla -->
+  <div class="table">
+    <div class="table-head">
+      <div>Site</div>
+      <div>Cliente</div>
+      <div>Country</div>
+      <div>City</div>
+      <div>Tipo</div>
+      <div>Residente</div>
+      <div style="text-align:right">Status</div>
+    </div>
+    <div class="table-row">
+      <div>
+        <div class="row-code">PAN-P22</div>
+        <div class="row-name">Pacora EL BOSQUE Restaurante</div>
+      </div>
+      <div class="row-text">Arcos Dorados</div>
+      <div class="row-mono">PA</div>
+      <div class="row-text">Panamá</div>
+      <div><span class="type-pill">retail</span></div>
+      <div class="resident-noc">NOC remoto</div>
+      <div style="text-align:right"><span class="status-pill">active</span></div>
+    </div>
+    <div class="table-row">
+      <div>
+        <div class="row-code">PAN-FINANCIAL-PARK</div>
+        <div class="row-name">Financial Park, piso 41</div>
+      </div>
+      <div class="row-text">Arcos Dorados</div>
+      <div class="row-mono">PA</div>
+      <div class="row-text">Panamá</div>
+      <div><span class="type-pill">retail</span></div>
+      <div class="resident-noc">· residente</div>
+      <div style="text-align:right"><span class="status-pill">active</span></div>
+    </div>
+    <div class="table-row">
+      <div>
+        <div class="row-code">ARC-AW-001</div>
+        <div class="row-name">ARUBA HIGH RISE</div>
+      </div>
+      <div class="row-text">Arcos Dorados</div>
+      <div class="row-mono">AW</div>
+      <div class="row-text">Aruba</div>
+      <div><span class="type-pill">retail</span></div>
+      <div class="resident-noc">NOC remoto</div>
+      <div style="text-align:right"><span class="status-pill">active</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- INGLÉS -->
+<div class="col" data-lang="en">
+  <div class="col-label">View in <span>ENGLISH</span> · this is what Inetum / F4E coordinator would see</div>
+
+  <!-- Page header -->
+  <div class="page-header">
+    <div class="page-eyebrow">Sites</div>
+    <div class="page-h1">105 <span class="dim">registered sites</span></div>
+    <p class="page-subtitle">Phase 2 plumbing · full Site Bible lands in Phase 5 (Domain 10)</p>
+  </div>
+
+  <!-- Filter bar -->
+  <div class="filter-bar">
+    <div class="filter-group">
+      <label>Search</label>
+      <input type="text" placeholder="name, code, city, address…">
+    </div>
+    <div class="filter-group">
+      <label>Client</label>
+      <select><option>all</option><option>Arcos Dorados</option><option>Fractalia</option></select>
+    </div>
+    <div class="filter-group">
+      <label>Country</label>
+      <select style="width:90px"><option>all</option></select>
+    </div>
+    <div class="filter-group">
+      <label>Type</label>
+      <div class="pills-row">
+        <button class="pill-btn">Retail</button>
+        <button class="pill-btn">DC</button>
+        <button class="pill-btn">Office</button>
+        <button class="pill-btn">Warehouse</button>
+        <button class="pill-btn">Branch</button>
+        <button class="pill-btn">Other</button>
+      </div>
+    </div>
+    <div class="filter-group">
+      <label>Status</label>
+      <div class="toggle-active">Active only</div>
+    </div>
+    <div class="counter"><b>89</b> <span class="dim">/ 105</span></div>
+  </div>
+
+  <!-- Table -->
+  <div class="table">
+    <div class="table-head">
+      <div>Site</div>
+      <div>Client</div>
+      <div>Country</div>
+      <div>City</div>
+      <div>Type</div>
+      <div>Resident</div>
+      <div style="text-align:right">Status</div>
+    </div>
+    <div class="table-row">
+      <div>
+        <div class="row-code">PAN-P22</div>
+        <div class="row-name">Pacora EL BOSQUE Restaurante</div>
+      </div>
+      <div class="row-text">Arcos Dorados</div>
+      <div class="row-mono">PA</div>
+      <div class="row-text">Panamá</div>
+      <div><span class="type-pill">retail</span></div>
+      <div class="resident-noc">Remote NOC</div>
+      <div style="text-align:right"><span class="status-pill">active</span></div>
+    </div>
+    <div class="table-row">
+      <div>
+        <div class="row-code">PAN-FINANCIAL-PARK</div>
+        <div class="row-name">Financial Park, piso 41</div>
+      </div>
+      <div class="row-text">Arcos Dorados</div>
+      <div class="row-mono">PA</div>
+      <div class="row-text">Panamá</div>
+      <div><span class="type-pill">retail</span></div>
+      <div class="resident-noc">· resident</div>
+      <div style="text-align:right"><span class="status-pill">active</span></div>
+    </div>
+    <div class="table-row">
+      <div>
+        <div class="row-code">ARC-AW-001</div>
+        <div class="row-name">ARUBA HIGH RISE</div>
+      </div>
+      <div class="row-text">Arcos Dorados</div>
+      <div class="row-mono">AW</div>
+      <div class="row-text">Aruba</div>
+      <div><span class="type-pill">retail</span></div>
+      <div class="resident-noc">Remote NOC</div>
+      <div style="text-align:right"><span class="status-pill">active</span></div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<div class="footer-note">
+  Toggle ES/EN arriba a la derecha · click para cambiar de columna · en producción real el toggle vive en el header del cockpit y persiste en localStorage entre sesiones
+</div>
+
+<script>
+  // Toggle simple: alterna qué columna se muestra
+  const buttons = document.querySelectorAll('#lang-toggle button');
+  const cols = document.querySelectorAll('.col');
+
+  // Por default mostramos AMBAS lado a lado para comparar
+  // Pero también permitimos modo single-view con toggle
+  let mode = 'side-by-side'; // o 'single'
+
+  buttons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const lang = btn.dataset.lang;
+      buttons.forEach(b => b.classList.toggle('active', b === btn));
+
+      if (mode === 'side-by-side') {
+        // En modo lado a lado mantenemos ambas visibles, solo highlight la activa
+        cols.forEach(c => {
+          c.style.outline = c.dataset.lang === lang
+            ? '3px solid #D97706'
+            : 'none';
+          c.style.outlineOffset = c.dataset.lang === lang ? '-3px' : '0';
+        });
+      } else {
+        cols.forEach(c => {
+          c.classList.toggle('show', c.dataset.lang === lang);
+        });
+      }
+    });
+  });
+
+  // Mostrar ambas por default
+  cols.forEach(c => c.classList.add('show'));
+</script>
+
+</body>
+</html>

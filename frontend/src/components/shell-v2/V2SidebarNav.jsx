@@ -14,35 +14,37 @@
  */
 
 import { NavLink } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 // Nav items por scope. SRS ve todo; client solo lo operativo.
+// `key` se usa para resolver i18n: t(`nav.${key}`).
 const NAV_BY_SCOPE = {
   srs: [
-    { to: "/srs",                 label: "Operaciones",   end: true, accent: true },
-    { to: "/srs/espacio-ops",     label: "Espacio OPS" },
-    { to: "/srs/intervenciones",  label: "Intervenciones" },
-    { to: "/srs/rollouts",        label: "Rollouts" },
-    { to: "/srs/projects",        label: "Proyectos" },
-    { to: "/srs/sites",           label: "Sitios" },
-    { to: "/srs/techs",           label: "Técnicos" },
-    { to: "/srs/agreements",      label: "Contratos" },
-    { to: "/srs/insights",        label: "Inteligencia" },
-    { to: "/srs/finance",         label: "Finanzas" },
-    { to: "/srs/admin",           label: "Admin" },
+    { to: "/srs",                 key: "operations",    end: true, accent: true },
+    { to: "/srs/espacio-ops",     key: "espacio_ops" },
+    { to: "/srs/intervenciones",  key: "interventions" },
+    { to: "/srs/rollouts",        key: "rollouts" },
+    { to: "/srs/projects",        key: "projects" },
+    { to: "/srs/sites",           key: "sites" },
+    { to: "/srs/techs",           key: "techs" },
+    { to: "/srs/agreements",      key: "agreements" },
+    { to: "/srs/insights",        key: "insights" },
+    { to: "/srs/finance",         key: "finance" },
+    { to: "/srs/admin",           key: "admin" },
   ],
   client: [
-    { to: "/client",                  label: "Operaciones",   end: true, accent: true },
-    { to: "/client/espacio-ops",      label: "Espacio OPS" },
-    { to: "/client/intervenciones",   label: "Intervenciones" },
-    { to: "/client/sites",            label: "Sitios" },
-    { to: "/client/agreements",       label: "Contratos" },
-    { to: "/client/deliverables",     label: "Entregables" },
+    { to: "/client",                  key: "operations",    end: true, accent: true },
+    { to: "/client/espacio-ops",      key: "espacio_ops" },
+    { to: "/client/intervenciones",   key: "interventions" },
+    { to: "/client/sites",            key: "sites" },
+    { to: "/client/agreements",       key: "agreements" },
+    { to: "/client/deliverables",     key: "deliverables" },
   ],
 };
 
-const SPACE_LABEL = {
-  srs:    { caps: "InsiteIQ",      title: "SRS Coordinators" },
-  client: { caps: "InsiteIQ · Client", title: "Workspace" },
+const SPACE_LABELS = {
+  srs:    { caps: "InsiteIQ",          titleKey: "srs_coordinators" },
+  client: { caps: "InsiteIQ · Client", titleKey: "workspace" },
 };
 
 export default function V2SidebarNav({
@@ -51,10 +53,12 @@ export default function V2SidebarNav({
   region = "EU-West",
   organizationName,
 }) {
+  const { t } = useTranslation("common");
   const navItems = NAV_BY_SCOPE[scope] || NAV_BY_SCOPE.srs;
-  const labels = SPACE_LABEL[scope] || SPACE_LABEL.srs;
+  const spaceLabel = SPACE_LABELS[scope] || SPACE_LABELS.srs;
   // Para client space, mostrar el nombre de la organización en el título.
-  const titleText = scope === "client" && organizationName ? organizationName : labels.title;
+  const titleText =
+    scope === "client" && organizationName ? organizationName : t(`nav.${spaceLabel.titleKey}`);
   return (
     // Sidebar bg surface-3 (#F4F6F8) + border-right strong, replica mock F.
     <aside className="w-[200px] bg-cl-surface-3 border-r border-cl-border-strong flex-shrink-0 flex flex-col">
@@ -64,7 +68,7 @@ export default function V2SidebarNav({
           className="label-caps-v2 mb-0.5"
           style={{ color: "#0A1628", fontWeight: 800 }}
         >
-          {labels.caps}
+          {spaceLabel.caps}
         </p>
         <h1
           className="font-jakarta text-[15px] text-cl-text"
@@ -91,7 +95,7 @@ export default function V2SidebarNav({
               return `${base} text-cl-text-mid font-medium hover:text-cl-text hover:bg-cl-surface-2`;
             }}
           >
-            {n.label}
+            {t(`nav.${n.key}`)}
           </NavLink>
         ))}
       </nav>
@@ -107,15 +111,15 @@ export default function V2SidebarNav({
             className="font-jakarta uppercase"
             style={{ color: "#0A6131", fontWeight: 700, letterSpacing: "0.1em" }}
           >
-            SISTEMA OPERATIVO
+            {t("nav.system_operational")}
           </span>
         </div>
         <div className="flex items-center justify-between mt-2">
-          <span className="text-cl-text-dim font-jakarta" style={{ fontWeight: 500 }}>Build</span>
+          <span className="text-cl-text-dim font-jakarta" style={{ fontWeight: 500 }}>{t("nav.build")}</span>
           <span className="font-mono text-cl-text-mid">{buildSha}</span>
         </div>
         <div className="flex items-center justify-between">
-          <span className="text-cl-text-dim font-jakarta" style={{ fontWeight: 500 }}>Region</span>
+          <span className="text-cl-text-dim font-jakarta" style={{ fontWeight: 500 }}>{t("nav.region")}</span>
           <span className="font-mono text-cl-text-mid">{region}</span>
         </div>
       </div>

@@ -11,10 +11,24 @@
     "insights": "Insights",
     "finance": "Finance",
     "admin": "Admin",
+    "deliverables": "Deliverables",
     "logout": "Sign out",
     "team_section": "Operations team",
     "system_status": "System operational",
+    "system_operational": "SYSTEM OPERATIONAL",
+    "srs_coordinators": "SRS Coordinators",
+    "workspace": "Workspace",
+    "build": "Build",
+    "region": "Region",
     "active_count": "{{count}} active"
+  },
+  "error": {
+    "boundary_title": "Something broke in this view",
+    "boundary_subtitle": "The app didn't lose your session. Only this panel failed to render. You can try reloading or go back to the cockpit.",
+    "detail_dev_only": "Technical detail (dev only)",
+    "retry": "Retry",
+    "reload_app": "Reload app",
+    "unknown": "Unknown error"
   },
   "common": {
     "search": "Search",

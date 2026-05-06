@@ -13,6 +13,7 @@
  */
 
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Icon, ICONS } from "../../lib/icons";
 import { getTechTimeInfo, TECH_REGISTRY } from "../../lib/tz";
 
@@ -65,6 +66,7 @@ function TeamCard({ name }) {
 }
 
 export default function V2BottomStrip() {
+  const { t } = useTranslation("common");
   // Trigger re-render cada 30s para refrescar horas locales
   const [, setTick] = useState(0);
 
@@ -75,7 +77,7 @@ export default function V2BottomStrip() {
 
   return (
     <footer className="h-[84px] border-t border-cl-border bg-cl-bg flex items-center px-6 gap-4 flex-shrink-0">
-      <span className="label-caps-v2 mr-2">Equipo de operaciones</span>
+      <span className="label-caps-v2 mr-2">{t("nav.team_section")}</span>
 
       <div className="flex items-center gap-2 overflow-x-auto wr-scroll flex-1 pb-1">
         {OPS_TEAM.map((name) => <TeamCard key={name} name={name} />)}

@@ -12,6 +12,7 @@
  */
 
 import { Component } from "react";
+import i18n from "../../i18n";
 import { Icon, ICONS } from "../../lib/icons";
 
 export default class V2ErrorBoundary extends Component {
@@ -46,7 +47,8 @@ export default class V2ErrorBoundary extends Component {
 
     if (this.props.fallback) return this.props.fallback;
 
-    const errorMsg = this.state.error?.message || "Error desconocido";
+    const t = i18n.t.bind(i18n);
+    const errorMsg = this.state.error?.message || t("error.unknown");
 
     return (
       <div
@@ -71,13 +73,12 @@ export default class V2ErrorBoundary extends Component {
               className="font-jakarta text-[18px] m-0"
               style={{ color: "#0A1628", fontWeight: 700, letterSpacing: "-0.005em" }}
             >
-              Algo se rompió en esta vista
+              {t("error.boundary_title")}
             </h2>
           </div>
 
           <p className="text-[13px] leading-relaxed m-0 mb-3" style={{ color: "#3D4A66", fontWeight: 500 }}>
-            La app no perdió tu sesión. Solo este panel falló al renderizar.
-            Puedes intentar recargar o volver al cockpit.
+            {t("error.boundary_subtitle")}
           </p>
 
           {import.meta.env.DEV && (
@@ -89,7 +90,7 @@ export default class V2ErrorBoundary extends Component {
                 className="cursor-pointer text-[11px] font-mono transition"
                 style={{ letterSpacing: "0.06em", color: "#3D4A66" }}
               >
-                Detalle técnico (solo dev)
+                {t("error.detail_dev_only")}
               </summary>
               <pre
                 className="mt-2 text-[11px] font-mono leading-snug"
@@ -127,7 +128,7 @@ export default class V2ErrorBoundary extends Component {
                 e.currentTarget.style.borderColor = "#C8CDD8";
               }}
             >
-              Reintentar
+              {t("error.retry")}
             </button>
             {/* Recargar app · ORANGE escaso (decisión con urgencia · "el sistema falló") */}
             <button
@@ -155,7 +156,7 @@ export default class V2ErrorBoundary extends Component {
               }}
             >
               <Icon icon={ICONS.refresh} size={13} />
-              Recargar app
+              {t("error.reload_app")}
             </button>
           </div>
         </div>

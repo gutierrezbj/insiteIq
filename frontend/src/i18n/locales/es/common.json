@@ -11,10 +11,24 @@
     "insights": "Inteligencia",
     "finance": "Finanzas",
     "admin": "Admin",
+    "deliverables": "Entregables",
     "logout": "Cerrar sesión",
     "team_section": "Equipo de operaciones",
     "system_status": "Sistema operativo",
+    "system_operational": "SISTEMA OPERATIVO",
+    "srs_coordinators": "SRS Coordinators",
+    "workspace": "Workspace",
+    "build": "Build",
+    "region": "Region",
     "active_count": "{{count}} activas"
+  },
+  "error": {
+    "boundary_title": "Algo se rompió en esta vista",
+    "boundary_subtitle": "La app no perdió tu sesión. Solo este panel falló al renderizar. Puedes intentar recargar o volver al cockpit.",
+    "detail_dev_only": "Detalle técnico (solo dev)",
+    "retry": "Reintentar",
+    "reload_app": "Recargar app",
+    "unknown": "Error desconocido"
   },
   "common": {
     "search": "Buscar",
