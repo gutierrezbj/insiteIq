@@ -25,6 +25,7 @@
  */
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "../../../contexts/AuthContext";
 import { useFetch } from "../../../lib/useFetch";
 import { api } from "../../../lib/api";
@@ -42,12 +43,12 @@ import SectionCard, { SectionTitle } from "../../../components/v2-shared/Section
 import { JAKARTA, MONO, MONO_CAPS } from "../../../components/v2-shared/typography";
 
 const TABS = [
-  { key: "invoices", label: "Invoices (AR)" },
-  { key: "vendor_payables", label: "Vendor payables (AP)" },
-  { key: "recurring", label: "Recurring" },
-  { key: "preinvoice", label: "Pre-invoice" },
-  { key: "channels", label: "Channel partners" },
-  { key: "collections", label: "Collections ball" },
+  { key: "invoices", labelKey: "tab_invoices" },
+  { key: "vendor_payables", labelKey: "tab_vendor_payables" },
+  { key: "recurring", labelKey: "tab_recurring" },
+  { key: "preinvoice", labelKey: "tab_preinvoice" },
+  { key: "channels", labelKey: "tab_channels" },
+  { key: "collections", labelKey: "tab_collections" },
 ];
 
 /* ─── Status pills inline ──────────────────────────────────────── */
@@ -98,6 +99,7 @@ function StatusPillDot({ map, status }) {
 /* ─── Page ─────────────────────────────────────────────────────── */
 
 export default function FinancePage() {
+  const { t } = useTranslation("common");
   const [tab, setTab] = useState("invoices");
   const { user } = useAuth();
   const srsMem = user?.memberships?.find((m) => m.space === "srs_coordinators");
@@ -124,7 +126,7 @@ export default function FinancePage() {
       {/* Header */}
       <div style={{ paddingLeft: 16, borderLeft: "3px solid #0A1628", marginBottom: 22 }}>
         <div style={{ ...MONO_CAPS, fontSize: 11, color: "#8B95A8", marginBottom: 6 }}>
-          Finance
+          {t("page_finance.kicker")}
         </div>
         <h1
           style={{
@@ -136,11 +138,10 @@ export default function FinancePage() {
             lineHeight: 1.1,
           }}
         >
-          Pre-invoice · channel splits · collections
+          {t("page_finance.title")}
         </h1>
         <p style={{ fontFamily: JAKARTA, fontSize: 13, color: "#3D4A66", marginTop: 6, fontWeight: 500 }}>
-          Fase 2 scaffold · entidad invoice + rates + AP layer aterrizan Fase 3 (Admin/Finance).
-          Hoy expone lo cobrable y dónde se duerme el dinero.
+          {t("page_finance.subtitle")}
         </p>
       </div>
 
@@ -157,13 +158,13 @@ export default function FinancePage() {
           flexWrap: "wrap",
         }}
       >
-        {TABS.map((t) => {
-          const isActive = tab === t.key;
+        {TABS.map((tabDef) => {
+          const isActive = tab === tabDef.key;
           return (
             <button
-              key={t.key}
+              key={tabDef.key}
               type="button"
-              onClick={() => setTab(t.key)}
+              onClick={() => setTab(tabDef.key)}
               style={{
                 padding: "8px 14px",
                 ...MONO_CAPS,
@@ -189,7 +190,7 @@ export default function FinancePage() {
                 }
               }}
             >
-              {t.label}
+              {t(`page_finance.${tabDef.labelKey}`)}
             </button>
           );
         })}
@@ -214,6 +215,7 @@ export default function FinancePage() {
 /* ─── Invoices tab (AR) ───────────────────────────────────────── */
 
 function InvoicesTab({ orgById, isSrsAdmin }) {
+  const { t } = useTranslation("common");
   const [statusFilter, setStatusFilter] = useState("");
   const path = statusFilter
     ? `/invoices?status_filter=${statusFilter}&limit=200`
@@ -223,7 +225,7 @@ function InvoicesTab({ orgById, isSrsAdmin }) {
   const list = invoices || [];
   const totals = useMemo(() => {
     const by = { draft: 0, sent: 0, paid: 0, overdue: 0, void: 0 };
-    for (const i of list) by[i.status] = (by[i.status] || 0) + 1;
+    for (const inv of list) by[inv.status] = (by[inv.status] || 0) + 1;
     return by;
   }, [list]);
 
@@ -232,12 +234,12 @@ function InvoicesTab({ orgById, isSrsAdmin }) {
       <SectionCard>
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
           <div>
-            <SectionTitle marginBottom={4}>Invoices generadas</SectionTitle>
+            <SectionTitle marginBottom={4}>{t("page_finance.invoices_section_title")}</SectionTitle>
             <div style={{ fontFamily: JAKARTA, fontSize: 16, fontWeight: 700, color: "#0A1628" }}>
               {list.length}{" "}
               <span style={{ color: "#3D4A66", fontWeight: 500 }}>
-                · draft {totals.draft} · sent {totals.sent} · paid {totals.paid}
-                {totals.overdue ? ` · overdue ${totals.overdue}` : ""}
+                {t("page_finance.invoices_summary", { draft: totals.draft, sent: totals.sent, paid: totals.paid })}
+                {totals.overdue ? t("page_finance.invoices_summary_overdue", { overdue: totals.overdue }) : ""}
               </span>
             </div>
           </div>
@@ -260,7 +262,7 @@ function InvoicesTab({ orgById, isSrsAdmin }) {
             htmlFor="inv-status"
             style={{ ...MONO_CAPS, fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.14em" }}
           >
-            Status
+            {t("page_finance.label_status")}
           </label>
           <select
             id="inv-status"
@@ -268,7 +270,7 @@ function InvoicesTab({ orgById, isSrsAdmin }) {
             onChange={(e) => setStatusFilter(e.target.value)}
             style={selectStyle}
           >
-            <option value="">todos</option>
+            <option value="">{t("page_finance.all")}</option>
             <option value="draft">draft</option>
             <option value="sent">sent</option>
             <option value="paid">paid</option>
@@ -304,17 +306,17 @@ function InvoicesTab({ orgById, isSrsAdmin }) {
             letterSpacing: "0.14em",
           }}
         >
-          <div>Invoice #</div>
-          <div>Cliente</div>
-          <div>Periodo</div>
-          <div style={{ textAlign: "right" }}>WOs</div>
-          <div style={{ textAlign: "right" }}>Total</div>
-          <div style={{ textAlign: "right" }}>Status</div>
+          <div>{t("page_finance.invoices_col_number")}</div>
+          <div>{t("page_finance.invoices_col_client")}</div>
+          <div>{t("page_finance.invoices_col_period")}</div>
+          <div style={{ textAlign: "right" }}>{t("page_finance.invoices_col_wos")}</div>
+          <div style={{ textAlign: "right" }}>{t("page_finance.invoices_col_total")}</div>
+          <div style={{ textAlign: "right" }}>{t("page_finance.invoices_col_status")}</div>
         </div>
 
         <div style={{ maxHeight: "65vh", overflowY: "auto" }}>
-          {loading && <Empty text="cargando…" />}
-          {!loading && list.length === 0 && <Empty text="— sin invoices —" />}
+          {loading && <Empty text={t("page_finance.loading")} />}
+          {!loading && list.length === 0 && <Empty text={t("page_finance.invoices_empty")} />}
           {list.map((inv) => (
             <Link
               key={inv.id}
@@ -349,7 +351,7 @@ function InvoicesTab({ orgById, isSrsAdmin }) {
                       textOverflow: "ellipsis",
                     }}
                   >
-                    ref {inv.client_ref}
+                    {t("page_finance.invoices_ref_prefix", { ref: inv.client_ref })}
                   </div>
                 )}
               </div>
@@ -413,6 +415,7 @@ function InvoicesTab({ orgById, isSrsAdmin }) {
 /* ─── Pre-invoice tab ──────────────────────────────────────────── */
 
 function PreInvoiceTab({ wos, orgById, agreementById }) {
+  const { t } = useTranslation("common");
   const billable = wos.filter((w) => w.status === "closed" && !w.billing_line_id);
 
   const byOrg = useMemo(() => {
@@ -434,7 +437,7 @@ function PreInvoiceTab({ wos, orgById, agreementById }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       <SectionCard>
-        <SectionTitle>Resumen facturable</SectionTitle>
+        <SectionTitle>{t("page_finance.preinvoice_summary_title")}</SectionTitle>
         <div
           style={{
             display: "grid",
@@ -442,29 +445,29 @@ function PreInvoiceTab({ wos, orgById, agreementById }) {
             gap: 12,
           }}
         >
-          <KpiTile label="WOs pendientes" value={billable.length} hint="closed sin billing_line" tone="primary" />
-          <KpiTile label="Clientes" value={byOrg.length} />
+          <KpiTile label={t("page_finance.preinvoice_kpi_pending")} value={billable.length} hint={t("page_finance.preinvoice_kpi_pending_hint")} tone="primary" />
+          <KpiTile label={t("page_finance.preinvoice_kpi_clients")} value={byOrg.length} />
           {Object.entries(byShield).map(([shield, count]) => (
-            <KpiTile key={shield} label={`shield ${shield}`} value={count} />
+            <KpiTile key={shield} label={t("page_finance.preinvoice_kpi_shield", { shield })} value={count} />
           ))}
         </div>
       </SectionCard>
 
       <SectionCard padding={0}>
         <header style={{ padding: "14px 18px", borderBottom: "1px solid #E2E5EC" }}>
-          <SectionTitle marginBottom={2}>Por cliente</SectionTitle>
+          <SectionTitle marginBottom={2}>{t("page_finance.preinvoice_section_by_client")}</SectionTitle>
           <div style={{ fontFamily: JAKARTA, fontSize: 16, fontWeight: 700, color: "#0A1628" }}>
-            {byOrg.length} <span style={{ color: "#3D4A66", fontWeight: 500 }}>orgs con WOs listas</span>
+            {byOrg.length} <span style={{ color: "#3D4A66", fontWeight: 500 }}>{t("page_finance.preinvoice_orgs_with_ready_wos")}</span>
           </div>
         </header>
         <div>
-          {byOrg.length === 0 && <Empty text="— nada listo para facturar —" />}
-          {byOrg.map(([orgId, wos]) => (
+          {byOrg.length === 0 && <Empty text={t("page_finance.preinvoice_empty")} />}
+          {byOrg.map(([orgId, orgWos]) => (
             <OrgBillableRow
               key={orgId}
               org={orgById.get(orgId)}
               orgId={orgId}
-              wos={wos}
+              wos={orgWos}
               agreementById={agreementById}
             />
           ))}
@@ -472,13 +475,14 @@ function PreInvoiceTab({ wos, orgById, agreementById }) {
       </SectionCard>
 
       <p style={{ ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em" }}>
-        Rates por shield + moneda + SR entity facturadora · Fase 3.
+        {t("page_finance.preinvoice_footer")}
       </p>
     </div>
   );
 }
 
 function OrgBillableRow({ org, orgId, wos, agreementById }) {
+  const { t } = useTranslation("common");
   const [expanded, setExpanded] = useState(false);
   return (
     <div style={{ padding: "14px 18px", borderBottom: "1px solid #F0F2F7" }}>
@@ -520,7 +524,7 @@ function OrgBillableRow({ org, orgId, wos, agreementById }) {
             >
               {wos.length}
             </div>
-            <div style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.14em" }}>WOs</div>
+            <div style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.14em" }}>{t("page_finance.preinvoice_org_wos_label")}</div>
           </div>
           <span style={{ fontFamily: MONO, fontSize: 11, color: "#3D4A66", fontWeight: 700 }}>
             {expanded ? "▼" : "▶"}
@@ -554,11 +558,11 @@ function OrgBillableRow({ org, orgId, wos, agreementById }) {
                         {w.reference}
                       </span>
                       <span style={{ ...MONO_CAPS, fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.12em" }}>
-                        · shield {w.shield_level}
+                        {t("page_finance.preinvoice_shield_label", { shield: w.shield_level })}
                       </span>
                       {ag && (
                         <span style={{ ...MONO_CAPS, fontSize: 9.5, color: "#8B95A8", letterSpacing: "0.12em" }}>
-                          · {ag.currency}
+                          {t("page_finance.preinvoice_currency_label", { currency: ag.currency })}
                         </span>
                       )}
                     </div>
@@ -586,7 +590,9 @@ function OrgBillableRow({ org, orgId, wos, agreementById }) {
                       flexShrink: 0,
                     }}
                   >
-                    closed {w.closed_at ? formatAge(w.closed_at) + " ago" : "—"}
+                    {w.closed_at
+                      ? t("page_finance.preinvoice_closed_ago", { age: formatAge(w.closed_at) })
+                      : t("page_finance.preinvoice_closed_dash")}
                   </div>
                 </div>
               </Link>
@@ -601,6 +607,7 @@ function OrgBillableRow({ org, orgId, wos, agreementById }) {
 /* ─── Channels tab ─────────────────────────────────────────────── */
 
 function ChannelsTab({ orgs }) {
+  const { t } = useTranslation("common");
   const partnerOrgs = useMemo(
     () =>
       orgs.filter((o) =>
@@ -619,17 +626,16 @@ function ChannelsTab({ orgs }) {
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       <SectionCard>
         <SectionTitle>
-          Channel + JV + prime partners · {partnerOrgs.length} registrados
+          {t("page_finance.channels_section_title", { count: partnerOrgs.length })}
         </SectionTitle>
         <p style={{ fontFamily: JAKARTA, fontSize: 13, color: "#3D4A66", lineHeight: 1.55, fontWeight: 500 }}>
-          Commission rules y revenue splits expuestos para que Finance sepa a quién le debe qué porcentaje.
-          Monetización = Principio #3 Proxy Coordination (medida y monetizable).
+          {t("page_finance.channels_subtitle")}
         </p>
       </SectionCard>
 
       <SectionCard padding={0}>
         <div>
-          {partnerOrgs.length === 0 && <Empty text="— sin channel partners registrados —" />}
+          {partnerOrgs.length === 0 && <Empty text={t("page_finance.channels_empty")} />}
           {partnerOrgs.map((o) => <ChannelRow key={o.id} org={o} />)}
         </div>
       </SectionCard>
@@ -638,6 +644,7 @@ function ChannelsTab({ orgs }) {
 }
 
 function ChannelRow({ org }) {
+  const { t } = useTranslation("common");
   const partnerRels = (org.partner_relationships || []).filter(
     (r) =>
       r.status === "active" &&
@@ -689,17 +696,17 @@ function ChannelRow({ org }) {
             <div style={{ textAlign: "right", display: "flex", flexDirection: "column", gap: 2, flexShrink: 0 }}>
               {r.commission_rule && (
                 <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#0A6131", letterSpacing: "0.12em" }}>
-                  commission · {formatCommission(r.commission_rule)}
+                  {t("page_finance.channels_commission_label", { rule: formatCommission(r.commission_rule, t) })}
                 </div>
               )}
               {r.revenue_split_pct != null && (
                 <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#1E40AF", letterSpacing: "0.12em" }}>
-                  rev split {r.revenue_split_pct}%
+                  {t("page_finance.channels_rev_split", { pct: r.revenue_split_pct })}
                 </div>
               )}
               {r.cost_split_pct != null && (
                 <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#7E5212", letterSpacing: "0.12em" }}>
-                  cost split {r.cost_split_pct}%
+                  {t("page_finance.channels_cost_split", { pct: r.cost_split_pct })}
                 </div>
               )}
             </div>
@@ -710,19 +717,20 @@ function ChannelRow({ org }) {
   );
 }
 
-function formatCommission(rule) {
+function formatCommission(rule, t) {
   if (!rule || typeof rule !== "object") return String(rule);
   const parts = [];
   if (rule.base_pct != null) parts.push(`${rule.base_pct}%`);
   if (rule.scope) parts.push(rule.scope);
-  if (rule.floor_usd != null) parts.push(`floor $${rule.floor_usd}`);
-  if (rule.cap_usd != null) parts.push(`cap $${rule.cap_usd}`);
+  if (rule.floor_usd != null) parts.push(t("page_finance.channels_floor", { value: rule.floor_usd }));
+  if (rule.cap_usd != null) parts.push(t("page_finance.channels_cap", { value: rule.cap_usd }));
   return parts.length ? parts.join(" · ") : JSON.stringify(rule);
 }
 
 /* ─── Collections tab ──────────────────────────────────────────── */
 
 function CollectionsTab({ wos, orgById }) {
+  const { t } = useTranslation("common");
   const now = Date.now();
   const stuck = wos.filter((w) => {
     if (w.status === "resolved" && w.ball_in_court?.side === "client") return true;
@@ -749,24 +757,21 @@ function CollectionsTab({ wos, orgById }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       <SectionCard>
-        <SectionTitle>Donde se duerme el dinero</SectionTitle>
+        <SectionTitle>{t("page_finance.collections_title")}</SectionTitle>
         <p style={{ fontFamily: JAKARTA, fontSize: 13, color: "#3D4A66", lineHeight: 1.55, fontWeight: 500 }}>
-          WOs <span style={{ color: "#7E5212", fontWeight: 700 }}>resolved</span> con ball
-          en el cliente (esperando sign-off) +{" "}
-          <span style={{ color: "#3D4A66", fontWeight: 700 }}>closed</span> sin billing_line hace más de 30 días.
-          Se alimentará en Fase 3 con invoice_outbox + aging buckets reales.
+          {t("page_finance.collections_subtitle_pre")}<span style={{ color: "#7E5212", fontWeight: 700 }}>{t("page_finance.collections_subtitle_resolved")}</span>{t("page_finance.collections_subtitle_mid")}<span style={{ color: "#3D4A66", fontWeight: 700 }}>{t("page_finance.collections_subtitle_closed")}</span>{t("page_finance.collections_subtitle_post")}
         </p>
       </SectionCard>
 
       <SectionCard padding={0}>
         <header style={{ padding: "14px 18px", borderBottom: "1px solid #E2E5EC" }}>
-          <SectionTitle marginBottom={2}>Atascos actuales</SectionTitle>
+          <SectionTitle marginBottom={2}>{t("page_finance.collections_section_title")}</SectionTitle>
           <div style={{ fontFamily: JAKARTA, fontSize: 16, fontWeight: 700, color: "#0A1628" }}>
-            {stuck.length} <span style={{ color: "#3D4A66", fontWeight: 500 }}>WO{stuck.length === 1 ? "" : "s"} · {byOrg.length} org{byOrg.length === 1 ? "" : "s"}</span>
+            {stuck.length} <span style={{ color: "#3D4A66", fontWeight: 500 }}>{t(stuck.length === 1 ? "page_finance.collections_summary_one" : "page_finance.collections_summary_other", { count: stuck.length, orgCount: byOrg.length })}</span>
           </div>
         </header>
         <div>
-          {stuck.length === 0 && <Empty text="— sin atascos, todo fluye —" />}
+          {stuck.length === 0 && <Empty text={t("page_finance.collections_empty")} />}
           {byOrg.map(([orgId, list]) => (
             <div key={orgId} style={{ padding: "14px 18px", borderBottom: "1px solid #F0F2F7" }}>
               <div
@@ -780,7 +785,7 @@ function CollectionsTab({ wos, orgById }) {
               >
                 {orgById.get(orgId)?.legal_name || orgId.slice(-6)}
                 <span style={{ ...MONO_CAPS, fontSize: 9.5, color: "#8B95A8", letterSpacing: "0.12em", marginLeft: 10, fontWeight: 700 }}>
-                  · {list.length} WO{list.length === 1 ? "" : "s"}
+                  {t(list.length === 1 ? "page_finance.collections_org_wos_one" : "page_finance.collections_org_wos_other", { count: list.length })}
                 </span>
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -840,6 +845,7 @@ function CollectionsTab({ wos, orgById }) {
 /* ─── Recurring tab (X-c) ──────────────────────────────────────── */
 
 function RecurringTab({ orgById, isSrsAdmin }) {
+  const { t } = useTranslation("common");
   const { data: subs, loading, reload } = useFetch("/subscriptions");
 
   const list = subs || [];
@@ -864,18 +870,21 @@ function RecurringTab({ orgById, isSrsAdmin }) {
       <SectionCard>
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
           <div>
-            <SectionTitle marginBottom={4}>Recurring streams</SectionTitle>
+            <SectionTitle marginBottom={4}>{t("page_finance.recurring_section_title")}</SectionTitle>
             <div style={{ fontFamily: JAKARTA, fontSize: 16, fontWeight: 700, color: "#0A1628" }}>
               {list.filter((s) => s.status === "active").length}{" "}
               <span style={{ color: "#3D4A66", fontWeight: 500 }}>
-                activos · {list.filter((s) => s.status === "paused").length} paused ·{" "}
-                {list.filter((s) => s.status === "cancelled").length} cancelled
+                {t("page_finance.recurring_summary", {
+                  paused: list.filter((s) => s.status === "paused").length,
+                  cancelled: list.filter((s) => s.status === "cancelled").length,
+                })}
               </span>
             </div>
             {monthlyRunRate > 0 && (
               <div style={{ ...MONO_CAPS, fontSize: 10, color: "#0A1628", letterSpacing: "0.14em", marginTop: 6, fontWeight: 700 }}>
-                run-rate ≈ {monthlyRunRate.toFixed(0)} /mo{" "}
-                {currencyMix.length === 1 ? currencyMix[0] : `(mix: ${currencyMix.join(", ")})`}
+                {currencyMix.length === 1
+                  ? t("page_finance.recurring_run_rate_single", { rate: monthlyRunRate.toFixed(0), currency: currencyMix[0] })
+                  : t("page_finance.recurring_run_rate_mix", { rate: monthlyRunRate.toFixed(0), currencies: currencyMix.join(", ") })}
               </div>
             )}
           </div>
@@ -898,18 +907,18 @@ function RecurringTab({ orgById, isSrsAdmin }) {
             letterSpacing: "0.14em",
           }}
         >
-          <div>Título</div>
-          <div>Cliente</div>
-          <div style={{ textAlign: "right" }}>Amount</div>
-          <div>Cadence</div>
-          <div>Next run</div>
-          <div style={{ textAlign: "right" }}>Status</div>
-          <div style={{ textAlign: "right" }}>Acciones</div>
+          <div>{t("page_finance.recurring_col_title")}</div>
+          <div>{t("page_finance.recurring_col_client")}</div>
+          <div style={{ textAlign: "right" }}>{t("page_finance.recurring_col_amount")}</div>
+          <div>{t("page_finance.recurring_col_cadence")}</div>
+          <div>{t("page_finance.recurring_col_next_run")}</div>
+          <div style={{ textAlign: "right" }}>{t("page_finance.recurring_col_status")}</div>
+          <div style={{ textAlign: "right" }}>{t("page_finance.recurring_col_actions")}</div>
         </div>
 
         <div>
-          {loading && <Empty text="cargando…" />}
-          {!loading && list.length === 0 && <Empty text="— sin subscriptions · crea la primera —" />}
+          {loading && <Empty text={t("page_finance.loading")} />}
+          {!loading && list.length === 0 && <Empty text={t("page_finance.recurring_empty")} />}
           {list.map((s) => (
             <SubscriptionRow
               key={s.id}
@@ -923,13 +932,14 @@ function RecurringTab({ orgById, isSrsAdmin }) {
       </SectionCard>
 
       <p style={{ ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em" }}>
-        X-c · run-now manual hoy · cron worker aterriza Horizonte 3
+        {t("page_finance.recurring_footer")}
       </p>
     </div>
   );
 }
 
 function SubscriptionRow({ sub, orgById, isSrsAdmin, reload }) {
+  const { t } = useTranslation("common");
   return (
     <div
       style={{
@@ -956,7 +966,7 @@ function SubscriptionRow({ sub, orgById, isSrsAdmin, reload }) {
           {sub.title}
         </div>
         <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#8B95A8", letterSpacing: "0.12em", marginTop: 2 }}>
-          runs {sub.runs_count}
+          {t("page_finance.recurring_runs_count", { count: sub.runs_count })}
           {sub.last_invoice_id && (
             <>
               {" · "}
@@ -964,7 +974,7 @@ function SubscriptionRow({ sub, orgById, isSrsAdmin, reload }) {
                 to={`/srs/finance/invoices/${sub.last_invoice_id}`}
                 style={{ color: "#0A1628", textDecoration: "underline", textDecorationStyle: "dotted", fontWeight: 800 }}
               >
-                last invoice ↗
+                {t("page_finance.recurring_last_invoice")}
               </Link>
             </>
           )}
@@ -1018,6 +1028,7 @@ function SubscriptionRow({ sub, orgById, isSrsAdmin, reload }) {
 }
 
 function SubActions({ sub, reload }) {
+  const { t } = useTranslation("common");
   const [busy, setBusy] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
@@ -1028,7 +1039,7 @@ function SubActions({ sub, reload }) {
       await api.post(path, {});
       reload();
     } catch (e) {
-      alert(e.message || "error");
+      alert(e.message || t("page_finance.recurring_action_error"));
     } finally {
       setBusy(false);
     }
@@ -1042,20 +1053,20 @@ function SubActions({ sub, reload }) {
     <div style={{ display: "flex", alignItems: "center", gap: 4, justifyContent: "flex-end" }}>
       {sub.status === "active" && (
         <>
-          <IconBtn label="run" title="Run now" onClick={() => run(`/subscriptions/${sub.id}/run-now`)} disabled={busy} tone="primary" />
-          <IconBtn label="||" title="Pausar" onClick={() => run(`/subscriptions/${sub.id}/pause`)} disabled={busy} />
+          <IconBtn label="run" title={t("page_finance.recurring_btn_run_title")} onClick={() => run(`/subscriptions/${sub.id}/run-now`)} disabled={busy} tone="primary" />
+          <IconBtn label="||" title={t("page_finance.recurring_btn_pause_title")} onClick={() => run(`/subscriptions/${sub.id}/pause`)} disabled={busy} />
         </>
       )}
       {sub.status === "paused" && (
-        <IconBtn label="▶" title="Resume" onClick={() => run(`/subscriptions/${sub.id}/resume`)} disabled={busy} tone="success" />
+        <IconBtn label="▶" title={t("page_finance.recurring_btn_resume_title")} onClick={() => run(`/subscriptions/${sub.id}/resume`)} disabled={busy} tone="success" />
       )}
-      <IconBtn label="×" title="Cancel" onClick={() => setCancelOpen(true)} disabled={busy} tone="danger" />
+      <IconBtn label="×" title={t("page_finance.recurring_btn_cancel_title")} onClick={() => setCancelOpen(true)} disabled={busy} tone="danger" />
       <ActionDialog
         open={cancelOpen}
         onClose={() => setCancelOpen(false)}
-        title={`Cancelar subscription · ${sub.title}`}
-        subtitle="Terminal. Para re-crear hay que hacer una nueva."
-        submitLabel="Cancel subscription"
+        title={t("page_finance.recurring_cancel_title", { title: sub.title })}
+        subtitle={t("page_finance.recurring_cancel_subtitle")}
+        submitLabel={t("page_finance.recurring_cancel_submit")}
         destructive
         submitDisabled={!cancelReason.trim()}
         onSubmit={async () => {
@@ -1066,13 +1077,13 @@ function SubActions({ sub, reload }) {
         }}
       >
         <div>
-          <DialogLabel htmlFor="sc-reason">Razón</DialogLabel>
+          <DialogLabel htmlFor="sc-reason">{t("page_finance.recurring_cancel_reason_label")}</DialogLabel>
           <DialogTextarea
             id="sc-reason"
             rows={3}
             value={cancelReason}
             onChange={(e) => setCancelReason(e.target.value)}
-            placeholder="Cliente cambió plan · scope reducido · fin contrato…"
+            placeholder={t("page_finance.recurring_cancel_reason_placeholder")}
             required
           />
         </div>
@@ -1129,6 +1140,7 @@ function IconBtn({ label, title, onClick, disabled, tone = "default" }) {
 /* ─── Vendor payables tab (X-d AP) ─────────────────────────────── */
 
 function VendorPayablesTab({ orgById, isSrsAdmin }) {
+  const { t } = useTranslation("common");
   const [statusFilter, setStatusFilter] = useState("");
   const path = statusFilter
     ? `/vendor-invoices?status_filter=${statusFilter}&limit=200`
@@ -1139,21 +1151,24 @@ function VendorPayablesTab({ orgById, isSrsAdmin }) {
   const list = vendorInvoices || [];
   const counts = useMemo(() => {
     const c = { received: 0, matched: 0, approved: 0, paid: 0, disputed: 0, rejected: 0 };
-    for (const v of list) c[v.status] = (c[v.status] || 0) + 1;
+    for (const vi of list) c[vi.status] = (c[vi.status] || 0) + 1;
     return c;
   }, [list]);
+
+  const invoiceCountHint = (n) =>
+    t(n === 1 ? "page_finance.vendor_kpi_invoices_one" : "page_finance.vendor_kpi_invoices_other", { count: n });
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       <SectionCard>
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginBottom: 12 }}>
           <div>
-            <SectionTitle marginBottom={4}>Deudas con proveedores · AP</SectionTitle>
+            <SectionTitle marginBottom={4}>{t("page_finance.vendor_section_title")}</SectionTitle>
             <div style={{ fontFamily: JAKARTA, fontSize: 16, fontWeight: 700, color: "#0A1628" }}>
               {list.length}{" "}
               <span style={{ color: "#3D4A66", fontWeight: 500 }}>
-                facturas · recibidas {counts.received} · approved {counts.approved}
-                {counts.disputed ? ` · disputed ${counts.disputed}` : ""}
+                {t("page_finance.vendor_summary", { received: counts.received, approved: counts.approved })}
+                {counts.disputed ? t("page_finance.vendor_summary_disputed", { disputed: counts.disputed }) : ""}
               </span>
             </div>
           </div>
@@ -1168,10 +1183,10 @@ function VendorPayablesTab({ orgById, isSrsAdmin }) {
               marginTop: 8,
             }}
           >
-            <KpiTile label="Current (0-30d)" value={aging.buckets.current.total.toFixed(2)} hint={`${aging.buckets.current.count} factura${aging.buckets.current.count === 1 ? "" : "s"}`} />
-            <KpiTile label="30-60d" value={aging.buckets["30_60"].total.toFixed(2)} hint={`${aging.buckets["30_60"].count} factura${aging.buckets["30_60"].count === 1 ? "" : "s"}`} tone="warning" />
-            <KpiTile label="60-90d" value={aging.buckets["60_90"].total.toFixed(2)} hint={`${aging.buckets["60_90"].count} factura${aging.buckets["60_90"].count === 1 ? "" : "s"}`} tone="warning" />
-            <KpiTile label="90d+" value={aging.buckets.over_90.total.toFixed(2)} hint={`${aging.buckets.over_90.count} factura${aging.buckets.over_90.count === 1 ? "" : "s"}`} tone="danger" />
+            <KpiTile label={t("page_finance.vendor_kpi_current")} value={aging.buckets.current.total.toFixed(2)} hint={invoiceCountHint(aging.buckets.current.count)} />
+            <KpiTile label={t("page_finance.vendor_kpi_30_60")} value={aging.buckets["30_60"].total.toFixed(2)} hint={invoiceCountHint(aging.buckets["30_60"].count)} tone="warning" />
+            <KpiTile label={t("page_finance.vendor_kpi_60_90")} value={aging.buckets["60_90"].total.toFixed(2)} hint={invoiceCountHint(aging.buckets["60_90"].count)} tone="warning" />
+            <KpiTile label={t("page_finance.vendor_kpi_90_plus")} value={aging.buckets.over_90.total.toFixed(2)} hint={invoiceCountHint(aging.buckets.over_90.count)} tone="danger" />
           </div>
         )}
       </SectionCard>
@@ -1188,7 +1203,7 @@ function VendorPayablesTab({ orgById, isSrsAdmin }) {
           }}
         >
           <label htmlFor="vi-status" style={{ ...MONO_CAPS, fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.14em" }}>
-            Status
+            {t("page_finance.label_status")}
           </label>
           <select
             id="vi-status"
@@ -1196,7 +1211,7 @@ function VendorPayablesTab({ orgById, isSrsAdmin }) {
             onChange={(e) => setStatusFilter(e.target.value)}
             style={selectStyle}
           >
-            <option value="">todos</option>
+            <option value="">{t("page_finance.all")}</option>
             <option value="received">received</option>
             <option value="matched">matched</option>
             <option value="approved">approved</option>
@@ -1233,40 +1248,41 @@ function VendorPayablesTab({ orgById, isSrsAdmin }) {
             letterSpacing: "0.14em",
           }}
         >
-          <div>Vendor invoice #</div>
-          <div>Vendor</div>
-          <div>Received</div>
-          <div style={{ textAlign: "right" }}>Total</div>
-          <div style={{ textAlign: "right" }}>Match</div>
-          <div style={{ textAlign: "right" }}>Status</div>
+          <div>{t("page_finance.vendor_col_number")}</div>
+          <div>{t("page_finance.vendor_col_vendor")}</div>
+          <div>{t("page_finance.vendor_col_received")}</div>
+          <div style={{ textAlign: "right" }}>{t("page_finance.vendor_col_total")}</div>
+          <div style={{ textAlign: "right" }}>{t("page_finance.vendor_col_match")}</div>
+          <div style={{ textAlign: "right" }}>{t("page_finance.vendor_col_status")}</div>
         </div>
 
         <div style={{ maxHeight: "65vh", overflowY: "auto" }}>
-          {loading && <Empty text="cargando…" />}
+          {loading && <Empty text={t("page_finance.loading")} />}
           {!loading && list.length === 0 && (
-            <Empty text="— sin vendor invoices · registra la primera —" />
+            <Empty text={t("page_finance.vendor_empty")} />
           )}
-          {list.map((v) => <VendorInvoiceRow key={v.id} vi={v} orgById={orgById} />)}
+          {list.map((vi) => <VendorInvoiceRow key={vi.id} vi={vi} orgById={orgById} />)}
         </div>
       </SectionCard>
 
       <p style={{ ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em" }}>
-        X-d · AP con three-way match · paid tracking · aging
+        {t("page_finance.vendor_footer")}
       </p>
     </div>
   );
 }
 
 function VendorInvoiceRow({ vi, orgById }) {
+  const { t } = useTranslation("common");
   const match = vi.match_report;
   const matchLabel = match
     ? match.result === "match"
-      ? { color: "#0A6131", l: "MATCH" }
+      ? { color: "#0A6131", l: t("page_finance.vendor_match_match") }
       : match.result === "partial_match"
-      ? { color: "#7E5212", l: "PARTIAL" }
+      ? { color: "#7E5212", l: t("page_finance.vendor_match_partial") }
       : match.result === "mismatch"
-      ? { color: "#991B1B", l: "MISMATCH" }
-      : { color: "#8B95A8", l: "NO PO" }
+      ? { color: "#991B1B", l: t("page_finance.vendor_match_mismatch") }
+      : { color: "#8B95A8", l: t("page_finance.vendor_match_no_po") }
     : null;
 
   return (
@@ -1291,8 +1307,10 @@ function VendorInvoiceRow({ vi, orgById }) {
           {vi.vendor_invoice_number}
         </div>
         <div style={{ fontFamily: MONO, fontSize: 10, color: "#8B95A8", marginTop: 1, fontWeight: 500 }}>
-          {(vi.linked_work_order_ids || []).length} WOs ·{" "}
-          {(vi.linked_budget_approval_ids || []).length} POs
+          {t("page_finance.vendor_wos_pos_count", {
+            wos: (vi.linked_work_order_ids || []).length,
+            pos: (vi.linked_budget_approval_ids || []).length,
+          })}
         </div>
       </div>
       <div
@@ -1309,7 +1327,7 @@ function VendorInvoiceRow({ vi, orgById }) {
         {orgById.get(vi.vendor_organization_id)?.legal_name || vi.vendor_organization_id.slice(-6)}
       </div>
       <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.14em" }}>
-        {vi.received_at ? formatAge(vi.received_at) + " ago" : "—"}
+        {vi.received_at ? t("page_finance.vendor_received_ago", { age: formatAge(vi.received_at) }) : "—"}
       </div>
       <div style={{ textAlign: "right" }}>
         <div

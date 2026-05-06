@@ -14,6 +14,7 @@
  */
 import { useMemo, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { api } from "../../../lib/api";
 import { useAuth } from "../../../contexts/AuthContext";
 import { useFetch } from "../../../lib/useFetch";
@@ -36,15 +37,15 @@ const INVOICE_STATUS = {
   void:    { dot: "#C8CDD8", color: "#8B95A8" },
 };
 
-const CATEGORY_LABEL = {
-  wo_base: "WO base",
-  after_hours_uplift: "After-hours uplift",
-  travel_flat: "Travel flat",
-  travel_mileage: "Travel km",
-  parts_markup: "Parts markup",
-  monthly_fee: "Monthly fee",
-  quarterly_fee: "Quarterly fee",
-  adjustment: "Adjustment",
+const CATEGORY_KEY = {
+  wo_base: "category_wo_base",
+  after_hours_uplift: "category_after_hours_uplift",
+  travel_flat: "category_travel_flat",
+  travel_mileage: "category_travel_mileage",
+  parts_markup: "category_parts_markup",
+  monthly_fee: "category_monthly_fee",
+  quarterly_fee: "category_quarterly_fee",
+  adjustment: "category_adjustment",
 };
 
 function StatusPill({ status }) {
@@ -68,6 +69,7 @@ function StatusPill({ status }) {
 }
 
 export default function InvoiceDetailPage() {
+  const { t } = useTranslation("common");
   const { invoice_id } = useParams();
   const location = useLocation();
   const { user } = useAuth();
@@ -87,11 +89,13 @@ export default function InvoiceDetailPage() {
 
   const inClientSpace = location.pathname.startsWith("/client");
   const backHref = inClientSpace ? "/client" : "/srs/finance";
-  const backLabel = inClientSpace ? "Status" : "Finance";
+  const backLabel = inClientSpace
+    ? t("page_finance_invoice.back_status")
+    : t("page_finance_invoice.back_finance");
 
-  if (loading) return <Centered text="cargando…" />;
-  if (error) return <Centered text={`error · ${error.message}`} />;
-  if (!inv) return <Centered text="—" />;
+  if (loading) return <Centered text={t("page_finance_invoice.loading")} />;
+  if (error) return <Centered text={t("page_finance_invoice.error_prefix", { message: error.message })} />;
+  if (!inv) return <Centered text={t("page_finance_invoice.dash")} />;
 
   return (
     <div style={{ padding: "32px 40px", maxWidth: 1400 }}>
@@ -100,7 +104,7 @@ export default function InvoiceDetailPage() {
       <div style={{ paddingLeft: 16, borderLeft: "3px solid #0A1628", marginBottom: 22 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6, flexWrap: "wrap" }}>
           <span style={{ ...MONO_CAPS, fontSize: 10, color: "#0A1628", letterSpacing: "0.16em" }}>
-            Invoice
+            {t("page_finance_invoice.kicker_invoice")}
           </span>
           <span style={{ ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.12em" }}>
             {inv.invoice_number}
@@ -108,7 +112,7 @@ export default function InvoiceDetailPage() {
           <StatusPill status={inv.status} />
           {inv.client_ref && (
             <span style={{ ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.12em" }}>
-              · client ref {inv.client_ref}
+              {t("page_finance_invoice.kicker_client_ref", { ref: inv.client_ref })}
             </span>
           )}
         </div>
@@ -125,19 +129,27 @@ export default function InvoiceDetailPage() {
           {org?.legal_name || inv.organization_id}
         </h1>
         <p style={{ fontFamily: JAKARTA, fontSize: 13.5, color: "#3D4A66", marginTop: 8, fontWeight: 500 }}>
-          Período {shortDate(inv.period_start)} → {shortDate(inv.period_end)} ·{" "}
-          {inv.generated_from_wo_count} WO{inv.generated_from_wo_count === 1 ? "" : "s"}
+          {t(
+            inv.generated_from_wo_count === 1
+              ? "page_finance_invoice.subtitle_period_one"
+              : "page_finance_invoice.subtitle_period_other",
+            {
+              start: shortDate(inv.period_start),
+              end: shortDate(inv.period_end),
+              count: inv.generated_from_wo_count,
+            }
+          )}
         </p>
       </div>
 
       {/* Totals strip + actions */}
       <SectionCard style={{ marginBottom: 16 }}>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 24, alignItems: "flex-end" }}>
-          <Stat label="Subtotal" value={`${inv.subtotal.toFixed(2)} ${inv.currency}`} />
-          <Stat label={`Tax (${inv.tax_rate_pct}%)`} value={`${inv.tax_amount.toFixed(2)} ${inv.currency}`} />
+          <Stat label={t("page_finance_invoice.stat_subtotal")} value={`${inv.subtotal.toFixed(2)} ${inv.currency}`} />
+          <Stat label={t("page_finance_invoice.stat_tax", { pct: inv.tax_rate_pct })} value={`${inv.tax_amount.toFixed(2)} ${inv.currency}`} />
           <div>
             <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.14em", marginBottom: 4 }}>
-              Total
+              {t("page_finance_invoice.stat_total")}
             </div>
             <div
               style={{
@@ -165,7 +177,7 @@ export default function InvoiceDetailPage() {
 
       {/* Lifecycle */}
       <SectionCard style={{ marginBottom: 16 }}>
-        <SectionTitle>Lifecycle</SectionTitle>
+        <SectionTitle>{t("page_finance_invoice.section_lifecycle")}</SectionTitle>
         <div
           style={{
             display: "grid",
@@ -173,11 +185,11 @@ export default function InvoiceDetailPage() {
             gap: 10,
           }}
         >
-          <TimelineStat label="Generado" iso={inv.created_at} />
-          <TimelineStat label="Emitido" iso={inv.issued_at || inv.sent_at} />
-          <TimelineStat label="Vence" iso={inv.due_date} tone={inv.status === "overdue" ? "danger" : "neutral"} />
+          <TimelineStat label={t("page_finance_invoice.lifecycle_generated")} iso={inv.created_at} />
+          <TimelineStat label={t("page_finance_invoice.lifecycle_issued")} iso={inv.issued_at || inv.sent_at} />
+          <TimelineStat label={t("page_finance_invoice.lifecycle_due")} iso={inv.due_date} tone={inv.status === "overdue" ? "danger" : "neutral"} />
           <TimelineStat
-            label={inv.status === "void" ? "Void" : "Cobrado"}
+            label={inv.status === "void" ? t("page_finance_invoice.lifecycle_void") : t("page_finance_invoice.lifecycle_paid")}
             iso={inv.paid_at || inv.void_at}
             tone={inv.status === "paid" ? "success" : "neutral"}
           />
@@ -194,7 +206,7 @@ export default function InvoiceDetailPage() {
             }}
           >
             <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#991B1B", letterSpacing: "0.14em", marginBottom: 4 }}>
-              Void reason
+              {t("page_finance_invoice.void_reason_label")}
             </div>
             <div style={{ fontFamily: JAKARTA, fontSize: 13, color: "#0A1628", fontWeight: 500 }}>
               {inv.void_reason}
@@ -207,7 +219,7 @@ export default function InvoiceDetailPage() {
       <SectionCard padding={0}>
         <header style={{ padding: "14px 18px", borderBottom: "1px solid #E2E5EC" }}>
           <SectionTitle marginBottom={0}>
-            Billing lines · {(inv.billing_lines || []).length}
+            {t("page_finance_invoice.billing_lines_title", { count: (inv.billing_lines || []).length })}
           </SectionTitle>
         </header>
         <div
@@ -224,16 +236,16 @@ export default function InvoiceDetailPage() {
             letterSpacing: "0.14em",
           }}
         >
-          <div>Descripción</div>
-          <div>Category</div>
-          <div style={{ textAlign: "right" }}>Qty</div>
-          <div style={{ textAlign: "right" }}>Unit</div>
-          <div style={{ textAlign: "right" }}>Subtotal</div>
+          <div>{t("page_finance_invoice.billing_col_description")}</div>
+          <div>{t("page_finance_invoice.billing_col_category")}</div>
+          <div style={{ textAlign: "right" }}>{t("page_finance_invoice.billing_col_qty")}</div>
+          <div style={{ textAlign: "right" }}>{t("page_finance_invoice.billing_col_unit")}</div>
+          <div style={{ textAlign: "right" }}>{t("page_finance_invoice.billing_col_subtotal")}</div>
         </div>
         <div>
           {(inv.billing_lines || []).length === 0 && (
             <div style={{ padding: "20px 18px", ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em" }}>
-              — sin lines —
+              {t("page_finance_invoice.billing_empty")}
             </div>
           )}
           {(inv.billing_lines || []).map((l, i) => (
@@ -275,12 +287,12 @@ export default function InvoiceDetailPage() {
                       fontWeight: 800,
                     }}
                   >
-                    {l.work_order_reference || "wo"} ↗
+                    {l.work_order_reference || t("page_finance_invoice.billing_link_wo_default")} ↗
                   </Link>
                 )}
               </div>
               <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.14em" }}>
-                {CATEGORY_LABEL[l.category] || l.category}
+                {CATEGORY_KEY[l.category] ? t(`page_finance_invoice.${CATEGORY_KEY[l.category]}`) : l.category}
               </div>
               <div
                 style={{
@@ -332,7 +344,7 @@ export default function InvoiceDetailPage() {
           }}
         >
           <div style={{ ...MONO_CAPS, fontSize: 10, color: "#3D4A66", letterSpacing: "0.14em", textAlign: "right" }}>
-            Total
+            {t("page_finance_invoice.billing_total_label")}
           </div>
           <div
             style={{
@@ -356,7 +368,7 @@ export default function InvoiceDetailPage() {
 
       {inv.notes && (
         <SectionCard style={{ marginTop: 16 }}>
-          <SectionTitle marginBottom={6}>Notas</SectionTitle>
+          <SectionTitle marginBottom={6}>{t("page_finance_invoice.section_notes")}</SectionTitle>
           <p
             style={{
               fontFamily: JAKARTA,
@@ -373,7 +385,7 @@ export default function InvoiceDetailPage() {
       )}
 
       <p style={{ marginTop: 24, ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em" }}>
-        Iter 2.29 · X-b + X-g · PDF + email outbox · SMTP/PDF workers Horizonte 3
+        {t("page_finance_invoice.footer_iter")}
       </p>
     </div>
   );
@@ -382,6 +394,7 @@ export default function InvoiceDetailPage() {
 /* ─── Status actions ───────────────────────────────────────────── */
 
 function SendAction({ inv, reload }) {
+  const { t } = useTranslation("common");
   const [open, setOpen] = useState(false);
   const [due, setDue] = useState(30);
 
@@ -393,18 +406,18 @@ function SendAction({ inv, reload }) {
   return (
     <>
       <button type="button" onClick={() => setOpen(true)} className="btn-trigger-v2">
-        Emitir al cliente
+        {t("page_finance_invoice.send_btn")}
       </button>
       <ActionDialog
         open={open}
         onClose={() => setOpen(false)}
-        title="Emitir invoice"
-        subtitle="Draft → sent. Fija issued_at + due_date."
-        submitLabel="Emitir"
+        title={t("page_finance_invoice.send_title")}
+        subtitle={t("page_finance_invoice.send_subtitle")}
+        submitLabel={t("page_finance_invoice.send_submit")}
         onSubmit={submit}
       >
         <div>
-          <DialogLabel htmlFor="sa-due">Due in days</DialogLabel>
+          <DialogLabel htmlFor="sa-due">{t("page_finance_invoice.send_due_label")}</DialogLabel>
           <DialogInput
             id="sa-due"
             type="number"
@@ -414,8 +427,7 @@ function SendAction({ inv, reload }) {
           />
         </div>
         <p style={{ fontFamily: JAKARTA, fontSize: 11.5, color: "#8B95A8", lineHeight: 1.5, fontWeight: 500 }}>
-          Cuando tengamos SMTP worker (Horizonte 3), este botón dispara email automático al cliente.
-          Hoy solo cambia status + audit log.
+          {t("page_finance_invoice.send_helper")}
         </p>
       </ActionDialog>
     </>
@@ -423,6 +435,7 @@ function SendAction({ inv, reload }) {
 }
 
 function MarkPaidAction({ inv, reload }) {
+  const { t } = useTranslation("common");
   const [open, setOpen] = useState(false);
   const [paidAt, setPaidAt] = useState("");
   const [notes, setNotes] = useState("");
@@ -464,32 +477,32 @@ function MarkPaidAction({ inv, reload }) {
           e.currentTarget.style.boxShadow = "0 2px 6px -1px rgba(22, 163, 74, 0.32)";
         }}
       >
-        Marcar cobrada
+        {t("page_finance_invoice.paid_btn")}
       </button>
       <ActionDialog
         open={open}
         onClose={() => setOpen(false)}
-        title="Marcar cobrada"
-        subtitle={`Total ${inv.total.toFixed(2)} ${inv.currency}`}
-        submitLabel="Confirmar"
+        title={t("page_finance_invoice.paid_title")}
+        subtitle={t("page_finance_invoice.paid_subtitle", { total: inv.total.toFixed(2), currency: inv.currency })}
+        submitLabel={t("page_finance_invoice.paid_submit")}
         onSubmit={submit}
       >
         <div>
           <DialogLabel htmlFor="mp-date" optional>
-            Fecha de cobro (default hoy)
+            {t("page_finance_invoice.paid_date_label")}
           </DialogLabel>
           <DialogInput id="mp-date" type="date" value={paidAt} onChange={(e) => setPaidAt(e.target.value)} />
         </div>
         <div>
           <DialogLabel htmlFor="mp-notes" optional>
-            Notas
+            {t("page_finance_invoice.paid_notes_label")}
           </DialogLabel>
           <DialogTextarea
             id="mp-notes"
             rows={2}
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="Wire ref / check # / exchange rate"
+            placeholder={t("page_finance_invoice.paid_notes_placeholder")}
           />
         </div>
       </ActionDialog>
@@ -498,6 +511,7 @@ function MarkPaidAction({ inv, reload }) {
 }
 
 function VoidAction({ inv, reload }) {
+  const { t } = useTranslation("common");
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState("");
 
@@ -536,26 +550,26 @@ function VoidAction({ inv, reload }) {
           e.currentTarget.style.background = "#FFFFFF";
         }}
       >
-        Void
+        {t("page_finance_invoice.void_btn")}
       </button>
       <ActionDialog
         open={open}
         onClose={() => setOpen(false)}
-        title="Void invoice"
-        subtitle="Invalida y libera los WOs para re-billing en otra factura."
-        submitLabel="Void"
+        title={t("page_finance_invoice.void_title")}
+        subtitle={t("page_finance_invoice.void_subtitle")}
+        submitLabel={t("page_finance_invoice.void_submit")}
         destructive
         submitDisabled={!canSubmit}
         onSubmit={submit}
       >
         <div>
-          <DialogLabel htmlFor="va-reason">Razón</DialogLabel>
+          <DialogLabel htmlFor="va-reason">{t("page_finance_invoice.void_reason_input_label")}</DialogLabel>
           <DialogTextarea
             id="va-reason"
             rows={3}
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            placeholder="Emitida con error · cliente pide re-agrupar · currency equivocado…"
+            placeholder={t("page_finance_invoice.void_reason_placeholder")}
             required
           />
         </div>
@@ -589,6 +603,7 @@ function Stat({ label, value }) {
 }
 
 function TimelineStat({ label, iso, tone = "neutral" }) {
+  const { t } = useTranslation("common");
   const valueColor =
     tone === "success" ? "#0A6131" : tone === "danger" ? "#991B1B" : "#0A1628";
   return (
@@ -608,7 +623,7 @@ function TimelineStat({ label, iso, tone = "neutral" }) {
       </div>
       {iso && (
         <div style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.14em", marginTop: 2 }}>
-          {formatAge(iso)} ago
+          {t("page_finance_invoice.ago_suffix", { age: formatAge(iso) })}
         </div>
       )}
     </div>
@@ -644,6 +659,7 @@ function shortDate(iso) {
 /* ─── P&L 3 márgenes (X-g) ─────────────────────────────────────── */
 
 function InvoicePnLSection({ invoice }) {
+  const { t } = useTranslation("common");
   const { data: pnl, loading, error } = useFetch(`/invoices/${invoice.id}/pnl`, {
     deps: [invoice.id],
   });
@@ -651,9 +667,9 @@ function InvoicePnLSection({ invoice }) {
   if (loading) {
     return (
       <SectionCard style={{ marginTop: 16 }}>
-        <SectionTitle marginBottom={4}>P&L · 3 márgenes</SectionTitle>
+        <SectionTitle marginBottom={4}>{t("page_finance_invoice.pnl_section_title_loading")}</SectionTitle>
         <div style={{ ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em" }}>
-          calculando…
+          {t("page_finance_invoice.pnl_computing")}
         </div>
       </SectionCard>
     );
@@ -661,9 +677,9 @@ function InvoicePnLSection({ invoice }) {
   if (error || !pnl) {
     return (
       <SectionCard style={{ marginTop: 16 }}>
-        <SectionTitle marginBottom={4}>P&L · 3 márgenes</SectionTitle>
+        <SectionTitle marginBottom={4}>{t("page_finance_invoice.pnl_section_title_error")}</SectionTitle>
         <p style={{ fontFamily: JAKARTA, fontSize: 13, color: "#991B1B", fontWeight: 500 }}>
-          {error?.message || "No se pudo computar P&L"}
+          {error?.message || t("page_finance_invoice.pnl_error_default")}
         </p>
       </SectionCard>
     );
@@ -675,27 +691,38 @@ function InvoicePnLSection({ invoice }) {
   return (
     <SectionCard padding={0} style={{ marginTop: 16 }}>
       <header style={{ padding: "14px 18px", borderBottom: "1px solid #E2E5EC" }}>
-        <SectionTitle marginBottom={4}>P&L · 3 márgenes · X-g Fase 2</SectionTitle>
+        <SectionTitle marginBottom={4}>{t("page_finance_invoice.pnl_section_title")}</SectionTitle>
         <div style={{ fontFamily: JAKARTA, fontSize: 14, fontWeight: 700, color: "#0A1628" }}>
-          Revenue {pnl.revenue.toFixed(2)} {pnl.currency} ·{" "}
+          {t("page_finance_invoice.pnl_revenue_line", { revenue: pnl.revenue.toFixed(2), currency: pnl.currency })}
           <span style={{ color: "#3D4A66", fontWeight: 500 }}>
-            cost committed {pnl.cost_committed.toFixed(2)} · cash out {pnl.cash_out.toFixed(2)}
+            {t("page_finance_invoice.pnl_costs_line", {
+              committed: pnl.cost_committed.toFixed(2),
+              cash: pnl.cash_out.toFixed(2),
+            })}
           </span>
         </div>
         <div style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.14em", marginTop: 6 }}>
-          Coverage {coverage.wo_with_any_cost}/{coverage.wo_count} ({coverage.pct_any_cost?.toFixed(0)}%)
+          {t("page_finance_invoice.pnl_coverage_line", {
+            withCost: coverage.wo_with_any_cost,
+            total: coverage.wo_count,
+            pct: coverage.pct_any_cost?.toFixed(0),
+          })}
           {" · "}
-          <span style={{ color: "#0A1628", fontWeight: 800 }}>{coverage.wo_with_vendor_invoice} vendor_invoice</span>
+          <span style={{ color: "#0A1628", fontWeight: 800 }}>
+            {t("page_finance_invoice.pnl_coverage_vendor", { count: coverage.wo_with_vendor_invoice })}
+          </span>
           {" · "}
-          <span style={{ color: "#3D4A66", fontWeight: 700 }}>{coverage.wo_with_snapshot} snapshot</span>
+          <span style={{ color: "#3D4A66", fontWeight: 700 }}>
+            {t("page_finance_invoice.pnl_coverage_snapshot", { count: coverage.wo_with_snapshot })}
+          </span>
           {coverage.wo_with_both > 0 && (
             <span style={{ marginLeft: 6, color: "#1E40AF", fontWeight: 700 }}>
-              · {coverage.wo_with_both} both (vendor gana)
+              {t("page_finance_invoice.pnl_coverage_both", { count: coverage.wo_with_both })}
             </span>
           )}
           {lowCoverage && (
             <span style={{ marginLeft: 8, color: "#7E5212", fontWeight: 800 }}>
-              · low coverage — P&L incompleto
+              {t("page_finance_invoice.pnl_coverage_low")}
             </span>
           )}
         </div>
@@ -710,34 +737,34 @@ function InvoicePnLSection({ invoice }) {
         }}
       >
         <MarginCard
-          label="Nominal"
+          label={t("page_finance_invoice.pnl_margin_nominal")}
           tone="primary"
           data={pnl.margins.nominal}
           currency={pnl.currency}
           footnote={pnl.margins.nominal.based_on}
         />
         <MarginCard
-          label="Cash-flow"
+          label={t("page_finance_invoice.pnl_margin_cash_flow")}
           tone={pnl.margins.cash_flow.invoice_paid ? "success" : "muted"}
           data={pnl.margins.cash_flow}
           currency={pnl.currency}
           footnote={
             pnl.margins.cash_flow.invoice_paid
-              ? `invoice paid · cash out ${pnl.margins.cash_flow.cash_out.toFixed(2)} (solo vendors paid)`
-              : "invoice no-paid aún · revenue=0 hasta cobro"
+              ? t("page_finance_invoice.pnl_margin_paid_footnote", { cash: pnl.margins.cash_flow.cash_out.toFixed(2) })
+              : t("page_finance_invoice.pnl_margin_unpaid_footnote")
           }
         />
         <MarginCard
-          label="Proxy-adjusted"
+          label={t("page_finance_invoice.pnl_margin_proxy")}
           tone="warning"
           data={pnl.margins.proxy_adjusted}
           currency={pnl.currency}
-          footnote={`menos ${pnl.coordination_cost.toFixed(2)} coordination absorbido`}
+          footnote={t("page_finance_invoice.pnl_margin_proxy_footnote", { coordination: pnl.coordination_cost.toFixed(2) })}
         />
       </div>
 
       <div style={{ padding: "14px 18px", borderTop: "1px solid #E2E5EC" }}>
-        <SectionTitle marginBottom={10}>Per-WO breakdown</SectionTitle>
+        <SectionTitle marginBottom={10}>{t("page_finance_invoice.pnl_per_wo_title")}</SectionTitle>
         <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 380, overflowY: "auto" }}>
           {(pnl.per_wo || []).map((w) => (
             <Link
@@ -764,7 +791,7 @@ function InvoicePnLSection({ invoice }) {
                     <CostSourcePill source={w.cost_source} />
                     {w.vendor_invoices_count > 0 && (
                       <span style={{ ...MONO_CAPS, fontSize: 9.5, color: "#0A1628", letterSpacing: "0.12em", fontWeight: 800 }}>
-                        · {w.vendor_invoices_count} VI
+                        {t("page_finance_invoice.pnl_per_wo_vi_count", { count: w.vendor_invoices_count })}
                       </span>
                     )}
                   </div>
@@ -785,7 +812,7 @@ function InvoicePnLSection({ invoice }) {
                 <div style={{ textAlign: "right", flexShrink: 0 }}>
                   {w.cost_source === "none" ? (
                     <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#8B95A8", letterSpacing: "0.14em" }}>
-                      sin cost
+                      {t("page_finance_invoice.pnl_per_wo_no_cost")}
                     </div>
                   ) : (
                     <>
@@ -811,7 +838,7 @@ function InvoicePnLSection({ invoice }) {
                             marginTop: 2,
                           }}
                         >
-                          {w.cash_out.toFixed(2)} cash
+                          {w.cash_out.toFixed(2)}{t("page_finance_invoice.pnl_per_wo_cash_suffix")}
                         </div>
                       )}
                       {w.coordination_cost > 0 && (
@@ -825,7 +852,7 @@ function InvoicePnLSection({ invoice }) {
                             marginTop: 2,
                           }}
                         >
-                          +{w.coordination_cost.toFixed(2)} coord
+                          +{w.coordination_cost.toFixed(2)}{t("page_finance_invoice.pnl_per_wo_coord_suffix")}
                         </div>
                       )}
                     </>
@@ -847,24 +874,25 @@ function InvoicePnLSection({ invoice }) {
           letterSpacing: "0.14em",
         }}
       >
-        X-g Fase 2 · vendor_invoices prioritarias (AP real) · cost_snapshot fallback
+        {t("page_finance_invoice.pnl_footer")}
       </div>
     </SectionCard>
   );
 }
 
 function CostSourcePill({ source }) {
+  const { t } = useTranslation("common");
   if (source === "vendor_invoice") {
     return (
       <span style={{ ...MONO_CAPS, fontSize: 9.5, color: "#0A1628", letterSpacing: "0.12em", fontWeight: 800 }}>
-        · vendor_invoice
+        {t("page_finance_invoice.pnl_cost_source_vendor")}
       </span>
     );
   }
   if (source === "cost_snapshot") {
     return (
       <span style={{ ...MONO_CAPS, fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.12em", fontWeight: 700 }}>
-        · snapshot
+        {t("page_finance_invoice.pnl_cost_source_snapshot")}
       </span>
     );
   }

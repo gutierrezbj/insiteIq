@@ -11,6 +11,7 @@
  */
 import { useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { api } from "../../../lib/api";
 import { useAuth } from "../../../contexts/AuthContext";
 import { useFetch } from "../../../lib/useFetch";
@@ -27,22 +28,23 @@ import MetaRow from "../../../components/v2-shared/MetaRow";
 import { JAKARTA, MONO, MONO_CAPS } from "../../../components/v2-shared/typography";
 
 const VI_STATUS = {
-  received: { dot: "#8B95A8", color: "#3D4A66", label: "received" },
-  matched:  { dot: "#1E3A8A", color: "#1E40AF", label: "matched" },
-  approved: { dot: "#E8A33D", color: "#7E5212", label: "approved · ready to pay" },
-  paid:     { dot: "#16A34A", color: "#0A6131", label: "paid" },
-  disputed: { dot: "#DC2626", color: "#991B1B", label: "disputed" },
-  rejected: { dot: "#C8CDD8", color: "#8B95A8", label: "rejected" },
+  received: { dot: "#8B95A8", color: "#3D4A66", labelKey: "vi_status_received" },
+  matched:  { dot: "#1E3A8A", color: "#1E40AF", labelKey: "vi_status_matched" },
+  approved: { dot: "#E8A33D", color: "#7E5212", labelKey: "vi_status_approved" },
+  paid:     { dot: "#16A34A", color: "#0A6131", labelKey: "vi_status_paid" },
+  disputed: { dot: "#DC2626", color: "#991B1B", labelKey: "vi_status_disputed" },
+  rejected: { dot: "#C8CDD8", color: "#8B95A8", labelKey: "vi_status_rejected" },
 };
 
 const MATCH_LOOK = {
-  match:         { color: "#0A6131", label: "MATCH" },
-  partial_match: { color: "#7E5212", label: "PARTIAL" },
-  mismatch:      { color: "#991B1B", label: "MISMATCH" },
-  no_po:         { color: "#8B95A8", label: "NO PO" },
+  match:         { color: "#0A6131", labelKey: "match_result_match" },
+  partial_match: { color: "#7E5212", labelKey: "match_result_partial" },
+  mismatch:      { color: "#991B1B", labelKey: "match_result_mismatch" },
+  no_po:         { color: "#8B95A8", labelKey: "match_result_no_po" },
 };
 
 function StatusPill({ status }) {
+  const { t } = useTranslation("common");
   const s = VI_STATUS[status] || VI_STATUS.received;
   return (
     <span
@@ -57,12 +59,13 @@ function StatusPill({ status }) {
       }}
     >
       <span style={{ width: 6, height: 6, borderRadius: "50%", background: s.dot }} />
-      {s.label}
+      {t(`page_finance_vendor_invoice.${s.labelKey}`)}
     </span>
   );
 }
 
 export default function VendorInvoiceDetailPage() {
+  const { t } = useTranslation("common");
   const { vi_id } = useParams();
   const { user } = useAuth();
   const srsMem = user?.memberships?.find((m) => m.space === "srs_coordinators");
@@ -79,20 +82,20 @@ export default function VendorInvoiceDetailPage() {
     return orgs.find((o) => o.id === vi.vendor_organization_id);
   }, [vi, orgs]);
 
-  if (loading) return <Centered text="cargando…" />;
-  if (error) return <Centered text={`error · ${error.message}`} />;
-  if (!vi) return <Centered text="—" />;
+  if (loading) return <Centered text={t("page_finance_vendor_invoice.loading")} />;
+  if (error) return <Centered text={t("page_finance_vendor_invoice.error_prefix", { message: error.message })} />;
+  if (!vi) return <Centered text={t("page_finance_vendor_invoice.dash")} />;
 
   const match = vi.match_report;
 
   return (
     <div style={{ padding: "32px 40px", maxWidth: 1400 }}>
-      <BackLinkV2 to="/srs/finance" label="Finance" />
+      <BackLinkV2 to="/srs/finance" label={t("page_finance_vendor_invoice.back_finance")} />
 
       <div style={{ paddingLeft: 16, borderLeft: "3px solid #0A1628", marginBottom: 22 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6, flexWrap: "wrap" }}>
           <span style={{ ...MONO_CAPS, fontSize: 10, color: "#0A1628", letterSpacing: "0.16em" }}>
-            Vendor invoice · AP
+            {t("page_finance_vendor_invoice.kicker_vendor_invoice")}
           </span>
           <span style={{ ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.12em" }}>
             {vi.vendor_invoice_number}
@@ -112,20 +115,20 @@ export default function VendorInvoiceDetailPage() {
           {vendor?.legal_name || vi.vendor_organization_id}
         </h1>
         <p style={{ fontFamily: JAKARTA, fontSize: 13.5, color: "#3D4A66", marginTop: 8, fontWeight: 500 }}>
-          Received {shortDate(vi.received_at)}
-          {vi.issued_at && ` · issued ${shortDate(vi.issued_at)}`}
-          {vi.due_date && ` · due ${shortDate(vi.due_date)}`}
+          {t("page_finance_vendor_invoice.subtitle_received", { date: shortDate(vi.received_at) })}
+          {vi.issued_at && t("page_finance_vendor_invoice.subtitle_issued", { date: shortDate(vi.issued_at) })}
+          {vi.due_date && t("page_finance_vendor_invoice.subtitle_due", { date: shortDate(vi.due_date) })}
         </p>
       </div>
 
       {/* Totals + actions */}
       <SectionCard style={{ marginBottom: 16 }}>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 24, alignItems: "flex-end" }}>
-          <Stat label="Subtotal" value={`${vi.subtotal.toFixed(2)} ${vi.currency}`} />
-          <Stat label={`Tax (${vi.tax_rate_pct}%)`} value={`${vi.tax_amount.toFixed(2)} ${vi.currency}`} />
+          <Stat label={t("page_finance_vendor_invoice.stat_subtotal")} value={`${vi.subtotal.toFixed(2)} ${vi.currency}`} />
+          <Stat label={t("page_finance_vendor_invoice.stat_tax", { pct: vi.tax_rate_pct })} value={`${vi.tax_amount.toFixed(2)} ${vi.currency}`} />
           <div>
             <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.14em", marginBottom: 4 }}>
-              Total a pagar
+              {t("page_finance_vendor_invoice.stat_total_payable")}
             </div>
             <div
               style={{
@@ -161,11 +164,10 @@ export default function VendorInvoiceDetailPage() {
 
       {/* Three-way match */}
       <SectionCard style={{ marginBottom: 16 }}>
-        <SectionTitle>Three-way match</SectionTitle>
+        <SectionTitle>{t("page_finance_vendor_invoice.section_three_way_match")}</SectionTitle>
         {!match ? (
           <p style={{ fontFamily: JAKARTA, fontSize: 13, color: "#3D4A66", lineHeight: 1.55, fontWeight: 500 }}>
-            Aún no corrido. El match compara PO (budget_approval totals) ↔ vendor invoice ↔ receipts
-            (tech_captures.parts_used). Corre cuando tengas al menos un linked_budget_approval_id.
+            {t("page_finance_vendor_invoice.match_pending_subtitle")}
           </p>
         ) : (
           <div
@@ -177,7 +179,7 @@ export default function VendorInvoiceDetailPage() {
           >
             <div>
               <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.14em", marginBottom: 4 }}>
-                Resultado
+                {t("page_finance_vendor_invoice.match_label_result")}
               </div>
               <div
                 style={{
@@ -188,17 +190,23 @@ export default function VendorInvoiceDetailPage() {
                   letterSpacing: "-0.01em",
                 }}
               >
-                {MATCH_LOOK[match.result]?.label || match.result}
+                {MATCH_LOOK[match.result]
+                  ? t(`page_finance_vendor_invoice.${MATCH_LOOK[match.result].labelKey}`)
+                  : match.result}
               </div>
             </div>
-            <MatchStat label="PO total" value={`${match.po_total.toFixed(2)} ${vi.currency}`} />
-            <MatchStat label="Invoice" value={`${match.invoice_total.toFixed(2)} ${vi.currency}`} />
+            <MatchStat label={t("page_finance_vendor_invoice.match_label_po_total")} value={`${match.po_total.toFixed(2)} ${vi.currency}`} />
+            <MatchStat label={t("page_finance_vendor_invoice.match_label_invoice")} value={`${match.invoice_total.toFixed(2)} ${vi.currency}`} />
             <MatchStat
-              label="Variance"
-              value={`${match.variance >= 0 ? "+" : ""}${match.variance.toFixed(2)} (${match.variance_pct.toFixed(1)}%)`}
+              label={t("page_finance_vendor_invoice.match_label_variance")}
+              value={t("page_finance_vendor_invoice.match_variance_value", {
+                sign: match.variance >= 0 ? "+" : "",
+                amount: match.variance.toFixed(2),
+                pct: match.variance_pct.toFixed(1),
+              })}
               valueColor={Math.abs(match.variance_pct) > 5 ? "#7E5212" : "#0A1628"}
             />
-            <MatchStat label="Receipts" value={`${match.receipt_matched_items} items`} />
+            <MatchStat label={t("page_finance_vendor_invoice.match_label_receipts")} value={t("page_finance_vendor_invoice.match_receipts_value", { count: match.receipt_matched_items })} />
           </div>
         )}
       </SectionCard>
@@ -212,19 +220,19 @@ export default function VendorInvoiceDetailPage() {
         }}
       >
         <SectionCard>
-          <SectionTitle>Trazabilidad</SectionTitle>
+          <SectionTitle>{t("page_finance_vendor_invoice.section_traceability")}</SectionTitle>
           <dl style={{ display: "flex", flexDirection: "column" }}>
-            <MetaRow label="Vendor" value={vendor?.legal_name || vi.vendor_organization_id} />
-            <MetaRow label="SRS entity" value={vi.srs_entity_id || "—"} />
-            <MetaRow label="Vendor ref" value={vi.vendor_invoice_number} />
-            <MetaRow label="Linked WOs" value={(vi.linked_work_order_ids || []).length} />
-            <MetaRow label="Linked POs" value={(vi.linked_budget_approval_ids || []).length} />
+            <MetaRow label={t("page_finance_vendor_invoice.trace_vendor")} value={vendor?.legal_name || vi.vendor_organization_id} />
+            <MetaRow label={t("page_finance_vendor_invoice.trace_srs_entity")} value={vi.srs_entity_id || "—"} />
+            <MetaRow label={t("page_finance_vendor_invoice.trace_vendor_ref")} value={vi.vendor_invoice_number} />
+            <MetaRow label={t("page_finance_vendor_invoice.trace_linked_wos")} value={(vi.linked_work_order_ids || []).length} />
+            <MetaRow label={t("page_finance_vendor_invoice.trace_linked_pos")} value={(vi.linked_budget_approval_ids || []).length} />
           </dl>
 
           {(vi.linked_work_order_ids || []).length > 0 && (
             <div style={{ marginTop: 14 }}>
               <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.14em", marginBottom: 8 }}>
-                WOs vinculadas
+                {t("page_finance_vendor_invoice.trace_linked_wos_title")}
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                 {vi.linked_work_order_ids.map((woId) => (
@@ -257,17 +265,17 @@ export default function VendorInvoiceDetailPage() {
         </SectionCard>
 
         <SectionCard>
-          <SectionTitle>Lifecycle</SectionTitle>
+          <SectionTitle>{t("page_finance_vendor_invoice.section_lifecycle")}</SectionTitle>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-            <TimelineStat label="Received" iso={vi.received_at} />
-            <TimelineStat label="Approved" iso={vi.approved_at} by={vi.approved_by} />
+            <TimelineStat label={t("page_finance_vendor_invoice.lifecycle_received")} iso={vi.received_at} />
+            <TimelineStat label={t("page_finance_vendor_invoice.lifecycle_approved")} iso={vi.approved_at} by={vi.approved_by} />
             <TimelineStat
-              label={vi.status === "disputed" ? "Disputed" : "Paid"}
+              label={vi.status === "disputed" ? t("page_finance_vendor_invoice.lifecycle_disputed") : t("page_finance_vendor_invoice.lifecycle_paid")}
               iso={vi.paid_at || vi.disputed_at}
               by={vi.paid_by}
               tone={vi.status === "disputed" ? "danger" : "success"}
             />
-            <TimelineStat label="Rejected" iso={vi.rejected_at} tone="danger" />
+            <TimelineStat label={t("page_finance_vendor_invoice.lifecycle_rejected")} iso={vi.rejected_at} tone="danger" />
           </div>
           {vi.wire_ref && (
             <div
@@ -280,7 +288,7 @@ export default function VendorInvoiceDetailPage() {
               }}
             >
               <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.14em", marginBottom: 4 }}>
-                Wire ref
+                {t("page_finance_vendor_invoice.lifecycle_wire_ref")}
               </div>
               <div style={{ fontFamily: MONO, fontSize: 13, color: "#0A6131", fontWeight: 700 }}>
                 {vi.wire_ref}
@@ -288,10 +296,10 @@ export default function VendorInvoiceDetailPage() {
             </div>
           )}
           {vi.dispute_reason && (
-            <CalloutBox tone="danger" label="Dispute reason" text={vi.dispute_reason} />
+            <CalloutBox tone="danger" label={t("page_finance_vendor_invoice.callout_dispute_reason")} text={vi.dispute_reason} />
           )}
           {vi.reject_reason && (
-            <CalloutBox tone="muted" label="Reject reason" text={vi.reject_reason} />
+            <CalloutBox tone="muted" label={t("page_finance_vendor_invoice.callout_reject_reason")} text={vi.reject_reason} />
           )}
         </SectionCard>
       </div>
@@ -299,7 +307,7 @@ export default function VendorInvoiceDetailPage() {
       {(vi.lines || []).length > 0 && (
         <SectionCard padding={0} style={{ marginTop: 16 }}>
           <header style={{ padding: "14px 18px", borderBottom: "1px solid #E2E5EC" }}>
-            <SectionTitle marginBottom={0}>Invoice lines · {vi.lines.length}</SectionTitle>
+            <SectionTitle marginBottom={0}>{t("page_finance_vendor_invoice.lines_title", { count: vi.lines.length })}</SectionTitle>
           </header>
           <div>
             {vi.lines.map((l, i) => (
@@ -357,7 +365,7 @@ export default function VendorInvoiceDetailPage() {
 
       {vi.notes && (
         <SectionCard style={{ marginTop: 16 }}>
-          <SectionTitle marginBottom={6}>Notas</SectionTitle>
+          <SectionTitle marginBottom={6}>{t("page_finance_vendor_invoice.section_notes")}</SectionTitle>
           <p
             style={{
               fontFamily: JAKARTA,
@@ -374,7 +382,7 @@ export default function VendorInvoiceDetailPage() {
       )}
 
       <p style={{ marginTop: 24, ...MONO_CAPS, fontSize: 10, color: "#8B95A8", letterSpacing: "0.14em" }}>
-        Iter 2.30 · X-d AP · trazabilidad deudas con proveedores · audit log graba todo
+        {t("page_finance_vendor_invoice.footer_iter")}
       </p>
     </div>
   );
@@ -383,6 +391,7 @@ export default function VendorInvoiceDetailPage() {
 /* ─── Actions ──────────────────────────────────────────────────── */
 
 function MatchAction({ vi, reload }) {
+  const { t } = useTranslation("common");
   const [busy, setBusy] = useState(false);
   async function run() {
     setBusy(true);
@@ -424,12 +433,13 @@ function MatchAction({ vi, reload }) {
         e.currentTarget.style.background = "#FFFFFF";
       }}
     >
-      {busy ? "matching…" : "Run match"}
+      {busy ? t("page_finance_vendor_invoice.match_btn_running") : t("page_finance_vendor_invoice.match_btn_label")}
     </button>
   );
 }
 
 function ApproveAction({ vi, reload }) {
+  const { t } = useTranslation("common");
   const [open, setOpen] = useState(false);
   const [notes, setNotes] = useState("");
   const [override, setOverride] = useState(false);
@@ -445,14 +455,14 @@ function ApproveAction({ vi, reload }) {
   return (
     <>
       <button type="button" onClick={() => setOpen(true)} className="btn-trigger-v2">
-        Aprobar
+        {t("page_finance_vendor_invoice.approve_btn")}
       </button>
       <ActionDialog
         open={open}
         onClose={() => setOpen(false)}
-        title="Aprobar vendor invoice"
-        subtitle={`${vi.total.toFixed(2)} ${vi.currency} · ready-to-pay`}
-        submitLabel="Aprobar"
+        title={t("page_finance_vendor_invoice.approve_title")}
+        subtitle={t("page_finance_vendor_invoice.approve_subtitle", { total: vi.total.toFixed(2), currency: vi.currency })}
+        submitLabel={t("page_finance_vendor_invoice.approve_submit")}
         submitDisabled={mismatch && !override}
         onSubmit={submit}
       >
@@ -467,17 +477,19 @@ function ApproveAction({ vi, reload }) {
             }}
           >
             <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#991B1B", letterSpacing: "0.14em", marginBottom: 6 }}>
-              ⚠ Match reporta MISMATCH
+              {t("page_finance_vendor_invoice.approve_mismatch_warning")}
             </div>
             <p style={{ fontFamily: JAKARTA, fontSize: 13, color: "#0A1628", fontWeight: 500, lineHeight: 1.5 }}>
-              Variance {vi.match_report?.variance_pct?.toFixed(1)}% entre PO
-              (${vi.match_report?.po_total?.toFixed(2)}) e invoice
-              (${vi.match_report?.invoice_total?.toFixed(2)}).
+              {t("page_finance_vendor_invoice.approve_mismatch_body", {
+                pct: vi.match_report?.variance_pct?.toFixed(1),
+                po: vi.match_report?.po_total?.toFixed(2),
+                invoice: vi.match_report?.invoice_total?.toFixed(2),
+              })}
             </p>
             <div style={{ marginTop: 10 }}>
               <DialogCheckbox
                 id="vi-ovr"
-                label="Override mismatch (queda audited)"
+                label={t("page_finance_vendor_invoice.approve_override_label")}
                 checked={override}
                 onChange={setOverride}
               />
@@ -486,7 +498,7 @@ function ApproveAction({ vi, reload }) {
         )}
         <div>
           <DialogLabel htmlFor="vi-an" optional>
-            Notas
+            {t("page_finance_vendor_invoice.approve_notes_label")}
           </DialogLabel>
           <DialogTextarea
             id="vi-an"
@@ -501,6 +513,7 @@ function ApproveAction({ vi, reload }) {
 }
 
 function PaidAction({ vi, reload }) {
+  const { t } = useTranslation("common");
   const [open, setOpen] = useState(false);
   const [wire, setWire] = useState("");
   const [paidAt, setPaidAt] = useState("");
@@ -542,30 +555,30 @@ function PaidAction({ vi, reload }) {
           e.currentTarget.style.boxShadow = "0 2px 6px -1px rgba(22, 163, 74, 0.32)";
         }}
       >
-        Pagar
+        {t("page_finance_vendor_invoice.paid_btn")}
       </button>
       <ActionDialog
         open={open}
         onClose={() => setOpen(false)}
-        title="Marcar pagada"
-        subtitle={`${vi.total.toFixed(2)} ${vi.currency} · wire_ref requerido`}
-        submitLabel="Confirmar pago"
+        title={t("page_finance_vendor_invoice.paid_title")}
+        subtitle={t("page_finance_vendor_invoice.paid_subtitle", { total: vi.total.toFixed(2), currency: vi.currency })}
+        submitLabel={t("page_finance_vendor_invoice.paid_submit")}
         submitDisabled={!wire.trim()}
         onSubmit={submit}
       >
         <div>
-          <DialogLabel htmlFor="vip-wire">Wire ref / check #</DialogLabel>
+          <DialogLabel htmlFor="vip-wire">{t("page_finance_vendor_invoice.paid_wire_label")}</DialogLabel>
           <DialogInput
             id="vip-wire"
             value={wire}
             onChange={(e) => setWire(e.target.value)}
-            placeholder="WIRE-20260421-FERVI-001"
+            placeholder={t("page_finance_vendor_invoice.paid_wire_placeholder")}
             required
           />
         </div>
         <div>
           <DialogLabel htmlFor="vip-date" optional>
-            Fecha de pago (default hoy)
+            {t("page_finance_vendor_invoice.paid_date_label")}
           </DialogLabel>
           <DialogInput
             id="vip-date"
@@ -576,7 +589,7 @@ function PaidAction({ vi, reload }) {
         </div>
         <div>
           <DialogLabel htmlFor="vip-notes" optional>
-            Notas
+            {t("page_finance_vendor_invoice.paid_notes_label")}
           </DialogLabel>
           <DialogTextarea
             id="vip-notes"
@@ -591,6 +604,7 @@ function PaidAction({ vi, reload }) {
 }
 
 function DisputeAction({ vi, reload }) {
+  const { t } = useTranslation("common");
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState("");
   async function submit() {
@@ -599,25 +613,25 @@ function DisputeAction({ vi, reload }) {
   }
   return (
     <>
-      <GhostBtn onClick={() => setOpen(true)}>Disputar</GhostBtn>
+      <GhostBtn onClick={() => setOpen(true)}>{t("page_finance_vendor_invoice.dispute_btn")}</GhostBtn>
       <ActionDialog
         open={open}
         onClose={() => setOpen(false)}
-        title="Disputar vendor invoice"
-        subtitle="Flagged · SRS cuestiona el monto o el trabajo no se entregó"
-        submitLabel="Disputar"
+        title={t("page_finance_vendor_invoice.dispute_title")}
+        subtitle={t("page_finance_vendor_invoice.dispute_subtitle")}
+        submitLabel={t("page_finance_vendor_invoice.dispute_submit")}
         destructive
         submitDisabled={!reason.trim()}
         onSubmit={submit}
       >
         <div>
-          <DialogLabel htmlFor="vi-dr">Razón</DialogLabel>
+          <DialogLabel htmlFor="vi-dr">{t("page_finance_vendor_invoice.dispute_reason_label")}</DialogLabel>
           <DialogTextarea
             id="vi-dr"
             rows={3}
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            placeholder="Ej: Fervimax cobra 2 visitas cuando fue 1 · parts no entregadas · variance excesiva…"
+            placeholder={t("page_finance_vendor_invoice.dispute_reason_placeholder")}
             required
           />
         </div>
@@ -627,6 +641,7 @@ function DisputeAction({ vi, reload }) {
 }
 
 function RejectAction({ vi, reload }) {
+  const { t } = useTranslation("common");
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState("");
   async function submit() {
@@ -635,25 +650,25 @@ function RejectAction({ vi, reload }) {
   }
   return (
     <>
-      <GhostBtn onClick={() => setOpen(true)}>Rechazar</GhostBtn>
+      <GhostBtn onClick={() => setOpen(true)}>{t("page_finance_vendor_invoice.reject_btn")}</GhostBtn>
       <ActionDialog
         open={open}
         onClose={() => setOpen(false)}
-        title="Rechazar vendor invoice"
-        subtitle="Invalida · no se paga. Para re-registrar hay que crear nueva."
-        submitLabel="Rechazar"
+        title={t("page_finance_vendor_invoice.reject_title")}
+        subtitle={t("page_finance_vendor_invoice.reject_subtitle")}
+        submitLabel={t("page_finance_vendor_invoice.reject_submit")}
         destructive
         submitDisabled={!reason.trim()}
         onSubmit={submit}
       >
         <div>
-          <DialogLabel htmlFor="vi-rr">Razón</DialogLabel>
+          <DialogLabel htmlFor="vi-rr">{t("page_finance_vendor_invoice.reject_reason_label")}</DialogLabel>
           <DialogTextarea
             id="vi-rr"
             rows={3}
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            placeholder="Ej: factura duplicada · vendor equivocado · no corresponde…"
+            placeholder={t("page_finance_vendor_invoice.reject_reason_placeholder")}
             required
           />
         </div>
@@ -741,6 +756,7 @@ function MatchStat({ label, value, valueColor = "#0A1628" }) {
 }
 
 function TimelineStat({ label, iso, by, tone = "neutral" }) {
+  const { t } = useTranslation("common");
   const valueColor =
     tone === "success" ? "#0A6131" : tone === "danger" ? "#991B1B" : "#0A1628";
   return (
@@ -760,7 +776,9 @@ function TimelineStat({ label, iso, by, tone = "neutral" }) {
       </div>
       {iso && (
         <div style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.14em", marginTop: 2 }}>
-          {formatAge(iso)} ago{by && ` · ${by.slice(-6)}`}
+          {by
+            ? t("page_finance_vendor_invoice.ago_suffix_by", { age: formatAge(iso), by: by.slice(-6) })
+            : t("page_finance_vendor_invoice.ago_suffix", { age: formatAge(iso) })}
         </div>
       )}
     </div>
