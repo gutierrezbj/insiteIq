@@ -4,6 +4,7 @@
  * Mi propio Skill Passport. Mobile-first. Big KPIs (Level/Rating/Jobs/Certs)
  * + Skills + Certs + Cobertura + Quality marks.
  */
+import { useTranslation } from "react-i18next";
 import { useAuth } from "../../contexts/AuthContext";
 import { useFetch } from "../../lib/useFetch";
 import { formatAge } from "../../components/ui/Badges";
@@ -17,11 +18,12 @@ const LEVEL_STYLES = {
 };
 
 export default function TechProfilePage() {
+  const { t } = useTranslation("common");
   const { user } = useAuth();
   const { data: passport, loading } = useFetch("/techs/me/passport");
 
-  if (loading) return <Centered text="cargando…" />;
-  if (!passport) return <Centered text="— passport no disponible —" />;
+  if (loading) return <Centered text={t("common.loading")} />;
+  if (!passport) return <Centered text={t("page_tech.profile_passport_unavailable")} />;
 
   const lvl = LEVEL_STYLES[passport.level] || LEVEL_STYLES.unrated;
 
@@ -29,7 +31,7 @@ export default function TechProfilePage() {
     <div>
       <div style={{ paddingLeft: 12, borderLeft: "3px solid #0A1628", marginBottom: 20 }}>
         <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#8B95A8", letterSpacing: "0.16em", marginBottom: 4 }}>
-          Mi perfil
+          {t("page_tech.profile_kicker")}
         </div>
         <h1
           style={{
@@ -41,43 +43,43 @@ export default function TechProfilePage() {
             lineHeight: 1.1,
           }}
         >
-          {user?.full_name?.split(" ")[0] || "Tech"}
+          {user?.full_name?.split(" ")[0] || t("page_tech.profile_fallback_name")}
         </h1>
         <p style={{ ...MONO_CAPS, fontSize: 9.5, color: "#8B95A8", letterSpacing: "0.14em", marginTop: 6 }}>
           {passport.employment_type}
-          {passport.last_active_at && <> · activo {formatAge(passport.last_active_at)} ago</>}
+          {passport.last_active_at && <> {t("page_tech.profile_active_ago", { age: formatAge(passport.last_active_at) })}</>}
         </p>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>
-        <KpiCard label="Level" value={passport.level} valueColor={lvl.color} />
+        <KpiCard label={t("page_tech.profile_kpi_level")} value={passport.level} valueColor={lvl.color} />
         <KpiCard
-          label="Rating"
+          label={t("page_tech.profile_kpi_rating")}
           value={passport.rating_count ? passport.rating_avg.toFixed(2) : "—"}
           hint={
             passport.rating_count > 0
-              ? `${passport.rating_count} rating${passport.rating_count === 1 ? "" : "s"}`
+              ? t(passport.rating_count === 1 ? "page_tech.profile_kpi_rating_hint_one" : "page_tech.profile_kpi_rating_hint_other", { count: passport.rating_count })
               : null
           }
         />
-        <KpiCard label="Jobs done" value={passport.jobs_completed} />
-        <KpiCard label="Certs" value={passport.certifications?.length || 0} />
+        <KpiCard label={t("page_tech.profile_kpi_jobs")} value={passport.jobs_completed} />
+        <KpiCard label={t("page_tech.profile_kpi_certs")} value={passport.certifications?.length || 0} />
       </div>
 
       {(passport.skills || []).length > 0 && (
-        <Section title="Skills">
+        <Section title={t("page_tech.profile_section_skills")}>
           {passport.skills.map((s, i) => (
             <ItemCard
               key={i}
               left={s.name}
-              right={`${s.tier}${s.endorsed_count != null ? ` · ${s.endorsed_count} endorsed` : ""}`}
+              right={`${s.tier}${s.endorsed_count != null ? ` · ${s.endorsed_count}${t("page_tech.profile_endorsed_suffix")}` : ""}`}
             />
           ))}
         </Section>
       )}
 
       {(passport.certifications || []).length > 0 && (
-        <Section title="Certifications">
+        <Section title={t("page_tech.profile_section_certs")}>
           {passport.certifications.map((c, i) => (
             <div
               key={i}
@@ -102,11 +104,11 @@ export default function TechProfilePage() {
 
       {((passport.countries_covered || []).length > 0 ||
         (passport.languages || []).length > 0) && (
-        <Section title="Cobertura">
+        <Section title={t("page_tech.profile_section_coverage")}>
           {(passport.countries_covered || []).length > 0 && (
             <div style={{ marginBottom: 12 }}>
               <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#8B95A8", letterSpacing: "0.14em", marginBottom: 6 }}>
-                Countries
+                {t("page_tech.profile_subsection_countries")}
               </div>
               <Chips items={passport.countries_covered} />
             </div>
@@ -114,7 +116,7 @@ export default function TechProfilePage() {
           {(passport.languages || []).length > 0 && (
             <div>
               <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#8B95A8", letterSpacing: "0.14em", marginBottom: 6 }}>
-                Languages
+                {t("page_tech.profile_subsection_languages")}
               </div>
               <Chips items={passport.languages} />
             </div>
@@ -123,7 +125,7 @@ export default function TechProfilePage() {
       )}
 
       {(passport.quality_marks || []).length > 0 && (
-        <Section title="Quality marks">
+        <Section title={t("page_tech.profile_section_quality_marks")}>
           {passport.quality_marks.map((q, i) => (
             <div
               key={i}
@@ -148,7 +150,7 @@ export default function TechProfilePage() {
       )}
 
       <p style={{ ...MONO_CAPS, fontSize: 9.5, color: "#8B95A8", letterSpacing: "0.14em", marginTop: 16 }}>
-        Edición pasa por SRS · Fase 3 Admin
+        {t("page_tech.profile_footer")}
       </p>
     </div>
   );

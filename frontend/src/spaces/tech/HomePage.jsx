@@ -5,12 +5,15 @@
  */
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "../../contexts/AuthContext";
 import { useFetch } from "../../lib/useFetch";
 import { WoStatusPill, SeverityPill } from "../../components/v2-shared/Pills";
 import { JAKARTA, MONO_CAPS } from "../../components/v2-shared/typography";
+import i18n from "../../i18n";
 
 export default function TechHome() {
+  const { t } = useTranslation("common");
   const { user } = useAuth();
   const { data: wos, loading } = useFetch("/work-orders?limit=100");
 
@@ -26,7 +29,7 @@ export default function TechHome() {
     <div>
       <div style={{ paddingLeft: 12, borderLeft: "3px solid #0A1628", marginBottom: 20 }}>
         <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#8B95A8", letterSpacing: "0.16em", marginBottom: 4 }}>
-          Trabajos
+          {t("page_tech.home_kicker")}
         </div>
         <h1
           style={{
@@ -39,7 +42,9 @@ export default function TechHome() {
           }}
         >
           {myWos.active.length}{" "}
-          <span style={{ color: "#3D4A66", fontWeight: 600 }}>activos</span>
+          <span style={{ color: "#3D4A66", fontWeight: 600 }}>
+            {t(myWos.active.length === 1 ? "page_tech.home_count_suffix_one" : "page_tech.home_count_suffix_other")}
+          </span>
         </h1>
       </div>
 
@@ -56,7 +61,7 @@ export default function TechHome() {
             fontWeight: 500,
           }}
         >
-          No tienes trabajos activos asignados ahora mismo.
+          {t("page_tech.home_empty")}
         </div>
       )}
 
@@ -67,7 +72,7 @@ export default function TechHome() {
       {myWos.done.length > 0 && (
         <section>
           <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#3D4A66", letterSpacing: "0.14em", marginBottom: 8 }}>
-            Histórico reciente
+            {t("page_tech.home_section_recent")}
           </div>
           <div
             style={{
@@ -113,13 +118,14 @@ export default function TechHome() {
       )}
 
       <p style={{ marginTop: 24, ...MONO_CAPS, fontSize: 9.5, color: "#8B95A8", letterSpacing: "0.14em" }}>
-        PWA mode · actions pendientes Fase 4
+        {t("page_tech.home_footer")}
       </p>
     </div>
   );
 }
 
 function ActiveJobCard({ wo }) {
+  const { t } = useTranslation("common");
   return (
     <Link
       to={`/tech/ops/${wo.id}`}
@@ -164,7 +170,7 @@ function ActiveJobCard({ wo }) {
         <WoStatusPill status={wo.status} />
         {wo.deadline_resolve_at && (
           <span style={{ ...MONO_CAPS, fontSize: 9.5, color: "#8B95A8", letterSpacing: "0.12em" }}>
-            resolve in {formatDeadline(wo.deadline_resolve_at)}
+            {t("page_tech.home_resolve_in", { time: formatDeadline(wo.deadline_resolve_at) })}
           </span>
         )}
       </div>
@@ -174,14 +180,14 @@ function ActiveJobCard({ wo }) {
 
 function formatDeadline(iso) {
   if (!iso) return "—";
-  const t = new Date(iso).getTime();
-  if (isNaN(t)) return "—";
-  const delta = t - Date.now();
+  const ts = new Date(iso).getTime();
+  if (isNaN(ts)) return "—";
+  const delta = ts - Date.now();
   const past = delta < 0;
   const abs = Math.abs(delta);
   const hours = Math.floor(abs / (1000 * 60 * 60));
   const days = Math.floor(hours / 24);
-  if (past) return days > 0 ? `OVERDUE ${days}d` : "OVERDUE";
-  if (hours < 24) return `${hours}h`;
-  return `${days}d`;
+  if (past) return days > 0 ? i18n.t("page_tech.deadline_overdue_days", { days }) : i18n.t("page_tech.deadline_overdue");
+  if (hours < 24) return i18n.t("page_tech.deadline_hours", { hours });
+  return i18n.t("page_tech.deadline_days", { days });
 }

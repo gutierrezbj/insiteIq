@@ -5,6 +5,7 @@
  * (Jobs/Briefing/Profile/Sign out). Touch targets generosos.
  */
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "../../contexts/AuthContext";
 
 const JAKARTA = "'Plus Jakarta Sans', sans-serif";
@@ -15,15 +16,17 @@ const MONO_CAPS = {
   textTransform: "uppercase",
 };
 
-const nav = [
-  { to: "/tech", label: "Jobs", end: true },
-  { to: "/tech/briefing", label: "Briefing" },
-  { to: "/tech/profile", label: "Profile" },
+const NAV_KEYS = [
+  { to: "/tech",          i18n: "nav_jobs",     end: true },
+  { to: "/tech/briefing", i18n: "nav_briefing" },
+  { to: "/tech/profile",  i18n: "nav_profile" },
 ];
 
 export default function TechLayout() {
+  const { t } = useTranslation("common");
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const nav = NAV_KEYS.map((n) => ({ ...n, label: t(`page_tech.${n.i18n}`) }));
 
   function handleLogout() {
     logout();
@@ -54,7 +57,7 @@ export default function TechLayout() {
       >
         <div style={{ minWidth: 0 }}>
           <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#8B95A8", letterSpacing: "0.16em", marginBottom: 4 }}>
-            InsiteIQ · Tech Field
+            {t("page_tech.layout_kicker")}
           </div>
           <div
             style={{
@@ -67,7 +70,7 @@ export default function TechLayout() {
               textOverflow: "ellipsis",
             }}
           >
-            {user?.full_name || "Technician"}
+            {user?.full_name || t("page_tech.layout_fallback_name")}
           </div>
         </div>
         <button
@@ -86,7 +89,7 @@ export default function TechLayout() {
           onMouseEnter={(e) => (e.currentTarget.style.color = "#0A1628")}
           onMouseLeave={(e) => (e.currentTarget.style.color = "#3D4A66")}
         >
-          Rotar pwd
+          {t("page_tech.layout_btn_rotate_pwd")}
         </button>
       </header>
 
@@ -139,7 +142,7 @@ export default function TechLayout() {
           onMouseEnter={(e) => (e.currentTarget.style.color = "#991B1B")}
           onMouseLeave={(e) => (e.currentTarget.style.color = "#8B95A8")}
         >
-          Sign out
+          {t("page_tech.nav_sign_out")}
         </button>
       </nav>
     </div>

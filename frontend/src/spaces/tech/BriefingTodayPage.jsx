@@ -6,6 +6,7 @@
  */
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "../../contexts/AuthContext";
 import { api } from "../../lib/api";
 import { useFetch } from "../../lib/useFetch";
@@ -14,6 +15,7 @@ import { WoStatusPill, SeverityPill } from "../../components/v2-shared/Pills";
 import { JAKARTA, MONO_CAPS } from "../../components/v2-shared/typography";
 
 export default function BriefingTodayPage() {
+  const { t } = useTranslation("common");
   const { user } = useAuth();
   const { data: wos, loading } = useFetch("/work-orders?limit=200");
   const [briefings, setBriefings] = useState({});
@@ -53,7 +55,7 @@ export default function BriefingTodayPage() {
     <div>
       <div style={{ paddingLeft: 12, borderLeft: "3px solid #0A1628", marginBottom: 20 }}>
         <div style={{ ...MONO_CAPS, fontSize: 9.5, color: "#8B95A8", letterSpacing: "0.16em", marginBottom: 4 }}>
-          Briefings
+          {t("page_tech.briefing_kicker")}
         </div>
         <h1
           style={{
@@ -65,18 +67,18 @@ export default function BriefingTodayPage() {
             lineHeight: 1.1,
           }}
         >
-          Hoy · {myActive.length}{" "}
+          {t("page_tech.briefing_title_today", { count: myActive.length })}{" "}
           <span style={{ color: "#3D4A66", fontWeight: 600 }}>
-            activa{myActive.length === 1 ? "" : "s"}
+            {t(myActive.length === 1 ? "page_tech.briefing_count_suffix_one" : "page_tech.briefing_count_suffix_other")}
           </span>
         </h1>
         <p style={{ ...MONO_CAPS, fontSize: 9.5, color: "#8B95A8", letterSpacing: "0.14em", marginTop: 6 }}>
-          Leer antes de en_route · Decision #8
+          {t("page_tech.briefing_subtitle")}
         </p>
       </div>
 
-      {loading && <Empty text="cargando…" />}
-      {!loading && myActive.length === 0 && <Empty text="— sin trabajos activos —" />}
+      {loading && <Empty text={t("common.loading")} />}
+      {!loading && myActive.length === 0 && <Empty text={t("page_tech.briefing_empty_no_active")} />}
 
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         {myActive.map((w) => (
@@ -93,17 +95,18 @@ export default function BriefingTodayPage() {
 }
 
 function BriefingCard({ wo, briefing, loading }) {
+  const { t } = useTranslation("common");
   const exists = briefing?.exists;
   const acked = exists && briefing.status === "acknowledged";
   const assembled = exists && briefing.status === "assembled";
 
   const statusStyle = loading
-    ? { dot: "#C8CDD8", color: "#8B95A8", label: "..." }
+    ? { dot: "#C8CDD8", color: "#8B95A8", label: t("page_tech.briefing_status_loading") }
     : !exists
-    ? { dot: "#C8CDD8", color: "#8B95A8", label: "sin briefing" }
+    ? { dot: "#C8CDD8", color: "#8B95A8", label: t("page_tech.briefing_status_none") }
     : acked
-    ? { dot: "#16A34A", color: "#0A6131", label: "acknowledged" }
-    : { dot: "#E8A33D", color: "#7E5212", label: "read + ack pendiente" };
+    ? { dot: "#16A34A", color: "#0A6131", label: t("page_tech.briefing_status_acked") }
+    : { dot: "#E8A33D", color: "#7E5212", label: t("page_tech.briefing_status_pending_ack") };
 
   return (
     <Link
@@ -174,12 +177,12 @@ function BriefingCard({ wo, briefing, loading }) {
         </span>
         {assembled && briefing.assembled_at && (
           <span style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.12em" }}>
-            · assembled {formatAge(briefing.assembled_at)} ago
+            {t("page_tech.briefing_assembled_ago", { age: formatAge(briefing.assembled_at) })}
           </span>
         )}
         {acked && briefing.acknowledged_at && (
           <span style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.12em" }}>
-            · acked {formatAge(briefing.acknowledged_at)} ago
+            {t("page_tech.briefing_acked_ago", { age: formatAge(briefing.acknowledged_at) })}
           </span>
         )}
       </div>
@@ -195,7 +198,7 @@ function BriefingCard({ wo, briefing, loading }) {
           }}
         >
           <div style={{ ...MONO_CAPS, fontSize: 9, color: "#8B95A8", letterSpacing: "0.14em", marginBottom: 4 }}>
-            Nota del coord
+            {t("page_tech.briefing_coord_note_label")}
           </div>
           <div
             style={{
