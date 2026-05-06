@@ -108,11 +108,22 @@ function classifyWoForFlag(wo) {
  *   - Color del stroke = status (verde/rojo/azul/gris)
  *   - Anchor: punta inferior del pin
  */
+// Helper compartido · resuelve el label del flag desde i18n con variant.
+//   "long" → "Hecho/Marcha" · "Con problema" · "Programado" · "Pendiente"
+//   "short" → "Hecho/Marcha" · "Problema" · "Programado" · "Pendiente"
+//   "scheduled_unassigned" se usa en el popup mapa para flag=scheduled
+function flagLabelFor(flagKind, variant = "long") {
+  const map = {
+    long: { done: "flag_done", problem: "flag_problem", scheduled: "flag_scheduled", pending: "flag_pending" },
+    short: { done: "flag_done", problem: "flag_problem_short", scheduled: "flag_scheduled", pending: "flag_pending" },
+  };
+  const keys = map[variant] || map.long;
+  const k = keys[flagKind] || "flag_pending";
+  return i18n.t(`page_rollout_detail.${k}`);
+}
+
 function flagMarkerHtml(color, flagKind) {
-  const label = flagKind === "done" ? "Hecho/Marcha"
-    : flagKind === "problem" ? "Con problema"
-    : flagKind === "scheduled" ? "Programado"
-    : "Pendiente";
+  const label = flagLabelFor(flagKind, "long");
   return `
     <div class="rollout-pin" title="${label}" style="position:relative;width:32px;height:38px;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.45));">
       <svg viewBox="0 0 24 24" width="32" height="38" xmlns="http://www.w3.org/2000/svg"
@@ -208,7 +219,7 @@ export default function RolloutDetailPage() {
   if (loading) {
     return (
       <div className="h-full flex items-center justify-center text-cl-text-mid font-mono text-[12px]">
-        Cargando rollout…
+        {t("page_rollout_detail.loading_rollout")}
       </div>
     );
   }
@@ -329,9 +340,9 @@ export default function RolloutDetailPage() {
             <div className="ml-auto flex items-center gap-2 py-2">
               <span className="font-jakarta uppercase" style={{ fontSize: 10, color: "#3D4A66", fontWeight: 700, letterSpacing: "0.12em" }}>{t("page_rollout_detail.view_label")}</span>
               {[
-                { key: "all", label: "Todos" },
-                { key: "problems", label: `Problemas (${counts.problem})`, color: FLAG_COLORS.problem },
-                { key: "scheduled", label: `Programados (${counts.scheduled})`, color: FLAG_COLORS.scheduled },
+                { key: "all", label: t("page_rollout_detail.filter_all") },
+                { key: "problems", label: `${t("page_rollout_detail.kpi_problems")} (${counts.problem})`, color: FLAG_COLORS.problem },
+                { key: "scheduled", label: `${t("page_rollout_detail.kpi_scheduled")} (${counts.scheduled})`, color: FLAG_COLORS.scheduled },
               ].map((f) => {
                 const isActive = filter === f.key;
                 return (
@@ -412,6 +423,7 @@ export default function RolloutDetailPage() {
 
 /* ─────────────────────── Botón Bulk Re-schedule (Iter 2.9) ─────────────────────── */
 function BulkRescheduleButton({ count, onClick }) {
+  const { t } = useTranslation("common");
   const hasPending = count > 0;
   return (
     <button
@@ -438,7 +450,7 @@ function BulkRescheduleButton({ count, onClick }) {
           e.currentTarget.style.color = "#0066B8";
         }
       }}
-      title={hasPending ? `Programar ${count} sites pending en bulk` : "Sin sites pending"}
+      title={hasPending ? t("page_rollout_detail.bulk_btn_title_pending", { count }) : t("page_rollout_detail.bulk_btn_title_no_pending")}
     >
       <Icon icon={ICONS.calendar} size={14} />
       Bulk{hasPending ? ` · ${count}` : ""}
@@ -452,6 +464,7 @@ function BulkRescheduleButton({ count, onClick }) {
  * de POSTs a /work-orders/{id}/advance (target=triage). Cero backend nuevo.
  * Tracking de progreso visible: "Programando 5 de 17…". */
 function BulkRescheduleModal({ wos, sites, users, onClose, onDone }) {
+  const { t } = useTranslation("common");
   // Default: todos los pending seleccionados
   const [selected, setSelected] = useState(() => new Set(wos.map((w) => w.id)));
   const [techId, setTechId] = useState("");
@@ -481,11 +494,11 @@ function BulkRescheduleModal({ wos, sites, users, onClose, onDone }) {
   async function execute() {
     const ids = Array.from(selected);
     if (ids.length === 0) {
-      toast.error("Seleccioná al menos 1 site");
+      toast.error(t("page_rollout_detail.bulk_select_one_site"));
       return;
     }
     if (!techId || !scheduledAt) {
-      toast.error("Tech y fecha son obligatorios");
+      toast.error(t("page_rollout_detail.tech_date_required"));
       return;
     }
     setSubmitting(true);
@@ -513,12 +526,12 @@ function BulkRescheduleModal({ wos, sites, users, onClose, onDone }) {
     setSubmitting(false);
     const successes = ids.length - errors.length;
     if (errors.length === 0) {
-      toast.success(`${successes} sites programados correctamente`);
+      toast.success(t("page_rollout_detail.bulk_success", { count: successes }));
       onDone?.();
     } else if (successes > 0) {
-      toast.warning(`${successes} OK · ${errors.length} con error · revisá lista`);
+      toast.warning(t("page_rollout_detail.bulk_partial", { ok: successes, errors: errors.length }));
     } else {
-      toast.error(`Falló todo · ${errors.length} errores`);
+      toast.error(t("page_rollout_detail.bulk_all_failed", { errors: errors.length }));
     }
   }
 
@@ -539,12 +552,12 @@ function BulkRescheduleModal({ wos, sites, users, onClose, onDone }) {
       >
         {/* Header · navy strong title con presencia */}
         <header className="px-5 py-4 flex-shrink-0" style={{ borderBottom: "1px solid #C8CDD8", background: "#F7F8FA", borderRadius: "6px 6px 0 0" }}>
-          <p className="label-caps-v2 mb-1" style={{ color: "#0A1628", fontWeight: 800 }}>Programar bulk</p>
+          <p className="label-caps-v2 mb-1" style={{ color: "#0A1628", fontWeight: 800 }}>{t("page_rollout_detail.bulk_modal_title")}</p>
           <h2 className="font-jakarta text-[18px] leading-tight" style={{ color: "#0A1628", fontWeight: 700, letterSpacing: "-0.005em" }}>
-            {selected.size} de {wos.length} sites pending seleccionados
+            {t("page_rollout_detail.bulk_modal_subtitle", { count: selected.size, total: wos.length })}
           </h2>
           <p className="text-[12px] mt-1 font-mono" style={{ color: "#3D4A66", fontWeight: 500 }}>
-            Avanza intake → triage con tech + fecha. Operación secuencial (1 POST por site).
+            {t("page_rollout_detail.bulk_modal_explainer")}
           </p>
         </header>
 
@@ -554,7 +567,7 @@ function BulkRescheduleModal({ wos, sites, users, onClose, onDone }) {
           <div className="px-5 py-3 border-b border-cl-border grid grid-cols-2 gap-3 flex-shrink-0">
             <div>
               <label className="block text-[10px] text-cl-text-dim uppercase mb-1.5" style={{ letterSpacing: "0.14em" }}>
-                Técnico asignado
+                {t("page_rollout_detail.modal_label_tech")}
               </label>
               <select
                 value={techId}
@@ -562,7 +575,7 @@ function BulkRescheduleModal({ wos, sites, users, onClose, onDone }) {
                 disabled={submitting}
                 className="w-full bg-cl-surface/40 border border-cl-border rounded-sm px-3 py-2 text-[12px] text-cl-text font-mono"
               >
-                <option value="">— Selecciona técnico —</option>
+                <option value="">{t("page_rollout_detail.modal_select_tech_placeholder")}</option>
                 {techCandidates.map((u) => (
                   <option key={u.id} value={u.id}>{u.full_name || u.email}</option>
                 ))}
@@ -570,7 +583,7 @@ function BulkRescheduleModal({ wos, sites, users, onClose, onDone }) {
             </div>
             <div>
               <label className="block text-[10px] text-cl-text-dim uppercase mb-1.5" style={{ letterSpacing: "0.14em" }}>
-                Fecha programada (mismo día para todos)
+                {t("page_rollout_detail.bulk_modal_label_date")}
               </label>
               <input
                 type="datetime-local"
@@ -592,15 +605,15 @@ function BulkRescheduleModal({ wos, sites, users, onClose, onDone }) {
               onMouseEnter={(e) => (e.currentTarget.style.textDecoration = "underline")}
               onMouseLeave={(e) => (e.currentTarget.style.textDecoration = "none")}
             >
-              {selected.size === wos.length ? "Deseleccionar todos" : "Seleccionar todos"}
+              {selected.size === wos.length ? t("page_rollout_detail.bulk_modal_deselect_all") : t("page_rollout_detail.bulk_modal_select_all")}
             </button>
             <span className="text-[11px] text-cl-text-mid font-mono">{selected.size} / {wos.length}</span>
           </div>
           {wos.length === 0 && (
             <div className="flex-1 flex items-center justify-center px-5 py-12 text-center">
               <div>
-                <p className="text-[13px] mb-1" style={{ color: "#3D4A66", fontWeight: 600 }}>Sin sites pending para programar</p>
-                <p className="text-[11px] text-cl-text-dim font-mono">Solo aparecen aquí los sites en estado <span style={{ color: "#0A1628", fontWeight: 700 }}>intake</span> (no asignados todavía)</p>
+                <p className="text-[13px] mb-1" style={{ color: "#3D4A66", fontWeight: 600 }}>{t("page_rollout_detail.no_pending_sites")}</p>
+                <p className="text-[11px] text-cl-text-dim font-mono">{t("page_rollout_detail.no_pending_explainer")}</p>
               </div>
             </div>
           )}
@@ -623,7 +636,7 @@ function BulkRescheduleModal({ wos, sites, users, onClose, onDone }) {
                     style={{ accentColor: "#0A1628" }}
                   />
                   <div className="min-w-0 flex-1">
-                    <div className="text-[12px] text-cl-text truncate">{s.name || "Site sin nombre"}</div>
+                    <div className="text-[12px] text-cl-text truncate">{s.name || t("page_rollout_detail.site_no_name")}</div>
                     <div className="text-[10px] text-cl-text-dim font-mono truncate">
                       {s.code || "—"} · {formatWoCode(w)} · {s.country || ""}
                     </div>
@@ -638,7 +651,7 @@ function BulkRescheduleModal({ wos, sites, users, onClose, onDone }) {
           {submitting && (
             <div className="px-5 py-2 flex-shrink-0" style={{ borderTop: "1px solid #E2E5EC" }}>
               <div className="flex items-center justify-between text-[12px] mb-1" style={{ color: "#0A1628" }}>
-                <span style={{ fontWeight: 600 }}>Programando…</span>
+                <span style={{ fontWeight: 600 }}>{t("page_rollout_detail.scheduling")}</span>
                 <span className="font-mono" style={{ fontWeight: 700 }}>{progress.done} / {progress.total}</span>
               </div>
               <div className="w-full rounded-full h-1.5 overflow-hidden" style={{ background: "#E8EDF5" }}>
@@ -654,7 +667,7 @@ function BulkRescheduleModal({ wos, sites, users, onClose, onDone }) {
           )}
           {!submitting && progress.errors.length > 0 && (
             <div className="px-5 py-2 flex-shrink-0 max-h-[100px] overflow-y-auto wr-scroll" style={{ borderTop: "1px solid #E2E5EC", background: "#FCE4E6" }}>
-              <p className="text-[11px] font-mono mb-1" style={{ color: "#8E1F2A", fontWeight: 700 }}>{progress.errors.length} errores:</p>
+              <p className="text-[11px] font-mono mb-1" style={{ color: "#8E1F2A", fontWeight: 700 }}>{t("page_rollout_detail.bulk_modal_errors_label", { count: progress.errors.length })}</p>
               {progress.errors.map((e, i) => (
                 <p key={i} className="text-[10px] font-mono" style={{ color: "#3D4A66" }}>{e.code}: {e.msg}</p>
               ))}
@@ -672,7 +685,7 @@ function BulkRescheduleModal({ wos, sites, users, onClose, onDone }) {
             onMouseEnter={(e) => !submitting && (e.currentTarget.style.color = "#0A1628")}
             onMouseLeave={(e) => !submitting && (e.currentTarget.style.color = "#3D4A66")}
           >
-            {submitting ? "Esperá…" : "Cancelar"}
+            {submitting ? t("page_rollout_detail.bulk_modal_wait") : t("page_rollout_detail.bulk_modal_cancel")}
           </button>
           <button
             onClick={execute}
@@ -688,7 +701,9 @@ function BulkRescheduleModal({ wos, sites, users, onClose, onDone }) {
               boxShadow: submitting || selected.size === 0 || !techId || !scheduledAt ? "none" : "0 2px 6px -1px rgba(10, 22, 40, 0.18)",
             }}
           >
-            {submitting ? `Programando ${progress.done}/${progress.total}…` : `Programar ${selected.size} sites`}
+            {submitting
+              ? t("page_rollout_detail.bulk_modal_progress_count", { done: progress.done, total: progress.total })
+              : t("page_rollout_detail.bulk_modal_schedule_n", { count: selected.size })}
           </button>
         </footer>
       </div>
@@ -751,6 +766,7 @@ function LegendPin({ color, label }) {
 
 /* ─────────────────────── Modal "Programar desde Mapa" ─────────────────────── */
 function ScheduleSiteModal({ wo, site, users, onClose, onScheduled }) {
+  const { t } = useTranslation("common");
   const [techId, setTechId] = useState("");
   const [scheduledAt, setScheduledAt] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -763,7 +779,7 @@ function ScheduleSiteModal({ wo, site, users, onClose, onScheduled }) {
 
   async function handleSubmit() {
     if (!techId || !scheduledAt) {
-      toast.error("Tech y fecha son obligatorios");
+      toast.error(t("page_rollout_detail.tech_date_required"));
       return;
     }
     setSubmitting(true);
@@ -775,11 +791,11 @@ function ScheduleSiteModal({ wo, site, users, onClose, onScheduled }) {
         assigned_tech_user_id: techId,
         scheduled_at: new Date(scheduledAt).toISOString(),
       });
-      toast.success(`${site?.code || wo.reference} programado`);
+      toast.success(t("page_rollout_detail.single_scheduled_toast", { code: site?.code || wo.reference }));
       onScheduled?.();
       onClose();
     } catch (err) {
-      toast.error(`Error: ${err.message || err}`);
+      toast.error(t("page_rollout_detail.single_scheduled_error", { message: err.message || err }));
     } finally {
       setSubmitting(false);
     }
@@ -802,9 +818,9 @@ function ScheduleSiteModal({ wo, site, users, onClose, onScheduled }) {
       >
         {/* Header · navy strong title */}
         <header className="px-5 py-4" style={{ borderBottom: "1px solid #E2E5EC", background: "#F7F8FA", borderRadius: "6px 6px 0 0" }}>
-          <p className="label-caps-v2 mb-1" style={{ color: "#0A1628", fontWeight: 800 }}>Programar instalación</p>
+          <p className="label-caps-v2 mb-1" style={{ color: "#0A1628", fontWeight: 800 }}>{t("page_rollout_detail.schedule_install_modal_title")}</p>
           <h2 className="font-jakarta text-[18px] leading-tight" style={{ color: "#0A1628", fontWeight: 700, letterSpacing: "-0.005em" }}>
-            {site?.name || "Site sin nombre"}
+            {site?.name || t("page_rollout_detail.site_no_name")}
           </h2>
           <p className="text-[11px] text-cl-text-mid font-mono mt-0.5">
             {site?.code} · {site?.city || site?.country}
@@ -815,7 +831,7 @@ function ScheduleSiteModal({ wo, site, users, onClose, onScheduled }) {
         <div className="px-5 py-4 space-y-4">
           <div>
             <label className="block font-jakarta text-[10px] uppercase mb-1.5" style={{ letterSpacing: "0.14em", color: "#3D4A66", fontWeight: 700 }}>
-              Técnico asignado
+              {t("page_rollout_detail.modal_label_tech")}
             </label>
             <select
               value={techId}
@@ -823,7 +839,7 @@ function ScheduleSiteModal({ wo, site, users, onClose, onScheduled }) {
               className="w-full rounded-sm px-3 py-2 text-[13px] font-mono"
               style={{ background: "#FFFFFF", border: "1px solid #C8CDD8", color: "#0A1628", outline: "none" }}
             >
-              <option value="">— Selecciona técnico —</option>
+              <option value="">{t("page_rollout_detail.modal_select_tech_placeholder")}</option>
               {techCandidates.map((u) => (
                 <option key={u.id} value={u.id}>
                   {u.full_name || u.email} · {u.email}
@@ -834,7 +850,7 @@ function ScheduleSiteModal({ wo, site, users, onClose, onScheduled }) {
 
           <div>
             <label className="block font-jakarta text-[10px] uppercase mb-1.5" style={{ letterSpacing: "0.14em", color: "#3D4A66", fontWeight: 700 }}>
-              Fecha y hora programada (local)
+              {t("page_rollout_detail.single_modal_label_date")}
             </label>
             <input
               type="datetime-local"
@@ -846,9 +862,7 @@ function ScheduleSiteModal({ wo, site, users, onClose, onScheduled }) {
           </div>
 
           <p className="text-[12px] leading-relaxed" style={{ color: "#3D4A66", fontWeight: 500 }}>
-            Avanza este site de <span style={{ color: "#8B95A8" }}>intake</span> a{" "}
-            <span style={{ color: "#0A1628", fontWeight: 700 }}>triage</span> con tech asignado y fecha
-            agendada. La banderita pasa de azul (programado) a verde (en marcha).
+            {t("page_rollout_detail.single_modal_explainer")}
           </p>
         </div>
 
@@ -862,7 +876,7 @@ function ScheduleSiteModal({ wo, site, users, onClose, onScheduled }) {
             onMouseEnter={(e) => !submitting && (e.currentTarget.style.color = "#0A1628")}
             onMouseLeave={(e) => !submitting && (e.currentTarget.style.color = "#3D4A66")}
           >
-            Cancelar
+            {t("page_rollout_detail.bulk_modal_cancel")}
           </button>
           <button
             onClick={handleSubmit}
@@ -878,7 +892,7 @@ function ScheduleSiteModal({ wo, site, users, onClose, onScheduled }) {
               boxShadow: submitting || !techId || !scheduledAt ? "none" : "0 2px 6px -1px rgba(10, 22, 40, 0.18)",
             }}
           >
-            {submitting ? "Programando…" : "Programar"}
+            {submitting ? t("page_rollout_detail.schedule_modal_submitting") : t("page_rollout_detail.schedule_modal_submit")}
           </button>
         </footer>
       </div>
@@ -888,6 +902,7 @@ function ScheduleSiteModal({ wo, site, users, onClose, onScheduled }) {
 
 /* ─────────────────────── Tab MAPA ─────────────────────── */
 function MapTab({ wos, sites, users, onScheduled }) {
+  const { t } = useTranslation("common");
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markersRef = useRef({});
@@ -992,7 +1007,7 @@ function MapTab({ wos, sites, users, onScheduled }) {
       const flag = classifyWoForFlag(wo);
       const color = FLAG_COLORS[flag];
       const tech = users[getTechId(wo)];
-      const techName = tech?.full_name || tech?.name || "Sin asignar";
+      const techName = tech?.full_name || tech?.name || i18n.t("page_rollout_detail.tech_unassigned");
 
       const icon = L.divIcon({
         className: "rollout-flag-marker",
@@ -1010,19 +1025,23 @@ function MapTab({ wos, sites, users, onScheduled }) {
       }
       const isScheduled = flag === "scheduled";
       const ctaButton = isScheduled
-        ? `<button data-action="schedule" data-wo-id="${wo.id}" style="margin-top:6px;width:100%;background:#0A1628;color:#FFFFFF;border:0;border-radius:3px;padding:6px 10px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;">Programar instalación →</button>`
+        ? `<button data-action="schedule" data-wo-id="${wo.id}" style="margin-top:6px;width:100%;background:#0A1628;color:#FFFFFF;border:0;border-radius:3px;padding:6px 10px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;">${i18n.t("page_rollout_detail.popup_schedule_install")}</button>`
         : "";
+      // Para popup variant: scheduled muestra "Programado · sin agendar", problem usa short
+      const popupFlagLabel = flag === "scheduled"
+        ? i18n.t("page_rollout_detail.flag_scheduled_unassigned")
+        : flagLabelFor(flag, "short");
       const popupHtml = `
         <div style="background:#FFFFFF;color:#0A1628;font-family:'JetBrains Mono',monospace;min-width:220px;">
           <div style="padding:9px 12px;border-bottom:1px solid #E2E5EC;">
-            <div style="font-size:10px;color:${color};font-weight:600;letter-spacing:0.1em;text-transform:uppercase;">${flag === "done" ? "Hecho/Marcha" : flag === "problem" ? "Problema" : flag === "scheduled" ? "Programado · sin agendar" : "Pendiente"}</div>
-            <div style="font-size:13px;color:#FFFFFF;font-weight:600;margin-top:2px;">${site.name || "Sin nombre"}</div>
+            <div style="font-size:10px;color:${color};font-weight:600;letter-spacing:0.1em;text-transform:uppercase;">${popupFlagLabel}</div>
+            <div style="font-size:13px;color:#FFFFFF;font-weight:600;margin-top:2px;">${site.name || i18n.t("page_rollout_detail.site_no_name_alt")}</div>
             <div style="font-size:10px;color:#3D4A66;">${site.code || ""}</div>
           </div>
           <div style="padding:8px 12px;font-size:11px;line-height:1.5;">
             <div><span style="color:#8B95A8;">WO:</span> ${formatWoCode(wo)}</div>
-            <div><span style="color:#8B95A8;">Status:</span> ${wo.status}</div>
-            <div><span style="color:#8B95A8;">Tech:</span> ${techName}</div>
+            <div><span style="color:#8B95A8;">${i18n.t("page_rollout_detail.popup_status")}:</span> ${wo.status}</div>
+            <div><span style="color:#8B95A8;">${i18n.t("page_rollout_detail.popup_tech")}:</span> ${techName}</div>
             ${ctaButton}
           </div>
         </div>
@@ -1116,22 +1135,22 @@ function MapTab({ wos, sites, users, onScheduled }) {
           e.currentTarget.style.background = "#FFFFFF";
           e.currentTarget.style.color = "#0A1628";
         }}
-        title="Reset zoom (atajo: Esc)"
+        title={t("page_rollout_detail.map_overview_tooltip")}
       >
         <Icon icon="map" size={14} />
-        Vista general
+        {t("page_rollout_detail.map_overview_btn")}
       </button>
 
       {/* Leyenda · pins con la misma visual del marker (consistencia) */}
       <div className="absolute bottom-3 left-5 z-[400] bg-cl-surface/95 border border-cl-border rounded-sm px-3 py-2 flex items-center gap-4 text-[10px] backdrop-blur-sm">
-        <p className="label-caps-v2">Leyenda</p>
-        <LegendPin color={FLAG_COLORS.done} label="Hecho/Marcha" />
-        <LegendPin color={FLAG_COLORS.problem} label="Problema" />
-        <LegendPin color={FLAG_COLORS.scheduled} label="Programado" />
+        <p className="label-caps-v2">{t("page_rollout_detail.map_legend")}</p>
+        <LegendPin color={FLAG_COLORS.done} label={t("page_rollout_detail.flag_done")} />
+        <LegendPin color={FLAG_COLORS.problem} label={t("page_rollout_detail.flag_problem_short")} />
+        <LegendPin color={FLAG_COLORS.scheduled} label={t("page_rollout_detail.flag_scheduled")} />
       </div>
       {!window.L && (
         <div className="absolute inset-0 flex items-center justify-center text-cl-text-dim text-[12px] font-mono">
-          Cargando mapa…
+          {t("common.loading")}
         </div>
       )}
 
@@ -1153,15 +1172,20 @@ function MapTab({ wos, sites, users, onScheduled }) {
 }
 
 /* ─────────────────────── Tab KANBAN ─────────────────────── */
-const KANBAN_COLUMNS = [
-  { key: "solicitado",  label: "Solicitado",  statuses: ["intake", "triage"] },
-  { key: "preparando",  label: "Preparando",  statuses: ["pre_flight", "assigned", "dispatched"] },
-  { key: "en_campo",    label: "En campo",    statuses: ["en_route", "on_site", "in_progress"] },
-  { key: "cerrando",    label: "Cerrando",    statuses: ["in_closeout", "resolved"] },
-  { key: "cerrado",     label: "Cerrado",     statuses: ["completed", "closed"] },
+const KANBAN_COLUMN_KEYS = [
+  { key: "solicitado",  i18n: "kanban_col_requested",  statuses: ["intake", "triage"] },
+  { key: "preparando",  i18n: "kanban_col_preparing",  statuses: ["pre_flight", "assigned", "dispatched"] },
+  { key: "en_campo",    i18n: "kanban_col_in_field",   statuses: ["en_route", "on_site", "in_progress"] },
+  { key: "cerrando",    i18n: "kanban_col_closing",    statuses: ["in_closeout", "resolved"] },
+  { key: "cerrado",     i18n: "kanban_col_closed",     statuses: ["completed", "closed"] },
 ];
 
 function KanbanTab({ wos, sites, users, reload }) {
+  const { t } = useTranslation("common");
+  const KANBAN_COLUMNS = useMemo(
+    () => KANBAN_COLUMN_KEYS.map((c) => ({ ...c, label: t(`page_rollout_detail.${c.i18n}`) })),
+    [t]
+  );
   const [draggedId, setDraggedId] = useState(null);
   const wosByColumn = useMemo(() => {
     const map = {};
@@ -1216,7 +1240,7 @@ function KanbanTab({ wos, sites, users, reload }) {
           </div>
           <div className="p-2 space-y-2 overflow-y-auto flex-1">
             {wosByColumn[col.key].length === 0 && (
-              <p className="text-[10px] text-cl-text-dim italic px-2 py-3">Vacía</p>
+              <p className="text-[10px] text-cl-text-dim italic px-2 py-3">{t("page_rollout_detail.kanban_col_empty")}</p>
             )}
             {wosByColumn[col.key].map((wo) => {
               const site = sites[wo.site_id];
@@ -1238,7 +1262,7 @@ function KanbanTab({ wos, sites, users, reload }) {
                     {site?.name || wo.title || "—"}
                   </div>
                   <div className="text-[10px] text-cl-text-mid truncate">
-                    {site?.code || ""} · {tech?.full_name || tech?.name || "Sin tech"}
+                    {site?.code || ""} · {tech?.full_name || tech?.name || t("page_rollout_detail.tech_unassigned_short")}
                   </div>
                 </article>
               );
@@ -1253,6 +1277,8 @@ function KanbanTab({ wos, sites, users, reload }) {
 
 /* ─────────────────────── Tab CUADRO DE MANDO ─────────────────────── */
 function DashboardTab({ dashboard, counts, totalSites, progressPct }) {
+  const { t, i18n } = useTranslation("common");
+  const numLocale = (i18n.language || "es").startsWith("en") ? "en-US" : "es-ES";
   const k = dashboard?.kpis || {};
   const wo = dashboard?.work_orders || {};
 
@@ -1260,7 +1286,7 @@ function DashboardTab({ dashboard, counts, totalSites, progressPct }) {
     <div className="px-10 py-6 space-y-6">
       {/* Hero metric · navy strong + border-strong para autoridad */}
       <div className="rounded-sm px-6 py-6" style={{ background: "#FFFFFF", border: "1px solid #C8CDD8", borderLeft: "4px solid #0A1628" }}>
-        <p className="label-caps-v2 mb-2" style={{ color: "#0A1628", fontWeight: 800 }}>Avance del rollout</p>
+        <p className="label-caps-v2 mb-2" style={{ color: "#0A1628", fontWeight: 800 }}>{t("page_rollout_detail.dashboard_title")}</p>
         <div className="flex items-baseline gap-3 mb-3 flex-wrap">
           {/* Número GIGANTE 48px navy strong (NO text-white) */}
           <span
@@ -1292,50 +1318,50 @@ function DashboardTab({ dashboard, counts, totalSites, progressPct }) {
 
       {/* 4 KPI cards */}
       <div className="grid grid-cols-4 gap-3">
-        <KpiCard label="Hecho/Marcha" value={counts.done} color={FLAG_COLORS.done} />
-        <KpiCard label="Con problemas" value={counts.problem} color={FLAG_COLORS.problem} />
-        <KpiCard label="Programados" value={counts.scheduled} color={FLAG_COLORS.scheduled} />
-        <KpiCard label="Activas hoy" value={wo.active || 0} color="#3D4A66" />
+        <KpiCard label={t("page_rollout_detail.kpi_done")} value={counts.done} color={FLAG_COLORS.done} />
+        <KpiCard label={t("page_rollout_detail.kpi_problems")} value={counts.problem} color={FLAG_COLORS.problem} />
+        <KpiCard label={t("page_rollout_detail.kpi_scheduled")} value={counts.scheduled} color={FLAG_COLORS.scheduled} />
+        <KpiCard label={t("page_rollout_detail.kpi_active_today")} value={wo.active || 0} color="#3D4A66" />
       </div>
 
       {/* Velocidad + drift + ETA */}
       <div className="grid grid-cols-3 gap-3">
         <DataPanel
-          title="Velocidad"
+          title={t("page_rollout_detail.panel_velocity")}
           value={k.throughput_week ?? "—"}
-          unit="sites cerrados / 7 días"
+          unit={`sites / 7d`}
         />
         <DataPanel
-          title="Drift vs SOW"
+          title={t("page_rollout_detail.panel_drift")}
           value={k.on_schedule_pct != null ? `${k.on_schedule_pct}%` : "—"}
-          unit={k.on_schedule_pct == null ? "sin baseline" : k.on_schedule_pct >= 100 ? "adelantados" : "atrasados"}
+          unit={k.on_schedule_pct == null ? "—" : k.on_schedule_pct >= 100 ? "↑" : "↓"}
           color={k.on_schedule_pct == null ? "#3D4A66" : k.on_schedule_pct >= 100 ? "#22C55E" : k.on_schedule_pct >= 80 ? "#0A1628" : "#DC2626"}
         />
         <DataPanel
-          title="ETA 100%"
+          title={t("page_rollout_detail.panel_eta_100")}
           value={k.eta_to_100pct_weeks != null ? `${k.eta_to_100pct_weeks}` : "—"}
-          unit={k.eta_to_100pct_weeks == null ? "sin throughput" : "semanas restantes"}
+          unit={k.eta_to_100pct_weeks == null ? "—" : "weeks"}
         />
       </div>
 
       {/* SLA + incidents */}
       <div className="grid grid-cols-2 gap-3">
         <DataPanel
-          title="SLA compliance"
+          title={t("page_rollout_detail.panel_sla_compliance")}
           value={k.sla_compliance_pct != null ? `${k.sla_compliance_pct}%` : "—"}
-          unit="WOs cerradas dentro deadline"
+          unit={t("page_rollout_detail.panel_sla_unit")}
           color={k.sla_compliance_pct == null ? "#3D4A66" : k.sla_compliance_pct >= 90 ? "#22C55E" : "#0A1628"}
         />
         <DataPanel
-          title="Incidentes activos"
+          title={t("page_rollout_detail.panel_incidents_active")}
           value={k.incidents_active || 0}
-          unit="severity high/critical sin cerrar"
+          unit="high/critical"
           color={k.incidents_active > 0 ? "#DC2626" : "#22C55E"}
         />
       </div>
 
       <p className="text-[10px] text-cl-text-dim font-mono">
-        Generado {dashboard?.generated_at ? new Date(dashboard.generated_at).toLocaleString("es-ES") : "—"}
+        {dashboard?.generated_at ? new Date(dashboard.generated_at).toLocaleString(numLocale) : "—"}
       </p>
     </div>
   );
@@ -1366,14 +1392,20 @@ function DataPanel({ title, value, unit, color }) {
  * Gantt: filas = sites con WO, eje X = mes.
  * Iter 2.4 añade: selector de rango (1m/3m/6m/Todo), línea HOY amber,
  * tooltip detallado al hover, sin límite de 100 rows. */
-const TIMELINE_RANGES = [
-  { key: "1m",  label: "Últ. mes", days: 30 },
-  { key: "3m",  label: "3M",       days: 90 },
-  { key: "6m",  label: "6M",       days: 180 },
-  { key: "all", label: "Todo",     days: null },
+const TIMELINE_RANGE_KEYS = [
+  { key: "1m",  i18n: "timeline_range_1m",  days: 30 },
+  { key: "3m",  i18n: "timeline_range_3m",  days: 90 },
+  { key: "6m",  i18n: "timeline_range_6m",  days: 180 },
+  { key: "all", i18n: "timeline_range_all", days: null },
 ];
 
 function TimelineTab({ wos, sites }) {
+  const { t, i18n } = useTranslation("common");
+  const numLocale = (i18n.language || "es").startsWith("en") ? "en-US" : "es-ES";
+  const TIMELINE_RANGES = useMemo(
+    () => TIMELINE_RANGE_KEYS.map((r) => ({ ...r, label: t(`page_rollout_detail.${r.i18n}`) })),
+    [t]
+  );
   // Iter 2.6: rangeKey persistido global cross-rollouts (preferencia del user)
   const [rangeKey, setRangeKey] = useLocalStorageState("rollout-timeline-range", "3m");
 
@@ -1426,20 +1458,20 @@ function TimelineTab({ wos, sites }) {
 
   const todayPct = pctOf(new Date());
   const todayInRange = todayPct != null && todayPct >= 0 && todayPct <= 100;
-  const todayLabel = new Date().toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "numeric" });
+  const todayLabel = new Date().toLocaleDateString(numLocale, { day: "2-digit", month: "short", year: "numeric" });
 
   return (
     <div className="px-10 py-6 h-full overflow-auto wr-scroll">
       {/* Header con selector de rango */}
       <div className="mb-4 flex items-end justify-between gap-3 flex-wrap">
         <div>
-          <p className="label-caps-v2 mb-1">Timeline del rollout</p>
+          <p className="label-caps-v2 mb-1">{t("page_rollout_detail.timeline_title")}</p>
           <p className="text-[11px] text-cl-text-dim">
-            Sites × tiempo · barras por status · línea amber = HOY ({todayLabel}) · {rows.length} sites en rango
+            HOY ({todayLabel}) · {rows.length} sites
           </p>
         </div>
         <div className="flex items-center gap-1">
-          <span className="text-[10px] text-cl-text-dim uppercase mr-1.5" style={{ letterSpacing: "0.1em" }}>Rango:</span>
+          <span className="text-[10px] text-cl-text-dim uppercase mr-1.5" style={{ letterSpacing: "0.1em" }}>{t("page_rollout_detail.timeline_range_label")}</span>
           {TIMELINE_RANGES.map((b) => (
             <button
               key={b.key}
@@ -1461,17 +1493,17 @@ function TimelineTab({ wos, sites }) {
       {rows.length === 0 ? (
         <EmptyState
           icon="inbox"
-          title="Sin WOs en este rango"
-          sublabel="Ampliá el rango o seleccioná 'Todo' para ver el histórico completo"
+          title={t("page_rollout_detail.timeline_empty_title")}
+          sublabel={t("page_rollout_detail.timeline_empty_sublabel")}
         />
       ) : (
         <div className="border border-cl-border rounded-sm overflow-hidden">
           {/* Header months */}
           <div className="grid border-b border-cl-border bg-cl-surface/40" style={{ gridTemplateColumns: `200px repeat(${months.length}, 1fr)` }}>
-            <div className="px-3 py-2 label-caps-v2">Site</div>
+            <div className="px-3 py-2 label-caps-v2">{t("page_rollout_detail.timeline_col_site")}</div>
             {months.map((m, i) => (
               <div key={i} className="px-2 py-2 text-[10px] text-cl-text-dim font-mono uppercase border-l border-cl-border" style={{ letterSpacing: "0.1em" }}>
-                {m.toLocaleDateString("es-ES", { month: "short", year: "2-digit" })}
+                {m.toLocaleDateString(numLocale, { month: "short", year: "2-digit" })}
               </div>
             ))}
           </div>
@@ -1497,18 +1529,22 @@ function TimelineTab({ wos, sites }) {
               const endPct = r.endDate ? pctOf(r.endDate) : (r.startDate ? pctOf(new Date()) : null);
               const widthPct = startPct != null && endPct != null ? Math.max(1, endPct - startPct) : null;
               const color = FLAG_COLORS[r.flag];
-              const flagLabel = r.flag === "done" ? "Hecho/Marcha"
-                : r.flag === "problem" ? "Con problema"
-                : r.flag === "scheduled" ? "Programado" : "Pendiente";
+              const flagLabel = flagLabelFor(r.flag, "long");
               const durationDays = r.startDate
                 ? Math.max(1, Math.ceil(((r.endDate || new Date()).getTime() - r.startDate.getTime()) / (1000 * 60 * 60 * 24)))
                 : null;
+              const durationLabel = durationDays
+                ? `${t(durationDays === 1
+                    ? "page_rollout_detail.timeline_duration_one"
+                    : "page_rollout_detail.timeline_duration_other",
+                    { count: durationDays })}${r.endDate ? "" : ` ${t("page_rollout_detail.timeline_in_progress_suffix")}`}`
+                : t("page_rollout_detail.timeline_no_duration");
               const tooltip = [
                 r.site.name || "—",
                 r.site.code || "",
                 `${formatWoCode(r.wo)} · ${r.wo.status}`,
                 flagLabel,
-                durationDays ? `${durationDays} día${durationDays !== 1 ? "s" : ""}${r.endDate ? "" : " (en marcha)"}` : "sin duración",
+                durationLabel,
               ].filter(Boolean).join(" · ");
 
               return (
@@ -1553,23 +1589,30 @@ function TimelineTab({ wos, sites }) {
  * Dictado original owner: "poder sacar un reporte con 3 clicks".
  * Aquí: 2 clicks (Exportar → CSV/PDF). Cumple. */
 function ExportReportButton({ project, wos, sites, users, counts, totalSites, progressPct }) {
+  const { t } = useTranslation("common");
   const [open, setOpen] = useState(false);
 
   function exportCsv() {
     setOpen(false);
     try {
       const headers = [
-        "Site Code", "Site Name", "Pais", "Ciudad",
-        "WO Code", "Status", "Banderita", "Tech",
-        "Creado", "Cerrado", "Lat", "Lng",
+        t("page_rollout_detail.csv_header_site_code"),
+        t("page_rollout_detail.csv_header_site_name"),
+        t("page_rollout_detail.csv_header_country"),
+        t("page_rollout_detail.csv_header_city"),
+        t("page_rollout_detail.csv_header_wo_code"),
+        t("page_rollout_detail.csv_header_status"),
+        t("page_rollout_detail.csv_header_flag"),
+        t("page_rollout_detail.csv_header_tech"),
+        t("page_rollout_detail.csv_header_created"),
+        t("page_rollout_detail.csv_header_closed"),
+        t("page_rollout_detail.csv_header_lat"),
+        t("page_rollout_detail.csv_header_lng"),
       ];
       const rows = wos.map((w) => {
         const s = sites[w.site_id] || {};
         const tech = users[getTechId(w)];
         const flag = classifyWoForFlag(w);
-        const flagLabel = flag === "done" ? "Hecho/Marcha"
-          : flag === "problem" ? "Con problema"
-          : flag === "scheduled" ? "Programado" : "Pendiente";
         return [
           s.code || "",
           s.name || "",
@@ -1577,8 +1620,8 @@ function ExportReportButton({ project, wos, sites, users, counts, totalSites, pr
           s.city || "",
           formatWoCode(w),
           w.status,
-          flagLabel,
-          tech?.full_name || tech?.name || "Sin asignar",
+          flagLabelFor(flag, "long"),
+          tech?.full_name || tech?.name || t("page_rollout_detail.tech_unassigned"),
           w.created_at || "",
           w.closed_at || "",
           s.lat ?? s.latitude ?? "",
@@ -1603,9 +1646,9 @@ function ExportReportButton({ project, wos, sites, users, counts, totalSites, pr
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      toast.success(`CSV exportado · ${rows.length} sites`);
+      toast.success(t("page_rollout_detail.export_csv_success", { count: rows.length }));
     } catch (err) {
-      toast.error(`Error CSV: ${err.message || err}`);
+      toast.error(t("page_rollout_detail.export_csv_error", { message: err.message || err }));
     }
   }
 
@@ -1614,15 +1657,14 @@ function ExportReportButton({ project, wos, sites, users, counts, totalSites, pr
     try {
       const reportId = "rollout-print-report";
       document.getElementById(reportId)?.remove();
-      const date = new Date().toLocaleString("es-ES", { dateStyle: "long", timeStyle: "short" });
+      const numLocale = i18n.language && i18n.language.startsWith("en") ? "en-US" : "es-ES";
+      const date = new Date().toLocaleString(numLocale, { dateStyle: "long", timeStyle: "short" });
 
       const rowsHtml = wos.map((w) => {
         const s = sites[w.site_id] || {};
         const tech = users[getTechId(w)];
         const flag = classifyWoForFlag(w);
-        const flagLabel = flag === "done" ? "Hecho/Marcha"
-          : flag === "problem" ? "Problema"
-          : flag === "scheduled" ? "Programado" : "Pendiente";
+        const flagLabel = flagLabelFor(flag, "short");
         const flagColor = FLAG_COLORS[flag];
         return `<tr>
           <td style="padding:4px 6px;border-bottom:1px solid #ddd;font-family:monospace;font-size:9px;">${s.code || "—"}</td>
@@ -1631,9 +1673,16 @@ function ExportReportButton({ project, wos, sites, users, counts, totalSites, pr
           <td style="padding:4px 6px;border-bottom:1px solid #ddd;font-family:monospace;font-size:9px;">${formatWoCode(w)}</td>
           <td style="padding:4px 6px;border-bottom:1px solid #ddd;font-size:9px;">${w.status}</td>
           <td style="padding:4px 6px;border-bottom:1px solid #ddd;font-size:9px;color:${flagColor};font-weight:600;">${flagLabel}</td>
-          <td style="padding:4px 6px;border-bottom:1px solid #ddd;font-size:9px;">${tech?.full_name || tech?.name || "Sin asignar"}</td>
+          <td style="padding:4px 6px;border-bottom:1px solid #ddd;font-size:9px;">${tech?.full_name || tech?.name || t("page_rollout_detail.tech_unassigned")}</td>
         </tr>`;
       }).join("");
+
+      const summaryProblems = `<div style="color:#DC2626;">● ${t("page_rollout_detail.pdf_summary_problems", { count: counts.problem })}</div>`;
+      const summaryScheduled = `<div style="color:#3B82F6;">● ${t("page_rollout_detail.pdf_summary_scheduled", { count: counts.scheduled })}</div>`;
+      const summaryDone = `<div style="color:#16A34A;">● ${t("page_rollout_detail.pdf_summary_done", { count: counts.done })}</div>`;
+      const summaryPending = counts.pending
+        ? `<div style="color:#8B95A8;">● ${t("page_rollout_detail.pdf_summary_pending", { count: counts.pending })}</div>`
+        : "";
 
       const wrapper = document.createElement("div");
       wrapper.id = reportId;
@@ -1648,32 +1697,32 @@ function ExportReportButton({ project, wos, sites, users, counts, totalSites, pr
           @media screen { #${reportId} { display: none; } }
         </style>
         <header style="border-bottom:2px solid #111;padding-bottom:10px;margin-bottom:14px;">
-          <div style="font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:#666;">InsiteIQ · SRS · Reporte de Rollout</div>
+          <div style="font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:#666;">${t("page_rollout_detail.pdf_header_kicker")}</div>
           <h1 style="font-size:18px;margin:5px 0 2px 0;font-weight:700;">${project.title}</h1>
-          <div style="font-size:10px;color:#555;font-family:monospace;">${project.code} · Status: ${project.status}</div>
-          <div style="font-size:9px;color:#888;margin-top:3px;">Generado ${date}</div>
+          <div style="font-size:10px;color:#555;font-family:monospace;">${project.code} · ${t("page_rollout_detail.pdf_status_label")}: ${project.status}</div>
+          <div style="font-size:9px;color:#888;margin-top:3px;">${t("page_rollout_detail.pdf_generated_at", { date })}</div>
         </header>
         <section style="margin-bottom:12px;display:flex;gap:18px;font-size:11px;align-items:baseline;">
           <div><strong style="font-size:18px;">${counts.done}</strong> / ${totalSites} sites · <span style="color:#16A34A;font-weight:600;">${progressPct}%</span></div>
-          <div style="color:#DC2626;">● ${counts.problem} con problemas</div>
-          <div style="color:#3B82F6;">● ${counts.scheduled} en calendario</div>
-          <div style="color:#16A34A;">● ${counts.done} hecho/marcha</div>
-          ${counts.pending ? `<div style="color:#8B95A8;">● ${counts.pending} pendientes</div>` : ""}
+          ${summaryProblems}
+          ${summaryScheduled}
+          ${summaryDone}
+          ${summaryPending}
         </section>
         <table style="width:100%;border-collapse:collapse;font-size:10px;">
           <thead><tr style="background:#f5f5f5;">
-            <th style="text-align:left;padding:6px;border-bottom:2px solid #111;font-size:9px;text-transform:uppercase;letter-spacing:0.08em;">Site Code</th>
-            <th style="text-align:left;padding:6px;border-bottom:2px solid #111;font-size:9px;text-transform:uppercase;letter-spacing:0.08em;">Site Name</th>
-            <th style="text-align:left;padding:6px;border-bottom:2px solid #111;font-size:9px;text-transform:uppercase;letter-spacing:0.08em;">País</th>
-            <th style="text-align:left;padding:6px;border-bottom:2px solid #111;font-size:9px;text-transform:uppercase;letter-spacing:0.08em;">WO</th>
-            <th style="text-align:left;padding:6px;border-bottom:2px solid #111;font-size:9px;text-transform:uppercase;letter-spacing:0.08em;">Status</th>
-            <th style="text-align:left;padding:6px;border-bottom:2px solid #111;font-size:9px;text-transform:uppercase;letter-spacing:0.08em;">Banderita</th>
-            <th style="text-align:left;padding:6px;border-bottom:2px solid #111;font-size:9px;text-transform:uppercase;letter-spacing:0.08em;">Tech</th>
+            <th style="text-align:left;padding:6px;border-bottom:2px solid #111;font-size:9px;text-transform:uppercase;letter-spacing:0.08em;">${t("page_rollout_detail.csv_header_site_code")}</th>
+            <th style="text-align:left;padding:6px;border-bottom:2px solid #111;font-size:9px;text-transform:uppercase;letter-spacing:0.08em;">${t("page_rollout_detail.csv_header_site_name")}</th>
+            <th style="text-align:left;padding:6px;border-bottom:2px solid #111;font-size:9px;text-transform:uppercase;letter-spacing:0.08em;">${t("page_rollout_detail.csv_header_country")}</th>
+            <th style="text-align:left;padding:6px;border-bottom:2px solid #111;font-size:9px;text-transform:uppercase;letter-spacing:0.08em;">${t("page_rollout_detail.pdf_col_wo")}</th>
+            <th style="text-align:left;padding:6px;border-bottom:2px solid #111;font-size:9px;text-transform:uppercase;letter-spacing:0.08em;">${t("page_rollout_detail.csv_header_status")}</th>
+            <th style="text-align:left;padding:6px;border-bottom:2px solid #111;font-size:9px;text-transform:uppercase;letter-spacing:0.08em;">${t("page_rollout_detail.csv_header_flag")}</th>
+            <th style="text-align:left;padding:6px;border-bottom:2px solid #111;font-size:9px;text-transform:uppercase;letter-spacing:0.08em;">${t("page_rollout_detail.csv_header_tech")}</th>
           </tr></thead>
           <tbody>${rowsHtml}</tbody>
         </table>
         <footer style="margin-top:14px;border-top:1px solid #ccc;padding-top:6px;font-size:8px;color:#888;">
-          InsiteIQ · System Rapid Solutions · Documento confidencial · ${wos.length} WOs · ${date}
+          ${t("page_rollout_detail.pdf_footer", { count: wos.length, date })}
         </footer>
       `;
       document.body.appendChild(wrapper);
@@ -1683,9 +1732,9 @@ function ExportReportButton({ project, wos, sites, users, counts, totalSites, pr
         setTimeout(() => document.getElementById(reportId)?.remove(), 1500);
       }, 60);
 
-      toast.success("Reporte listo · usá 'Guardar como PDF' en el diálogo");
+      toast.success(t("page_rollout_detail.export_pdf_success"));
     } catch (err) {
-      toast.error(`Error PDF: ${err.message || err}`);
+      toast.error(t("page_rollout_detail.export_pdf_error", { message: err.message || err }));
     }
   }
 
@@ -1714,10 +1763,10 @@ function ExportReportButton({ project, wos, sites, users, counts, totalSites, pr
             e.currentTarget.style.background = "#FFFFFF";
           }
         }}
-        title="Exportar reporte"
+        title={t("page_rollout_detail.export_btn_tooltip")}
       >
         <Icon icon={ICONS.download} size={14} />
-        Exportar
+        {t("page_rollout_detail.export_btn")}
         <Icon icon={open ? ICONS.chevronUp : ICONS.chevronDown} size={12} />
       </button>
       {open && (
@@ -1741,8 +1790,8 @@ function ExportReportButton({ project, wos, sites, users, counts, totalSites, pr
             >
               <Icon icon={ICONS.document} size={16} color="#0A1628" />
               <div className="flex-1">
-                <div style={{ fontWeight: 700 }}>Exportar CSV / XLSX</div>
-                <div className="text-[10px] text-cl-text-dim font-mono mt-0.5">{wos.length} sites · Excel-ready</div>
+                <div style={{ fontWeight: 700 }}>{t("page_rollout_detail.export_option_csv_title")}</div>
+                <div className="text-[10px] text-cl-text-dim font-mono mt-0.5">{t("page_rollout_detail.export_option_csv_sub", { count: wos.length })}</div>
               </div>
             </button>
             <button
@@ -1758,8 +1807,8 @@ function ExportReportButton({ project, wos, sites, users, counts, totalSites, pr
             >
               <Icon icon={ICONS.printer} size={16} color="#0A1628" />
               <div className="flex-1">
-                <div style={{ fontWeight: 700 }}>Imprimir PDF</div>
-                <div className="text-[10px] text-cl-text-dim font-mono mt-0.5">A4 landscape · "Guardar como PDF"</div>
+                <div style={{ fontWeight: 700 }}>{t("page_rollout_detail.export_option_pdf_title")}</div>
+                <div className="text-[10px] text-cl-text-dim font-mono mt-0.5">{t("page_rollout_detail.export_option_pdf_sub")}</div>
               </div>
             </button>
           </div>
