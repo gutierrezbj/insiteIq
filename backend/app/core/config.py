@@ -41,5 +41,26 @@ class Settings(BaseSettings):
     # Tenant default (v1 = single SRS tenant, prep for Ghost Tech)
     DEFAULT_TENANT_CODE: str = "SRS"
 
+    # ─── Outbox workers (email + webhook) ─────────────────────────
+    # Drena email_outbox + webhook_outbox.
+    # Si SMTP_HOST está vacío, el email worker logea pero no envía
+    # (modo NoOp seguro para dev local sin credenciales).
+    WORKERS_ENABLED: bool = True
+    WORKER_POLL_INTERVAL_SECONDS: int = 30
+    WORKER_BATCH_SIZE: int = 20
+    WORKER_MAX_ATTEMPTS: int = 5
+
+    # SMTP (configurar en .env del VPS)
+    SMTP_HOST: str = ""             # ej: smtp.gmail.com / smtp-relay.brevo.com
+    SMTP_PORT: int = 587
+    SMTP_USER: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_FROM: str = "InsiteIQ <noreply@systemrapid.io>"
+    SMTP_USE_TLS: bool = True       # True = STARTTLS port 587 · False = SSL port 465
+
+    # Webhook (timeout + signing opcional)
+    WEBHOOK_TIMEOUT_SECONDS: int = 15
+    WEBHOOK_SIGNING_SECRET: str = ""  # si está set: header X-InsiteIQ-Signature HMAC-SHA256
+
 
 settings = Settings()

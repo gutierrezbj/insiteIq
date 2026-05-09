@@ -3,6 +3,8 @@ InsiteIQ v1 Foundation — FastAPI application entry
 Clean shell: CORS + audit_log middleware + health + auth.
 Business routers added per-phase as the Blueprint v1.1 roadmap advances.
 """
+import asyncio
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -11,6 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.database import close_db, connect_db
 from app.middleware.audit_log import AuditLogMiddleware
+from app.workers import email_worker_loop, webhook_worker_loop
 from app.routes import audit_log as audit_log_routes
 from app.routes import auth as auth_routes
 from app.routes import health as health_routes
@@ -36,11 +39,36 @@ from app.routes import vendor_invoices as vendor_invoices_routes
 from app.routes import work_orders as work_orders_routes
 
 
+log = logging.getLogger("insiteiq.main")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await connect_db()
-    yield
-    await close_db()
+
+    # Outbox workers (Principio #1 · emit outward)
+    worker_tasks: list[asyncio.Task] = []
+    if settings.WORKERS_ENABLED:
+        worker_tasks.append(asyncio.create_task(email_worker_loop(), name="email_worker"))
+        worker_tasks.append(asyncio.create_task(webhook_worker_loop(), name="webhook_worker"))
+        log.info("Outbox workers started (%d tasks)", len(worker_tasks))
+    else:
+        log.warning("WORKERS_ENABLED=false · outbox no se drena")
+
+    try:
+        yield
+    finally:
+        # Graceful shutdown — cancel + wait
+        for task in worker_tasks:
+            task.cancel()
+        for task in worker_tasks:
+            try:
+                await task
+            except asyncio.CancelledError:
+                pass
+            except Exception:
+                log.exception("Worker %s shutdown error", task.get_name())
+        await close_db()
 
 
 app = FastAPI(
