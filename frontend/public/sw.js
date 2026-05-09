@@ -1,5 +1,15 @@
-const CACHE_NAME = "insiteiq-v1";
-const PRECACHE = ["/", "/index.html"];
+// Bump CACHE_NAME en cada deploy que toque assets críticos (íconos, manifest,
+// nuevo bundle). Activa-handler abajo borra caches viejos y self.clients.claim()
+// fuerza el SW nuevo a tomar control sin reload manual.
+const CACHE_NAME = "insiteiq-v2.63";
+const PRECACHE = [
+  "/",
+  "/index.html",
+  "/manifest.json",
+  "/icons/icon-192.png",
+  "/icons/icon-512.png",
+  "/icons/apple-touch-icon.png",
+];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
