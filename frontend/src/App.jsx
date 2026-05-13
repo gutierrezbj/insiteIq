@@ -82,6 +82,7 @@ import TechLayout from "./spaces/tech/Layout";
 import TechHome from "./spaces/tech/HomePage";
 import TechProfilePage from "./spaces/tech/ProfilePage";
 import BriefingTodayPage from "./spaces/tech/BriefingTodayPage";
+import TechWoDetailPage from "./spaces/tech/WoDetailPage";
 
 function RootRedirect() {
   const { user } = useAuth();
@@ -211,7 +212,8 @@ export default function App() {
             }
           >
             <Route index element={<TechHome />} />
-            <Route path="ops/:wo_id" element={<WorkOrderDetailPage />} />
+            {/* WO detail mobile-first operativo (Iter 2.63h) · NO el WorkOrderDetailPage SRS */}
+            <Route path="ops/:wo_id" element={<TechWoDetailPage />} />
             <Route path="ops/:wo_id/report" element={<InterventionReportPage />} />
             <Route path="briefing" element={<BriefingTodayPage />} />
             <Route path="profile" element={<TechProfilePage />} />
