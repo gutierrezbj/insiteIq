@@ -123,44 +123,65 @@ async def main():
         user_id = result.inserted_id
         print(f"↑ Created · id={user_id}")
 
-    # 3) Asignar 1-2 WOs activas del tenant a este user para que tenga
-    #    data visible al entrar a /tech. Buscamos WOs en status que
-    #    sirva para curiosear (dispatched, en_route, on_site, resolved)
+    # 3) Asegurar que el user de pruebas tenga al menos 1 WO con site
+    #    completo (lat/lng + onsite_contact) y en estado operativo
+    #    (dispatched/en_route/on_site) para que pueda curiosear el flow
+    #    mobile-first completo del Iter 2.63h.
+    #
+    #    Estrategia robusta · NO depende del seed estado actual:
+    #      a) Busca WOs ya asignadas a pruebas@ (idempotente)
+    #      b) Si no hay, busca WOs con site_id (cualquier status) que NO
+    #         tengan tech asignado · ahí le asigna 1
+    #      c) Si encontró una pero está en intake/triage/closed, la
+    #         promueve a 'dispatched' para que el flow operativo cargue
+    #
+    #    Esto NO le roba WOs a Agustin/Arlindo · solo toca las que están
+    #    sin asignar.
     user_id_str = str(user_id)
-    candidate_statuses = ["dispatched", "en_route", "on_site", "resolved"]
+    target_count = 2  # queremos al menos 2 WOs visibles en Jobs
 
-    cursor = db.work_orders.find(
-        {
+    # a) WOs ya asignadas
+    already = await db.work_orders.find({
+        "tenant_id": tenant_id,
+        "assigned_tech_user_id": user_id_str,
+    }).to_list(length=10)
+    print(f"  · WOs ya asignadas al user: {len(already)}")
+
+    need = max(0, target_count - len(already))
+    if need > 0:
+        # b) Candidatas sin asignar, con site_id (preferentemente con coords)
+        unassigned = await db.work_orders.find({
             "tenant_id": tenant_id,
-            "status": {"$in": candidate_statuses},
-        }
-    ).limit(3)
-    candidates = await cursor.to_list(length=3)
+            "$or": [
+                {"assigned_tech_user_id": None},
+                {"assigned_tech_user_id": {"$exists": False}},
+            ],
+            "site_id": {"$exists": True, "$ne": None},
+        }).limit(need * 2).to_list(length=need * 2)
 
-    if not candidates:
-        print("⚠ No hay WOs activas en candidate_statuses · no se asignó ninguna")
-    else:
-        for wo in candidates:
-            current_tech = wo.get("assigned_tech_user_id")
-            if current_tech == user_id_str:
-                print(f"  ✓ WO {wo.get('reference')} (status={wo['status']}) ya asignada")
-                continue
-            # Asignamos · NO degrademos · solo si no tiene tech o si es un seed
-            if current_tech and current_tech != user_id_str:
-                # Hacemos una copia · NO le robamos a Agustin/Arlindo sus WOs
-                # Mejor: solo si NO está asignada a nadie, asignamos.
-                print(f"  ⊘ WO {wo.get('reference')} ya tiene tech ({current_tech[:8]}...) · skip")
-                continue
-            await db.work_orders.update_one(
-                {"_id": wo["_id"]},
-                {
-                    "$set": {
-                        "assigned_tech_user_id": user_id_str,
-                        "updated_at": now,
-                    }
-                },
-            )
-            print(f"  ↑ assign · WO {wo.get('reference')} (status={wo['status']}) → pruebas user")
+        promoted = 0
+        for wo in unassigned:
+            if promoted >= need:
+                break
+            wo_status = wo.get("status")
+            patch = {
+                "assigned_tech_user_id": user_id_str,
+                "updated_at": now,
+            }
+            # c) Si está en estado NO operativo, promovemos a dispatched
+            if wo_status not in ("dispatched", "en_route", "on_site", "resolved"):
+                patch["status"] = "dispatched"
+                print(
+                    f"  ↑ assign+promote · WO {wo.get('reference')} "
+                    f"({wo_status} → dispatched) → pruebas user"
+                )
+            else:
+                print(f"  ↑ assign · WO {wo.get('reference')} (status={wo_status}) → pruebas user")
+            await db.work_orders.update_one({"_id": wo["_id"]}, {"$set": patch})
+            promoted += 1
+
+        if promoted < need:
+            print(f"  ⚠ Solo encontró {promoted}/{need} WOs sin asignar para pruebas")
 
     # 4) Crear briefing pendiente de ack si no hay (para que pueda probar
     #    el flow "He leído y entendí"). Buscamos uno de los WOs asignados
