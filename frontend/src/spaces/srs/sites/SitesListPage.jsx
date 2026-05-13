@@ -18,6 +18,7 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useFetch } from "../../../lib/useFetch";
 import CreateSiteAction from "../../../components/admin/CreateSiteAction";
+import EditSiteAction from "../../../components/admin/EditSiteAction";
 import { SiteStatusPill } from "../../../components/v2-shared/Pills";
 import { JAKARTA, MONO_CAPS } from "../../../components/v2-shared/typography";
 
@@ -371,7 +372,7 @@ export default function SitesListPage() {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "3fr 2fr 1fr 2fr 1fr 1.4fr 1fr",
+            gridTemplateColumns: "3fr 2fr 1fr 2fr 1fr 1.4fr 1fr auto",
             gap: 12,
             padding: "12px 18px",
             background: "#F4F6F8",
@@ -389,6 +390,7 @@ export default function SitesListPage() {
           <div>{t("sites.col_type")}</div>
           <div>{t("sites.col_resident")}</div>
           <div style={{ textAlign: "right" }}>{t("sites.col_status")}</div>
+          <div style={{ minWidth: 60 }}></div>
         </div>
 
         {/* Rows */}
@@ -403,7 +405,7 @@ export default function SitesListPage() {
               to={`/srs/sites/${s.id}`}
               style={{
                 display: "grid",
-                gridTemplateColumns: "3fr 2fr 1fr 2fr 1fr 1.4fr 1fr",
+                gridTemplateColumns: "3fr 2fr 1fr 2fr 1fr 1.4fr 1fr auto",
                 gap: 12,
                 padding: "14px 18px",
                 borderBottom: "1px solid #E2E5EC",
@@ -511,6 +513,16 @@ export default function SitesListPage() {
               {/* Status */}
               <div style={{ textAlign: "right" }}>
                 <SiteStatusPill status={s.status} />
+              </div>
+              {/* Edit (stopPropagation evita que el Link wrapper capture el click) */}
+              <div
+                style={{ minWidth: 60, display: "flex", justifyContent: "flex-end" }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
+              >
+                <EditSiteAction site={s} onSaved={() => reload()} />
               </div>
             </Link>
           );

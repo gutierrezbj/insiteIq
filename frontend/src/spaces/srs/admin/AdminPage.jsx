@@ -19,6 +19,7 @@ import { formatAge } from "../../../components/ui/Badges";
 import CreateUserAction from "../../../components/admin/CreateUserAction";
 import EditUserAction from "../../../components/admin/EditUserAction";
 import CreateOrgAction from "../../../components/admin/CreateOrgAction";
+import EditOrgAction from "../../../components/admin/EditOrgAction";
 import { JAKARTA, MONO, MONO_CAPS } from "../../../components/v2-shared/typography";
 
 const TAB_KEYS = [
@@ -361,13 +362,13 @@ function OrgsTab() {
       <div style={{ maxHeight: "65vh", overflowY: "auto" }}>
         {loading && <Empty text={t("common.loading")} />}
         {!loading && filtered.length === 0 && <Empty text={t("page_admin.empty_no_match")} />}
-        {filtered.map((o) => <OrgRow key={o.id} o={o} />)}
+        {filtered.map((o) => <OrgRow key={o.id} o={o} onSaved={() => reload()} />)}
       </div>
     </section>
   );
 }
 
-function OrgRow({ o }) {
+function OrgRow({ o, onSaved }) {
   const { t } = useTranslation("common");
   return (
     <div style={{ padding: "14px 18px", borderBottom: "1px solid #F0F2F7" }}>
@@ -397,6 +398,9 @@ function OrgRow({ o }) {
             )}
             <StatusDot active={o.status === "active"} />
           </div>
+        </div>
+        <div style={{ flexShrink: 0 }}>
+          <EditOrgAction org={o} onSaved={onSaved} />
         </div>
       </div>
 
