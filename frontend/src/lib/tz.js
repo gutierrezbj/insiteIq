@@ -112,75 +112,94 @@ export function getTechTimeInfo(nameOrUser, viewerTz = VIEWER_TZ) {
   const meta = resolveMeta(nameOrUser);
   if (!meta) return null;
 
-  const now = new Date();
-  const fmt = (tz) =>
-    new Intl.DateTimeFormat("es-ES", {
-      timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: false,
-    }).format(now);
+  // Defensa runtime · si meta.tz es un IANA inválido (ej. "America/Miami"
+  // tipeado a mano en el text input legacy), Intl.DateTimeFormat tira
+  // RangeError y crashea TODO el render del map. Wrap completo en try/
+  // catch: si algo falla, devolvemos null y la UI usa fallbacks "—".
+  // Iter 2.63f · fix pantallazo negro en /srs/techs reportado por owner.
+  try {
+    const now = new Date();
+    const fmt = (tz) =>
+      new Intl.DateTimeFormat("es-ES", {
+        timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: false,
+      }).format(now);
 
-  const hourOnly = (tz) =>
-    parseInt(
+    const hourOnly = (tz) =>
+      parseInt(
+        new Intl.DateTimeFormat("en-US", {
+          timeZone: tz, hour: "2-digit", hour12: false,
+        }).format(now),
+        10
+      );
+
+    const weekdayOf = (tz) =>
       new Intl.DateTimeFormat("en-US", {
-        timeZone: tz, hour: "2-digit", hour12: false,
+        timeZone: tz, weekday: "short",
+      }).format(now);
+
+    const techTime = fmt(meta.tz);
+    const viewerTime = fmt(viewerTz);
+    const techHour = hourOnly(meta.tz);
+    const techMinute = parseInt(
+      new Intl.DateTimeFormat("en-US", {
+        timeZone: meta.tz, minute: "2-digit", hour12: false,
       }).format(now),
       10
     );
+    const isWeekend = ["Sat", "Sun"].includes(weekdayOf(meta.tz));
 
-  const weekdayOf = (tz) =>
-    new Intl.DateTimeFormat("en-US", {
-      timeZone: tz, weekday: "short",
-    }).format(now);
+    let status;
+    if (isWeekend) status = "weekend";
+    else if (techHour >= meta.workStart && techHour < meta.workEnd) status = "onduty";
+    else if (techHour >= meta.workEnd && techHour < 22) status = "afterhours";
+    else if (techHour >= 22 || techHour < 6) status = "sleeping";
+    else status = "starting";
 
-  const techTime = fmt(meta.tz);
-  const viewerTime = fmt(viewerTz);
-  const techHour = hourOnly(meta.tz);
-  const techMinute = parseInt(
-    new Intl.DateTimeFormat("en-US", {
-      timeZone: meta.tz, minute: "2-digit", hour12: false,
-    }).format(now),
-    10
-  );
-  const isWeekend = ["Sat", "Sun"].includes(weekdayOf(meta.tz));
+    // Offset vs viewer
+    const techOffsetDate = new Date(now.toLocaleString("en-US", { timeZone: meta.tz }));
+    const viewerOffsetDate = new Date(now.toLocaleString("en-US", { timeZone: viewerTz }));
+    const diffHours = Math.round((techOffsetDate - viewerOffsetDate) / 3600000);
+    const offsetText =
+      diffHours === 0 ? "misma hora que tú"
+        : diffHours > 0 ? `+${diffHours}h de ti`
+        : `${diffHours}h de ti`;
 
-  let status;
-  if (isWeekend) status = "weekend";
-  else if (techHour >= meta.workStart && techHour < meta.workEnd) status = "onduty";
-  else if (techHour >= meta.workEnd && techHour < 22) status = "afterhours";
-  else if (techHour >= 22 || techHour < 6) status = "sleeping";
-  else status = "starting";
+    // Tiempo hasta fin de jornada (solo on-duty)
+    let untilEndOfDay = null;
+    if (status === "onduty") {
+      const minutesToEnd = (meta.workEnd - techHour) * 60 - techMinute;
+      const h = Math.floor(minutesToEnd / 60);
+      const m = minutesToEnd % 60;
+      untilEndOfDay = h > 0 ? `${h}h ${m}min` : `${m}min`;
+    }
 
-  // Offset vs viewer
-  const techOffsetDate = new Date(now.toLocaleString("en-US", { timeZone: meta.tz }));
-  const viewerOffsetDate = new Date(now.toLocaleString("en-US", { timeZone: viewerTz }));
-  const diffHours = Math.round((techOffsetDate - viewerOffsetDate) / 3600000);
-  const offsetText =
-    diffHours === 0 ? "misma hora que tú"
-      : diffHours > 0 ? `+${diffHours}h de ti`
-      : `${diffHours}h de ti`;
-
-  // Tiempo hasta fin de jornada (solo on-duty)
-  let untilEndOfDay = null;
-  if (status === "onduty") {
-    const minutesToEnd = (meta.workEnd - techHour) * 60 - techMinute;
-    const h = Math.floor(minutesToEnd / 60);
-    const m = minutesToEnd % 60;
-    untilEndOfDay = h > 0 ? `${h}h ${m}min` : `${m}min`;
+    return {
+      techTime,
+      viewerTime,
+      status,
+      label: STATUS_LABEL[status],
+      color: STATUS_COLOR[status],
+      offsetText,
+      diffHours,
+      tzLabel: meta.tzLabel,
+      role: meta.role || null,
+      displayName: meta.displayName || null,
+      untilEndOfDay,
+      shouldNotDisturb: status === "sleeping" || status === "weekend",
+    };
+  } catch (err) {
+    // Log para que el owner vea cuál user tiene tz inválido en mongo.
+    // No re-throw · degradamos a "sin info" y dejamos que UI muestre fallbacks.
+    if (typeof console !== "undefined") {
+      const ident = typeof nameOrUser === "object"
+        ? nameOrUser.full_name || nameOrUser.email || "(unknown)"
+        : nameOrUser;
+      console.warn(
+        `[tz.js] getTechTimeInfo failed for "${ident}" · tz="${meta?.tz}" · ${err.message}`
+      );
+    }
+    return null;
   }
-
-  return {
-    techTime,
-    viewerTime,
-    status,
-    label: STATUS_LABEL[status],
-    color: STATUS_COLOR[status],
-    offsetText,
-    diffHours,
-    tzLabel: meta.tzLabel,
-    role: meta.role || null,
-    displayName: meta.displayName || null,
-    untilEndOfDay,
-    shouldNotDisturb: status === "sleeping" || status === "weekend",
-  };
 }
 
 /**

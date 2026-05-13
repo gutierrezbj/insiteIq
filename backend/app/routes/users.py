@@ -16,6 +16,7 @@ fuera de banda). Nunca se persiste en clear — se hashea y guarda el hash.
 import secrets
 import string
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from bson import ObjectId
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -28,6 +29,28 @@ from app.middleware.audit_log import write_audit_event
 from app.models.user import AuthorityLevel, EmploymentType, Space
 
 router = APIRouter(prefix="/users", tags=["users"])
+
+
+def _validate_tz(tz: str | None) -> None:
+    """
+    Reject IANA timezone strings that ZoneInfo no puede resolver (ej.
+    'America/Miami' tipeado por error · no es un IANA válido). Si tz es
+    None o '' lo pasamos limpio (campo opcional).
+
+    El frontend (DialogTimezoneSelect Iter 2.63e) ya restringe a una lista
+    fija, pero esta es la segunda capa por si alguien hace PATCH a la API
+    directamente o por si el dato viene de un import legacy.
+    """
+    if not tz:
+        return
+    try:
+        ZoneInfo(tz)
+    except (ZoneInfoNotFoundError, Exception) as exc:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            f"Timezone IANA inválido: '{tz}' ({exc}). "
+            f"Usá uno válido tipo 'America/New_York', 'Europe/Madrid', 'America/Panama'.",
+        )
 
 
 def _shape(doc: dict) -> dict:
@@ -201,6 +224,8 @@ async def create_user(
             "Se requiere al menos una membership",
         )
 
+    _validate_tz(body.tz)
+
     db = get_db()
     if db is None:
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "DB not ready")
@@ -278,6 +303,8 @@ async def update_user(
             status.HTTP_403_FORBIDDEN,
             "Solo SRS owner/director puede actualizar users",
         )
+
+    _validate_tz(body.tz)
 
     db = get_db()
     try:

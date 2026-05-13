@@ -5,6 +5,7 @@ Full Site Bible CRUD (known_issues, device_bible links, confidence workflow)
 lands in Fase 5 with Domain 10 Knowledge.
 """
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from bson import ObjectId
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -14,6 +15,20 @@ from app.core.dependencies import CurrentUser, get_current_user
 from app.database import get_db
 from app.middleware.audit_log import write_audit_event
 from app.models.site import SiteContact
+
+
+def _validate_tz(tz: str | None) -> None:
+    """Mismo guard que routes/users.py · IANA whitelist via ZoneInfo."""
+    if not tz:
+        return
+    try:
+        ZoneInfo(tz)
+    except (ZoneInfoNotFoundError, Exception) as exc:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            f"Timezone IANA inválido: '{tz}' ({exc}). "
+            f"Usá uno válido tipo 'America/Panama', 'Europe/Madrid', 'America/New_York'.",
+        )
 
 router = APIRouter(prefix="/sites", tags=["sites"])
 
@@ -124,6 +139,8 @@ async def create_site(
             status.HTTP_403_FORBIDDEN, "Solo SRS owner/director puede crear sites"
         )
 
+    _validate_tz(body.timezone)
+
     db = get_db()
     # Verify the org exists in tenant
     try:
@@ -188,6 +205,8 @@ async def update_site(
         raise HTTPException(
             status.HTTP_403_FORBIDDEN, "Solo SRS owner/director puede actualizar sites"
         )
+
+    _validate_tz(body.timezone)
 
     db = get_db()
     try:
