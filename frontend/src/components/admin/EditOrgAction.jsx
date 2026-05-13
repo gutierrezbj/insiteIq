@@ -12,6 +12,7 @@ import { useTranslation } from "react-i18next";
 import { api } from "../../lib/api";
 import ActionDialog, {
   DialogCheckbox,
+  DialogCountrySelect,
   DialogInput,
   DialogLabel,
   DialogPanel,
@@ -188,11 +189,10 @@ export default function EditOrgAction({ org, onSaved }) {
             <DialogLabel htmlFor="eo-country" optional>
               {t("modal_edit_org.label_country")}
             </DialogLabel>
-            <DialogInput
+            <DialogCountrySelect
               id="eo-country"
               value={country}
-              onChange={(e) => setCountry(e.target.value.toUpperCase())}
-              maxLength={2}
+              onChange={setCountry}
             />
           </div>
           <div>

@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../../lib/api";
 import ActionDialog, {
+  DialogCountrySelect,
   DialogInput,
   DialogLabel,
   DialogSelect,
@@ -115,12 +116,10 @@ export default function CreateOrgAction({ onCreated }) {
             <DialogLabel htmlFor="co-country" optional>
               {t("modal_create_org.label_country")}
             </DialogLabel>
-            <DialogInput
+            <DialogCountrySelect
               id="co-country"
               value={country}
-              onChange={(e) => setCountry(e.target.value.toUpperCase())}
-              placeholder={t("modal_create_org.placeholder_country")}
-              maxLength={2}
+              onChange={setCountry}
             />
           </div>
           <div>

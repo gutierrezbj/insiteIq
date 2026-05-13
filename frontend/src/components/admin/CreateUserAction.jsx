@@ -11,6 +11,7 @@ import { api } from "../../lib/api";
 import { useFetch } from "../../lib/useFetch";
 import ActionDialog, {
   DialogCheckbox,
+  DialogCountrySelect,
   DialogInput,
   DialogLabel,
   DialogPanel,
@@ -192,12 +193,10 @@ export default function CreateUserAction({ onCreated }) {
               </div>
               <div>
                 <DialogLabel htmlFor="cu-country" optional>{t("modal_create_user.label_country")}</DialogLabel>
-                <DialogInput
+                <DialogCountrySelect
                   id="cu-country"
                   value={country}
-                  onChange={(e) => setCountry(e.target.value.toUpperCase())}
-                  placeholder={t("modal_create_user.placeholder_country")}
-                  maxLength={2}
+                  onChange={setCountry}
                 />
               </div>
             </div>

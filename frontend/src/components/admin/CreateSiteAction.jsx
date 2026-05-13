@@ -9,11 +9,13 @@ import { api } from "../../lib/api";
 import { useFetch } from "../../lib/useFetch";
 import ActionDialog, {
   DialogCheckbox,
+  DialogCountrySelect,
   DialogInput,
   DialogLabel,
   DialogPanel,
   DialogSelect,
   DialogTextarea,
+  DialogTimezoneSelect,
 } from "../ui/ActionDialog";
 
 export default function CreateSiteAction({ onCreated }) {
@@ -161,12 +163,10 @@ export default function CreateSiteAction({ onCreated }) {
         <div className="grid grid-cols-3 gap-2">
           <div>
             <DialogLabel htmlFor="cs-country">{t("modal_create_site.label_country")}</DialogLabel>
-            <DialogInput
+            <DialogCountrySelect
               id="cs-country"
               value={country}
-              onChange={(e) => setCountry(e.target.value.toUpperCase())}
-              placeholder={t("modal_create_site.placeholder_country")}
-              maxLength={2}
+              onChange={setCountry}
               required
             />
           </div>
@@ -181,11 +181,10 @@ export default function CreateSiteAction({ onCreated }) {
           </div>
           <div>
             <DialogLabel htmlFor="cs-tz" optional>{t("modal_create_site.label_tz")}</DialogLabel>
-            <DialogInput
+            <DialogTimezoneSelect
               id="cs-tz"
               value={tz}
-              onChange={(e) => setTz(e.target.value)}
-              placeholder={t("modal_create_site.placeholder_tz")}
+              onChange={setTz}
             />
           </div>
         </div>

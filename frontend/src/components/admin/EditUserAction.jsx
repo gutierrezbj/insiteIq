@@ -13,10 +13,12 @@ import { useTranslation } from "react-i18next";
 import { api } from "../../lib/api";
 import ActionDialog, {
   DialogCheckbox,
+  DialogCountrySelect,
   DialogInput,
   DialogLabel,
   DialogPanel,
   DialogSelect,
+  DialogTimezoneSelect,
 } from "../ui/ActionDialog";
 
 const EMPLOYMENT_OPTIONS = [
@@ -221,11 +223,10 @@ export default function EditUserAction({ user, onSaved }) {
               </div>
               <div>
                 <DialogLabel htmlFor="eu-country" optional>{t("modal_edit_user.label_country")}</DialogLabel>
-                <DialogInput
+                <DialogCountrySelect
                   id="eu-country"
                   value={country}
-                  onChange={(e) => setCountry(e.target.value.toUpperCase())}
-                  maxLength={2}
+                  onChange={setCountry}
                 />
               </div>
             </div>
@@ -265,11 +266,11 @@ export default function EditUserAction({ user, onSaved }) {
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <DialogLabel htmlFor="eu-tz" optional>{t("modal_edit_user.label_tz")}</DialogLabel>
-                  <DialogInput
+                  <DialogTimezoneSelect
                     id="eu-tz"
                     value={tz}
-                    onChange={(e) => setTz(e.target.value)}
-                    placeholder={t("modal_edit_user.placeholder_tz")}
+                    onChange={setTz}
+                    onChangeLabel={setTzLabel}
                   />
                 </div>
                 <div>

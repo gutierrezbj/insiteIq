@@ -18,6 +18,7 @@
  */
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { COUNTRIES, TIMEZONES, tzLabelFor } from "../../lib/locales-data";
 
 const JAKARTA = "'Plus Jakarta Sans', sans-serif";
 const MONO = "'JetBrains Mono', monospace";
@@ -396,5 +397,62 @@ export function DialogCheckbox({ id, label, checked, onChange, disabled }) {
       />
       <span>{label}</span>
     </label>
+  );
+}
+
+/**
+ * DialogCountrySelect — wrapper de DialogSelect prepopulado con países
+ * de presencia SRS (lib/locales-data.js COUNTRIES). Reemplaza el text
+ * input de "country (ISO-2)" en todos los modales para evitar errores
+ * tipo "Panama" cuando el sistema espera "PA".
+ *
+ * value = ISO-2 ("PA", "ES", etc.) · onChange recibe ISO-2.
+ * Iter 2.63e · feedback owner.
+ */
+export function DialogCountrySelect({ id, value, onChange, required, includeBlank = true, blankLabel = "— elegir país —", ...props }) {
+  return (
+    <DialogSelect
+      id={id}
+      value={value || ""}
+      onChange={onChange}
+      required={required}
+      {...props}
+      options={[
+        ...(includeBlank ? [{ v: "", l: blankLabel }] : []),
+        ...COUNTRIES.map((c) => ({ v: c.iso, l: `${c.name} · ${c.iso}` })),
+      ]}
+    />
+  );
+}
+
+/**
+ * DialogTimezoneSelect — wrapper para timezone IANA. Reemplaza el text
+ * input que aceptaba cualquier string libre.
+ *
+ * value = IANA tz ("America/Panama") · onChange recibe IANA.
+ * Si pasás onChangeLabel(label), también te devuelve el label corto
+ * sugerido (e.g. "Panamá", "NY", "Madrid") · útil para autopoblar
+ * tz_label cuando el usuario cambia el tz.
+ */
+export function DialogTimezoneSelect({ id, value, onChange, onChangeLabel, required, includeBlank = true, blankLabel = "— elegir timezone —", ...props }) {
+  function handleChange(newTz) {
+    onChange?.(newTz);
+    if (onChangeLabel) {
+      const label = tzLabelFor(newTz);
+      if (label) onChangeLabel(label);
+    }
+  }
+  return (
+    <DialogSelect
+      id={id}
+      value={value || ""}
+      onChange={handleChange}
+      required={required}
+      {...props}
+      options={[
+        ...(includeBlank ? [{ v: "", l: blankLabel }] : []),
+        ...TIMEZONES.map((t) => ({ v: t.tz, l: `${t.label} · ${t.tz}` })),
+      ]}
+    />
   );
 }
