@@ -1,10 +1,73 @@
 # InsiteIQ — Project Status
 
-**Estado:** v2 deployed · 2026-04-29
+**Estado:** 🚀 v2.63i DEPLOYED · 2026-05-10 · LISTA PARA USO CON EQUIPO
 **Decisión:** Owner (JuanCho)
-**Último commit live en PROD:** branch `v1-foundation` · sprint v2 (Alpha→Eta) deployed 2026-04-29 13:19 CET
-**Dominio:** https://insiteiq.systemrapid.io · acceso v2 vía `?v2=1` query param
+**Último commit live en PROD:** `80af95c` · rama `v1-foundation` · 9 iters deployed esta sesión (2.63 → 2.63i)
+**Dominio:** https://insiteiq.systemrapid.io
 **Repo:** https://github.com/gutierrezbj/insiteIq
+**Equipo validando ahora:** Andros + Agustín con cuentas reales · Adriana en finanzas · plan de pruebas docx generado y compartido
+
+---
+
+## SPRINT PRE-USO REAL · 2026-05-08 → 2026-05-10
+
+Sesión de cierre de bloqueantes operacionales antes de uso del equipo en producción. **17 commits** entre i18n epic + workers + PWA + Admin write ops + Tech mobile-first. Todo deployed.
+
+### Iter 2.62 · i18n epic (8 lotes · ~980 keys ES+EN)
+
+Lote 3 RolloutDetailPage refactor completo (CSV/PDF exports + flag labels + modales schedule + timeline duration helpers). Lote 4 InterventionReportPage modales (Regenerate · Email dispatch · Webhook dispatch · timeline labels). Lote 5a+5b AdminPage + Agreements list/detail. Lote 5c Finance pages (3140 líneas · delegado a sub-agent · 271 keys). Lote 5d+5f TechDetail + SiteDetail + InsightsPage. Lote 5e+5g Projects + Client HomePage. Lote 6 Tech PWA mobile (Layout + Home + BriefingToday + Profile). Lote 7+8 admin/finance modales + sections + UI primitives. **Resultado:** toggle ES/EN funciona edge-to-edge desde login hasta Finance modales, Tech PWA, Reports, Rollouts, Insights. Listo para Inetum/F4E.
+
+### Iter 2.63 · Outbox workers (Principio #1 · emit outward live)
+
+`app/workers/email_worker.py` con SMTP via stdlib smtplib + asyncio.to_thread + backoff exponencial 2/4/8/16/32min + NoOp safe si SMTP_HOST vacío. `app/workers/webhook_worker.py` con httpx POST JSON + timeout configurable + HMAC-SHA256 signing opcional (WEBHOOK_SIGNING_SECRET). `app/main.py` lifespan arranca asyncio.create_task() para cada worker + graceful shutdown. 12 env vars nuevas (WORKERS_ENABLED · SMTP_* · WEBHOOK_*). Status flow real: `queued → sending → delivered/failed`. Workers actualizan `intervention_reports.deliveries[].status` para que la UI del owner vea progreso en `/srs/ops/{wo_id}/report`. **Pendiente owner:** configurar SMTP_HOST/USER/PASS en `.env` del VPS para activar envío real.
+
+### Iter 2.63b · PWA installable (íconos paleta F + iOS meta)
+
+Bug encontrado: `public/icons/` vacío en repo · nginx servía SPA index.html (~2KB HTML) cuando browser pedía `/icons/icon-192.png` · manifest cargaba pero install prompt nunca aparecía. Fix: 4 íconos PNG generados con paleta F (navy `#0A1628` + amber accent bar + "iQ" blanco centrado · pequeño dot amber). `apple-touch-icon` 180×180 (iOS Safari ignora manifest.json · usa este link). `manifest.json` v2 navy theme + scope `/` + portrait + lang `es` + SRS branding. `index.html` con apple-mobile-web-app-title + status-bar black-translucent + mobile-web-app-capable. `sw.js` cache bump `v1 → v2.63` para invalidar caches viejos. **Verificación PROD curl headers:** icon-192/512/apple-touch-icon → `image/png` 3-10KB cada uno · manifest.json → `application/json` 636 bytes.
+
+### Iter 2.63c · TECH_REGISTRY → backend + Admin edit users + i18n cleanup
+
+User model extendido con 6 fields opcionales (`tz` · `tz_label` · `role_title` · `display_name` · `work_start` · `work_end`) reemplazando el TECH_REGISTRY hardcoded en `lib/tz.js`. `_shape()` expone los nuevos + phone + country. Create/Update bodies aceptan los 6. **Nuevo endpoint** `POST /api/users/{id}/reset-password` (SRS owner/director · genera temp pwd 12-char URL-safe · setea `must_change_password=true` · audited · self-reset prohibido). `seed_foundation.py` puebla los 9 users con tz/role completos. Frontend `lib/tz.js` refactor con backward compat: `getTechTimeInfo(nameOrUser)` acepta object (preferred) o string (legacy lookup TECH_REGISTRY). TechsListPage migrado al patrón nuevo. **EditUserAction.jsx** modal completo con todos los fields + panel Reset password con copy-to-clipboard + ~50 keys nuevas `modal_edit_user`. AdminPage UsersTab grid 5col→6col con columna "Editar" por row. **Cleanup i18n:** 4 strings hardcoded en ChangePasswordPage refactoreados.
+
+### Migration script · user profile fields en PROD existentes
+
+`scripts/migrate_user_profile_fields.py` idempotente. Match por email · solo actualiza fields en null · NO sobrescribe data manual. **Resultado en PROD:** 9 SRS users updateados (Juan Madrid · Sajid London · Adriana Madrid · Andros Montevideo · Luis Lima · Agustín NY · Hugo Madrid · Yunus London · Arlindo NY). Rackel skipped (no canónico).
+
+### Iter 2.63d · Admin edit orgs + sites
+
+**EditOrgAction.jsx**: modal completo con legal_name + display_name + country + jurisdiction + tax_ids.primary + status (active/inactive/archived) + **partner_relationships dinámicas** (array con add/remove rows · type + status + notes opcional). Soporta múltiples roles simultáneos (Fervimax = client + channel_partner + JV). **EditSiteAction.jsx**: modal con code + name + country + city + address + timezone + status + Panel Contacto onsite (name + role + phone + email) + Panel Modelo cierre + NOC (has_physical_resident + default_noc_operator_user_id select de SRS users). NO permite cambiar organization_id (previene cross-tenant leaks). Botón "Editar" wire en AdminPage OrgRow + SitesListPage row con `stopPropagation` para no triggear el Link wrapper. Backend cero cambios (PATCH endpoints ya existían).
+
+### Iter 2.63e · Country + Timezone dropdowns reusables
+
+Owner roast: _"intento cambiar el timezone u se sale el cursor del field, seria bueno tener los timezone en un deplegable"_ + _"Los paises deberian ser desplegables preestablecidos"_. `lib/locales-data.js` con 32 países (LATAM + EU + EEUU sort alfa) + 31 timezones IANA (sort por offset GMT). `DialogCountrySelect` y `DialogTimezoneSelect` wrappers de DialogSelect. **DialogTimezoneSelect** además acepta `onChangeLabel` para autopoblar el `tz_label` corto cuando user elige el IANA. Wireado en 6 modales (Edit + Create de User/Org/Site).
+
+### Iter 2.63f · Fix pantallazo negro /srs/techs + defensa runtime + validación tz backend
+
+Owner reportó: _"Techs da pantallazo negro"_ tras editar Arlindo con `America/Miami` (NO es IANA válido · el correcto es `America/New_York`). Cuando TechsListPage hace map sobre users y llama getTechTimeInfo(u), el `Intl.DateTimeFormat({ timeZone: 'America/Miami' })` tira RangeError no capturado · crashea TODO el render. **Defensas triples:** (1) Frontend `lib/tz.js` envuelve la lógica Intl en try/catch · si tz inválido logea warning y devuelve null · UI degrada silenciosamente sin crashear. (2) Backend `_validate_tz()` en `routes/users.py` y `routes/sites.py` rechaza tz inválido en POST/PATCH con HTTP 400. (3) Script `repair_invalid_tz.py` que escanea users en mongo y restaura al canonical si está corrupto. **Resultado script en PROD:** 8 users válidos · 1 repair (Arlindo: `America/Miami` → `America/New_York`).
+
+### Iter 2.63g · Agustín + Andros promovidos a director
+
+`scripts/promote_to_admin.py` idempotente. Backend `_is_admin()` check pide `authority_level ∈ {owner, director}` en SRS membership. **Resultado:** Agustín y Andros pasaron de `mid_manager` → `director` · ambos pueden ahora editar users/orgs/sites + reset password del equipo + ver audit log completo. **Reset pwds generadas y compartidas con owner** para que arranquen limpio (Agustín `SmYDF28ht85z` · Andros `eBT5iKJzSxz3`).
+
+**Doc Word entregado:** `Plan_Pruebas_InsiteIQ_2026-05-10.docx` en raíz del repo · 513 párrafos · validation PASSED · estructura: pre-flight (URL + tabla de credenciales) + 12 secciones Andros + 9 secciones Agustín + casos comunes + bugs conocidos + checklist marcable. Generado con `docx-js` skill.
+
+### Iter 2.63h · Tech WO Detail mobile-first operativo
+
+Owner roast: _"PIENSA COMO TECNICO DE CAMPO · es una app de campo · no inventes ni te vuelvas loco · es gente operativa"_. Antes `/tech/ops/:wo_id` reusaba el `WorkOrderDetailPage` SRS desktop (1682 líneas pensadas para pantalla grande). Ahora pieza nueva `frontend/src/spaces/tech/WoDetailPage.jsx` (889 líneas) mobile-first OPERATIVA.
+
+**Flow forzado por status:** `dispatched → [SALÍ HACIA EL SITIO] → en_route → [LLEGUÉ AL SITIO] → on_site → form capture + [TERMINÉ] → resolved → "Esperando validación del CAU" → closed → "✓ Cerrado · buen trabajo"`.
+
+**Componentes mobile-first inline:** HeaderRow con back + WO ref + status pill · LocationBlock con dirección + lat/lng + botón gigante navy "📍 Abrir en Google Maps" · ContactBlock con tap-to-call (tel: href nativo) + email mailto · BriefingBlock con nota del coord + botón amber 52px "HE LEÍDO Y ENTENDÍ" · InterventionBlock con textareas grandes (qué encontraste · qué hiciste) + fotos via `<input capture="environment">` con preview grid + remove · ActionButton 64px alto navy strong (gigante touch target). Validación: needs `what_did >5 chars + min 1 foto` para terminar.
+
+**Backend cero cambios** · usa GET `/work-orders/{id}` + GET `/sites/{id}` + GET briefing + POST briefing/acknowledge + POST capture + POST advance + POST `/uploads` (multipart).
+
+**Phase 2 diferido:** video upload (uploads.py hoy solo imagen) · firma del responsable (canvas o foto papel firmado) · botón "SALÍ DEL SITIO" en status resolved · offline cache · geofence check-in (validar lat/lng tech vs site).
+
+### Iter 2.63i · Test user pruebas@ con doble membership + chip de login one-click
+
+`scripts/create_test_user.py` crea/asegura `pruebas@systemrapid.com` con pwd seed `InsiteIQ2026!` y `must_change_password=False` (entra directo · es curioseo). Memberships dobles `srs_coordinators` + `tech_field` ambas `mid_manager`. Cross-vista profile poblado (Madrid · role "Tech de pruebas"). **Bonus:** el script asigna 1-3 WOs activas sin tech (no le roba a Agustín/Arlindo) + promueve a `dispatched` si están en estado no-operativo + siembra briefing pendiente de ack en una. Login chip nuevo en LoginPage (7º chip "Pruebas Tech · Doble SRS + campo").
+
+**Resultado:** owner click chip → entra directo → ve WO `FM-19566` asignada con briefing pendiente · puede curiosear el flow tech mobile completo sin tocar credenciales reales.
 
 ---
 

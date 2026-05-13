@@ -1,4 +1,5 @@
 - **[Handoff a Code](handoff_to_code.md)** — **LEER PRIMERO** si arrancas en Claude Code · estado real, comandos útiles, reglas rectoras, decisiones pendientes
+- **[Sprint pre-uso real v2.63](sprint_pre_uso_real_v2.63.md)** — **LEER SEGUNDO** · bitácora detallada del último sprint (2026-05-08 → 2026-05-10) · 17 commits · i18n epic + outbox workers + PWA + Admin write + Tech mobile-first + cuenta de pruebas · decisiones del owner + 4 lecciones nuevas
 - [Sprint Reanudación v2](sprint_reanudacion_v2.md) — Log de las 7 fases (Alpha→Eta) que llevaron InsiteIQ del estado pausado al deployed en PROD · Draft 5 · sprint cerrado al 100%
 - [Glossary](glossary.md) — Acronimos, modulos, capas, fases del protocolo SRS/InsiteIQ + términos v2 (Mock 1:1, Anti-plantilla IA, KPI-as-filter, drag handle 6-dots, scope filter, etc.)
 - [Infra Notion](reference_infra_notion.md) — Referencia a docs de infraestructura SRS: servidores, puertos, VPN, backups

@@ -8,7 +8,55 @@
 >
 > ---
 >
-> **🚀 SPRINT v2 DEPLOYED EN PROD · 2026-04-29 · MIGRACIÓN A CODE**
+> **🚀 SPRINT PRE-USO REAL v2.63i DEPLOYED · 2026-05-10 · EQUIPO VALIDANDO**
+>
+> 17 commits deployed entre 2026-05-08 y 2026-05-10 cerrando bloqueantes
+> operacionales antes de uso real con el equipo. Andros + Agustín están
+> probando AHORA con el doc Word `Plan_Pruebas_InsiteIQ_2026-05-10.docx`.
+>
+> Estado al cierre:
+> - **i18n epic completo** (8 lotes · ~980 keys ES+EN simétricas · toggle
+>   edge-to-edge en todas las vistas · listo Inetum/F4E)
+> - **Outbox workers live** (email + webhook · backoff exponencial · NoOp
+>   safe · falta SMTP_HOST en .env del VPS para envío real)
+> - **PWA installable** (íconos paleta F · iOS apple-touch-icon · instalable
+>   en Safari iPhone y Chrome Android)
+> - **Admin write ops** (Users + Orgs + Sites edit · reset password ·
+>   partner_relationships dinámicas · DialogCountrySelect 32 países +
+>   DialogTimezoneSelect 31 IANA con auto-label)
+> - **TECH_REGISTRY migrado al backend** (User model con tz/role/horario ·
+>   9 SRS users poblados en PROD via migration script idempotente)
+> - **Tech WO Detail mobile-first** (`/tech/ops/:wo_id` · pieza NUEVA
+>   separada del SRS desktop · tap-to-call · tap-to-Maps · cámara nativa ·
+>   botón gigante 64px forzado por status · 889 líneas operativas)
+> - **Test user pruebas@** con chip de login one-click + doble membership
+>   SRS+Tech (owner curiosea sin tocar credenciales del equipo)
+> - **Agustín + Andros promovidos a director** (todo el equipo SRS plantilla
+>   ahora puede admin write ops · cero SSH para cambios operativos)
+>
+> Ver `memory/sprint_pre_uso_real_v2.63.md` para bitácora detallada con
+> decisiones del owner + 4 lecciones nuevas. Ver `PROJECT_STATUS.md` para
+> snapshot.
+>
+> **Bloqueantes operacionales restantes (3):**
+> 1. SMTP creds en `.env` del VPS (5 min owner · activa email worker)
+> 2. Feedback de Andros + Agustín tras smoke test (esperando)
+> 3. Phase 2 Tech mobile diferido (video upload · firma del responsable ·
+>    "salí del sitio" · offline cache · geofence) — solo si validan MVP
+>
+> **Lecciones nuevas (memory/donde_la_cagamos.md sesión 2026-05-10):**
+> - #5 Text input libre = bomba de tiempo (caso `America/Miami` crashea
+>   render con `Intl.DateTimeFormat` · 3 capas de defensa obligatorias)
+> - #6 La PWA de campo NO es "el desktop reducido" (animal distinto ·
+>   una mano teléfono otra destornillador · prisa real · UNA acción
+>   grande visible por pantalla)
+> - #7 Migration scripts paralelos a cambios aditivos al schema
+> - #8 Sub-agents útiles para refactor masivo cuando el patrón está
+>   validado (NO cuando hay decisiones abiertas)
+>
+> ---
+>
+> **SPRINT v2 DEPLOYED EN PROD · 2026-04-29 · MIGRACIÓN A CODE**
 >
 > 7 fases del sprint de reanudación completadas y desplegadas en VPS 1
 > (Alpha + Beta + Gamma + Delta + Epsilon + Zeta + Eta) más pulidos A

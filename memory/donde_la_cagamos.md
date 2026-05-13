@@ -523,3 +523,81 @@ Ejemplo aplicado al Sprint 1 Rollouts (deployed exitoso):
 > Cuando el agente propone detalles operativos (color, filtro, patrón), debe marcarlos explícitamente como "decisiones mías para validar" para que el owner pueda corregir en bloque sin tener que rechazar todo. Ejemplo: al final de un deploy, listar 3-5 decisiones de detalle tomadas por el agente para que el owner las valide.
 
 **Para el siguiente agente:** lee este cuaderno entero. La regla #1 dirección invertida sigue vigente para lo macro. Pero NO te quedes paralizado en "yo solo transcribo, espero dictado para todo". Aporta ideas dentro del dictado macro del owner. El owner dictó "rollout con mapa kanban cuadro". Tú proponer "banderita SVG verde/rojo/azul + filtro + autofit + leyenda" es OK (esos son detalles operativos derivados del dictado, no invención visual desde cero).
+
+---
+
+## Sesión 2026-05-10 · Sprint pre-uso real v2.63 · 4 lecciones nuevas
+
+### Lección estructural #5 · Text input libre = bomba de tiempo
+
+**Caso real:** Iter 2.63e introdujo `DialogTimezoneSelect` y `DialogCountrySelect` reemplazando text inputs libres en los modales Admin Edit. Antes el campo `timezone` aceptaba cualquier string. El owner editó al user Arlindo con `America/Miami` (creyó que era IANA válido porque Miami es ciudad reconocida · pero IANA usa la zona representativa · Miami está en `America/New_York`). Backend guardó sin validar. Frontend al renderizar `/srs/techs` llamó `Intl.DateTimeFormat({ timeZone: 'America/Miami' })` → `RangeError` no capturado → crashea TODO el render del map → **pantallazo negro** en la lista entera del equipo.
+
+**Regla derivada:** cualquier campo libre que alimente a una API del browser que puede crashear con datos inválidos (`Intl.DateTimeFormat` para timezones · `Intl.NumberFormat` para locales · `new Date()` para fechas mal formateadas · `URL()` para URLs malformadas · etc.) requiere SIEMPRE 3 capas de defensa:
+
+1. **UI restrictiva** (dropdown · combobox · NO text input libre)
+2. **Validación backend dura** (ZoneInfo whitelist en routes/users.py + routes/sites.py)
+3. **Try/catch defensivo en frontend render path** (degradar silenciosamente · NO crashear)
+
+Las 3 capas no son redundancia · son defense-in-depth. Si una falla las otras protegen.
+
+**Para el siguiente agente:** cada vez que diseñes un form, pregúntate: _"¿qué pasa si el browser API que consume este campo recibe basura?"_. Si la respuesta es "crash uncaught", aplica las 3 capas.
+
+### Lección estructural #6 · La PWA de campo NO es "el desktop reducido"
+
+**Caso real:** Iter 2.63 inicial · `/tech/ops/:wo_id` reusaba el `WorkOrderDetailPage` SRS desktop (1682 líneas, padding 32-40px, maxWidth 1400, grids 3-col, kickers MONO_CAPS, secciones decorativas). Cargaba en mobile pero la UX era pésima · acciones críticas perdidas en bloques densos · 4-5 scroll por viewport · nada táctil grande.
+
+Owner roast: _"PIENSA COMO TECNICO DE CAMPO · Agustín es un coordinador, es una app de campo, no inventes ni te vuelvas loco, es gente operativa"_.
+
+**Regla derivada:** la herramienta del tech de campo es un **animal distinto**, no una versión adaptada del cockpit SRS. Pensar como el operativo en plena calle con cliente al lado:
+- Una mano en el teléfono otra en el destornillador
+- Prisa real
+- Cero paciencia para tap chicos
+- Posiblemente con guantes
+- Luz solar directa = contraste alto necesario
+
+**Patrón de diseño:** cada pantalla = UNA acción grande visible · el resto a un tap. Botones gigantes 64px alto. Tap-to-call con `tel:` href nativo. Tap-to-Maps con `https://maps.google.com/?api=1&query=lat,lng`. `<input capture="environment">` para cámara nativa. Cero kickers MONO_CAPS decorativos. Cero secciones que no son acción inmediata.
+
+**Para el siguiente agente:** cuando construyas pieza mobile-first del tech (o de cualquier rol operativo de campo), NO copies layout del desktop. Pregúntate: _"¿qué necesita esta persona hacer AHORITA · en 3 segundos · con la prisa real?"_.
+
+### Lección operativa #7 · Migration scripts paralelos a cambios aditivos al schema
+
+**Caso real:** Iter 2.63c agregó 6 fields opcionales al User model (`tz` · `tz_label` · `role_title` · `display_name` · `work_start` · `work_end`). Los users ya existentes en mongo se quedaban con esos fields en `null`. Sin script, cada uno tendría que abrir el modal Edit y poblarlos manualmente. Owner tendría que hacer trabajo manual repetitivo por defecto del agente.
+
+**Regla derivada:** todo cambio aditivo al schema (nuevos fields opcionales) merece su **migration script paralelo** en el mismo commit/iter:
+- Idempotente (safe para re-correr · solo actualiza si campo es null)
+- Log claro de qué tocó (`↑ patch` / `✓ keep` / `⊘ skip`)
+- NO sobrescribe data manual existente
+- Documentado en el commit message + bitácora
+
+**Para el siguiente agente:** después de extender un modelo, antes de cerrar el commit, escribe el `scripts/migrate_<thing>.py` correspondiente. Ejecutar en PROD es 30 segundos · ahorrarle al owner trabajo manual de carga vale la inversión.
+
+### Lección operativa #8 · Sub-agents útiles para refactor masivo cuando el patrón está validado
+
+**Caso real:** Iter 2.62 lote 5c (Finance pages · 3140 líneas en 3 archivos) era el 30% del epic i18n restante. Delegué a un sub-agent con instrucciones específicas (namespaces exactos: `page_finance`, `page_finance_invoice`, `page_finance_vendor_invoice` · patrón useTranslation hook + i18n singleton para helpers no-React · regla rename de loop vars `t→ev` para evitar shadow del hook · backward compat con TECH_REGISTRY · pattern de status pills con `labelKey`). Sub-agent entregó 271 keys + 3 archivos + commit + push en una sola pasada · build clean.
+
+**Regla derivada:** delegación a sub-agent funciona cuando:
+1. El patrón ya está validado en archivos previos del mismo lote (no es exploratorio)
+2. Las instrucciones son específicas con ejemplos concretos · namespaces · paths absolutos
+3. El sub-agent puede validar él mismo (build + sintaxis py_compile + commit + push)
+4. El alcance es claro (file paths + scope de cambio + expectativa de entrega)
+
+**NO delegar cuando:**
+- Hay decisiones de diseño abiertas (visual / UX / cuál endpoint usar / cómo estructurar)
+- El patrón no existe aún (el primer archivo del lote lo hace el agente principal · los siguientes pueden delegarse)
+- La integración cruzada es alta (toca data shared como common.json sin coordinación)
+
+**Para el siguiente agente:** sub-agents bien usados ahorran horas. Mal usados generan caos. Pregunta: _"¿podría escribir un test que verifique si el sub-agent hizo lo correcto sin abrir los archivos?"_. Si la respuesta es sí → delega. Si no → hazlo tú.
+
+---
+
+## Reglas duras vigentes al cierre del sprint v2.63
+
+Las 14 reglas duras + la regla #1 dirección invertida + las reglas estructurales #1-4 anteriores SIGUEN VIGENTES. Se suman las 4 lecciones de este sprint (text input libre · PWA de campo · migration scripts · sub-agents).
+
+**Para el siguiente agente · empieza por:**
+1. Leer este cuaderno entero (530+ líneas)
+2. Leer `memory/sprint_pre_uso_real_v2.63.md` (bitácora detallada del último sprint)
+3. Leer `PROJECT_STATUS.md` (estado live del producto)
+4. NO proponer nada visual sin haber leído los 3 anteriores
+
+> *Aprender de las cagadas del agente anterior es la única forma de no repetirlas. El owner lleva 25 años de SRS · él ya pagó esas lecciones en plata y madrugadas · tú las recibes gratis en este cuaderno.*
