@@ -30,6 +30,7 @@ const DEMO_ROLES = [
   { key: "client",   label: "Cliente",         sub: "Fractalia · Rackel", email: "rackel.rocha@fractaliasystems.es" },
   { key: "tech",     label: "Tech plantilla",  sub: "Agustin",            email: "agustinc@systemrapid.com" },
   { key: "tech_ext", label: "Tech externo",    sub: "Arlindo · sub",      email: "arlindoo@systemrapid.com" },
+  { key: "pruebas",  label: "Pruebas Tech",    sub: "Doble SRS + campo",  email: "pruebas@systemrapid.com" },
 ];
 
 const HERO_COUNTERS = [
