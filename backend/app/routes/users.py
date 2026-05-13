@@ -36,8 +36,17 @@ def _shape(doc: dict) -> dict:
         "id": str(doc["_id"]),
         "email": doc.get("email"),
         "full_name": doc.get("full_name"),
+        "phone": doc.get("phone"),
+        "country": doc.get("country"),
         "is_active": doc.get("is_active", True),
         "employment_type": doc.get("employment_type"),
+        # Cross-vista profile (ex-TECH_REGISTRY · frontend lib/tz.js reads from here)
+        "tz": doc.get("tz"),
+        "tz_label": doc.get("tz_label"),
+        "role_title": doc.get("role_title"),
+        "display_name": doc.get("display_name"),
+        "work_start": doc.get("work_start"),
+        "work_end": doc.get("work_end"),
         "memberships": [
             {
                 "space": m.get("space"),
@@ -150,6 +159,13 @@ class CreateUserBody(BaseModel):
     email_provisioned_by_srs: bool = False
     memberships: list[MembershipBody] = Field(default_factory=list)
     notes: str | None = None
+    # Cross-vista profile (opcionales)
+    tz: str | None = None
+    tz_label: str | None = None
+    role_title: str | None = None
+    display_name: str | None = None
+    work_start: int | None = None
+    work_end: int | None = None
 
 
 class UpdateUserBody(BaseModel):
@@ -161,6 +177,13 @@ class UpdateUserBody(BaseModel):
     employment_type: EmploymentType | None = None
     memberships: list[MembershipBody] | None = None
     notes: str | None = None
+    # Cross-vista profile
+    tz: str | None = None
+    tz_label: str | None = None
+    role_title: str | None = None
+    display_name: str | None = None
+    work_start: int | None = None
+    work_end: int | None = None
 
 
 @router.post("", status_code=status.HTTP_201_CREATED)
@@ -210,6 +233,13 @@ async def create_user(
         "password_changed_at": None,
         "last_login_at": None,
         "notes": body.notes,
+        # Cross-vista profile (opcionales · usados por lib/tz.js)
+        "tz": body.tz,
+        "tz_label": body.tz_label,
+        "role_title": body.role_title,
+        "display_name": body.display_name,
+        "work_start": body.work_start,
+        "work_end": body.work_end,
         "created_at": now,
         "updated_at": now,
         "created_by": user.user_id,
@@ -274,6 +304,19 @@ async def update_user(
         patch["space_memberships"] = [m.model_dump() for m in body.memberships]
     if body.notes is not None:
         patch["notes"] = body.notes
+    # Cross-vista profile
+    if body.tz is not None:
+        patch["tz"] = body.tz
+    if body.tz_label is not None:
+        patch["tz_label"] = body.tz_label
+    if body.role_title is not None:
+        patch["role_title"] = body.role_title
+    if body.display_name is not None:
+        patch["display_name"] = body.display_name
+    if body.work_start is not None:
+        patch["work_start"] = body.work_start
+    if body.work_end is not None:
+        patch["work_end"] = body.work_end
 
     if not patch:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Nada para actualizar")
@@ -297,3 +340,72 @@ async def update_user(
 
     refreshed = await db.users.find_one({"_id": oid})
     return _shape(refreshed)
+
+
+@router.post("/{user_id}/reset-password")
+async def reset_user_password(
+    user_id: str, user: CurrentUser = Depends(get_current_user)
+):
+    """
+    SRS owner/director regenera temp password para un user · setea
+    must_change_password=true para forzar rotación en próximo login.
+
+    Devuelve temp_password solo en este response (el admin lo copia +
+    comparte fuera de banda · NO se persiste en clear, solo el hash).
+    Audited.
+    """
+    if not _is_admin(user):
+        raise HTTPException(
+            status.HTTP_403_FORBIDDEN,
+            "Solo SRS owner/director puede resetear passwords",
+        )
+
+    db = get_db()
+    try:
+        oid = ObjectId(user_id)
+    except Exception:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Invalid user_id")
+
+    doc = await db.users.find_one({"_id": oid, "tenant_id": user.tenant_id})
+    if not doc:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "User not found")
+    if user_id == user.user_id:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            "Para cambiar tu propia password usá /auth/change-password",
+        )
+
+    temp = _gen_temp_password()
+    now = datetime.now(timezone.utc)
+
+    await db.users.update_one(
+        {"_id": oid},
+        {
+            "$set": {
+                "hashed_password": hash_password(temp),
+                "must_change_password": True,
+                "password_changed_at": None,
+                "updated_at": now,
+                "updated_by": user.user_id,
+            }
+        },
+    )
+
+    await write_audit_event(
+        db,
+        tenant_id=user.tenant_id,
+        actor_user_id=user.user_id,
+        action="user.reset_password",
+        entity_refs=[
+            {"collection": "users", "id": user_id, "label": doc.get("full_name")}
+        ],
+        context_snapshot={"email": doc.get("email")},
+    )
+
+    return {
+        "id": user_id,
+        "email": doc.get("email"),
+        "full_name": doc.get("full_name"),
+        "temp_password": temp,  # solo en este response
+        "must_change_password": True,
+    }

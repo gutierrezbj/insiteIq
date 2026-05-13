@@ -121,7 +121,7 @@ export default function ChangePasswordPage() {
             marginBottom: 8,
           }}
         >
-          Cambiar contraseña
+          {t("page_auth.change_pwd_title")}
         </h1>
         <p
           style={{
@@ -164,7 +164,7 @@ export default function ChangePasswordPage() {
             marginBottom: 14,
           }}
         >
-          {next.length}/10 min
+          {t("page_auth.change_pwd_min_label", { n: next.length })}
         </div>
 
         <FieldLabel>{t("page_auth.change_pwd_field_confirm_legacy")}</FieldLabel>
@@ -230,7 +230,7 @@ export default function ChangePasswordPage() {
               marginBottom: 14,
             }}
           >
-            Contraseña actualizada. Redirigiendo…
+            {t("page_auth.change_pwd_done")}
           </div>
         )}
 
@@ -295,12 +295,12 @@ export default function ChangePasswordPage() {
               e.currentTarget.style.background = "#FFFFFF";
             }}
           >
-            Cancelar
+            {t("page_auth.btn_cancel")}
           </button>
         )}
 
         <p style={{ ...MONO_CAPS, fontSize: 9.5, color: "#8B95A8", letterSpacing: "0.14em", marginTop: 22 }}>
-          Herramienta interna SRS · auditado en audit_log
+          {t("page_auth.internal_tool_footer")}
         </p>
       </form>
     </div>

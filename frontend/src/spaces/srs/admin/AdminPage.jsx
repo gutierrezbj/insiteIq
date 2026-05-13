@@ -17,6 +17,7 @@ import { useTranslation } from "react-i18next";
 import { useFetch } from "../../../lib/useFetch";
 import { formatAge } from "../../../components/ui/Badges";
 import CreateUserAction from "../../../components/admin/CreateUserAction";
+import EditUserAction from "../../../components/admin/EditUserAction";
 import CreateOrgAction from "../../../components/admin/CreateOrgAction";
 import { JAKARTA, MONO, MONO_CAPS } from "../../../components/v2-shared/typography";
 
@@ -192,7 +193,7 @@ function UsersTab() {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "3fr 3fr 2fr 3fr 1fr",
+          gridTemplateColumns: "3fr 3fr 2fr 3fr 1fr auto",
           gap: 12,
           padding: "10px 18px",
           background: "#F4F6F8",
@@ -208,6 +209,7 @@ function UsersTab() {
         <div>{t("page_admin.users_col_type")}</div>
         <div>{t("page_admin.users_col_memberships")}</div>
         <div style={{ textAlign: "right" }}>{t("page_admin.users_col_status")}</div>
+        <div style={{ minWidth: 60 }}></div>
       </div>
 
       <div style={{ maxHeight: "65vh", overflowY: "auto" }}>
@@ -218,11 +220,11 @@ function UsersTab() {
             key={u.id}
             style={{
               display: "grid",
-              gridTemplateColumns: "3fr 3fr 2fr 3fr 1fr",
+              gridTemplateColumns: "3fr 3fr 2fr 3fr 1fr auto",
               gap: 12,
               padding: "12px 18px",
               borderBottom: "1px solid #F0F2F7",
-              alignItems: "flex-start",
+              alignItems: "center",
             }}
           >
             <div
@@ -272,6 +274,9 @@ function UsersTab() {
             </div>
             <div style={{ textAlign: "right" }}>
               <StatusDot active={u.is_active} />
+            </div>
+            <div style={{ minWidth: 60, display: "flex", justifyContent: "flex-end" }}>
+              <EditUserAction user={u} onSaved={() => reload()} />
             </div>
           </div>
         ))}

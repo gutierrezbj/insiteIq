@@ -163,7 +163,11 @@ export default function TechsListPage() {
           }}
         >
           {filtered.map((u) => {
-            const info = getTechTimeInfo(u.full_name);
+            // Iter 2.63c: pasamos el user object completo · si trae tz/role
+            // del backend usa eso; si no, fallback al TECH_REGISTRY local
+            // por full_name (backward compat hasta que todos los users del
+            // tenant tengan los fields poblados via seed o Admin edit).
+            const info = getTechTimeInfo(u);
             const displayName = info?.displayName || u.full_name || u.email;
             const role = info?.role || null;
             const tzLabel = info?.tzLabel || null;

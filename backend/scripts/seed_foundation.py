@@ -285,6 +285,9 @@ async def seed():
             country="ES",
             employment="plantilla",
             memberships=[_m("srs_coordinators", "lead", "owner")],
+            tz="Europe/Madrid", tz_label="Madrid",
+            role_title="Founder & Lead", display_name="Juan G",
+            work_start=8, work_end=20,
         ),
         _user(
             tenant_id, pwd,
@@ -293,6 +296,9 @@ async def seed():
             country="GB",
             employment="plantilla",
             memberships=[_m("srs_coordinators", "owner_readonly", "owner")],
+            tz="Europe/London", tz_label="London",
+            role_title="Co-owner (read-only)", display_name="Sajid",
+            work_start=9, work_end=18,
         ),
         _user(
             tenant_id, pwd,
@@ -301,6 +307,9 @@ async def seed():
             country="VE",
             employment="plantilla",
             memberships=[_m("srs_coordinators", "finance", "director")],
+            tz="Europe/Madrid", tz_label="Madrid",
+            role_title="Accountant", display_name="Adriana B",
+            work_start=8, work_end=18,
         ),
         _user(
             tenant_id, pwd,
@@ -309,6 +318,9 @@ async def seed():
             country="VE",
             employment="plantilla",
             memberships=[_m("srs_coordinators", "ops_coordinator", "mid_manager")],
+            tz="America/Montevideo", tz_label="Montevideo",
+            role_title="Project Manager", display_name="Andros B",
+            work_start=8, work_end=18,
         ),
         _user(
             tenant_id, pwd,
@@ -317,6 +329,9 @@ async def seed():
             country="PE",
             employment="plantilla",
             memberships=[_m("srs_coordinators", "field_consultant", "mid_manager")],
+            tz="America/Lima", tz_label="Lima",
+            role_title="Field Consultant CET", display_name="Luis S",
+            work_start=8, work_end=17,
         ),
         _user(
             tenant_id, pwd,
@@ -328,6 +343,9 @@ async def seed():
                 _m("srs_coordinators", "tech_senior", "mid_manager"),
                 _m("tech_field", "tech_senior", "mid_manager"),
             ],
+            tz="America/New_York", tz_label="NY",
+            role_title="Senior Consultant", display_name="Agustin R",
+            work_start=9, work_end=18,
         ),
         _user(
             tenant_id, pwd,
@@ -336,6 +354,9 @@ async def seed():
             country=None,
             employment="plantilla",
             memberships=[_m("tech_field", "tech_dc", "mid_manager")],
+            tz="Europe/Madrid", tz_label="Madrid",
+            role_title="Tech plantilla", display_name="Hugo R",
+            work_start=8, work_end=19,
         ),
         _user(
             tenant_id, pwd,
@@ -344,6 +365,9 @@ async def seed():
             country="GB",
             employment="plantilla",
             memberships=[_m("srs_coordinators", "account_lead", "mid_manager")],
+            tz="Europe/London", tz_label="London",
+            role_title="Account Lead London", display_name="Yunus H",
+            work_start=9, work_end=18,
         ),
         _user(
             tenant_id, pwd,
@@ -353,6 +377,9 @@ async def seed():
             employment="external_sub",
             email_provisioned=True,
             memberships=[_m("tech_field", "tech_contractor", "contractor")],
+            tz="America/New_York", tz_label="NY",
+            role_title="Tech external sub", display_name="Arlindo O",
+            work_start=9, work_end=18,
         ),
         # Sample client-side contact (Fractalia external, NOT part of 9 SRS users)
         _user(
@@ -1352,7 +1379,14 @@ def _org(tenant_id: str, *, legal_name: str, display_name: str, country: str,
 def _user(tenant_id: str, hashed_pwd: str, *, email: str, full_name: str,
           country: str, employment: str, memberships: list[dict],
           email_provisioned: bool = False,
-          must_change_password: bool = True) -> dict:
+          must_change_password: bool = True,
+          # Cross-vista profile (ex-TECH_REGISTRY · lib/tz.js lee de acá)
+          tz: str | None = None,
+          tz_label: str | None = None,
+          role_title: str | None = None,
+          display_name: str | None = None,
+          work_start: int | None = None,
+          work_end: int | None = None) -> dict:
     return {
         "tenant_id": tenant_id,
         "email": email.lower(),
@@ -1366,6 +1400,13 @@ def _user(tenant_id: str, hashed_pwd: str, *, email: str, full_name: str,
         # Seed default password forces rotation on first login
         "must_change_password": must_change_password,
         "password_changed_at": None,
+        # Cross-vista profile
+        "tz": tz,
+        "tz_label": tz_label,
+        "role_title": role_title,
+        "display_name": display_name,
+        "work_start": work_start,
+        "work_end": work_end,
         "created_at": _now(),
         "updated_at": _now(),
     }

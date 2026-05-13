@@ -54,5 +54,22 @@ class User(BaseMongoModel):
     last_login_at: str | None = None
     notes: str | None = None
 
+    # ─── Cross-vista profile (ex-TECH_REGISTRY hardcoded en lib/tz.js) ───
+    # Cuando un user existe en estos campos, lib/tz.js cross-frontend puede
+    # calcular hora local + estado laboral + offset vs viewer sin tener que
+    # mantener un registry duplicado en frontend.
+    #
+    # tz             — IANA timezone (e.g. "America/Lima", "Europe/Madrid")
+    # tz_label       — short display (e.g. "Lima", "Madrid", "NY")
+    # role_title     — cargo human-readable (e.g. "Senior Consultant")
+    # display_name   — short label para tarjetas/strips (e.g. "Agustin R")
+    # work_start/end — hora 24h cuando está on-duty (8 = 08:00, 18 = 18:00)
+    tz: str | None = None
+    tz_label: str | None = None
+    role_title: str | None = None
+    display_name: str | None = None
+    work_start: int | None = None
+    work_end: int | None = None
+
     def is_member_of(self, space: Space) -> bool:
         return any(m.space == space and m.active for m in self.space_memberships)

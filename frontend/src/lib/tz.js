@@ -8,33 +8,76 @@
  * de memoria, el sistema falló dos veces".
  *
  * Zero dependencies — usa Intl.DateTimeFormat nativo.
+ *
+ * ─── Source of truth (Iter 2.63c) ─────────────────────────────────
+ * Los campos tz / tz_label / role_title / display_name / work_start /
+ * work_end ahora viven en `users` collection del backend. Las vistas
+ * pasan el user object completo (ya viene de useFetch("/api/users"))
+ * a getTechTimeInfo(user, viewerTz).
+ *
+ * TECH_REGISTRY local queda como **fallback** para call sites legacy
+ * que solo tienen el `full_name` (e.g. cuando un WO viene serializado
+ * con tech_name sin user_id). Cuando esos call sites se migren, se
+ * elimina el registry.
  */
 
 export const VIEWER_TZ = "Europe/Madrid";
 export const VIEWER_TZ_LABEL = "Madrid";
 
 /**
- * Registry del equipo SRS con zona horaria, horario laboral, cargo y
- * display name corto.
+ * Fallback registry (legacy · usar user object del API cuando sea posible).
  *
- * Keys = `full_name` exacto del backend (matchea con `users.full_name` del
- * seed_foundation.py para que getTechTimeInfo() funcione cross-vista).
- * `displayName` = nombre corto para tarjetas y strips (primer nombre +
- * inicial primer apellido).
- *
- * TODO(fase Zeta): mover a backend y exponer via /api/users con campos
- * `tz` + `work_start` + `work_end` + `role_title` + `display_name`. Por
- * ahora registro local en frontend.
+ * Keys = `full_name` exacto del backend. Si un user del API trae sus
+ * propios fields tz/tz_label/etc, esos ganan. Este const solo se consulta
+ * cuando `getTechTimeInfo()` recibe un string (no un user object).
  */
 export const TECH_REGISTRY = {
-  "Agustin Rivera":   { displayName: "Agustin R",  tz: "America/New_York", tzLabel: "NY",     role: "Senior Consultant",    workStart: 9, workEnd: 18 },
+  "Agustin Rivera":   { displayName: "Agustin R",  tz: "America/New_York", tzLabel: "NY",         role: "Senior Consultant",    workStart: 9, workEnd: 18 },
   "Andros Briceño":   { displayName: "Andros B",   tz: "America/Montevideo", tzLabel: "Montevideo", role: "Project Manager",      workStart: 8, workEnd: 18 },
-  "Adriana Bracho":   { displayName: "Adriana B",  tz: "Europe/Madrid",    tzLabel: "Madrid", role: "Accountant",           workStart: 8, workEnd: 18 },
-  "Hugo M Rodriguez": { displayName: "Hugo R",     tz: "Europe/Madrid",    tzLabel: "Madrid", role: "Tech plantilla",       workStart: 8, workEnd: 19 },
-  "Arlindo Ochoa":    { displayName: "Arlindo O",  tz: "America/New_York", tzLabel: "NY",     role: "Tech external sub",    workStart: 9, workEnd: 18 },
-  "Luis Sánchez":     { displayName: "Luis S",     tz: "America/Lima",     tzLabel: "Lima",   role: "Field Consultant CET", workStart: 8, workEnd: 17 },
-  "Yunus Hafesjee":   { displayName: "Yunus H",    tz: "Europe/London",    tzLabel: "London", role: "Account Lead London",  workStart: 9, workEnd: 18 },
+  "Adriana Bracho":   { displayName: "Adriana B",  tz: "Europe/Madrid",    tzLabel: "Madrid",     role: "Accountant",           workStart: 8, workEnd: 18 },
+  "Hugo M Rodriguez": { displayName: "Hugo R",     tz: "Europe/Madrid",    tzLabel: "Madrid",     role: "Tech plantilla",       workStart: 8, workEnd: 19 },
+  "Arlindo Ochoa":    { displayName: "Arlindo O",  tz: "America/New_York", tzLabel: "NY",         role: "Tech external sub",    workStart: 9, workEnd: 18 },
+  "Luis Sánchez":     { displayName: "Luis S",     tz: "America/Lima",     tzLabel: "Lima",       role: "Field Consultant CET", workStart: 8, workEnd: 17 },
+  "Yunus Hafesjee":   { displayName: "Yunus H",    tz: "Europe/London",    tzLabel: "London",     role: "Account Lead London",  workStart: 9, workEnd: 18 },
 };
+
+/**
+ * Build a meta object from a user document from /api/users.
+ * Normaliza snake_case (backend) → camelCase (lib/tz). Si el user
+ * no trae fields tz, queda null y el caller decide qué hacer.
+ *
+ * @param {object} user — shape: { full_name, tz, tz_label, role_title, display_name, work_start, work_end }
+ * @returns {object|null} meta normalizado o null si el user no tiene tz
+ */
+export function buildTechMetaFromUser(user) {
+  if (!user || !user.tz) return null;
+  return {
+    tz: user.tz,
+    tzLabel: user.tz_label || user.tz,
+    role: user.role_title || null,
+    displayName: user.display_name || user.full_name || null,
+    workStart: user.work_start ?? 9,
+    workEnd: user.work_end ?? 18,
+  };
+}
+
+/**
+ * Resolve meta: user object > TECH_REGISTRY fallback by name.
+ *
+ * @param {object|string} nameOrUser — user object (preferred) o full_name string (legacy)
+ * @returns {object|null} meta o null si no se encuentra
+ */
+function resolveMeta(nameOrUser) {
+  if (!nameOrUser) return null;
+  if (typeof nameOrUser === "object") {
+    const fromUser = buildTechMetaFromUser(nameOrUser);
+    if (fromUser) return fromUser;
+    // Si user object no trae tz, fallback al registry por nombre
+    return TECH_REGISTRY[nameOrUser.full_name] || null;
+  }
+  // String — legacy lookup
+  return TECH_REGISTRY[nameOrUser] || null;
+}
 
 /**
  * @typedef {'onduty' | 'afterhours' | 'starting' | 'sleeping' | 'weekend'} LaborStatus
@@ -58,12 +101,15 @@ const STATUS_LABEL = {
 
 /**
  * Calcula hora local + estado laboral + offset de un tech.
- * @param {string} techName — key del TECH_REGISTRY
+ * Acepta tanto un user object del API (preferred · trae tz/tz_label/etc)
+ * como un full_name string (legacy fallback que busca en TECH_REGISTRY).
+ *
+ * @param {object|string} nameOrUser — user object o full_name (legacy)
  * @param {string} [viewerTz] — opcional, default VIEWER_TZ
- * @returns {null | {techTime, viewerTime, status, label, color, offsetText, diffHours, tzLabel, untilEndOfDay}}
+ * @returns {null | {techTime, viewerTime, status, label, color, offsetText, diffHours, tzLabel, role, displayName, untilEndOfDay, shouldNotDisturb}}
  */
-export function getTechTimeInfo(techName, viewerTz = VIEWER_TZ) {
-  const meta = TECH_REGISTRY[techName];
+export function getTechTimeInfo(nameOrUser, viewerTz = VIEWER_TZ) {
+  const meta = resolveMeta(nameOrUser);
   if (!meta) return null;
 
   const now = new Date();
