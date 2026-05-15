@@ -8,51 +8,69 @@
 >
 > ---
 >
-> **🚀 SPRINT PRE-USO REAL v2.63i DEPLOYED · 2026-05-10 · EQUIPO VALIDANDO**
+> **🚀 SPRINT PRE-USO REAL v2.63j DEPLOYED · 2026-05-11 · OWNER DE VIAJE · VALIDACIÓN PENDIENTE**
 >
-> 17 commits deployed entre 2026-05-08 y 2026-05-10 cerrando bloqueantes
-> operacionales antes de uso real con el equipo. Andros + Agustín están
-> probando AHORA con el doc Word `Plan_Pruebas_InsiteIQ_2026-05-10.docx`.
+> 19 commits deployed entre 2026-05-08 y 2026-05-11. Tras 17 commits del
+> sprint base v2.63a..i (Andros + Agustín validando con doc Word) llegó
+> el feedback de Agustín en `Pruebas_Equipo/Que preguntas tendria como
+> gerente o coordinador.docx` (15 preguntas + árbol estructural). Owner
+> aplicó filtro "gerente operativo pragmático" sobre las 15 → quedaron
+> 3 build + 3 descartar + 3 diferir + 6 ya resueltas. El sprint cerró
+> con Iter 2.63j (5 cambios bundleados · ver lección nueva abajo).
 >
-> Estado al cierre:
-> - **i18n epic completo** (8 lotes · ~980 keys ES+EN simétricas · toggle
->   edge-to-edge en todas las vistas · listo Inetum/F4E)
-> - **Outbox workers live** (email + webhook · backoff exponencial · NoOp
->   safe · falta SMTP_HOST en .env del VPS para envío real)
-> - **PWA installable** (íconos paleta F · iOS apple-touch-icon · instalable
->   en Safari iPhone y Chrome Android)
-> - **Admin write ops** (Users + Orgs + Sites edit · reset password ·
->   partner_relationships dinámicas · DialogCountrySelect 32 países +
->   DialogTimezoneSelect 31 IANA con auto-label)
-> - **TECH_REGISTRY migrado al backend** (User model con tz/role/horario ·
->   9 SRS users poblados en PROD via migration script idempotente)
-> - **Tech WO Detail mobile-first** (`/tech/ops/:wo_id` · pieza NUEVA
->   separada del SRS desktop · tap-to-call · tap-to-Maps · cámara nativa ·
->   botón gigante 64px forzado por status · 889 líneas operativas)
-> - **Test user pruebas@** con chip de login one-click + doble membership
->   SRS+Tech (owner curiosea sin tocar credenciales del equipo)
-> - **Agustín + Andros promovidos a director** (todo el equipo SRS plantilla
->   ahora puede admin write ops · cero SSH para cambios operativos)
+> Estado al cierre v2.63j:
+> - **i18n epic completo** (8 lotes · ~980 keys ES+EN simétricas)
+> - **Outbox workers live** (falta SMTP_HOST en `.env` del VPS)
+> - **PWA installable** (íconos paleta F · iOS apple-touch-icon)
+> - **Admin write ops** (Users + Orgs + Sites · reset password · partner_relationships
+>   dinámicas · DialogCountrySelect 32 + DialogTimezoneSelect 31 IANA)
+> - **TECH_REGISTRY migrado al backend** (User model · 9 SRS users en PROD)
+> - **Tech WO Detail mobile-first** (`/tech/ops/:wo_id` · botón gigante 64px)
+> - **Test user pruebas@** con chip one-click + doble membership SRS+Tech
+> - **Agustín + Andros director** (admin write ops · cero SSH operativo)
+> - **Iter 2.63j feedback Agustín · 5 cambios pendientes de validar:**
+>   1. `wo.status_timestamps` backend field (cada transición de estado
+>      queda registrada con timestamp · backward compat preservado para
+>      WOs viejas)
+>   2. Drift llegada automático en WO Detail header
+>      (`on_site_at − scheduled_at`) · badge severity (ok/warn/danger)
+>   3. Tiempo on-site automático en WO Detail
+>      (`capture.time_on_site_minutes` ya existente · expuesto)
+>   4. Widget Horizonte Programación en Cockpit (próximos 7d/30d count
+>      + última fecha programada + alert si horizonte se acorta)
+>   5. Sidebar simplificado: item "Rollouts" eliminado (ahora filtro
+>      `?type=rollout` en ProjectsListPage) · "Intervenciones" renombrado
+>      a "B&F · Intervenciones"
 >
-> Ver `memory/sprint_pre_uso_real_v2.63.md` para bitácora detallada con
-> decisiones del owner + 4 lecciones nuevas. Ver `PROJECT_STATUS.md` para
-> snapshot.
+> Ver `memory/sprint_pre_uso_real_v2.63.md` para bitácora detallada +
+> decisiones del owner + lecciones nuevas. Ver `PROJECT_STATUS.md` para
+> snapshot ejecutivo + tabla de validación pendiente.
+>
+> ---
+>
+> **⛔ REGLA CRÍTICA NUEVA: ITERATE > BUNDLE (Lección #9)**
+>
+> Default operativo: 1 cambio → deploy → validación del owner → siguiente.
+> NO bundlear varios cambios en 1 commit/deploy salvo que el agente declare
+> explícitamente "MUST bloqueante" antes de actuar. Owner roast del 2026-05-11
+> tras Iter 2.63j: *"validamos cambios, los organizamos y procedemos, ya lo
+> sabes NADA de salir a lo loco · los productos se ITERAN salvo que me digas
+> ese es un MUST"*. Documentado en `memory/donde_la_cagamos.md` lección #9.
+>
+> ---
 >
 > **Bloqueantes operacionales restantes (3):**
-> 1. SMTP creds en `.env` del VPS (5 min owner · activa email worker)
-> 2. Feedback de Andros + Agustín tras smoke test (esperando)
-> 3. Phase 2 Tech mobile diferido (video upload · firma del responsable ·
->    "salí del sitio" · offline cache · geofence) — solo si validan MVP
+> 1. **Validación 1-a-1 del owner de los 5 cambios Iter 2.63j** ← PRIORIDAD 0
+>    al volver del viaje
+> 2. SMTP creds en `.env` del VPS (5 min owner · activa email worker)
+> 3. Feedback de Andros + Agustín tras smoke test del Word de pruebas
 >
-> **Lecciones nuevas (memory/donde_la_cagamos.md sesión 2026-05-10):**
-> - #5 Text input libre = bomba de tiempo (caso `America/Miami` crashea
->   render con `Intl.DateTimeFormat` · 3 capas de defensa obligatorias)
-> - #6 La PWA de campo NO es "el desktop reducido" (animal distinto ·
->   una mano teléfono otra destornillador · prisa real · UNA acción
->   grande visible por pantalla)
+> **Lecciones acumuladas (memory/donde_la_cagamos.md):**
+> - #5 Text input libre = bomba de tiempo (caso `America/Miami`)
+> - #6 La PWA de campo NO es "el desktop reducido" (animal distinto)
 > - #7 Migration scripts paralelos a cambios aditivos al schema
-> - #8 Sub-agents útiles para refactor masivo cuando el patrón está
->   validado (NO cuando hay decisiones abiertas)
+> - #8 Sub-agents útiles para refactor masivo (con patrón validado)
+> - **#9 NUEVA · Iterar = 1 cambio + validación · NO bundles** (2026-05-11)
 >
 > ---
 >

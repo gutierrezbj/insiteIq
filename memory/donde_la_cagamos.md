@@ -594,10 +594,51 @@ Owner roast: _"PIENSA COMO TECNICO DE CAMPO · Agustín es un coordinador, es un
 
 Las 14 reglas duras + la regla #1 dirección invertida + las reglas estructurales #1-4 anteriores SIGUEN VIGENTES. Se suman las 4 lecciones de este sprint (text input libre · PWA de campo · migration scripts · sub-agents).
 
+---
+
+## Sesión 2026-05-11 · Lección estructural #9 · Iterar = 1 cambio + validación · NO bundles
+
+**Caso real:** Iter 2.63j · plan mode aprobado con 5 cambios concretos (drift WO Detail · Drift Dashboard Rollout · widget horizonte programación Cockpit · sidebar quitar Rollouts + renombrar Intervenciones · ProjectsListPage filter chips). El agente los empacó TODOS en un solo commit + push + deploy + smoke. Owner roast:
+
+> *"validamos cambios, los organizamos y procedemos, ya lo sabes NADA de salir a lo loco y ya sabes los productos se ITERAN salvo que me digas ese es un MUST."*
+
+Resultado: 5 cambios en PROD sin validación intermedia · si uno NO convence, hay que entrar a desempaquetar mezclado con los otros 4 que sí · ineficiente para el owner.
+
+**Regla derivada (operativa · no de diseño):**
+
+> **Default = ITERATE.** Cada cambio sale solo: 1 commit · 1 deploy · validación del owner · siguiente. El owner mira UN cambio aislado · decide quedar/ajustar/quitar · firma · pasamos al próximo.
+>
+> **Excepción = MUST.** El agente puede empaquetar varios cambios SOLO SI declara explícitamente al owner "esto es un MUST bloqueante" y el owner firma. Sin esa firma · no hay bundle.
+
+**Casos donde el bundle es OK (MUST declarado):**
+- Cambio que toca backend + frontend simultáneamente (no se puede dividir sin romper)
+- Refactor masivo con un patrón validado en archivos previos (i18n lotes, etc.)
+- Fix urgente de bug que crashea PROD (pantallazo negro tipo · primer commit cierra el sangrado)
+
+**Casos donde el bundle NO es OK (default ITERATE):**
+- Nuevas features visuales · una por una
+- Nuevos widgets o componentes · uno por uno
+- Cambios en navegación (sidebar · routing) · uno por uno
+- Cambios de modelo que agregan campos opcionales (cada uno con su sprint)
+
+**Para el siguiente agente:** cuando termines de proponer un plan con N items y estés a punto de ejecutar:
+1. Pregúntate: _"¿el owner declaró MUST?"_
+2. Si NO → ejecutá SOLO el primer item del plan · commit · deploy · esperá feedback · siguiente
+3. Si SÍ → seguí adelante con el bundle
+
+Atajo mental: _"5 cambios juntos sin firma del owner = 5 maneras de joder al owner que tiene que ir a validar mezclado"_.
+
+---
+
+## Reglas duras vigentes al cierre del sprint v2.63 (actualizado 2026-05-11)
+
+Las 14 reglas duras + #1 dirección invertida + estructurales #1-4 + lecciones #5-8 del sprint anterior SIGUEN VIGENTES. Se suma la lección #9 de hoy: **ITERATE > BUNDLE**.
+
 **Para el siguiente agente · empieza por:**
-1. Leer este cuaderno entero (530+ líneas)
-2. Leer `memory/sprint_pre_uso_real_v2.63.md` (bitácora detallada del último sprint)
+1. Leer este cuaderno entero (570+ líneas)
+2. Leer `memory/sprint_pre_uso_real_v2.63.md` (bitácora detallada de los últimos 2 sprints v2.63 + v2.63j)
 3. Leer `PROJECT_STATUS.md` (estado live del producto)
 4. NO proponer nada visual sin haber leído los 3 anteriores
+5. **DEFAULT = ITERATE.** No empaques cambios. 1 cambio · 1 deploy · validación · siguiente. Excepción solo si el owner declaró MUST.
 
 > *Aprender de las cagadas del agente anterior es la única forma de no repetirlas. El owner lleva 25 años de SRS · él ya pagó esas lecciones en plata y madrugadas · tú las recibes gratis en este cuaderno.*

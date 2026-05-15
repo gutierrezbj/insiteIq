@@ -29,8 +29,30 @@
 | c688819 | 2.63h | Tech WO Detail mobile-first operativo (889 líneas · pieza nueva separada del SRS) |
 | 0fde482 | 2.63i | Test user pruebas@ + chip de login one-click |
 | 80af95c | 2.63i fix | Script promueve WO a dispatched si está en estado no-operativo |
+| e928f42 | docs sprint cierre | PROJECT_STATUS + bitácora + Notion sync v1.6 + Plan_Pruebas.docx |
+| 9ab20af | **2.63j** | Feedback Agustín filtrado · drift llegada + tiempo on-site + horizonte programación + sidebar reorg (Rollouts fuera del menú · B&F · Intervenciones) |
 
-**Total:** 19 commits · ~3500 líneas netas + ~980 keys i18n (es+en simétricas)
+**Total:** 21 commits · ~4000 líneas netas + ~1000 keys i18n (es+en simétricas)
+
+---
+
+## Iter 2.63j · feedback Agustín filtrado (2026-05-11)
+
+Agustín entregó documento Word `Pruebas_Equipo/Que preguntas tendria como gerente o coordinador.docx` con 15 preguntas tipo "director/gerente" + árbol estructural "Por ticket/actividad". Owner pidió análisis con lente **"gerente operativo pragmático · poda burocracia"**.
+
+Filtrado de las 15:
+- **YA resueltas (6):** Q1 búsqueda ticket · Q2 filtro localidad · Q3 responsable técnico · Q7 % avance · Q8 ejecutadas counter · Q9 restantes counter
+- **Construido (3):** Q5 drift entrada · Q6 tiempo on-site · Q10 horizonte programación
+- **Descartado (3):** Q4 PM directivo cliente (campo fantasma) · Q11 programado sin ticket (no aplica al diseño) · Q14 t min/max threads (parálisis por análisis)
+- **Diferido (3):** Q12 search por serial · Q13 equipos por site · Q15 IA proactiva tiempo real
+
+Respuesta arquitectónica a la pregunta del owner "intervenciones · proyectos · rollouts · necesitamos los 3 o solo proyectos": **2 conceptos, no 3.** Rollouts es solo un tipo de proyecto · sale del menú · pasa a filtro `?type=rollout` dentro de `/srs/projects`. Intervenciones renombrado a "B&F · Intervenciones" para dejar claro que son reactivos (break-fix) vs Proyectos (planificados).
+
+Backend cambio mínimo: 1 campo opcional `status_timestamps: dict[str, datetime]` en WorkOrder model · 1 línea en `advance()` que lo puebla con primer ingreso al status. Backward compat preservado.
+
+Frontend nuevo helper `lib/wo-metrics.js` reusable: `driftMinutes()` · `timeOnSiteMinutes()` · `formatMinutes()` · `driftSeverity()` · `scheduledNextDays()` · `lastScheduledDate()`. Reuse en WO Detail + Rollout Dashboard + Cockpit widget.
+
+**Resultado en PROD:** 5 cambios visibles · **PENDIENTE validación del owner uno por uno** tras roast de bundle (ver decisión #7 + lección #9 abajo).
 
 ---
 
@@ -59,6 +81,31 @@ Owner roast cuando el agente propuso un TechWoDetailPage con bloques pesados sim
 ### 6. "Hacemos cuenta de pruebas para curiosear · más fácil clicar" (2026-05-10)
 
 En vez de loguear como Agustín y romper su workflow, owner pidió cuenta dedicada `pruebas@` con doble membership SRS + Tech, sin forced rotation, accesible vía un chip 7º en login. Resultado: 1 click → entra → curiosea ambos espacios.
+
+### 7. "Actúa como gerente operativo pragmático · poda burocracia" (2026-05-11)
+
+Tras primer análisis del docx de Agustín (15 preguntas + árbol) en que el agente listó 11 items en 3 sprints como roadmap acumulativo, owner roast:
+
+> *"Espera navegante, actua como gerente de operaciones muy pragmatico, esta es una herramienta que surge por podar toda la capa burocratica de una gestion · proyectos son proyectos · B&F es solo eso · lo importante es que InsiteIQ SABE como gestionar tus operaciones agiles y sabe interpretar tus numeros y ayudar a tus gestores a optimizar el tiempo."*
+
+> *"Agustin es mi mejor tecnico de campo pero tiende al paralisis por analisis, sin embargo tiene un 'tercer ojo' que ayuda · ese punto de vista crítico es el que necesitamos y evaluamos."*
+
+**Filtro adoptado:** cada propuesta pasa por 3 preguntas:
+1. ¿Poda burocracia o agrega?
+2. ¿Ahorra tiempo decidir a Andros/Adriana o solo añade campo a llenar?
+3. ¿Es automático (sistema calcula) o manual (alguien escribe)?
+
+Resultado del re-análisis: 11 items → 3 construir · 3 descartar · 3 diferir. Lo construido es 100% auto-calculado · cero campos nuevos para llenar.
+
+### 8. "ITERATE > BUNDLE · nada de salir a lo loco" (2026-05-11)
+
+Tras el iter 2.63j (5 cambios deployed en un solo push), owner declaró regla operativa nueva:
+
+> *"validamos cambios, los organizamos y procedemos, ya lo sabes NADA de salir a lo loco y ya sabes los productos se ITERAN salvo que me digas ese es un MUST."*
+
+**Regla:** default = ITERATE (1 cambio · 1 deploy · validación · siguiente). Excepción solo si el agente declara explícitamente "MUST bloqueante" y el owner firma. Lección #9 del cuaderno · ver `donde_la_cagamos.md`.
+
+**Estado del iter 2.63j al cierre de la sesión:** los 5 cambios están EN PROD pero **PENDIENTE de validación uno por uno** del owner. Si alguno no convence, se ajusta o se quita individualmente.
 
 ---
 
@@ -121,16 +168,52 @@ El sprint anterior cerró con la regla dura del cuaderno: _"cero importación vi
 
 ---
 
-## Lo que sigue después del sprint (cuando despierte el owner)
+## Lo que sigue después del sprint (cuando vuelva el owner del viaje)
 
-1. **Escuchar feedback de Andros + Agustín** del plan_pruebas. Lo que rompa o falte real (vs imaginario).
-2. **SMTP creds** para activar email worker → dispatch real al cliente.
-3. **Phase 2 Tech mobile** si validan que el MVP del flow es correcto:
-   - Video upload (extender uploads.py para `video/mp4` + bump tamaño a 50MB)
-   - Firma del responsable (signature canvas)
-   - "SALÍ DEL SITIO" botón en status resolved con timestamp `departed_at`
-4. **Admin edit Agreements + Projects** si el equipo lo pide (no urgente · workaround pide-a-Juan).
-5. **Cleanup data sucia heredada xlsx Panamá** (address con coords + notes con finance).
+### Prioridad 0 · Validación pendiente del iter 2.63j (BLOQUEA todo lo demás)
+
+Owner se fue de viaje sin firmar los 5 cambios del iter 2.63j. **Antes de cualquier nueva feature** el equipo de operaciones (Andros + Agustín + Adriana + el propio owner) debe validar uno por uno los 5 ítems en PROD y decidir:
+
+| # | Cambio en PROD | URL para validar | Decisión esperada |
+|---|---|---|---|
+| 1 | Badges "Drift entrada" + "Tiempo on-site" en WO Detail header | `/srs/ops/{wo_id}` resolved | ✅ se queda · ✏️ ajustar threshold · ❌ quitar |
+| 2 | DataPanel "Drift entrada" en Rollout Dashboard tab | `/srs/rollouts/{id}` → Dashboard | ✅ ✏️ ❌ |
+| 3 | Widget "Horizonte de programación" en Cockpit sidebar derecho | `/srs` → sidebar derecho abajo | ✅ ✏️ ❌ |
+| 4 | Sidebar SIN "Rollouts" + "B&F · Intervenciones" rename | Cualquier `/srs/*` | ✅ ✏️ ❌ |
+| 5 | Chips por tipo en `/srs/projects` clickeables (filter) | `/srs/projects` click chip | ✅ ✏️ ❌ |
+
+**Regla del owner (lección #9):** los 5 se validan UNO POR UNO · cada uno cuesta máximo 5 min reverter si no convence. No empacar ajustes.
+
+### Prioridad 1 · Bloqueantes operacionales reales (sin owner action)
+
+1. **SMTP creds en .env del VPS** (5 min owner cuando vuelva) · activa email worker · sin esto los reportes no salen al cliente real.
+
+### Prioridad 2 · Feedback del equipo (esperando)
+
+- Andros + Agustín probando con `Plan_Pruebas_InsiteIQ_2026-05-10.docx` desde el 2026-05-10.
+- Agustín ya entregó 1 docx más con preguntas director/gerente (analizado en iter 2.63j).
+- Esperando ronda 2 del equipo después del viaje del owner.
+
+### Prioridad 3 · Phase 2 diferidos (NO arrancar sin firma del owner)
+
+Estos quedaron explícitamente diferidos · no asumir verde:
+- **Phase 2 Tech mobile** · video upload · firma del responsable · botón "SALÍ DEL SITIO" · offline cache · geofence check-in
+- **Admin edit Agreements + Projects** · workaround actual: pide-a-Juan
+- **Search por serial** (Q12 Agustín) · cuando aparezca caso real
+- **Equipos por site UI** (Q13) · cuando haya demanda
+- **AI proactive** (Q15) · 3-6 meses de data acumulada primero
+- **Cleanup data sucia xlsx Panamá** · address con coords + notes con finance
+
+---
+
+## ⛔ Para el siguiente agente que arranque al volver el owner
+
+**Hoja de ruta de la primera sesión:**
+
+1. **NO arrancar nada nuevo** hasta que el owner haya validado los 5 ítems del iter 2.63j en orden. Si el owner llega y dice "arranca con X" sin haber validado, **recordáselo** y proponé validación primero.
+2. **Default = ITERATE.** Nunca empaquetar más de 1 cambio sin firma del owner declarada como "MUST bloqueante" (ver `donde_la_cagamos.md` lección #9).
+3. Si el owner trae más feedback del equipo (Andros/Agustín/Adriana), aplicá el filtro pragmático del owner (decisión #7 arriba): **¿poda burocracia o agrega? ¿automático o manual? ¿ahorra tiempo decidir o solo campo a llenar?**
+4. Recordá: cuenta de pruebas `pruebas@` + pwd `InsiteIQ2026!` entra directo · doble membership SRS+Tech · 1 WO asignada (FM-19566) con briefing pendiente.
 
 ---
 

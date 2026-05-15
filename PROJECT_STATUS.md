@@ -1,11 +1,27 @@
 # InsiteIQ — Project Status
 
-**Estado:** 🚀 v2.63i DEPLOYED · 2026-05-10 · LISTA PARA USO CON EQUIPO
+**Estado:** 🚀 v2.63j DEPLOYED · 2026-05-11 · OWNER DE VIAJE · validación pendiente
 **Decisión:** Owner (JuanCho)
-**Último commit live en PROD:** `80af95c` · rama `v1-foundation` · 9 iters deployed esta sesión (2.63 → 2.63i)
+**Último commit live en PROD:** `9ab20af` · rama `v1-foundation` · 21 commits totales en sprint pre-uso real
 **Dominio:** https://insiteiq.systemrapid.io
 **Repo:** https://github.com/gutierrezbj/insiteIq
-**Equipo validando ahora:** Andros + Agustín con cuentas reales · Adriana en finanzas · plan de pruebas docx generado y compartido
+**Equipo validando:** Andros + Agustín con plan_pruebas.docx · iter 2.63j espera validación 1 por 1 del owner al volver
+
+---
+
+## ⚠️ Pendiente al volver el owner (BLOQUEA siguientes iters)
+
+5 cambios del iter 2.63j en PROD esperan validación uno por uno (regla nueva ITERATE · ver `memory/donde_la_cagamos.md` lección #9):
+
+| # | Cambio | Decisión esperada |
+|---|---|---|
+| 1 | Badges "Drift entrada" + "Tiempo on-site" en WO Detail | ✅ ✏️ ❌ |
+| 2 | DataPanel "Drift entrada" en Rollout Dashboard | ✅ ✏️ ❌ |
+| 3 | Widget "Horizonte de programación" en Cockpit sidebar | ✅ ✏️ ❌ |
+| 4 | Sidebar quitar "Rollouts" + rename "B&F · Intervenciones" | ✅ ✏️ ❌ |
+| 5 | Chips por tipo en ProjectsListPage clickeables (filter) | ✅ ✏️ ❌ |
+
+Si alguno NO convence, costo de reverter individual = 2-5 min. NO empacar ajustes. Detalles completos en `memory/sprint_pre_uso_real_v2.63.md`.
 
 ---
 
