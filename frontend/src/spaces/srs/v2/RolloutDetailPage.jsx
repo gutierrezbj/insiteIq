@@ -58,6 +58,7 @@ import { useAuth } from "../../../contexts/AuthContext";
 import { useRefresh } from "../../../contexts/RefreshContext";
 import { Icon, ICONS } from "../../../lib/icons";
 import { formatWoCode } from "../../../lib/woCode";
+import { driftMinutes, driftSeverity } from "../../../lib/wo-metrics";
 import {
   getBallSide, getBallColor, getBallLabel, ballAgeHours,
   getTechId, getTag, computeSlaInfo,
@@ -391,7 +392,7 @@ export default function RolloutDetailPage() {
           <KanbanTab wos={filteredWos} sites={siteMap} users={userMap} reload={load} />
         )}
         {activeTab === "cuadro" && (
-          <DashboardTab dashboard={dashboard} counts={counts} totalSites={totalSites} progressPct={progressPct} />
+          <DashboardTab dashboard={dashboard} counts={counts} totalSites={totalSites} progressPct={progressPct} wos={wos} />
         )}
         {activeTab === "timeline" && (
           <TimelineTab wos={wos} sites={siteMap} />
@@ -1276,11 +1277,26 @@ function KanbanTab({ wos, sites, users, reload }) {
 }
 
 /* ─────────────────────── Tab CUADRO DE MANDO ─────────────────────── */
-function DashboardTab({ dashboard, counts, totalSites, progressPct }) {
+function DashboardTab({ dashboard, counts, totalSites, progressPct, wos }) {
   const { t, i18n } = useTranslation("common");
   const numLocale = (i18n.language || "es").startsWith("en") ? "en-US" : "es-ES";
   const k = dashboard?.kpis || {};
   const wo = dashboard?.work_orders || {};
+
+  // Iter 2.63j · Q5 Agustín · contadores de drift de llegada por WO
+  const driftStats = useMemo(() => {
+    if (!Array.isArray(wos)) return { measured: 0, late: 0, severe: 0 };
+    let measured = 0, late = 0, severe = 0;
+    for (const w of wos) {
+      const d = driftMinutes(w);
+      if (d == null) continue;
+      measured++;
+      const sev = driftSeverity(d);
+      if (sev === "warn") late++;
+      else if (sev === "danger") { late++; severe++; }
+    }
+    return { measured, late, severe };
+  }, [wos]);
 
   return (
     <div className="px-10 py-6 space-y-6">
@@ -1324,8 +1340,8 @@ function DashboardTab({ dashboard, counts, totalSites, progressPct }) {
         <KpiCard label={t("page_rollout_detail.kpi_active_today")} value={wo.active || 0} color="#3D4A66" />
       </div>
 
-      {/* Velocidad + drift + ETA */}
-      <div className="grid grid-cols-3 gap-3">
+      {/* Velocidad + drift project + ETA + drift llegada (Q5 Agustín) */}
+      <div className="grid grid-cols-4 gap-3">
         <DataPanel
           title={t("page_rollout_detail.panel_velocity")}
           value={k.throughput_week ?? "—"}
@@ -1341,6 +1357,26 @@ function DashboardTab({ dashboard, counts, totalSites, progressPct }) {
           title={t("page_rollout_detail.panel_eta_100")}
           value={k.eta_to_100pct_weeks != null ? `${k.eta_to_100pct_weeks}` : "—"}
           unit={k.eta_to_100pct_weeks == null ? "—" : "weeks"}
+        />
+        <DataPanel
+          title={t("page_rollout_detail.panel_drift_arrival")}
+          value={driftStats.measured === 0 ? "—" : driftStats.late}
+          unit={
+            driftStats.measured === 0
+              ? "—"
+              : t("page_rollout_detail.panel_drift_arrival_unit", {
+                  measured: driftStats.measured,
+                })
+          }
+          color={
+            driftStats.measured === 0
+              ? "#3D4A66"
+              : driftStats.severe > 0
+              ? "#DC2626"
+              : driftStats.late > 0
+              ? "#E8A33D"
+              : "#22C55E"
+          }
         />
       </div>
 

@@ -20,6 +20,12 @@ import { useFetch } from "../../../lib/useFetch";
 import { api, uploadFile } from "../../../lib/api";
 import { useAuth } from "../../../contexts/AuthContext";
 import { formatAge } from "../../../components/ui/Badges";
+import {
+  driftMinutes,
+  driftColors,
+  timeOnSiteMinutes,
+  formatMinutes as formatMinutesHuman,
+} from "../../../lib/wo-metrics";
 import ActionDialog, {
   DialogLabel,
   DialogInput,
@@ -180,6 +186,64 @@ export default function WorkOrderDetailPage() {
               }
             />
           )}
+          {/* Iter 2.63j · Q5 Agustín · drift de llegada (scheduled vs on_site) */}
+          {(() => {
+            const drift = driftMinutes(wo);
+            if (drift == null) return null;
+            const colors = driftColors(drift);
+            const label = drift >= 0
+              ? t("page_wo_detail.state_drift_late", { delta: formatMinutesHuman(drift) })
+              : t("page_wo_detail.state_drift_early", { delta: formatMinutesHuman(Math.abs(drift)) });
+            return (
+              <StateBlock
+                label={t("page_wo_detail.state_drift_arrival")}
+                value={
+                  <span
+                    style={{
+                      fontFamily: MONO,
+                      fontSize: 13,
+                      fontWeight: 700,
+                      background: colors.bg,
+                      color: colors.fg,
+                      padding: "3px 10px",
+                      borderRadius: 6,
+                    }}
+                    title={t("page_wo_detail.state_drift_title", {
+                      scheduled: wo.scheduled_at ? new Date(wo.scheduled_at).toLocaleString() : "—",
+                      arrived: wo.status_timestamps?.on_site
+                        ? new Date(wo.status_timestamps.on_site).toLocaleString()
+                        : "—",
+                    })}
+                  >
+                    {label}
+                  </span>
+                }
+              />
+            );
+          })()}
+          {/* Iter 2.63j · Q6 Agustín · tiempo on-site (lapso del servicio) */}
+          {(() => {
+            const mins = timeOnSiteMinutes(wo);
+            if (mins == null) return null;
+            return (
+              <StateBlock
+                label={t("page_wo_detail.state_time_on_site")}
+                value={
+                  <span
+                    style={{
+                      fontFamily: MONO,
+                      fontSize: 13,
+                      color: "#0A1628",
+                      fontWeight: 700,
+                      fontVariantNumeric: "tabular-nums",
+                    }}
+                  >
+                    {formatMinutesHuman(mins)}
+                  </span>
+                }
+              />
+            );
+          })()}
         </div>
       </SectionCard>
 

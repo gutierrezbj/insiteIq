@@ -9,7 +9,7 @@
  *   status, total_sites_target, ... }]
  */
 import { useMemo } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useFetch } from "../../../lib/useFetch";
 import { ProjectStatusPill } from "../../../components/v2-shared/Pills";
@@ -17,14 +17,31 @@ import { JAKARTA, MONO_CAPS } from "../../../components/v2-shared/typography";
 
 export default function ProjectsListPage() {
   const { t } = useTranslation("common");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const typeFilter = searchParams.get("type") || ""; // "" = todos
+
   const { data, loading } = useFetch("/projects");
   const projects = useMemo(() => data || [], [data]);
+
+  // Iter 2.63j · filter por type (?type=rollout etc) · chip clickeable
+  // toggle el filtro. Reemplaza al sidebar item "Rollouts" que se quitó.
+  const filteredProjects = useMemo(() => {
+    if (!typeFilter) return projects;
+    return projects.filter((p) => p.type === typeFilter || p.delivery_pattern === typeFilter);
+  }, [projects, typeFilter]);
 
   const byType = useMemo(() => {
     const m = {};
     for (const p of projects) m[p.type] = (m[p.type] || 0) + 1;
     return m;
   }, [projects]);
+
+  function toggleTypeFilter(type) {
+    setSearchParams(
+      typeFilter === type ? {} : { type },
+      { replace: true }
+    );
+  }
 
   return (
     <div style={{ padding: "32px 40px", maxWidth: 1400 }}>
@@ -49,26 +66,60 @@ export default function ProjectsListPage() {
             lineHeight: 1.1,
           }}
         >
-          {projects.length} <span style={{ color: "#3D4A66", fontWeight: 600 }}>{t("page_projects.title_count_suffix")}</span>
+          {typeFilter ? filteredProjects.length : projects.length}{" "}
+          <span style={{ color: "#3D4A66", fontWeight: 600 }}>
+            {t("page_projects.title_count_suffix")}
+            {typeFilter && <span style={{ color: "#D97706", marginLeft: 8 }}>· {typeFilter}</span>}
+          </span>
         </h1>
         <div style={{ marginTop: 10, display: "flex", flexWrap: "wrap", gap: 8 }}>
-          {Object.entries(byType).map(([type, n]) => (
-            <span
-              key={type}
+          {/* Chip "Todos" para limpiar el filtro */}
+          {typeFilter && (
+            <button
+              type="button"
+              onClick={() => setSearchParams({}, { replace: true })}
               style={{
                 padding: "4px 10px",
-                background: "#FFFFFF",
-                border: "1px solid #C8CDD8",
+                background: "#0A1628",
+                border: "1px solid #0A1628",
                 borderRadius: 4,
                 ...MONO_CAPS,
                 fontSize: 10,
-                color: "#0A1628",
+                color: "#FFFFFF",
                 letterSpacing: "0.12em",
+                cursor: "pointer",
               }}
             >
-              {type} · <span style={{ color: "#3D4A66", fontWeight: 800, marginLeft: 2 }}>{n}</span>
-            </span>
-          ))}
+              × {t("common.all")}
+            </button>
+          )}
+          {Object.entries(byType).map(([type, n]) => {
+            const isActive = typeFilter === type;
+            return (
+              <button
+                type="button"
+                key={type}
+                onClick={() => toggleTypeFilter(type)}
+                style={{
+                  padding: "4px 10px",
+                  background: isActive ? "#0A1628" : "#FFFFFF",
+                  border: `1px solid ${isActive ? "#0A1628" : "#C8CDD8"}`,
+                  borderRadius: 4,
+                  ...MONO_CAPS,
+                  fontSize: 10,
+                  color: isActive ? "#FFFFFF" : "#0A1628",
+                  letterSpacing: "0.12em",
+                  cursor: "pointer",
+                  transition: "all 120ms",
+                }}
+              >
+                {type} ·{" "}
+                <span style={{ color: isActive ? "#FFFFFF" : "#3D4A66", fontWeight: 800, marginLeft: 2 }}>
+                  {n}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -106,8 +157,8 @@ export default function ProjectsListPage() {
 
         {/* Rows */}
         {loading && <EmptyRow text={t("common.loading")} />}
-        {!loading && projects.length === 0 && <EmptyRow text={t("page_projects.empty_no_projects")} />}
-        {projects.map((p) => (
+        {!loading && filteredProjects.length === 0 && <EmptyRow text={t("page_projects.empty_no_projects")} />}
+        {filteredProjects.map((p) => (
           <Link
             key={p.id}
             to={`/srs/projects/${p.id}`}

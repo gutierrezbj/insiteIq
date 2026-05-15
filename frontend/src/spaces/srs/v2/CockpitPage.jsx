@@ -39,6 +39,7 @@ import {
   ShieldsWidget,
   WeatherWidget,
   SummaryWidget,
+  ScheduleHorizonWidget,
 } from "../../../components/cockpit-v2/SidebarWidgets";
 import {
   SkeletonKpiCard,
@@ -456,6 +457,7 @@ export default function V2CockpitPage({ scope = "srs" }) {
             })}
           />
           <SummaryWidget stats={summaryStats} />
+          <ScheduleHorizonWidget wos={wos} />
         </aside>
       </div>
     </div>

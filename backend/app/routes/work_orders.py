@@ -401,6 +401,14 @@ async def advance_work_order(
     if target == "closed":
         update["closed_at"] = now
 
+    # Iter 2.63j · timestamp del primer ingreso al target status. Solo set
+    # si la key no existe (preserva la primera vez · ignora re-entradas
+    # tipo on_site → en_route → on_site). Habilita drift entrada y otros
+    # cálculos temporales en frontend sin tener que ir a audit_log.
+    existing_ts = (doc.get("status_timestamps") or {})
+    if target not in existing_ts:
+        update[f"status_timestamps.{target}"] = now
+
     # Optional schedule fields (Rollout v2 "Programar desde Mapa") — solo si
     # vienen explícitos en el body. Backwards-compatible: callers viejos no
     # los pasan y nada cambia.

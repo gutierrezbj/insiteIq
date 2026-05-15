@@ -20,10 +20,15 @@ import { useTranslation } from "react-i18next";
 // `key` se usa para resolver i18n: t(`nav.${key}`).
 const NAV_BY_SCOPE = {
   srs: [
+    // Iter 2.63j · sidebar simplificado (feedback owner sobre input Agustín):
+    //   - "Rollouts" se quita · era redundante · ahora es filtro tipo=rollout
+    //     dentro de /srs/projects
+    //   - "B&F · Intervenciones" deja claro que son reactivos (break & fix)
+    //     vs Proyectos (planificados). Owner valida si prefiere "Intervenciones"
+    //     a secas (decisión mía mientras tanto).
     { to: "/srs",                 key: "operations",    end: true, accent: true },
     { to: "/srs/espacio-ops",     key: "espacio_ops" },
-    { to: "/srs/intervenciones",  key: "interventions" },
-    { to: "/srs/rollouts",        key: "rollouts" },
+    { to: "/srs/intervenciones",  key: "interventions_bf" },
     { to: "/srs/projects",        key: "projects" },
     { to: "/srs/sites",           key: "sites" },
     { to: "/srs/techs",           key: "techs" },

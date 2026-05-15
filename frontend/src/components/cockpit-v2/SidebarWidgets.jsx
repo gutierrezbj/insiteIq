@@ -18,6 +18,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Icon, ICONS } from "../../lib/icons";
 import { fetchWeatherFor, formatTemp } from "../../lib/weather";
+import { scheduledNextDays, lastScheduledDate } from "../../lib/wo-metrics";
 
 /* ─────────────────────────────────────────────────────────────── */
 /* AlertsWidget                                                    */
@@ -435,6 +436,103 @@ export function SummaryWidget({ stats = {}, viewerScope = "srs" }) {
             </span>
           </div>
         )}
+      </div>
+    </section>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────── */
+/* ScheduleHorizonWidget · Iter 2.63j · Q10 Agustín                */
+/*   "Hasta qué fecha está hecha la programación actual?"          */
+/*                                                                  */
+/* Cuenta WOs con scheduled_at en próximos 7 y 30 días. Muestra    */
+/* última fecha programada · alerta si el horizonte se está        */
+/* agotando (vaya programando nuevos antes de quedarte sin agenda).*/
+/* ─────────────────────────────────────────────────────────────── */
+
+export function ScheduleHorizonWidget({ wos = [] }) {
+  const { t, i18n } = useTranslation("common");
+  const dateLocale = (i18n.language || "es").startsWith("en") ? "en-US" : "es-ES";
+
+  const stats = useMemo(() => {
+    const next7 = scheduledNextDays(wos, 7).length;
+    const next30 = scheduledNextDays(wos, 30).length;
+    const last = lastScheduledDate(wos);
+    const daysToLast = last
+      ? Math.ceil((last.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+      : null;
+    return { next7, next30, last, daysToLast };
+  }, [wos]);
+
+  // Severity del horizonte · si la última fecha está a <7 días, alerta amber
+  // (hay que programar más). <3 días = rojo (urgente).
+  let severity = "ok";
+  if (stats.daysToLast == null) severity = "empty";
+  else if (stats.daysToLast < 3) severity = "danger";
+  else if (stats.daysToLast < 7) severity = "warn";
+
+  const sevColors = {
+    ok:     { bg: "#D9F1E5", fg: "#0A6131" },
+    warn:   { bg: "#FCF1DC", fg: "#7E5212" },
+    danger: { bg: "#FEF2F2", fg: "#991B1B" },
+    empty:  { bg: "#F4F6F8", fg: "#8B95A8" },
+  };
+  const c = sevColors[severity];
+
+  return (
+    <section className="border-t border-cl-border">
+      <header className="px-5 py-3 flex items-center justify-between">
+        <p className="label-caps-v2">{t("widget.schedule_horizon_title")}</p>
+      </header>
+      <div className="px-5 pb-5 space-y-2.5">
+        <div className="flex items-center justify-between py-1">
+          <span className="text-[12px] text-cl-text-mid">{t("widget.schedule_horizon_next_7d")}</span>
+          <span className="font-mono text-[18px] font-semibold" style={{ color: "#0A1628" }}>
+            {stats.next7}
+          </span>
+        </div>
+        <div className="flex items-center justify-between py-1">
+          <span className="text-[12px] text-cl-text-mid">{t("widget.schedule_horizon_next_30d")}</span>
+          <span className="font-mono text-[18px] font-semibold" style={{ color: "#0A1628" }}>
+            {stats.next30}
+          </span>
+        </div>
+        <div
+          className="flex items-center justify-between py-1 pt-3 border-t border-cl-border"
+          style={{ minHeight: 28 }}
+        >
+          <span className="text-[12px] text-cl-text-mid">{t("widget.schedule_horizon_last")}</span>
+          {stats.last ? (
+            <span
+              className="font-mono text-[12px] px-2 py-0.5 rounded"
+              style={{ background: c.bg, color: c.fg, fontWeight: 700 }}
+              title={
+                stats.daysToLast != null
+                  ? t("widget.schedule_horizon_days_to_last", { days: stats.daysToLast })
+                  : ""
+              }
+            >
+              {stats.last.toLocaleDateString(dateLocale, {
+                day: "2-digit",
+                month: "short",
+              })}
+            </span>
+          ) : (
+            <span className="font-mono text-[11px] text-cl-text-dim uppercase tracking-wider">
+              {t("widget.schedule_horizon_none")}
+            </span>
+          )}
+        </div>
+        {severity === "warn" || severity === "danger" ? (
+          <p
+            className="text-[11px] mt-2"
+            style={{ color: c.fg, fontWeight: 600, lineHeight: 1.4 }}
+          >
+            {severity === "danger"
+              ? t("widget.schedule_horizon_alert_urgent")
+              : t("widget.schedule_horizon_alert_warn")}
+          </p>
+        ) : null}
       </div>
     </section>
   );

@@ -166,6 +166,13 @@ class WorkOrder(BaseMongoModel):
     # tech + fecha agendada vía "Programar desde Mapa" del Rollout v2).
     scheduled_at: datetime | None = None
 
+    # Iter 2.63j · timestamps automáticos por cada status alcanzado.
+    # Poblados en advance() · cada key es un status, value es la primera
+    # vez que el WO entró ahí. Backward compat: WOs viejas no tienen este
+    # dict · el frontend usa fallbacks. Habilita drift entrada
+    # (on_site - scheduled_at), tiempo total (closed - intake), etc.
+    status_timestamps: dict[str, datetime] = Field(default_factory=dict)
+
     # ETA acknowledgment (Iter 2.10 · Pain Log #005-4 · cierra TOUS-pattern).
     # Confirmación del tech sobre la hora que va a llegar al site. v1 simple:
     # SRS coord puede registrar ack desde info externa (WhatsApp/llamada) con
