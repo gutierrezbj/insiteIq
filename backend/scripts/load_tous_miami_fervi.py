@@ -15,7 +15,7 @@ Roles correctos:
   - Andros + Luis (SRS)       → coordinadores SRS (uno por WO en este test)
   - Oscar Iturria             → técnico de TOUS desde MX (NO coord · contacto técnico
                                  del cliente final · onsite_contact del Site)
-  - Iduber Fercho             → tech de campo asignado (3er intento)
+  - Iduber Montes (Fercho en WhatsApp) → tech de campo asignado (3er intento)
 
 Histórico previo (techs que NO resolvieron · va en briefing):
   - 5 may  · Jose Avendano       → Pembroke · red desconfigurada
@@ -38,9 +38,9 @@ from app.models.service_agreement import SHIELD_DEFAULTS
 
 
 # ─── Tech (común a las dos WOs) ──────────────────────────────────────
-TECH_EMAIL = "iduberf@systemrapid.com"
-TECH_FULL_NAME = "Iduber Fercho"
-TECH_DISPLAY = "Iduber F"
+TECH_EMAIL = "iduberm@systemrapid.com"
+TECH_FULL_NAME = "Iduber Montes"
+TECH_DISPLAY = "Iduber M"
 TECH_PWD_SEED = "InsiteIQ2026!"
 TECH_TZ = "America/New_York"
 TECH_TZ_LABEL = "Miami"
@@ -644,7 +644,7 @@ async def main():
 
     # User
     print()
-    print("── Iduber Fercho (tech) ──────────────────────────")
+    print("── Iduber Montes (tech) ──────────────────────────")
     tech_id = await ensure_user_iduber(db, tenant_id, juan_id, now)
 
     # WOs
@@ -677,7 +677,7 @@ async def main():
     print(f"Andres T (Fervi): {andres_fervi_id}")
     print(f"  email: {FERVI_PM_EMAIL} · pwd: {FERVI_PM_PWD_SEED} (rota al primer login)")
     print(f"  space: client_coordinator · scope=Fervimax")
-    print(f"Iduber Fercho:    {tech_id}")
+    print(f"Iduber Montes:    {tech_id}")
     print(f"  email: {TECH_EMAIL} · pwd: {TECH_PWD_SEED} (rota al primer login)")
     print()
     print(f"#1 PEMBROKE · WO {wo_pmb_id} · Site {site_pmb_id} · Briefing {br_pmb_id}")
