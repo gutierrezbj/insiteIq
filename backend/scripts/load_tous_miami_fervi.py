@@ -9,8 +9,9 @@ Reconstrucción desde:
   - Cabezazos del owner JuanCho con los roles reales
 
 Roles correctos:
-  - Andres Tyminskiy (Fervi)  → coordinador de la actividad del LADO FERVI
-                                 (cliente Tier-1 · NO user InsiteIQ)
+  - Andres Tyminskiy (Fervi)  → field coordinator del LADO FERVI · USER InsiteIQ
+                                 en space=client_coordinator scope=Fervimax
+                                 (patrón paralelo a Rackel/Fractalia)
   - Andros + Luis (SRS)       → coordinadores SRS (uno por WO en este test)
   - Oscar Iturria             → técnico de TOUS desde MX (NO coord · contacto técnico
                                  del cliente final · onsite_contact del Site)
@@ -49,10 +50,14 @@ SA_CONTRACT_REF = "FERVI-SRS-BF-2026"
 SA_TITLE = "Fervimax · Break&Fix on-demand · Bronze"
 SA_SHIELD = "bronze"
 
-# ─── Fervi PM (en notes, NO user) ────────────────────────────────────
+# ─── Fervi field coordinator (SE CREA como user client_coordinator) ──
 FERVI_PM_NAME = "Andres Tyminskiy"
 FERVI_PM_EMAIL = "atyminskiy@fervimax.com"
 FERVI_PM_PHONE = "+34 722 82 88 46"
+FERVI_PM_PWD_SEED = "InsiteIQ2026!"
+FERVI_PM_TZ = "Europe/Madrid"
+FERVI_PM_TZ_LABEL = "Madrid"
+FERVI_PM_DISPLAY = "Andres T"
 
 # ─── TOUS técnico cliente final (en notes + onsite_contact) ──────────
 TOUS_TECH_NAME = "Oscar Iturria"
@@ -380,6 +385,61 @@ async def ensure_user_iduber(db, tenant_id, juan_id, now):
     return user_id
 
 
+async def ensure_user_andres(db, tenant_id, org_id, juan_id, now):
+    """
+    Andres Tyminskiy · client_coordinator de Fervimax (field coordinator).
+    Patrón paralelo al de Rackel (Fractalia) en seed_foundation.
+    Email NO provisionado por SRS · usa su email Fervi real.
+    """
+    existing = await db.users.find_one({"email": FERVI_PM_EMAIL})
+    if existing:
+        user_id = str(existing["_id"])
+        print(f"✓ User Andres Tyminskiy ya existe · id={user_id}")
+        return user_id
+
+    memberships = [{
+        "space": "client_coordinator",
+        "role": "field_coordinator",
+        "authority_level": "mid_manager",
+        "organization_id": org_id,  # Fervimax
+        "active": True,
+    }]
+    doc = {
+        "tenant_id": tenant_id,
+        "email": FERVI_PM_EMAIL,
+        "full_name": FERVI_PM_NAME,
+        "phone": FERVI_PM_PHONE,
+        "country": "ES",
+        "hashed_password": hash_password(FERVI_PM_PWD_SEED),
+        "is_active": True,
+        "employment_type": "external_sub",  # mismo patrón que Rackel (no es plantilla SRS)
+        "email_provisioned_by_srs": False,  # email Fervi propio
+        "space_memberships": memberships,
+        "must_change_password": True,
+        "password_changed_at": None,
+        "notes": (
+            "Field Coordinator de Fervimax · cliente Tier-1 de SRS. "
+            "Caso entrada: casos TOUS Pembroke + Dadeland Mall. "
+            "Ve solo WOs/sites/threads scoped a Fervimax (client_coordinator scope-aware)."
+        ),
+        "tz": FERVI_PM_TZ,
+        "tz_label": FERVI_PM_TZ_LABEL,
+        "role_title": "Field Coordinator · Fervimax",
+        "display_name": FERVI_PM_DISPLAY,
+        "work_start": 9,
+        "work_end": 18,
+        "last_login_at": None,
+        "created_at": now,
+        "updated_at": now,
+        "created_by": juan_id,
+        "updated_by": juan_id,
+    }
+    result = await db.users.insert_one(doc)
+    user_id = str(result.inserted_id)
+    print(f"↑ User Andres Tyminskiy creado · id={user_id} · client_coord Fervimax · pwd seed='{FERVI_PM_PWD_SEED}'")
+    return user_id
+
+
 async def ensure_work_order(db, tenant_id, org_id, site_id, sa_id, tech_id, coord_id, juan_id, now, wo_spec):
     existing = await db.work_orders.find_one({"tenant_id": tenant_id, "reference": wo_spec["reference"]})
     if existing:
@@ -560,11 +620,15 @@ async def main():
     print(f"Coord Luis:        {luis_id}  → lleva Pembroke")
     print()
 
-    # Fervimax + SA
+    # Fervimax + SA + Andres (client coordinator)
     print("── Fervimax organization ─────────────────────────")
     org_id = await ensure_org_fervimax_has_client_rel(db, juan_id, now)
     if not org_id:
         return
+
+    print()
+    print("── Andres Tyminskiy (Fervi client coord) ─────────")
+    andres_fervi_id = await ensure_user_andres(db, tenant_id, org_id, juan_id, now)
 
     print()
     print("── Service Agreement ─────────────────────────────")
@@ -610,7 +674,10 @@ async def main():
     print("=" * 72)
     print(f"Fervimax org:     {org_id}")
     print(f"Service Agreement: {sa_id} (Bronze)")
-    print(f"Iduber user:      {tech_id}")
+    print(f"Andres T (Fervi): {andres_fervi_id}")
+    print(f"  email: {FERVI_PM_EMAIL} · pwd: {FERVI_PM_PWD_SEED} (rota al primer login)")
+    print(f"  space: client_coordinator · scope=Fervimax")
+    print(f"Iduber Fercho:    {tech_id}")
     print(f"  email: {TECH_EMAIL} · pwd: {TECH_PWD_SEED} (rota al primer login)")
     print()
     print(f"#1 PEMBROKE · WO {wo_pmb_id} · Site {site_pmb_id} · Briefing {br_pmb_id}")
@@ -627,6 +694,8 @@ async def main():
     print("  · Luis abre Pembroke · llama a Rodrigues Fernanda + Jesús Garmón · valida hora")
     print("  · Andros abre Dadeland · llama a Oscar Iturria · cierra hora del jueves")
     print("  · Iduber recibe ambas WOs en su PWA · ack briefing por orden")
+    print("  · Andres (Fervi) entra a su Client Coordinator space · ve solo Fervi scope")
+    print("    URL: https://insiteiq.systemrapid.io/client?v2=1")
     print("  · Smoke test del Iter 2.63j a lo largo de la semana:")
     print("    1) status_timestamps debe crecer en cada advance")
     print("    2) badge drift llegada cuando Iduber haga check-in")
