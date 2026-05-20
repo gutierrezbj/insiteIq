@@ -26,12 +26,11 @@ export default class V2ErrorBoundary extends Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    // En dev mode mostramos el error en consola para debug rápido.
-    // En prod (fase Eta) esto debería postear a /api/errors o Sentry.
-    if (import.meta.env.DEV) {
-      // eslint-disable-next-line no-console
-      console.error("V2ErrorBoundary caught:", error, errorInfo);
-    }
+    // SIEMPRE imprimir a consola · DEV + PROD · necesario para diagnosticar
+    // bugs reportados por el equipo (Andros, Adriana, Iduber, Agustín, etc).
+    // En el futuro · postear a /api/errors o Sentry para tracking centralizado.
+    // eslint-disable-next-line no-console
+    console.error("V2ErrorBoundary caught:", error, errorInfo);
   }
 
   handleReload = () => {
@@ -81,26 +80,27 @@ export default class V2ErrorBoundary extends Component {
             {t("error.boundary_subtitle")}
           </p>
 
-          {import.meta.env.DEV && (
-            <details
-              className="mb-4 wr-scroll"
-              style={{ maxHeight: 160, overflowY: "auto" }}
+          {/* Detalle del error · SIEMPRE visible (DEV + PROD) para que el
+              owner/equipo lo pueda copiar y reportar sin abrir DevTools.
+              Collapsible por default · click expande. */}
+          <details
+            className="mb-4 wr-scroll"
+            style={{ maxHeight: 200, overflowY: "auto" }}
+          >
+            <summary
+              className="cursor-pointer text-[11px] font-mono transition"
+              style={{ letterSpacing: "0.06em", color: "#3D4A66" }}
             >
-              <summary
-                className="cursor-pointer text-[11px] font-mono transition"
-                style={{ letterSpacing: "0.06em", color: "#3D4A66" }}
-              >
-                {t("error.detail_dev_only")}
-              </summary>
-              <pre
-                className="mt-2 text-[11px] font-mono leading-snug"
-                style={{ whiteSpace: "pre-wrap", wordBreak: "break-word", color: "#3D4A66", background: "#F4F6F8", padding: 8, borderRadius: 4 }}
-              >
-                {errorMsg}
-                {this.state.error?.stack && `\n\n${this.state.error.stack}`}
-              </pre>
-            </details>
-          )}
+              Ver detalle técnico del error (copiar y mandar)
+            </summary>
+            <pre
+              className="mt-2 text-[11px] font-mono leading-snug"
+              style={{ whiteSpace: "pre-wrap", wordBreak: "break-word", color: "#3D4A66", background: "#F4F6F8", padding: 8, borderRadius: 4 }}
+            >
+              {errorMsg}
+              {this.state.error?.stack && `\n\n${this.state.error.stack}`}
+            </pre>
+          </details>
 
           <div className="flex items-center gap-2">
             <button
