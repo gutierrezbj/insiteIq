@@ -36,7 +36,7 @@ import { getTechTimeInfo, VIEWER_TZ_LABEL } from "../../../lib/tz";
 import { formatWoCode } from "../../../lib/woCode";
 import {
   getBallSide, getBallLabel, getBallColor, ballAgeHours,
-  getTechId, getTag, computeSlaInfo,
+  getTechId, getTag, computeSlaInfo, buildTimeline,
   ACTIVE_STATUSES, TERMINAL_STATUSES,
 } from "../../../lib/woFields";
 import KpiStripV2 from "../../../components/cockpit-v2/KpiStripV2";
