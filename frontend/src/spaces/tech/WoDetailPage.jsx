@@ -138,9 +138,15 @@ export default function TechWoDetailPage() {
       photos: photos,
       time_on_site_minutes: null,
     };
-    await api.post(`/work-orders/${wo_id}/capture`, body);
-    setCaptureDirty(false);
-    await reloadCapture();
+    try {
+      await api.post(`/work-orders/${wo_id}/capture/submit`, body);
+      setCaptureDirty(false);
+      setError(null);
+      await reloadCapture();
+    } catch (e) {
+      // Antes fallaba en silencio · ahora el tech ve por qué no se guardó.
+      setError(e?.message || "No se pudo guardar la intervención");
+    }
   }
 
   async function ackBriefing() {
