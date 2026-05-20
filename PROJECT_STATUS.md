@@ -1,27 +1,57 @@
 # InsiteIQ — Project Status
 
-**Estado:** 🚀 v2.63j DEPLOYED · 2026-05-11 · OWNER DE VIAJE · validación pendiente
+**Estado:** 🚀 USO REAL ARRANCADO · 2026-05-20 · CASO TOUS Fervimax + cleanup TOTAL deployed · bug WO Detail pendiente fix
 **Decisión:** Owner (JuanCho)
-**Último commit live en PROD:** `9ab20af` · rama `v1-foundation` · 21 commits totales en sprint pre-uso real
+**Último commit live en PROD:** `96381c5` · rama `v1-foundation` · cleanup scripts deployed
 **Dominio:** https://insiteiq.systemrapid.io
 **Repo:** https://github.com/gutierrezbj/insiteIq
-**Equipo validando:** Andros + Agustín con plan_pruebas.docx · iter 2.63j espera validación 1 por 1 del owner al volver
+**Caso operativo activo:** Fervimax → SRS · cambio switch TOUS Miami (2 tiendas) · tech Iduber Montes · ejecución mañana miércoles 11am
 
 ---
 
-## ⚠️ Pendiente al volver el owner (BLOQUEA siguientes iters)
+## ⚠️ Estado al cerrar sesión 2026-05-20 madrugada
 
-5 cambios del iter 2.63j en PROD esperan validación uno por uno (regla nueva ITERATE · ver `memory/donde_la_cagamos.md` lección #9):
+**PROD limpio · solo data real (post-cleanup):**
+- 1 tenant (SRS) · 11 users (9 SRS plantilla + Iduber Montes tech + Andres Tyminskiy Fervi client_coord)
+- 1 organization (Fervimax · partner_relationships=[joint_venture_partner, client])
+- 1 service_agreement (FERVI-SRS-BF-2026 Bronze)
+- 2 sites (TOUS Pembroke Pines + TOUS Dadeland Mall)
+- 2 work_orders (FERVI-TOUS-PMB-001 dispatched + FERVI-TOUS-DDM-001 triage)
+- 2 briefings (assembled · pending ack del tech)
+- audit_log inmutable (principio #7 · refs huérfanas a entities borradas · histórico legítimo)
 
-| # | Cambio | Decisión esperada |
-|---|---|---|
-| 1 | Badges "Drift entrada" + "Tiempo on-site" en WO Detail | ✅ ✏️ ❌ |
-| 2 | DataPanel "Drift entrada" en Rollout Dashboard | ✅ ✏️ ❌ |
-| 3 | Widget "Horizonte de programación" en Cockpit sidebar | ✅ ✏️ ❌ |
-| 4 | Sidebar quitar "Rollouts" + rename "B&F · Intervenciones" | ✅ ✏️ ❌ |
-| 5 | Chips por tipo en ProjectsListPage clickeables (filter) | ✅ ✏️ ❌ |
+**Iter 2.63j 5 cambios · 4 validados en cockpit (sidebar simplificado · widget Horizonte · filtro projects · drift+tiempo on-site se verán cuando avancen WOs):** ✅ visibles · ⏳ pendiente operación campo para validar badges drift/on-site dinámicamente.
 
-Si alguno NO convence, costo de reverter individual = 2-5 min. NO empacar ajustes. Detalles completos en `memory/sprint_pre_uso_real_v2.63.md`.
+**Bug encontrado al final · sin resolver:**
+| Síntoma | Pantalla 100% negra al pinchar Detalle de cualquier WO desde el cockpit |
+| URL afectada | `/srs/ops/<wo_id>` (y probablemente `/client/ops/<wo_id>`) |
+| Cockpit | Funciona PERFECTO · Iter 2.63j visible · WOs listadas OK |
+| Backend | 200 a todas las APIs · NO es backend |
+| Causa raíz probable | Crash JS no capturado en `WorkOrderDetailPage` · falta `V2ErrorBoundary` envolviendo la ruta · React desmonta todo el árbol al crash |
+| Fix preventivo preparado | App.jsx · envolver TODAS las rutas /srs/* y /client/* en `<V2View>` (42 líneas · sin commit · espera firma owner) |
+
+Ver `memory/donde_la_cagamos.md` lección estructural #11 para detalle.
+
+---
+
+## ⏭️ Hoja de ruta al despertar el owner
+
+1. **Firmar el fix preventivo App.jsx** → commit + push + deploy
+2. **Pinchar Detalle WO Dadeland** → ver mensaje legible del ErrorBoundary → consola browser (F12) para cazar el bug real
+3. **Iterar el bug real** (probablemente lookup huérfano o campo null sin guard · regla #9 · 1 cambio · 1 deploy · validar)
+4. **Cuando WO Detail funcione** → cargar el siguiente escenario firmado: **Agustín + rollout** (data NO sintética · realidad operativa actual)
+
+---
+
+## ⚠️ Iter 2.63j 5 cambios · estado tras uso real
+
+| # | Cambio | Estado visual en cockpit | Validación campo |
+|---|---|---|---|
+| 1 | Badges "Drift entrada" + "Tiempo on-site" en WO Detail | ⛔ WO Detail crashea · no se puede validar todavía | Bloqueado por bug |
+| 2 | DataPanel "Drift entrada" en Rollout Dashboard | N/A · no hay rollouts en PROD post-cleanup | Pendiente caso Agustín |
+| 3 | Widget "Horizonte de programación" en Cockpit sidebar | ✅ Visible · próximos 7d=1 · última fecha 20 may | Funcional · esperando validación operación |
+| 4 | Sidebar "B&F · Intervenciones" + sin "Rollouts" | ✅ Visible · sidebar limpio | Validado al cargar |
+| 5 | Chips por tipo en ProjectsListPage clickeables | ✅ Funcional (lista vacía post-cleanup pero filtro OK) | Pendiente caso Agustín para verificar con datos |
 
 ---
 

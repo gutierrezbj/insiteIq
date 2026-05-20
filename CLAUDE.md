@@ -8,7 +8,25 @@
 >
 > ---
 >
-> **🚀 SPRINT PRE-USO REAL v2.63j DEPLOYED · 2026-05-11 · OWNER DE VIAJE · VALIDACIÓN PENDIENTE**
+> **🚀 USO REAL ARRANCADO · 2026-05-20 · CASO TOUS Fervimax · cleanup TOTAL · BUG WO Detail PENDIENTE FIX**
+>
+> Owner volvió del viaje 2026-05-19. Caso operativo real entrante de Fervimax (cambio switch en 2 tiendas TOUS Miami · 3 techs distintos en 2 semanas sin transferencia formal de contexto). Cargado vía script idempotente `load_tous_miami_fervi.py`. Después cleanup TOTAL de seed (`cleanup_seed_for_real.py` · 345 docs borrados · audit_log inmutable preservado). Force-reset pwd Juan ejecutado.
+>
+> **PROD ahora con solo data real:** 11 users (9 SRS plantilla + Iduber Montes tech + Andres Tyminskiy Fervi client_coord) · 1 org Fervimax · 2 sites TOUS · 2 WOs · 2 briefings · 1 SA Bronze.
+>
+> **Bug pendiente al despertar el owner:**
+> - Cockpit `/srs` funciona PERFECTO · Iter 2.63j visible
+> - Al pinchar Detalle WO → pantalla 100% negra · backend responde 200 a todo
+> - Causa raíz probable: crash JS no capturado en WorkOrderDetailPage · falta V2ErrorBoundary envolviendo la ruta
+> - Fix preventivo en working tree (sin commit · espera firma): envolver TODAS las rutas /srs/* y /client/* en `<V2View>` (42 líneas App.jsx · 21 ins + 21 del)
+>
+> Ver `PROJECT_STATUS.md`, `memory/sprint_pre_uso_real_v2.63.md` (sección "Sesión 2026-05-19/20") y `memory/donde_la_cagamos.md` (lecciones #10 + #11) para detalle.
+>
+> **Próximo escenario firmado por owner:** caso Agustín + rollout · cargar desde realidad operativa actual (NO desde seed).
+>
+> ---
+>
+> **🚀 SPRINT PRE-USO REAL v2.63j DEPLOYED · 2026-05-11 (CONTEXTO HISTÓRICO)**
 >
 > 19 commits deployed entre 2026-05-08 y 2026-05-11. Tras 17 commits del
 > sprint base v2.63a..i (Andros + Agustín validando con doc Word) llegó

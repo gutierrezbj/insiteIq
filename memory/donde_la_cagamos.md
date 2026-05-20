@@ -642,3 +642,68 @@ Las 14 reglas duras + #1 dirección invertida + estructurales #1-4 + lecciones #
 5. **DEFAULT = ITERATE.** No empaques cambios. 1 cambio · 1 deploy · validación · siguiente. Excepción solo si el owner declaró MUST.
 
 > *Aprender de las cagadas del agente anterior es la única forma de no repetirlas. El owner lleva 25 años de SRS · él ya pagó esas lecciones en plata y madrugadas · tú las recibes gratis en este cuaderno.*
+
+---
+
+## Sesión 2026-05-19/20 · Arranque de uso real con caso TOUS · Lecciones #10 y #11
+
+### Contexto
+
+Owner volvió de viaje. Arrancamos uso real con primer caso operativo: cambio de switch TOUS en 2 tiendas Miami (Pembroke + Dadeland) · cliente Tier-1 Fervimax · tech Iduber Montes · coordinadores SRS Andros (Dadeland) + Luis (Pembroke) · contacto técnico TOUS Oscar Iturria desde MX.
+
+Caso documentado en cadena de emails Andrés Tyminskiy (Fervi PM) + WhatsApp group "Fervi-TOUS" con 262 mensajes + 35 fotos + 1 audio. **3 techs distintos en 2 semanas** (Jose Avendano → Carlos Marin Telxius → Iduber Montes) sin transferencia formal de contexto. Quote canónica Carlos: *"Srs aquí tienen un cangrejo con toda la película de la sirenita"*.
+
+Hicimos:
+1. **`load_tous_miami_fervi.py`** idempotente · creó 2 sites + 2 WOs + 2 briefings + user Iduber + user Andres (client_coordinator de Fervi · patrón paralelo Rackel/Fractalia) + SA Bronze + actualizó Fervimax org con rol `client` adicional al JV existente
+2. **`cleanup_seed_for_real.py`** con dry-run + EXECUTE · borró 345 docs seed dejando solo: tenant SRS + 11 users reales (9 plantilla + Iduber + Andres) + Fervimax + 2 TOUS + 1 SA + 2 WOs + 2 briefings. audit_log intacto (principio #7)
+3. **`force_reset_juan.py`** · reset pwd Juan a seed `InsiteIQ2026!` para que entrara post-cleanup
+
+### Lección #10 estructural · "Cleanup destructivo en PROD requiere DRY-RUN + WHITELIST explícita"
+
+**Lo que hicimos bien:**
+- Script con 2 modos: default DRY-RUN (cuenta + lista usuarios a borrar · NO toca DB) · `CLEANUP_EXECUTE=1` ejecuta
+- Whitelist explícita en código: 11 emails (9 SRS plantilla + 2 nuevos)
+- Lista de usuarios a borrar imprimida con email + full_name antes del execute
+- 3 segundos de margen para Ctrl+C
+- audit_log inmutable preservado (principio #7) · queda referencias huérfanas pero histórico legítimo
+
+**Lo que aprendimos:**
+- Owner ejecutó dry-run → revisó counts (345 docs · 22 orgs · 117 sites · 59 WOs · 3 users) → confirmó → ejecutó. 30 segundos del flujo completo
+- Sin dry-run hubiéramos borrado a ciegas · NO hay rollback de mongo deleteMany sin backup explícito
+- **Generalizable**: cualquier operación destructiva en PROD (drop · delete_many · update_many con $unset masivo) debe tener DRY-RUN obligatorio con counts antes del execute
+
+### Lección #11 estructural · "Sin V2ErrorBoundary fuera de las páginas v2, un crash JS = pantalla negra completa"
+
+**Lo que pasó tras el cleanup:**
+- Cockpit (`/srs`) carga PERFECTO · Iter 2.63j visible (B&F · Intervenciones · Widget Horizonte Programación · sidebar limpio)
+- Al pinchar "Detalle" en una card de WO → URL cambia a `/srs/ops/<wo_id>` → **pantalla 100% negra** (no se ve ni sidebar)
+- Backend responde 200 a todas las APIs (login + change-pwd + work-orders + users + sites + etc)
+- Causa raíz: `WorkOrderDetailPage` NO estaba envuelta en `V2ErrorBoundary`. Cuando crashea (algún componente · TBD con consola browser), React desmonta TODO el árbol porque el error NO está capturado · queda fondo negro del shell sin contenido
+
+**Estructura del problema:**
+- `V2View` (App.jsx:54) ya existía · envuelve componentes con `V2ErrorBoundary` + `Suspense`
+- SE USABA solo en 6 rutas v2 nuevas (V2CockpitPage · V2EspacioOpsPage · V2InterventionsKanbanPage · V2RolloutsListPage · V2RolloutDetailPage)
+- TODAS las demás rutas SRS + Client (15+ rutas) iban "pelonas" sin ErrorBoundary
+- Cualquier crash en esas = pantalla negra total · sin info para diagnóstico
+
+**Fix preventivo aplicado en working tree (sin commit · espera firma owner):**
+- Envolver TODAS las rutas `/srs/*` y `/client/*` en `<V2View name="...">` para que cualquier crash futuro muestre mensaje legible en vez de pantalla negra
+- 42 líneas modificadas en App.jsx · 21 ins + 21 del · cambio defensivo · no es feature nueva
+
+**Para el siguiente agente:** cualquier ruta nueva que añadas al Router, **OBLIGATORIO envolverla en `<V2View name="X">...</V2View>`**. Si no, un solo bug imprevisto deja al usuario en pantalla negra sin info. Es regla dura.
+
+### Para el siguiente agente que arranque al despertar el owner
+
+**Estado al cerrar la sesión 2026-05-20 madrugada:**
+- PROD limpio · solo data real (TOUS Pembroke + Dadeland)
+- Bug pantalla negra en `/srs/ops/<wo_id>` con fix preventivo preparado SIN COMMIT
+- Memorias actualizadas (este doc + sprint memo + PROJECT_STATUS pendiente)
+- Próximo paso firmado por owner: **escenario Agustín + rollout** (probable Arcos data real)
+
+**Lo primero al despertar el owner:**
+1. Firmar el fix preventivo (App.jsx envuelve rutas SRS/Client en V2View) → commit + push + deploy
+2. Pinchar Detalle WO Dadeland · ver mensaje de error legible · capturar la consola del browser
+3. Iterar el bug REAL del crash (probablemente lookup huérfano · audit_log entry · campo null sin guard)
+4. Una vez validado el WO Detail funciona · cargar el caso Agustín + rollout
+
+> *La consola del navegador es el primer recurso de diagnóstico frontend. Sin ella, todo es adivinanza. Para el siguiente bug: pedir F12 + Console + screenshot SIEMPRE antes de tocar código.*

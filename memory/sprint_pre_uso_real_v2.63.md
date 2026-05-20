@@ -217,4 +217,53 @@ Estos quedaron explícitamente diferidos · no asumir verde:
 
 ---
 
+## Sesión 2026-05-19/20 · Arranque uso real con caso TOUS
+
+Owner volvió del viaje. Caso real entrante de Fervimax · cambio de switch en 2 tiendas TOUS Miami (Pembroke + Dadeland). Tech: Iduber Montes (3er intento · 2 techs previos no resolvieron). Cadena de mails Andrés Tyminskiy + WhatsApp group (262 msgs · 35 fotos · 1 audio).
+
+**Lo que se hizo (4 scripts nuevos · 4 commits):**
+
+| Commit | Script | Acción |
+|---|---|---|
+| `0d9ea98` | `load_tous_miami_fervi.py` v1 | Primer intento · 1 site (Dadeland) · sin Andres como user |
+| `b604f64` | `load_tous_miami_fervi.py` v2 | Refactor tras leer WhatsApp · 2 sites · 2 WOs · histórico Jose+Carlos |
+| `bfb47f4` | `load_tous_miami_fervi.py` v3 | + user Andres Tyminskiy como client_coord Fervi (patrón Rackel) |
+| `973357b` | `load_tous_miami_fervi.py` v4 | Fix apellido Iduber (Montes · no Fercho que era apodo WhatsApp) |
+| `96381c5` | `cleanup_seed_for_real.py` + `force_reset_juan.py` | Cleanup TOTAL fake info + force-reset pwd Juan |
+
+**Ejecuciones en PROD:**
+1. `load_tous_miami_fervi.py` · creó SA Bronze · 2 sites TOUS · user Iduber · user Andres · 2 WOs · 2 briefings
+2. `cleanup_seed_for_real.py` DRY-RUN · 345 docs a borrar · whitelist 11 users
+3. `cleanup_seed_for_real.py` EXECUTE · 345 docs borrados · audit_log intacto
+4. `force_reset_juan.py` · pwd Juan → `InsiteIQ2026!` · must_change_password=True
+
+**Estado PROD al cerrar sesión:**
+- 1 tenant SRS
+- 11 users (9 SRS plantilla + Iduber Montes + Andres Tyminskiy)
+- 1 organization (Fervimax · partner_relationships=[joint_venture_partner, client])
+- 1 service_agreement (FERVI-SRS-BF-2026 Bronze)
+- 2 sites (TOUS Pembroke Pines + TOUS Dadeland Mall)
+- 2 work_orders (FERVI-TOUS-PMB-001 dispatched · FERVI-TOUS-DDM-001 triage)
+- 2 briefings (assembled · pending ack del tech)
+- audit_log inmutable (con refs huérfanas a entities borradas · histórico legítimo)
+
+**Decisiones del owner durante la sesión:**
+1. Cleanup TOTAL · no conservar orgs seed como catálogo · "darle duro a esto"
+2. Borrar también `pruebas@` test user
+3. Force-reset pwd Juan antes del cleanup para garantizar acceso post
+4. Andres Tyminskiy SÍ entra como user `client_coordinator` (no solo metadata)
+5. Email de bienvenida diferido (Iter B) · por ahora credenciales por WhatsApp manual
+
+**Bug encontrado al final de la sesión (sin resolver):**
+- Cockpit `/srs` carga PERFECTO post-cleanup · Iter 2.63j visible
+- Al pinchar Detalle de cualquier WO → `/srs/ops/<wo_id>` → **pantalla 100% negra**
+- Backend responde 200 a TODAS las APIs · es crash JS frontend
+- Sin consola browser no se diagnosticó el crash exacto
+- **Fix preventivo en working tree (sin commit)**: envolver TODAS las rutas /srs/* y /client/* en `<V2View>` (V2ErrorBoundary) para que el crash futuro muestre mensaje legible · 42 líneas en App.jsx
+- Documentado como Lección estructural #11 en `donde_la_cagamos.md`
+
+**Próximo escenario firmado por el owner:** caso Agustín + rollout (probablemente Arcos · pero la data Arcos fue borrada en el cleanup · habrá que recargarla limpia desde la realidad operativa actual · no desde el seed sintético).
+
+---
+
 > *Esto es lo más cerca de "puesta en uso con el equipo" que ha estado InsiteIQ desde su arranque. La diferencia con los 3 intentos de cockpit operativo fallidos del sprint anterior: este sprint fue todo backend + flow operativo + datos reales · cero diseño UX autónomo · cero invento visual. El agente hizo de plomero · no de arquitecto.*
