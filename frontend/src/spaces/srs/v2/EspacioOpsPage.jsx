@@ -293,6 +293,10 @@ export default function EspacioOpsPage({ scope = "srs" }) {
   }, []);
 
   /* ─────────────────────── Markers (sites con WO activa) ─────────────────────── */
+  // Track si ya hicimos fit-bounds inicial. Sólo lo hacemos UNA vez por sesión
+  // de la página · si el usuario movió el mapa después, no le interrumpimos.
+  const didInitialFitRef = useRef(false);
+
   useEffect(() => {
     if (!mapInstanceRef.current || !window.L) return;
     const L = window.L;
@@ -382,6 +386,23 @@ export default function EspacioOpsPage({ scope = "srs" }) {
 
       markersRef.current[wo.id] = marker;
     });
+
+    // Auto-zoom inicial · ajusta la vista a las ubicaciones reales una vez
+    // que tenemos markers. Sólo la PRIMERA vez · si el user ya navegó el mapa,
+    // respetamos su vista. Padding generoso para que los pills no queden pegados
+    // al borde. maxZoom=14 evita zoom de calle si hay 1 solo marker.
+    if (!didInitialFitRef.current) {
+      const markerObjs = Object.values(markersRef.current);
+      if (markerObjs.length > 0) {
+        const group = L.featureGroup(markerObjs);
+        map.fitBounds(group.getBounds(), {
+          padding: [80, 80],
+          maxZoom: 14,
+          animate: true,
+        });
+        didInitialFitRef.current = true;
+      }
+    }
   }, [wos, siteMap, userMap, orgMap]);
 
   /* ─────────────────────── Visibilidad de markers según filtro ─────────────────────── */
