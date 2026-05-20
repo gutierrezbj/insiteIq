@@ -707,3 +707,80 @@ Hicimos:
 4. Una vez validado el WO Detail funciona · cargar el caso Agustín + rollout
 
 > *La consola del navegador es el primer recurso de diagnóstico frontend. Sin ella, todo es adivinanza. Para el siguiente bug: pedir F12 + Console + screenshot SIEMPRE antes de tocar código.*
+
+---
+
+## Sesión 2026-05-20 tarde · Primera vuelta completa Modo 1 end-to-end · 8 fixes en cadena
+
+Owner ejecutó el flow completo TOUS Pembroke jugando el papel de Iduber Montes desde la PWA Tech. 8 commits de fix consecutivos cazando bugs latentes que el seed enmascaraba.
+
+### Lecciones nuevas (#12 a #15)
+
+**#12 · "Defenses must work in PROD too" (ErrorBoundary.jsx:31 + 84)**
+
+El V2ErrorBoundary tenía `import.meta.env.DEV` gating en TANTO `console.error` como en el `<details>` con stack trace. Resultado: en PROD el owner veía el panel naranja pero NI consola loggeada NI detalle visible. Ceguera operativa total.
+
+Fix: imprimir SIEMPRE en consola + mostrar SIEMPRE el detalle (collapsible).
+
+**Regla:** las defensas (ErrorBoundary, logs, telemetry) deben funcionar IGUAL en DEV y PROD. Prod-only behavior crea ceguera operativa. Si te preocupa flooding de logs, usa niveles, no gating env.
+
+**#13 · "Bugs latentes invisibles con seed data" · 3 casos en 1 sesión**
+
+Patrón confirmado:
+- `STAGES is not defined` (WorkOrderDetailPage · prop drilling fallido)
+- `to_status` vs `target_status` (Kanban · field name mismatch backend↔frontend)
+- `buildTimeline is not defined` (EspacioOpsPage · missing import)
+
+Los 3 bugs llevaban semanas/meses en el código · invisibles porque el seed enmascaraba el code path (60 WOs · siempre había data · alguien siempre acked briefing · etc). El cleanup TOTAL (Iter 2026-05-19) los expuso uno a uno.
+
+**Lección:** seed data masking es real. Cleanup periódico con uso operativo verdadero es el único stress test honesto.
+
+**#14 · "El sistema HACE lo correcto pero NO TE GUÍA"**
+
+Owner reportó tras cerrar primera WO: *"no sé qué hacer jajajaja"*. La WO pasó a `resolved` correctamente · ball pasó a client · sistema en estado correcto. Pero el UX no destaca que es turno del coord.
+
+Gaps grandes identificados como prioridad para sprint "Afinar" semana próxima:
+1. **Notificaciones cross-rol** · in-app + email · "Iduber terminó · te toca cerrar"
+2. **Path cristal clear** · home con "Pendiente de ti · N items" + halo amber en cards con ball=tú + botón gigante navy de la acción siguiente
+
+Quote canónica del owner: *"somos muchos y no sabemos ni nos notifican eso es fundamental, el path de la incidencia debe ser cristal clear"*.
+
+**#15 · "Field name mismatch es CONTRACT TEST faltante"**
+
+Backend espera `target_status` en `/work-orders/{id}/advance`. Frontend Kanban enviaba `to_status`. Pydantic con `extra="ignore"` descartaba el field equivocado · faltaba el required · respondía 422 silencioso. Toast formateaba `[object Object]`. Owner pensó "no se mueve la tarjeta".
+
+Mismo patrón en `submitCapture` · frontend Tech PWA llamaba `/work-orders/{id}/capture` (sin `/submit`) → 405 silencioso.
+
+**Lección:** sin contract tests (frontend genera payload · backend valida) estos bugs viven hasta que alguien los pisa en producción. Idea para iter: openapi spec + tipos generados automáticamente · o smoke test post-deploy que hace 1 advance + 1 capture/submit.
+
+### Cronología del día
+
+| Commit | Fix |
+|---|---|
+| `4703fd0` | V2ErrorBoundary universal (envuelve todas las rutas /srs/* y /client/*) |
+| `dae3b3b` | `STAGES is not defined` · prop drilling a StageTimeline |
+| `2861cfd` | onsite_contact por sitio + Oscar Urrutia (no Iturria) |
+| `cb2b4db` | Dadeland "NO hay contacto físico en tienda" |
+| `8cc6557` + `b81d00d` | Compliance → Reporte (UI + i18n key + prop + handler) |
+| `95f9e73` | Kanban `to_status` → `target_status` + `formatErrorDetail()` para toasts |
+| `37483bc` | Auto-fit zoom mapa sobre ubicaciones reales |
+| `bd4b975` | `force_reset_user.py` genérico (cualquier email) |
+| `2c611d7` | Tech PWA `/capture` → `/capture/submit` + try/catch visible |
+| `75b5695` | Popup mapa · bloque PROGRAMADA con scheduled_at o amber "SIN PROGRAMAR" |
+| `1d924d1` | ErrorBoundary detalle SIEMPRE visible en PROD (no solo DEV) |
+| `cc4bb03` | `buildTimeline is not defined` · missing import EspacioOps |
+
+### Para el siguiente agente
+
+**Estado al cerrar 2026-05-20 tarde:**
+- Primera vuelta Modo 1 end-to-end CERRADA con caso real TOUS Pembroke
+- WO Pembroke `resolved` (Iduber hizo todo el flow tech) · pendiente cierre coord SRS
+- WO Dadeland `triage` · pendiente coordinación con Oscar Urrutia (jueves)
+- 8 bugs cazados · todos deployados · ningún rollback necesario
+- 2 prioridades #1 firmadas para sprint "Afinar" semana próxima: **notificaciones + path cristal clear**
+
+**Si despiertas con nuevo bug del equipo:**
+1. Pide screenshot del panel "Algo se rompió"
+2. Pide "Ver detalle técnico del error (copiar y mandar)" del propio panel (ahora siempre visible)
+3. Con stack trace · arreglo en 5 min (los últimos 3 bugs fueron 1-line fixes)
+4. NO empacar fixes · regla #9 sigue: 1 commit · 1 deploy · validar · siguiente

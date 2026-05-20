@@ -1,11 +1,24 @@
 # InsiteIQ — Project Status
 
-**Estado:** 🚀 USO REAL ARRANCADO · 2026-05-20 · CASO TOUS Fervimax + cleanup TOTAL deployed · bug WO Detail pendiente fix
+**Estado:** 🚀 PRIMERA VUELTA MODO 1 CERRADA · 2026-05-20 tarde · 8 bugs cazados + Iduber ejecutó flow tech end-to-end · sprint "Afinar" firmado semana próxima
 **Decisión:** Owner (JuanCho)
 **Último commit live en PROD:** `96381c5` · rama `v1-foundation` · cleanup scripts deployed
 **Dominio:** https://insiteiq.systemrapid.io
 **Repo:** https://github.com/gutierrezbj/insiteIq
-**Caso operativo activo:** Fervimax → SRS · cambio switch TOUS Miami (2 tiendas) · tech Iduber Montes · ejecución mañana miércoles 11am
+**Caso operativo activo:** Fervimax → SRS · cambio switch TOUS Miami (2 tiendas) · tech Iduber Montes · Pembroke EJECUTADO (resolved · pendiente cierre coord) · Dadeland pendiente coord con Oscar Urrutia (jueves)
+
+---
+
+## Sprint "Afinar" · semana próxima · firmado por owner
+
+Owner cerró sesión 2026-05-20 con: *"somos muchos y no sabemos ni nos notifican eso es fundamental, el path de la incidencia debe ser cristal clear"*.
+
+**Prioridad #1 (bundleadas porque están acopladas · regla #9 honra MUST conjunto):**
+
+1. **Notificaciones cross-rol** · in-app badge en sidebar + email (vía outbox existente). Eventos: tech ack briefing · tech resolved · client/coord closed · drift > 30min · scheduled_at se aproxima.
+2. **Path cristal clear · "TE TOCA A TI"** · home con bloque "Pendiente de ti · N items" · halo amber en card cuando ball=tú · botón gigante navy de la acción siguiente en WO Detail · badge count en sidebar.
+
+Sin estas dos, el equipo (Andros, Adriana, Iduber, Agustín, Andres, Luis) NO va a abandonar WhatsApp · que es la promesa fundamental del Blueprint Modo 1 ("WhatsApp kill day 1").
 
 ---
 
