@@ -13,7 +13,7 @@ Roles correctos:
                                  en space=client_coordinator scope=Fervimax
                                  (patrón paralelo a Rackel/Fractalia)
   - Andros + Luis (SRS)       → coordinadores SRS (uno por WO en este test)
-  - Oscar Iturria             → técnico de TOUS desde MX (NO coord · contacto técnico
+  - Oscar Urrutia             → técnico de TOUS desde MX (NO coord · contacto técnico
                                  del cliente final · onsite_contact del Site)
   - Iduber Montes (Fercho en WhatsApp) → tech de campo asignado (3er intento)
 
@@ -59,11 +59,18 @@ FERVI_PM_TZ = "Europe/Madrid"
 FERVI_PM_TZ_LABEL = "Madrid"
 FERVI_PM_DISPLAY = "Andres T"
 
-# ─── TOUS técnico cliente final (en notes + onsite_contact) ──────────
-TOUS_TECH_NAME = "Oscar Iturria"
+# ─── TOUS técnico cliente final (referencia · usado en briefings) ────
+# OJO · en mails Fervi aparece transliterado como "Oscar Iturria" pero
+# owner confirma 2026-05-20 que el apellido real es URRUTIA. Cuando se
+# mencione al tech usamos Urrutia. Si el tech recibe mail de Fervi con
+# "Iturria" · es la misma persona.
+TOUS_TECH_NAME = "Oscar Urrutia"
 TOUS_TECH_PHONE = "+52 5568092374"
 
 # ─── Sites · DOS ──────────────────────────────────────────────────────
+# onsite_contact por site (corrección 2026-05-20 del owner):
+#   · Pembroke → supervisora de tienda (Rodrigues Fernanda · tel tienda)
+#   · Dadeland → Oscar Urrutia (técnico remoto MX que coordina la visita)
 SITE_PEMBROKE = {
     "code": "TOUS-PEMBROKE-FL",
     "name": "TOUS Pembroke Pines",
@@ -73,9 +80,14 @@ SITE_PEMBROKE = {
     "timezone": "America/New_York",
     "lat": 26.0089,
     "lng": -80.2962,
-    "store_contact_name": "Rodrigues Fernanda",
-    "store_contact_phone": "+1 954-904-4050",
-    "store_alt_phone": "+1 754-299-2662",
+    # onsite_contact específico para este sitio
+    "onsite_contact": {
+        "name": "Rodrigues Fernanda",
+        "phone": "+1 954-904-4050",
+        "email": None,
+        "role": "store_supervisor",
+    },
+    "onsite_contact_alt": "+1 754-299-2662",  # tel alt de la tienda
     "tech_support_contact": "Jesús Garmón · 919340208",
 }
 
@@ -88,9 +100,14 @@ SITE_DADELAND = {
     "timezone": "America/New_York",
     "lat": 25.6855,
     "lng": -80.3158,
-    "store_contact_name": None,
-    "store_contact_phone": None,
-    "store_alt_phone": None,
+    # onsite_contact específico · Oscar Urrutia coordina desde MX
+    "onsite_contact": {
+        "name": TOUS_TECH_NAME,
+        "phone": TOUS_TECH_PHONE,
+        "email": None,
+        "role": "client_remote_tech_mx",
+    },
+    "onsite_contact_alt": None,
     "tech_support_contact": None,
 }
 
@@ -162,13 +179,13 @@ WO_DADELAND = {
         "Tienda TOUS Dadeland Mall · swap de switch + diagnóstico de conectividad.\n\n"
         "Histórico previo:\n"
         " · 12 may 2026 · tech Carlos Marin Telxius (Telxius sub) · NO resolvió.\n"
-        " · Diagnosis Carlos + Oscar Iturria: 'el modem de AT&T no está en el local · "
+        " · Diagnosis Carlos + Oscar Urrutia: 'el modem de AT&T no está en el local · "
         "   viene de otro lado · hay que identificar el cable que llega con internet'.\n"
         " · Probaron apagar/encender switch · no devolvió internet.\n"
         " · Carlos recomendó: traer router · sacar todo · volver a conectar · cambiar SW.\n"
         " · Decisión escalada a DXC · pendiente confirmación.\n\n"
         "Trabajo esperado jueves:\n"
-        " 1. Coordinar hora exacta con Oscar Iturria (+52 5568092374) · es el técnico de TOUS "
+        " 1. Coordinar hora exacta con Oscar Urrutia (+52 5568092374) · es el técnico de TOUS "
         "    que conoce el sistema desde México · él da las indicaciones.\n"
         " 2. Llegar al Dadeland Mall · pregunta en la tienda.\n"
         " 3. Identificar el cable que entra con internet (viene por una tubería · no está "
@@ -181,7 +198,7 @@ WO_DADELAND = {
     ),
     "briefing_notes": (
         "TIENDA: TOUS Dadeland Mall · 7535 SW 88th St Suite 1950 · Miami FL 33156\n"
-        "HORA: jueves · hora TBD (Andros confirma con Oscar Iturria)\n\n"
+        "HORA: jueves · hora TBD (Andros confirma con Oscar Urrutia)\n\n"
         "ESTE ES EL SEGUNDO INTENTO en esta tienda. Lee bien:\n\n"
         "INTENTO 1 (12 mayo · Carlos Marin Telxius):\n"
         "  · Llegó · tienda abierta · diagnosis con Oscar (técnico TOUS remoto MX).\n"
@@ -195,7 +212,7 @@ WO_DADELAND = {
         "    sirenita'. Léete eso varias veces antes de ir.\n"
         "  · Decisión final del intento: escalar a DXC. Pendiente.\n\n"
         "TU MISIÓN (Iduber · 2do intento):\n"
-        "  1. ANTES de ir: LLAMAR a Oscar Iturria (+52 5568092374). Es el técnico de TOUS "
+        "  1. ANTES de ir: LLAMAR a Oscar Urrutia (+52 5568092374). Es el técnico de TOUS "
         "     desde MX · conoce el sistema · él te dice qué hacer cable a cable.\n"
         "  2. Confirmar hora con Oscar · él te dice cuándo abre la tienda y cuándo es buena hora.\n"
         "  3. EN LA TIENDA: foco en localizar el cable que trae internet (entra por una "
@@ -276,38 +293,49 @@ async def ensure_service_agreement(db, tenant_id, org_id, juan_id, now):
 
 
 async def ensure_site(db, tenant_id, org_id, juan_id, now, site_spec):
-    existing = await db.sites.find_one({
-        "tenant_id": tenant_id,
-        "$or": [{"code": site_spec["code"]}, {"address": site_spec["address"]}],
-    })
-    if existing:
-        site_id = str(existing["_id"])
-        print(f"✓ Site ya existe · id={site_id} · {existing.get('name')}")
-        return site_id
-
-    # onsite_contact = Oscar (técnico TOUS remoto MX · es el que tiene el contexto)
-    # Información de tienda + tech support vive en access_notes para que el tech la vea.
+    """
+    Idempotente con UPDATE · NO skip si existe. Esto permite corregir
+    onsite_contact + access_notes de sites ya creados re-ejecutando el script.
+    """
+    # Construir access_notes (texto plano que ve el tech en la PWA)
+    onsite = site_spec["onsite_contact"]
     contact_lines = [
-        f"TÉCNICO TOUS (remoto MX · sabe del sistema): {TOUS_TECH_NAME} · {TOUS_TECH_PHONE}",
+        f"CONTACTO ONSITE ({onsite['role']}): {onsite['name']} · {onsite['phone']}",
     ]
-    if site_spec.get("store_contact_name"):
+    if site_spec.get("onsite_contact_alt"):
+        contact_lines.append(f"  alt: {site_spec['onsite_contact_alt']}")
+    # Para Pembroke · añadimos también referencia al técnico TOUS coordinador
+    # remoto por si la supervisora no sabe. Para Dadeland · Oscar YA ES el onsite.
+    if onsite["role"] == "store_supervisor":
         contact_lines.append(
-            f"CONTACTO EN TIENDA: {site_spec['store_contact_name']} · {site_spec['store_contact_phone']}"
+            f"TÉCNICO TOUS REMOTO (MX · sabe del sistema): {TOUS_TECH_NAME} · {TOUS_TECH_PHONE}"
         )
-    if site_spec.get("store_alt_phone"):
-        contact_lines.append(f"  alt: {site_spec['store_alt_phone']}")
     if site_spec.get("tech_support_contact"):
         contact_lines.append(f"TECH SUPPORT REMOTO: {site_spec['tech_support_contact']}")
     contact_lines.append(
         f"COORD FERVIMAX: {FERVI_PM_NAME} · {FERVI_PM_EMAIL} · {FERVI_PM_PHONE}"
     )
+    access_notes_text = "\n".join(contact_lines)
 
-    onsite_contact = {
-        "name": TOUS_TECH_NAME,
-        "phone": TOUS_TECH_PHONE,
-        "email": None,
-        "role": "client_remote_tech_mx",
-    }
+    existing = await db.sites.find_one({
+        "tenant_id": tenant_id,
+        "$or": [{"code": site_spec["code"]}, {"address": site_spec["address"]}],
+    })
+
+    if existing:
+        site_id = str(existing["_id"])
+        # UPDATE onsite_contact + access_notes (corrección 2026-05-20)
+        await db.sites.update_one(
+            {"_id": existing["_id"]},
+            {"$set": {
+                "onsite_contact": onsite,
+                "access_notes": access_notes_text,
+                "updated_at": now,
+                "updated_by": juan_id,
+            }},
+        )
+        print(f"↑ Site actualizado · id={site_id} · {site_spec['name']} · onsite={onsite['name']}")
+        return site_id
 
     doc = {
         "tenant_id": tenant_id,
@@ -322,10 +350,10 @@ async def ensure_site(db, tenant_id, org_id, juan_id, now, site_spec):
         "lng": site_spec["lng"],
         "geofence_radius_m": None,
         "site_type": "retail",
-        "onsite_contact": onsite_contact,
+        "onsite_contact": onsite,
         "has_physical_resident": False,
         "default_noc_operator_user_id": None,
-        "access_notes": "\n".join(contact_lines),
+        "access_notes": access_notes_text,
         "status": "active",
         "notes": "Caso entrada via Fervimax · cliente final TOUS · histórico en WhatsApp group Fervi-TOUS.",
         "created_at": now,
@@ -335,7 +363,7 @@ async def ensure_site(db, tenant_id, org_id, juan_id, now, site_spec):
     }
     result = await db.sites.insert_one(doc)
     site_id = str(result.inserted_id)
-    print(f"↑ Site creado · id={site_id} · {site_spec['name']}")
+    print(f"↑ Site creado · id={site_id} · {site_spec['name']} · onsite={onsite['name']}")
     return site_id
 
 
@@ -526,37 +554,62 @@ async def ensure_work_order(db, tenant_id, org_id, site_id, sa_id, tech_id, coor
 
 
 async def ensure_briefing(db, tenant_id, wo_id, site_spec_dict, coord_id, now, briefing_notes):
+    """
+    Idempotente con UPDATE de site_bible_summary + coordinator_notes si existe
+    (para reflejar corrección de onsite_contact por site).
+    """
+    # Usar el onsite_contact específico del site (Pembroke=supervisora, Dadeland=Oscar)
+    onsite_contact = site_spec_dict["onsite_contact"]
+
+    if onsite_contact["role"] == "store_supervisor":
+        access_notes_text = (
+            "Tienda retail en centro comercial. Contacto onsite = supervisora "
+            "de tienda. Para coordinar antes de salir, llamar a la tienda. "
+            f"Técnico TOUS remoto MX (sabe del sistema): {TOUS_TECH_NAME} · {TOUS_TECH_PHONE}."
+        )
+    else:
+        access_notes_text = (
+            f"Tienda retail en centro comercial. Contacto onsite = {onsite_contact['name']} "
+            "(técnico TOUS remoto desde MX · sabe del sistema · él coordina la visita)."
+        )
+
+    site_bible = {
+        "site_name": site_spec_dict["name"],
+        "address": site_spec_dict["address"],
+        "country": site_spec_dict["country"],
+        "city": site_spec_dict["city"],
+        "timezone": site_spec_dict["timezone"],
+        "onsite_contact": onsite_contact,
+        "access_notes": access_notes_text,
+        "has_physical_resident": False,
+        "parking_notes": None,
+        "security_requirements": None,
+        "known_issues": [],
+        "confidence": "draft",
+    }
+
     existing = await db.copilot_briefings.find_one({"tenant_id": tenant_id, "work_order_id": wo_id})
     if existing:
         br_id = str(existing["_id"])
-        print(f"✓ Briefing ya existe · id={br_id} · status={existing.get('status')}")
+        # UPDATE si ya existe · refresca site_bible_summary + coordinator_notes
+        await db.copilot_briefings.update_one(
+            {"_id": existing["_id"]},
+            {"$set": {
+                "site_bible_summary": site_bible,
+                "coordinator_notes": briefing_notes,
+                "updated_at": now,
+                "updated_by": coord_id,
+            }},
+        )
+        print(f"↑ Briefing actualizado · id={br_id} · onsite={onsite_contact['name']}")
         return br_id
 
-    onsite_contact = {
-        "name": TOUS_TECH_NAME,
-        "phone": TOUS_TECH_PHONE,
-        "email": None,
-        "role": "client_remote_tech_mx",
-    }
     doc = {
         "tenant_id": tenant_id,
         "work_order_id": wo_id,
         "assembled_at": now,
         "assembled_by": coord_id,
-        "site_bible_summary": {
-            "site_name": site_spec_dict["name"],
-            "address": site_spec_dict["address"],
-            "country": site_spec_dict["country"],
-            "city": site_spec_dict["city"],
-            "timezone": site_spec_dict["timezone"],
-            "onsite_contact": onsite_contact,
-            "access_notes": "Tienda retail en centro comercial · coordinar con técnico TOUS Oscar Iturria (remoto MX).",
-            "has_physical_resident": False,
-            "parking_notes": None,
-            "security_requirements": None,
-            "known_issues": [],
-            "confidence": "draft",
-        },
+        "site_bible_summary": site_bible,
         "device_bible": [],
         "history": [],
         "parts_estimate": [],
@@ -692,7 +745,7 @@ async def main():
     print()
     print("Próximos pasos del equipo:")
     print("  · Luis abre Pembroke · llama a Rodrigues Fernanda + Jesús Garmón · valida hora")
-    print("  · Andros abre Dadeland · llama a Oscar Iturria · cierra hora del jueves")
+    print("  · Andros abre Dadeland · llama a Oscar Urrutia · cierra hora del jueves")
     print("  · Iduber recibe ambas WOs en su PWA · ack briefing por orden")
     print("  · Andres (Fervi) entra a su Client Coordinator space · ve solo Fervi scope")
     print("    URL: https://insiteiq.systemrapid.io/client?v2=1")
