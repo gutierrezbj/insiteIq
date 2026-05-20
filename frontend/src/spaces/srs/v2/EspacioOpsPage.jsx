@@ -79,6 +79,38 @@ function buildQuickPopupHtml({ wo, site, tech, client, warning }) {
   const ballColor = getBallColor(wo);
   const tag = getTag(wo);
 
+  // Programación: si hay scheduled_at lo mostramos formateado en el TZ del
+  // site (no del viewer · es la hora local del lugar). Si no, banner amber
+  // "SIN PROGRAMAR" · pista visible para el coord.
+  let scheduledBlock = "";
+  if (wo?.scheduled_at) {
+    try {
+      const d = new Date(wo.scheduled_at);
+      const siteTz = site?.timezone || "UTC";
+      const fmt = new Intl.DateTimeFormat("es-ES", {
+        timeZone: siteTz,
+        weekday: "short", day: "numeric", month: "short",
+        hour: "2-digit", minute: "2-digit", hour12: false,
+      }).format(d);
+      const tzLabel = site?.city || siteTz.split("/").pop().replace("_", " ");
+      scheduledBlock = `
+        <div style="margin:0 14px 10px;padding:8px 11px;background:#0A162808;border-left:3px solid #0A1628;border-radius:0 4px 4px 0;">
+          <p style="margin:0 0 2px;font-size:9px;color:#8B95A8;letter-spacing:0.14em;text-transform:uppercase;font-weight:700;">Programada</p>
+          <p style="margin:0;font-family:'JetBrains Mono',monospace;font-size:13px;color:#0A1628;font-weight:700;">${fmt} <span style="color:#8B95A8;font-weight:500;font-size:11px;">${tzLabel}</span></p>
+        </div>
+      `;
+    } catch {
+      scheduledBlock = "";
+    }
+  } else {
+    scheduledBlock = `
+      <div style="margin:0 14px 10px;padding:8px 11px;background:#D9770612;border-left:3px solid #D97706;border-radius:0 4px 4px 0;">
+        <p style="margin:0 0 2px;font-size:9px;color:#9A5A05;letter-spacing:0.14em;text-transform:uppercase;font-weight:700;">Programada</p>
+        <p style="margin:0;font-family:'JetBrains Mono',monospace;font-size:13px;color:#9A5A05;font-weight:700;">SIN PROGRAMAR · agendar con cliente</p>
+      </div>
+    `;
+  }
+
   return `
     <div style="background:#FFFFFF;color:#0A1628;font-family:'JetBrains Mono',monospace;">
       <!-- Header WO + SLA -->
@@ -103,6 +135,8 @@ function buildQuickPopupHtml({ wo, site, tech, client, warning }) {
           ${site?.city ? ` · ${site.city}` : ""}${site?.country ? `, ${site.country}` : ""}
         </p>
       </div>
+
+      ${scheduledBlock}
 
       <!-- Metadata 2x2 (todos los fields con fallback "—" para no salir vacíos) -->
       <div style="padding:4px 14px 12px;display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;">
