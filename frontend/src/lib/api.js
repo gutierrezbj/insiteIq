@@ -8,6 +8,32 @@ import { getAccessToken, clearTokens } from "./auth";
 
 const BASE_URL = import.meta.env.VITE_API_BASE || "/api";
 
+/**
+ * Serializa `payload.detail` a un STRING legible.
+ * - string  → tal cual (HTTPException con string)
+ * - array   → cada error Pydantic (loc + msg) concatenado · típico de 422
+ * - objeto  → JSON stringify defensivo
+ * - falsy   → fallback `HTTP <status>`
+ * Evita el clásico "[object Object]" en toasts (regla del Cuaderno · copy legible).
+ */
+function formatErrorDetail(detail, statusCode) {
+  if (typeof detail === "string") return detail;
+  if (Array.isArray(detail)) {
+    return detail
+      .map((d) => {
+        if (typeof d === "string") return d;
+        const loc = Array.isArray(d?.loc) ? d.loc.join(".") : "";
+        const msg = d?.msg || JSON.stringify(d);
+        return loc ? `${loc}: ${msg}` : msg;
+      })
+      .join(" · ");
+  }
+  if (detail && typeof detail === "object") {
+    try { return JSON.stringify(detail); } catch { /* fallthrough */ }
+  }
+  return `HTTP ${statusCode}`;
+}
+
 async function request(path, { method = "GET", body, headers = {}, auth = true } = {}) {
   const url = path.startsWith("http") ? path : `${BASE_URL}${path}`;
   const h = { "Content-Type": "application/json", ...headers };
@@ -31,7 +57,9 @@ async function request(path, { method = "GET", body, headers = {}, auth = true }
   const payload = isJson ? await res.json().catch(() => null) : await res.text();
 
   if (!res.ok) {
-    const msg = isJson && payload?.detail ? payload.detail : `HTTP ${res.status}`;
+    const msg = isJson && payload?.detail
+      ? formatErrorDetail(payload.detail, res.status)
+      : `HTTP ${res.status}`;
     throw new ApiError(msg, res.status, payload);
   }
   return payload;
@@ -78,7 +106,9 @@ export async function uploadFile(file) {
   );
   const payload = isJson ? await res.json().catch(() => null) : await res.text();
   if (!res.ok) {
-    const msg = isJson && payload?.detail ? payload.detail : `HTTP ${res.status}`;
+    const msg = isJson && payload?.detail
+      ? formatErrorDetail(payload.detail, res.status)
+      : `HTTP ${res.status}`;
     throw new ApiError(msg, res.status, payload);
   }
   return payload;

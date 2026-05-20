@@ -311,7 +311,7 @@ export default function InterventionsKanbanPage({ scope = "srs" }) {
 
       // API call
       try {
-        await api.post(`/work-orders/${woId}/advance`, { to_status: newStage });
+        await api.post(`/work-orders/${woId}/advance`, { target_status: newStage });
         toast.success(
           t("page_kanban.wo_moved", {
             code: wo.code || woId.slice(-8).toUpperCase(),
@@ -355,7 +355,7 @@ export default function InterventionsKanbanPage({ scope = "srs" }) {
       );
       setModalWoId(null);
       try {
-        await api.post(`/work-orders/${modalWo.id}/advance`, { to_status: toStatus });
+        await api.post(`/work-orders/${modalWo.id}/advance`, { target_status: toStatus });
         toast.success(t("page_kanban.advanced_to", { code: modalWo.code || "", stage: toStatus }));
         load();
       } catch (err) {
