@@ -48,17 +48,30 @@ export default function ActionDialog({
 
   const effectiveSubmitLabel = submitLabel ?? t("common.confirm");
 
+  // Reset state interno cuando el modal se cierra
   useEffect(() => {
     if (!open) {
       setBusy(false);
       setError(null);
-      return;
     }
+  }, [open]);
+
+  // Focus inicial al abrir · SOLO una vez por apertura.
+  // Antes vivía en el effect general con onClose en deps · cada keystroke
+  // del textarea re-renderizaba el padre con nuevo onClose inline → effect
+  // re-corría → focus() robaba el foco al textarea (síntoma: "cursor se sale").
+  useEffect(() => {
+    if (open) dialogRef.current?.focus();
+  }, [open]);
+
+  // Listener Escape para cerrar · re-engancha si open/busy/onClose cambian.
+  // Esto no afecta focus porque el dialogRef.focus() se aisló arriba.
+  useEffect(() => {
+    if (!open) return;
     function onKey(e) {
       if (e.key === "Escape" && !busy) onClose?.();
     }
     window.addEventListener("keydown", onKey);
-    dialogRef.current?.focus();
     return () => window.removeEventListener("keydown", onKey);
   }, [open, busy, onClose]);
 
