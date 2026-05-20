@@ -250,7 +250,7 @@ export default function WorkOrderDetailPage() {
       {/* 7-stage timeline */}
       <SectionCard style={{ marginBottom: 16 }}>
         <SectionTitle>{t("page_wo_detail.section_state_machine")}</SectionTitle>
-        <StageTimeline currentStatus={wo.status} />
+        <StageTimeline currentStatus={wo.status} stages={STAGES} />
       </SectionCard>
 
       {/* Metadata + Pre-flight grid */}
@@ -1305,7 +1305,7 @@ function StateBlock({ label, value, hint }) {
   );
 }
 
-function StageTimeline({ currentStatus }) {
+function StageTimeline({ currentStatus, stages }) {
   const isCancelled = currentStatus === "cancelled";
   if (isCancelled) {
     return (
@@ -1314,10 +1314,10 @@ function StageTimeline({ currentStatus }) {
       </div>
     );
   }
-  const currentIdx = STAGES.findIndex((s) => s.key === currentStatus);
+  const currentIdx = stages.findIndex((s) => s.key === currentStatus);
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 4, overflowX: "auto", paddingBottom: 4 }}>
-      {STAGES.map((s, i) => {
+      {stages.map((s, i) => {
         const done = i < currentIdx;
         const active = i === currentIdx;
         const dotBg = active ? "#0A1628" : done ? "#16A34A" : "#C8CDD8";
@@ -1348,7 +1348,7 @@ function StageTimeline({ currentStatus }) {
                 {s.label}
               </div>
             </div>
-            {i < STAGES.length - 1 && (
+            {i < stages.length - 1 && (
               <div
                 style={{
                   height: 1,
