@@ -133,7 +133,7 @@
     "no_site": "Sin sitio",
     "unassigned": "Sin asignar",
     "details_btn": "Detalle",
-    "compliance_btn": "Reporte"
+    "report_btn": "Reporte"
   },
   "widget": {
     "alerts_title": "Alertas operativas",

@@ -266,7 +266,7 @@ export default function V2CockpitPage({ scope = "srs" }) {
   }, [wos, users, stats._total]);
 
   const handleDetail = (wo) => navigate(`/srs/ops/${wo.id}`);
-  const handleCompliance = (wo) => navigate(`/srs/ops/${wo.id}/report`);
+  const handleReport = (wo) => navigate(`/srs/ops/${wo.id}/report`);
 
   /* ─────────────────────── Skeleton state ─────────────────────── */
   if (!hasLoadedOnce) {
@@ -380,7 +380,7 @@ export default function V2CockpitPage({ scope = "srs" }) {
                       site={site}
                       tech={tech}
                       onDetail={() => handleDetail(wo)}
-                      onCompliance={() => handleCompliance(wo)}
+                      onReport={() => handleReport(wo)}
                     />
                   );
                 })}

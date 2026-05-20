@@ -9,7 +9,7 @@
  *  - Title: site name (15px display, bold, white)
  *  - Subtitle: SITE id + descripción corta
  *  - Info rows: Tech con icono user · Info extra (partes/ETA) con icono box/calendar
- *  - Footer: 2 botones outline grid 2 cols (Detalle cyan / Compliance rojo)
+ *  - Footer: 2 botones outline grid 2 cols (Detalle cyan / Reporte rojo)
  *
  * Props:
  *  - wo: work order object con .id, .site_id, .severity, .status, .organization_id, etc
@@ -17,7 +17,7 @@
  *  - tech: user object con .full_name
  *  - extra: string opcional con info adicional (partes en sitio, ETA, ventana)
  *  - onDetail: () => void
- *  - onCompliance: () => void
+ *  - onReport: () => void  // navega al Intervention Report del WO
  */
 
 import { useTranslation } from "react-i18next";
@@ -61,7 +61,7 @@ export default function InterventionCardFull({
   tech,
   extra,
   onDetail,
-  onCompliance,
+  onReport,
 }) {
   const { t } = useTranslation("common");
   const status = getStatusInfo(wo?.status);
@@ -177,7 +177,7 @@ export default function InterventionCardFull({
           {t("intervention.details_btn")}
         </button>
         <button
-          onClick={onCompliance}
+          onClick={onReport}
           style={{
             background: "#FFFFFF",
             border: "1px solid #C8CDD8",
@@ -202,7 +202,7 @@ export default function InterventionCardFull({
             e.currentTarget.style.color = "#3D4A66";
           }}
         >
-          {t("intervention.compliance_btn")}
+          {t("intervention.report_btn")}
         </button>
       </div>
     </article>
