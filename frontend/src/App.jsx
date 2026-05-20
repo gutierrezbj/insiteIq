@@ -163,23 +163,23 @@ export default function App() {
             <Route path="espacio-ops" element={<V2View name="V2EspacioOpsPage"><V2EspacioOpsPage /></V2View>} />
             <Route path="intervenciones" element={<V2View name="V2InterventionsKanbanPage"><V2InterventionsKanbanPage /></V2View>} />
             {/* Páginas v1 sin reemplazo v2 todavía · funcionan dentro del V2Shell */}
-            <Route path="ops/:wo_id" element={<WorkOrderDetailPage />} />
-            <Route path="ops/:wo_id/report" element={<InterventionReportPage />} />
-            <Route path="projects" element={<ProjectsListPage />} />
-            <Route path="projects/:project_id" element={<ProjectDetailPage />} />
+            <Route path="ops/:wo_id" element={<V2View name="WorkOrderDetailPage"><WorkOrderDetailPage /></V2View>} />
+            <Route path="ops/:wo_id/report" element={<V2View name="InterventionReportPage"><InterventionReportPage /></V2View>} />
+            <Route path="projects" element={<V2View name="ProjectsListPage"><ProjectsListPage /></V2View>} />
+            <Route path="projects/:project_id" element={<V2View name="ProjectDetailPage"><ProjectDetailPage /></V2View>} />
             <Route path="rollouts" element={<V2View name="V2RolloutsListPage"><V2RolloutsListPage /></V2View>} />
             <Route path="rollouts/:project_id" element={<V2View name="V2RolloutDetailPage"><V2RolloutDetailPage /></V2View>} />
-            <Route path="sites" element={<SitesListPage />} />
-            <Route path="sites/:site_id" element={<SiteDetailPage />} />
-            <Route path="techs" element={<TechsListPage />} />
-            <Route path="techs/:user_id" element={<TechDetailPage />} />
-            <Route path="agreements" element={<AgreementsListPage />} />
-            <Route path="agreements/:agreement_id" element={<AgreementDetailPage />} />
-            <Route path="finance" element={<FinancePage />} />
-            <Route path="finance/invoices/:invoice_id" element={<InvoiceDetailPage />} />
-            <Route path="finance/vendor-invoices/:vi_id" element={<VendorInvoiceDetailPage />} />
-            <Route path="insights" element={<InsightsPage />} />
-            <Route path="admin" element={<AdminPage />} />
+            <Route path="sites" element={<V2View name="SitesListPage"><SitesListPage /></V2View>} />
+            <Route path="sites/:site_id" element={<V2View name="SiteDetailPage"><SiteDetailPage /></V2View>} />
+            <Route path="techs" element={<V2View name="TechsListPage"><TechsListPage /></V2View>} />
+            <Route path="techs/:user_id" element={<V2View name="TechDetailPage"><TechDetailPage /></V2View>} />
+            <Route path="agreements" element={<V2View name="AgreementsListPage"><AgreementsListPage /></V2View>} />
+            <Route path="agreements/:agreement_id" element={<V2View name="AgreementDetailPage"><AgreementDetailPage /></V2View>} />
+            <Route path="finance" element={<V2View name="FinancePage"><FinancePage /></V2View>} />
+            <Route path="finance/invoices/:invoice_id" element={<V2View name="InvoiceDetailPage"><InvoiceDetailPage /></V2View>} />
+            <Route path="finance/vendor-invoices/:vi_id" element={<V2View name="VendorInvoiceDetailPage"><VendorInvoiceDetailPage /></V2View>} />
+            <Route path="insights" element={<V2View name="InsightsPage"><InsightsPage /></V2View>} />
+            <Route path="admin" element={<V2View name="AdminPage"><AdminPage /></V2View>} />
           </Route>
 
           {/* Client Coordinator · v2 default desde Iter 2.8 */}
@@ -194,12 +194,12 @@ export default function App() {
             <Route index element={<V2View name="V2CockpitPage(client)"><V2CockpitPage scope="client" /></V2View>} />
             <Route path="espacio-ops" element={<V2View name="V2EspacioOpsPage(client)"><V2EspacioOpsPage scope="client" /></V2View>} />
             <Route path="intervenciones" element={<V2View name="V2InterventionsKanbanPage(client)"><V2InterventionsKanbanPage scope="client" /></V2View>} />
-            <Route path="status" element={<ClientHome />} />
-            <Route path="ops/:wo_id" element={<WorkOrderDetailPage />} />
-            <Route path="ops/:wo_id/report" element={<InterventionReportPage />} />
-            <Route path="invoices/:invoice_id" element={<InvoiceDetailPage />} />
-            <Route path="tickets" element={<ClientHome />} />
-            <Route path="deliverables" element={<ClientHome />} />
+            <Route path="status" element={<V2View name="ClientHome"><ClientHome /></V2View>} />
+            <Route path="ops/:wo_id" element={<V2View name="WorkOrderDetailPage(client)"><WorkOrderDetailPage /></V2View>} />
+            <Route path="ops/:wo_id/report" element={<V2View name="InterventionReportPage(client)"><InterventionReportPage /></V2View>} />
+            <Route path="invoices/:invoice_id" element={<V2View name="InvoiceDetailPage(client)"><InvoiceDetailPage /></V2View>} />
+            <Route path="tickets" element={<V2View name="ClientHome(tickets)"><ClientHome /></V2View>} />
+            <Route path="deliverables" element={<V2View name="ClientHome(deliverables)"><ClientHome /></V2View>} />
           </Route>
 
           {/* Tech Field PWA */}
