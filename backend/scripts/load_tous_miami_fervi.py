@@ -199,6 +199,9 @@ WO_DADELAND = {
     "briefing_notes": (
         "TIENDA: TOUS Dadeland Mall · 7535 SW 88th St Suite 1950 · Miami FL 33156\n"
         "HORA: jueves · hora TBD (Andros confirma con Oscar Urrutia)\n\n"
+        "⚠ NO HAY CONTACTO FÍSICO EN TIENDA (confirmado por Andres/Fervi 2026-05-20). "
+        "Único contacto = Oscar Urrutia desde México. Si llegas a la tienda y no hay "
+        "nadie esperándote, es lo NORMAL · llama directamente a Oscar.\n\n"
         "ESTE ES EL SEGUNDO INTENTO en esta tienda. Lee bien:\n\n"
         "INTENTO 1 (12 mayo · Carlos Marin Telxius):\n"
         "  · Llegó · tienda abierta · diagnosis con Oscar (técnico TOUS remoto MX).\n"
@@ -568,9 +571,14 @@ async def ensure_briefing(db, tenant_id, wo_id, site_spec_dict, coord_id, now, b
             f"Técnico TOUS remoto MX (sabe del sistema): {TOUS_TECH_NAME} · {TOUS_TECH_PHONE}."
         )
     else:
+        # Dadeland · Andres (Fervi) confirma que NO hay contacto físico en tienda
+        # · solo Oscar desde MX. Si el tech llega y no hay nadie esperándolo,
+        # es lo NORMAL · debe llamar a Oscar.
         access_notes_text = (
-            f"Tienda retail en centro comercial. Contacto onsite = {onsite_contact['name']} "
-            "(técnico TOUS remoto desde MX · sabe del sistema · él coordina la visita)."
+            f"Tienda retail en centro comercial. NO hay contacto físico en tienda "
+            f"(confirmado por Andres / Fervi). Único punto de contacto = "
+            f"{onsite_contact['name']} (técnico TOUS remoto desde MX · sabe del "
+            f"sistema · él coordina la visita y te dice qué hacer cable a cable)."
         )
 
     site_bible = {
