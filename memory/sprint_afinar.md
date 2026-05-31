@@ -120,11 +120,27 @@ FastAPI WebSocket nativo. 1 channel por user. Push real-time de: nueva alerta ·
 
 ---
 
+## Decisión confirmada visualmente (demo 2026-05-20)
+
+### Toggle Filas ⇄ Cuadrícula en la lista de eventos · CONFIRMADO
+
+Owner pidió "tarjetas cuadradas más pequeñas". Tras construir demo con toggle (`mocks/insiteiq_eventos_v2_grid_demo.html`) y comparar ambos modos en vivo, owner aprobó: *"pusiste los 2 mundos jajaja"*. Decisión:
+
+- **Toggle Filas ⇄ Cuadrícula** visible siempre (arriba-derecha de la lista de eventos)
+- **Default automático**: Cuadrícula si >12 eventos (modo alarma · pared de luces) · Filas si ≤12 (modo trabajo · más contexto + acción inline)
+- **Recordar preferencia manual** en `localStorage` (mismo patrón validado que los filtros del Kanban · ver `useLocalStorageSet`/`useLocalStorageBool` en InterventionsKanbanPage)
+- Filas = worklist (más info · acción inline cómoda) · Cuadrícula = monitoreo (densidad · glance "qué está rojo" · click abre panel lateral)
+- Halo amber + ribbon "TE TOCA" funciona en ambos modos
+
+Mock de referencia visual 1:1 para construir: `mocks/insiteiq_eventos_v2_grid_demo.html` (los dos modos en un solo HTML con toggle JS). El `mocks/insiteiq_eventos_v1_demo.html` es solo-filas (primera iteración).
+
+---
+
 ## Bonus si queda tiempo (NO MUST)
 
 ### Densidad operativa (Bloomberg style)
 - Truncate con tooltip · NUNCA wrap text en listas densas
-- Compact/comfortable mode toggle
+- ~~Compact/comfortable mode toggle~~ → CONFIRMADO arriba como Filas ⇄ Cuadrícula
 
 ### Operational ergonomics
 - Ball-in-court con time decay visible en cada card

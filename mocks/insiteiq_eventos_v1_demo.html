@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>InsiteIQ · Centro de Eventos · DEMO layout</title>
+
+<!-- Leaflet CDN (mismo patrón que el v2 real · sin npm) -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<!-- Fuentes (matchea v2 deployed: Plus Jakarta Sans display + JetBrains Mono data) -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+<style>
+  :root {
+    --navy:        #0A1628;
+    --navy-soft:   #1A2640;
+    --amber:       #D97706;
+    --amber-brt:   #F59E0B;
+    --amber-tint:  #FEF3E2;
+    --text-mid:    #3D4A66;
+    --text-dim:    #8B95A8;
+    --border:      #E2E5EC;
+    --border-str:  #C8CDD8;
+    --surface:     #FFFFFF;
+    --raised:      #F4F6F8;
+    --bg:          #ECEFF3;
+    --critical:    #DC2626;
+    --critical-bg: #FEF2F2;
+    --warn:        #D97706;
+    --warn-bg:     #FEF6EC;
+    --ok:          #16A34A;
+    --ok-bg:       #F0FDF4;
+    --info:        #3B82F6;
+    --info-bg:     #EFF6FF;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background: var(--bg);
+    color: var(--navy);
+    height: 100vh;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .mono { font-family: 'JetBrains Mono', monospace; }
+  /* Top 5 · #1 tabular-numeric EN TODA cifra */
+  .num { font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums; }
+  .caps { text-transform: uppercase; letter-spacing: 0.14em; font-size: 10px; font-weight: 700; }
+
+  /* ───────── Demo banner ───────── */
+  .demo-banner {
+    background: repeating-linear-gradient(45deg, #0A1628, #0A1628 12px, #16233d 12px, #16233d 24px);
+    color: #fff; text-align: center; padding: 4px; font-size: 10.5px;
+    letter-spacing: 0.18em; text-transform: uppercase; font-weight: 700;
+  }
+  .demo-banner span { color: var(--amber-brt); }
+
+  /* ───────── Shell ───────── */
+  .app { display: flex; flex-direction: column; height: calc(100vh - 22px); }
+
+  /* Header */
+  header {
+    height: 54px; flex-shrink: 0;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 22px;
+  }
+  .brand { display: flex; align-items: center; gap: 14px; }
+  .brand-mark {
+    width: 30px; height: 30px; border-radius: 7px;
+    background: var(--navy); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 13px; letter-spacing: -0.02em;
+  }
+  .brand-mark span { color: var(--amber-brt); }
+  .brand-title { font-weight: 800; font-size: 15px; letter-spacing: -0.01em; }
+  .brand-sub { font-size: 11px; color: var(--text-dim); font-weight: 600; }
+  .header-right { display: flex; align-items: center; gap: 18px; }
+  .live {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-size: 11px; color: var(--text-mid); font-weight: 600;
+  }
+  .live-dot {
+    width: 8px; height: 8px; border-radius: 50%; background: var(--ok);
+    box-shadow: 0 0 0 0 rgba(22,163,74,0.5); animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(22,163,74,0.5); }
+    70%  { box-shadow: 0 0 0 6px rgba(22,163,74,0); }
+    100% { box-shadow: 0 0 0 0 rgba(22,163,74,0); }
+  }
+  .clock { font-size: 12px; color: var(--navy); font-weight: 600; }
+  .lang { display: flex; border: 1px solid var(--border-str); border-radius: 5px; overflow: hidden; }
+  .lang button { border: 0; background: #fff; font-size: 10px; font-weight: 700; padding: 4px 8px; cursor: pointer; color: var(--text-dim); }
+  .lang button.active { background: var(--navy); color: #fff; }
+  .avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--raised); border: 1px solid var(--border-str);
+    display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: var(--text-mid); }
+
+  /* KPI strip · KPI-as-filter */
+  .kpi-strip {
+    flex-shrink: 0; display: grid; grid-template-columns: repeat(5, 1fr);
+    gap: 1px; background: var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .kpi {
+    background: var(--surface); padding: 12px 18px; cursor: pointer;
+    border-top: 3px solid transparent; transition: background 140ms, border-color 140ms;
+  }
+  .kpi:hover { background: var(--raised); }
+  .kpi.active { border-top-color: var(--amber); background: var(--amber-tint); }
+  .kpi-label { display: flex; align-items: center; justify-content: space-between; }
+  .kpi-label .caps { color: var(--text-dim); }
+  .kpi-val { font-size: 30px; font-weight: 800; line-height: 1.1; margin-top: 4px; }
+  .kpi-hint { font-size: 11px; color: var(--text-dim); font-weight: 500; margin-top: 1px; }
+  .kpi.crit .kpi-val { color: var(--critical); }
+  .kpi.warn .kpi-val { color: var(--amber); }
+  .kpi.ok   .kpi-val { color: var(--ok); }
+
+  /* Body 2 cols 60/40 */
+  .body { flex: 1; display: grid; grid-template-columns: 60% 40%; overflow: hidden; }
+
+  /* ───────── Events column (protagonista) ───────── */
+  .events-col { display: flex; flex-direction: column; overflow: hidden; border-right: 1px solid var(--border); }
+
+  .col-head {
+    flex-shrink: 0; padding: 16px 22px 12px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-left: 3px solid var(--navy);
+  }
+  .col-head h2 { font-size: 18px; font-weight: 800; letter-spacing: -0.01em; }
+  .col-head h2 .count { color: var(--amber); }
+  .sort-pill {
+    font-size: 10px; color: var(--text-mid); font-weight: 700;
+    background: var(--raised); border: 1px solid var(--border);
+    border-radius: 5px; padding: 4px 9px; letter-spacing: 0.08em;
+  }
+
+  /* "TE TOCA A TI" block */
+  .toca-block {
+    flex-shrink: 0; margin: 0 22px 4px; padding: 12px 14px;
+    background: var(--amber-tint); border: 1px solid #F4D9A8;
+    border-left: 3px solid var(--amber); border-radius: 0 8px 8px 0;
+  }
+  .toca-block .caps { color: #9A5A05; display: flex; align-items: center; gap: 7px; }
+  .toca-row {
+    display: flex; align-items: center; gap: 10px; margin-top: 9px;
+    padding: 7px 9px; background: #fff; border: 1px solid #F4D9A8; border-radius: 6px;
+  }
+  .toca-row:first-of-type { margin-top: 8px; }
+  .toca-row .tcode { font-size: 10.5px; color: var(--text-dim); font-weight: 600; }
+  .toca-row .ttitle { font-size: 13px; font-weight: 700; color: var(--navy); }
+  .toca-row .tmeta { font-size: 11px; color: var(--text-mid); margin-left: auto; font-weight: 600; }
+  .toca-cta {
+    border: 0; background: var(--navy); color: #fff; cursor: pointer;
+    font-family: 'Plus Jakarta Sans'; font-size: 10.5px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.07em; padding: 7px 12px; border-radius: 5px;
+    white-space: nowrap; transition: background 140ms;
+  }
+  .toca-cta:hover { background: var(--navy-soft); }
+
+  /* Events list */
+  .events-list { flex: 1; overflow-y: auto; padding: 8px 22px 22px; }
+  .events-list::-webkit-scrollbar { width: 9px; }
+  .events-list::-webkit-scrollbar-thumb { background: var(--border-str); border-radius: 5px; }
+
+  .ev {
+    position: relative;
+    display: grid; grid-template-columns: 4px 1fr auto;
+    gap: 14px; align-items: center;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 9px; padding: 12px 14px 12px 0; margin-bottom: 9px;
+    cursor: pointer; transition: box-shadow 160ms, border-color 160ms, transform 120ms;
+    overflow: visible;
+  }
+  .ev:hover { box-shadow: 0 8px 20px -6px rgba(10,22,40,0.14); border-color: var(--border-str); transform: translateY(-1px); }
+  .ev .sev-bar { height: 100%; border-radius: 9px 0 0 9px; align-self: stretch; }
+  .ev.crit  .sev-bar { background: var(--critical); }
+  .ev.warn  .sev-bar { background: var(--amber); }
+  .ev.ok    .sev-bar { background: var(--ok); }
+  .ev.info  .sev-bar { background: var(--info); }
+
+  /* halo amber cuando ball = yo */
+  .ev.mine { border-color: var(--amber); box-shadow: 0 0 0 1px var(--amber), 0 8px 20px -8px rgba(217,119,6,0.25); }
+  .ev.mine::after {
+    content: "TE TOCA"; position: absolute; top: -8px; right: 14px;
+    background: var(--amber); color: #fff; font-size: 8.5px; font-weight: 800;
+    letter-spacing: 0.1em; padding: 2px 7px; border-radius: 4px;
+  }
+
+  .ev-main { min-width: 0; }
+  .ev-top { display: flex; align-items: center; gap: 9px; margin-bottom: 3px; }
+  .sev-tag { display: inline-flex; align-items: center; gap: 4px; font-size: 9.5px; font-weight: 800; letter-spacing: 0.08em; }
+  .ev.crit .sev-tag { color: var(--critical); }
+  .ev.warn .sev-tag { color: var(--amber); }
+  .ev.ok   .sev-tag { color: var(--ok); }
+  .ev.info .sev-tag { color: var(--info); }
+  .sev-ico { width: 13px; height: 13px; }
+  .ev-code { font-size: 10px; color: var(--text-dim); font-weight: 600; }
+  .ev-title { font-size: 14px; font-weight: 700; color: var(--navy); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ev-site { font-size: 11.5px; color: var(--text-mid); font-weight: 500; margin-top: 1px; }
+  .ev-site .pin { color: var(--text-dim); }
+
+  /* meta row · tech + ball decay */
+  .ev-meta { display: flex; align-items: center; gap: 16px; margin-top: 8px; }
+  .ev-tech { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; color: var(--text-mid); font-weight: 600; }
+  .ev-tech svg { width: 13px; height: 13px; color: var(--text-dim); }
+  .ball { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; }
+  .ball-dot { width: 7px; height: 7px; border-radius: 50%; }
+  .ball.srs    { color: var(--navy); }    .ball.srs .ball-dot    { background: var(--navy); }
+  .ball.tech   { color: var(--info); }    .ball.tech .ball-dot   { background: var(--info); }
+  .ball.client { color: var(--amber); }   .ball.client .ball-dot { background: var(--amber); }
+  .ball .age { color: var(--text-dim); font-weight: 700; }
+
+  /* time-in-ball progress bar (rescatado del mock OverWatch) */
+  .ev-bar-wrap { margin-top: 9px; }
+  .ev-bar-label { display: flex; justify-content: space-between; font-size: 9.5px; color: var(--text-dim); font-weight: 600; letter-spacing: 0.06em; margin-bottom: 3px; }
+  .ev-bar { height: 5px; background: var(--raised); border-radius: 3px; overflow: hidden; }
+  .ev-bar-fill { height: 100%; border-radius: 3px; }
+  .ev.crit .ev-bar-fill { background: linear-gradient(90deg, #F87171, var(--critical)); }
+  .ev.warn .ev-bar-fill { background: linear-gradient(90deg, var(--amber-brt), var(--amber)); }
+  .ev.ok   .ev-bar-fill { background: linear-gradient(90deg, #4ADE80, var(--ok)); }
+  .ev.info .ev-bar-fill { background: linear-gradient(90deg, #60A5FA, var(--info)); }
+
+  /* right side · status pill + inline action */
+  .ev-right { display: flex; flex-direction: column; align-items: flex-end; gap: 9px; padding-right: 4px; }
+  .status-pill { font-size: 9.5px; font-weight: 700; letter-spacing: 0.08em; padding: 3px 9px; border-radius: 5px; text-transform: uppercase; white-space: nowrap; }
+  .st-triage     { background: var(--info-bg); color: var(--info); }
+  .st-dispatched { background: #F3E8FF; color: #7C3AED; }
+  .st-en_route   { background: #ECFEFF; color: #0891B2; }
+  .st-on_site    { background: var(--warn-bg); color: var(--amber); }
+  .st-resolved   { background: var(--ok-bg); color: var(--ok); }
+  .ev-action {
+    border: 1px solid var(--border-str); background: #fff; cursor: pointer;
+    font-family: 'Plus Jakarta Sans'; font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.07em; padding: 7px 12px; border-radius: 6px;
+    color: var(--navy); white-space: nowrap; transition: all 140ms;
+  }
+  .ev-action:hover { background: var(--navy); color: #fff; border-color: var(--navy); }
+  .ev-action.primary { background: var(--navy); color: #fff; border-color: var(--navy); }
+  .ev-action.primary:hover { background: var(--navy-soft); }
+
+  /* Top 5 · #2 hover preview card (pure CSS) */
+  .ev-preview {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.96);
+    width: 290px; z-index: 30; pointer-events: none; opacity: 0;
+    background: var(--navy); color: #fff; border-radius: 10px; padding: 14px 16px;
+    box-shadow: 0 20px 44px -8px rgba(10,22,40,0.5); transition: opacity 150ms, transform 150ms;
+  }
+  .ev:hover .ev-preview { opacity: 1; transform: translate(-50%, -50%) scale(1); transition-delay: 320ms; }
+  .ev-preview h4 { font-size: 13px; font-weight: 700; margin-bottom: 8px; }
+  .ev-preview .pv-row { display: flex; justify-content: space-between; font-size: 11px; padding: 3px 0; border-top: 1px solid rgba(255,255,255,0.1); }
+  .ev-preview .pv-k { color: #9DB0CC; }
+  .ev-preview .pv-v { font-weight: 600; }
+  .ev-preview .pv-hint { font-size: 10px; color: #9DB0CC; margin-top: 8px; font-style: italic; }
+
+  /* ───────── Map column ───────── */
+  .map-col { display: flex; flex-direction: column; overflow: hidden; background: var(--raised); }
+  .map-wrap { flex: 1; position: relative; min-height: 0; }
+  #map { position: absolute; inset: 0; }
+  .map-overlay { position: absolute; top: 12px; left: 14px; z-index: 500; pointer-events: none; }
+  .map-overlay .caps { color: var(--navy); background: rgba(255,255,255,0.9); padding: 4px 9px; border-radius: 5px; backdrop-filter: blur(4px); }
+  .map-legend {
+    position: absolute; bottom: 12px; left: 14px; z-index: 500; pointer-events: none;
+    background: rgba(255,255,255,0.94); border: 1px solid var(--border); border-radius: 6px;
+    padding: 7px 11px; display: flex; gap: 14px; backdrop-filter: blur(4px);
+  }
+  .map-legend .lg { display: flex; align-items: center; gap: 5px; font-size: 10px; color: var(--text-mid); font-weight: 600; }
+  .map-legend .lg-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+  /* custom leaflet pill markers */
+  .wo-pill {
+    display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+    background: #fff; border: 1.5px solid var(--navy); border-radius: 20px;
+    padding: 4px 11px 4px 8px; font-family: 'JetBrains Mono'; font-size: 11px; font-weight: 700;
+    color: var(--navy); box-shadow: 0 4px 12px -2px rgba(10,22,40,0.3);
+  }
+  .wo-pill .pdot { width: 8px; height: 8px; border-radius: 50%; }
+  .wo-pill.urgent { border-color: var(--critical); }
+
+  /* mini cards w/ sparklines */
+  .mini-cards { flex-shrink: 0; background: var(--surface); border-top: 1px solid var(--border); padding: 14px 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .mini { }
+  .mini .caps { color: var(--text-dim); }
+  .mini-val { font-size: 22px; font-weight: 800; margin-top: 2px; }
+  .mini-val .unit { font-size: 12px; color: var(--text-dim); font-weight: 600; }
+  .mini-spark { margin-top: 6px; }
+  .mini-trend { font-size: 10.5px; font-weight: 700; margin-top: 2px; }
+  .trend-up { color: var(--critical); } .trend-down { color: var(--ok); }
+</style>
+</head>
+<body>
+
+<div class="demo-banner">Mockup de layout · datos de ejemplo · <span>NO es la app en vivo</span> · estudio Dashboard de Eventos · 2026-05-20</div>
+
+<div class="app">
+
+  <!-- Header -->
+  <header>
+    <div class="brand">
+      <div class="brand-mark">i<span>Q</span></div>
+      <div>
+        <div class="brand-title">InsiteIQ</div>
+        <div class="brand-sub">Centro de Eventos · Operaciones</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <span class="live"><span class="live-dot"></span> EN VIVO · hace <span class="num">3</span>s</span>
+      <span class="clock num" id="clock">mié, 20 may · 21:48</span>
+      <div class="lang"><button class="active">ES</button><button>EN</button></div>
+      <div class="avatar">JG</div>
+    </div>
+  </header>
+
+  <!-- KPI strip (KPI-as-filter) -->
+  <div class="kpi-strip">
+    <div class="kpi crit active">
+      <div class="kpi-label"><span class="caps">Críticos abiertos</span></div>
+      <div class="kpi-val num">2</div>
+      <div class="kpi-hint">severity critical · activos</div>
+    </div>
+    <div class="kpi warn">
+      <div class="kpi-label"><span class="caps">SLA en riesgo</span></div>
+      <div class="kpi-val num">1</div>
+      <div class="kpi-hint">breach o próximo breach</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label"><span class="caps">Ball SRS &gt;6h</span></div>
+      <div class="kpi-val num">1</div>
+      <div class="kpi-hint">pendiente acción nuestra</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label"><span class="caps">Sin asignar</span></div>
+      <div class="kpi-val num">0</div>
+      <div class="kpi-hint">activa sin técnico</div>
+    </div>
+    <div class="kpi ok">
+      <div class="kpi-label"><span class="caps">Activas hoy</span></div>
+      <div class="kpi-val num">2</div>
+      <div class="kpi-hint">en ruta y en sitio</div>
+    </div>
+  </div>
+
+  <!-- Body -->
+  <div class="body">
+
+    <!-- EVENTS column (60%) -->
+    <section class="events-col">
+      <div class="col-head">
+        <h2>Eventos activos · <span class="count num">6</span></h2>
+        <span class="sort-pill">⇅ orden: urgencia (severidad × tiempo)</span>
+      </div>
+
+      <!-- TE TOCA A TI -->
+      <div class="toca-block">
+        <span class="caps">
+          <svg class="sev-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
+          Pendiente de ti · 2 acciones
+        </span>
+        <div class="toca-row">
+          <span class="tcode mono">FERVI-TOUS-PMB-001</span>
+          <span class="ttitle">Cerrar intervención</span>
+          <span class="tmeta">Iduber terminó · <span class="num">14</span>m esperando</span>
+          <button class="toca-cta">Cerrar WO →</button>
+        </div>
+        <div class="toca-row">
+          <span class="tcode mono">FERVI-TOUS-DDM-001</span>
+          <span class="ttitle">Agendar visita</span>
+          <span class="tmeta">sin programar · <span class="num">2</span>d</span>
+          <button class="toca-cta">Programar →</button>
+        </div>
+      </div>
+
+      <!-- Lista de eventos (ordenada por urgencia compuesta) -->
+      <div class="events-list">
+
+        <!-- 1 · CRITICAL · ball SRS viejo · TE TOCA -->
+        <article class="ev crit mine">
+          <div class="sev-bar"></div>
+          <div class="ev-main">
+            <div class="ev-top">
+              <span class="sev-tag">
+                <svg class="sev-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
+                CRÍTICO
+              </span>
+              <span class="ev-code mono">FERVI-TOUS-PMB-001</span>
+            </div>
+            <div class="ev-title">TOUS Pembroke Pines · conectividad + Zebra (3er intento)</div>
+            <div class="ev-site"><span class="pin">◉</span> Pembroke Pines, FL · Fervimax</div>
+            <div class="ev-meta">
+              <span class="ev-tech"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a6 6 0 0 1 12 0v2"/></svg> Iduber Montes</span>
+              <span class="ball srs"><span class="ball-dot"></span> ball: SRS · <span class="age num">14m</span></span>
+            </div>
+            <div class="ev-bar-wrap">
+              <div class="ev-bar-label"><span>tiempo esperando cierre</span><span class="num">resuelto, pendiente sign-off</span></div>
+              <div class="ev-bar"><div class="ev-bar-fill" style="width:30%"></div></div>
+            </div>
+          </div>
+          <div class="ev-right">
+            <span class="status-pill st-resolved">resolved</span>
+            <button class="ev-action primary">Cerrar WO</button>
+          </div>
+          <div class="ev-preview">
+            <h4>FERVI-TOUS-PMB-001</h4>
+            <div class="pv-row"><span class="pv-k">Cliente</span><span class="pv-v">Fervimax → TOUS</span></div>
+            <div class="pv-row"><span class="pv-k">Sitio</span><span class="pv-v">Pembroke Pines, FL</span></div>
+            <div class="pv-row"><span class="pv-k">Técnico</span><span class="pv-v">Iduber Montes</span></div>
+            <div class="pv-row"><span class="pv-k">Coordina</span><span class="pv-v">Luis Sánchez</span></div>
+            <div class="pv-row"><span class="pv-k">Drift llegada</span><span class="pv-v num">+18 min</span></div>
+            <div class="pv-row"><span class="pv-k">Tiempo on-site</span><span class="pv-v num">1h 42m</span></div>
+            <div class="pv-hint">3er intento · 2 técnicos previos no resolvieron</div>
+          </div>
+        </article>
+
+        <!-- 2 · WARN · sin programar · TE TOCA -->
+        <article class="ev warn mine">
+          <div class="sev-bar"></div>
+          <div class="ev-main">
+            <div class="ev-top">
+              <span class="sev-tag">
+                <svg class="sev-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                ATENCIÓN
+              </span>
+              <span class="ev-code mono">FERVI-TOUS-DDM-001</span>
+            </div>
+            <div class="ev-title">TOUS Dadeland Mall · swap switch + verificar internet</div>
+            <div class="ev-site"><span class="pin">◉</span> Miami, FL · Fervimax</div>
+            <div class="ev-meta">
+              <span class="ev-tech"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a6 6 0 0 1 12 0v2"/></svg> Iduber Montes</span>
+              <span class="ball srs"><span class="ball-dot"></span> ball: SRS · <span class="age num">2d 4h</span></span>
+            </div>
+            <div class="ev-bar-wrap">
+              <div class="ev-bar-label"><span>sin fecha programada</span><span style="color:var(--amber);font-weight:700">⚠ agendar con cliente</span></div>
+              <div class="ev-bar"><div class="ev-bar-fill" style="width:68%"></div></div>
+            </div>
+          </div>
+          <div class="ev-right">
+            <span class="status-pill st-triage">triage</span>
+            <button class="ev-action primary">Programar</button>
+          </div>
+          <div class="ev-preview">
+            <h4>FERVI-TOUS-DDM-001</h4>
+            <div class="pv-row"><span class="pv-k">Cliente</span><span class="pv-v">Fervimax → TOUS</span></div>
+            <div class="pv-row"><span class="pv-k">Sitio</span><span class="pv-v">Dadeland Mall, Miami</span></div>
+            <div class="pv-row"><span class="pv-k">Contacto</span><span class="pv-v">Oscar Urrutia (MX)</span></div>
+            <div class="pv-row"><span class="pv-k">Coordina</span><span class="pv-v">Andros Briceño</span></div>
+            <div class="pv-row"><span class="pv-k">Programada</span><span class="pv-v" style="color:#F59E0B">SIN PROGRAMAR</span></div>
+            <div class="pv-hint">2do intento · sin contacto físico en tienda</div>
+          </div>
+        </article>
+
+        <!-- 3 · WARN · SLA risk (sintético demo) -->
+        <article class="ev warn">
+          <div class="sev-bar"></div>
+          <div class="ev-main">
+            <div class="ev-top">
+              <span class="sev-tag">
+                <svg class="sev-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                ATENCIÓN
+              </span>
+              <span class="ev-code mono">CS-0538821</span>
+            </div>
+            <div class="ev-title">Router caído · sucursal centro</div>
+            <div class="ev-site"><span class="pin">◉</span> Madrid, ES · <em style="color:var(--text-dim)">demo</em></div>
+            <div class="ev-meta">
+              <span class="ev-tech"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a6 6 0 0 1 12 0v2"/></svg> Hugo Q.</span>
+              <span class="ball tech"><span class="ball-dot"></span> ball: TECH · <span class="age num">38m</span></span>
+            </div>
+            <div class="ev-bar-wrap">
+              <div class="ev-bar-label"><span>SLA resolución (Silver · 48h)</span><span class="num">vence en 3h 12m</span></div>
+              <div class="ev-bar"><div class="ev-bar-fill" style="width:82%"></div></div>
+            </div>
+          </div>
+          <div class="ev-right">
+            <span class="status-pill st-en_route">en route</span>
+            <button class="ev-action">Ver</button>
+          </div>
+          <div class="ev-preview">
+            <h4>CS-0538821</h4>
+            <div class="pv-row"><span class="pv-k">Estado</span><span class="pv-v">tech en ruta</span></div>
+            <div class="pv-row"><span class="pv-k">SLA</span><span class="pv-v" style="color:#F59E0B">82% consumido</span></div>
+            <div class="pv-hint">Dato de ejemplo · no real</div>
+          </div>
+        </article>
+
+        <!-- 4 · OK · on site (sintético demo) -->
+        <article class="ev ok">
+          <div class="sev-bar"></div>
+          <div class="ev-main">
+            <div class="ev-top">
+              <span class="sev-tag">
+                <svg class="sev-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg>
+                EN CURSO
+              </span>
+              <span class="ev-code mono">CS-0538904</span>
+            </div>
+            <div class="ev-title">Instalación AP WiFi · planta 2</div>
+            <div class="ev-site"><span class="pin">◉</span> Lima, PE · <em style="color:var(--text-dim)">demo</em></div>
+            <div class="ev-meta">
+              <span class="ev-tech"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a6 6 0 0 1 12 0v2"/></svg> Agustín R.</span>
+              <span class="ball tech"><span class="ball-dot"></span> ball: TECH · <span class="age num">1h 5m</span></span>
+            </div>
+            <div class="ev-bar-wrap">
+              <div class="ev-bar-label"><span>tiempo on-site</span><span class="num">1h 05m</span></div>
+              <div class="ev-bar"><div class="ev-bar-fill" style="width:45%"></div></div>
+            </div>
+          </div>
+          <div class="ev-right">
+            <span class="status-pill st-on_site">on site</span>
+            <button class="ev-action">Ver</button>
+          </div>
+          <div class="ev-preview">
+            <h4>CS-0538904</h4>
+            <div class="pv-row"><span class="pv-k">Técnico</span><span class="pv-v">Agustín R.</span></div>
+            <div class="pv-row"><span class="pv-k">Estado</span><span class="pv-v">trabajando on-site</span></div>
+            <div class="pv-hint">Dato de ejemplo · no real</div>
+          </div>
+        </article>
+
+        <!-- 5 · INFO · dispatched (sintético demo) -->
+        <article class="ev info">
+          <div class="sev-bar"></div>
+          <div class="ev-main">
+            <div class="ev-top">
+              <span class="sev-tag">
+                <svg class="sev-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4m0-4h.01"/></svg>
+                INFO
+              </span>
+              <span class="ev-code mono">CS-0539012</span>
+            </div>
+            <div class="ev-title">Reemplazo UPS programado</div>
+            <div class="ev-site"><span class="pin">◉</span> Montevideo, UY · <em style="color:var(--text-dim)">demo</em></div>
+            <div class="ev-meta">
+              <span class="ev-tech"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a6 6 0 0 1 12 0v2"/></svg> Arlindo O.</span>
+              <span class="ball tech"><span class="ball-dot"></span> ball: TECH · <span class="age num">12m</span></span>
+            </div>
+            <div class="ev-bar-wrap">
+              <div class="ev-bar-label"><span>despachado · esperando salida</span><span class="num">hoy 16:00</span></div>
+              <div class="ev-bar"><div class="ev-bar-fill" style="width:20%"></div></div>
+            </div>
+          </div>
+          <div class="ev-right">
+            <span class="status-pill st-dispatched">dispatched</span>
+            <button class="ev-action">Ver</button>
+          </div>
+          <div class="ev-preview">
+            <h4>CS-0539012</h4>
+            <div class="pv-row"><span class="pv-k">Técnico</span><span class="pv-v">Arlindo O.</span></div>
+            <div class="pv-hint">Dato de ejemplo · no real</div>
+          </div>
+        </article>
+
+        <!-- 6 · INFO · cerrada hoy (sintético demo) -->
+        <article class="ev info">
+          <div class="sev-bar"></div>
+          <div class="ev-main">
+            <div class="ev-top">
+              <span class="sev-tag" style="color:var(--ok)">
+                <svg class="sev-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg>
+                CERRADA
+              </span>
+              <span class="ev-code mono">CS-0538710</span>
+            </div>
+            <div class="ev-title">Cableado estructurado · oficina norte</div>
+            <div class="ev-site"><span class="pin">◉</span> London, UK · <em style="color:var(--text-dim)">demo</em></div>
+            <div class="ev-meta">
+              <span class="ev-tech"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a6 6 0 0 1 12 0v2"/></svg> Yunus H.</span>
+              <span class="ball client"><span class="ball-dot"></span> facturable · <span class="age num">cerrada 3h</span></span>
+            </div>
+          </div>
+          <div class="ev-right">
+            <span class="status-pill st-resolved" style="background:var(--ok-bg);color:var(--ok)">closed</span>
+            <button class="ev-action">Reporte</button>
+          </div>
+          <div class="ev-preview">
+            <h4>CS-0538710</h4>
+            <div class="pv-row"><span class="pv-k">Estado</span><span class="pv-v">cerrada · facturable</span></div>
+            <div class="pv-hint">Dato de ejemplo · no real</div>
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+    <!-- MAP column (40%) -->
+    <aside class="map-col">
+      <div class="map-wrap">
+        <div class="map-overlay"><span class="caps">Mapa operativo · <span class="num">2</span> activas con coords</span></div>
+        <div id="map"></div>
+        <div class="map-legend">
+          <span class="lg"><span class="lg-dot" style="background:var(--critical)"></span>Crítico</span>
+          <span class="lg"><span class="lg-dot" style="background:var(--navy)"></span>Activo</span>
+          <span class="lg"><span class="lg-dot" style="background:var(--text-dim)"></span>Normal</span>
+        </div>
+      </div>
+      <div class="mini-cards">
+        <div class="mini">
+          <span class="caps">Drift llegada · 30d</span>
+          <div class="mini-val num">+22<span class="unit"> min prom</span></div>
+          <svg class="mini-spark" width="100%" height="28" viewBox="0 0 120 28" preserveAspectRatio="none">
+            <polyline points="0,20 20,18 40,22 60,14 80,16 100,9 120,12" fill="none" stroke="#D97706" stroke-width="2"/>
+          </svg>
+          <div class="mini-trend trend-up">▲ 4 min vs mes anterior</div>
+        </div>
+        <div class="mini">
+          <span class="caps">Cerradas · 7d</span>
+          <div class="mini-val num">11</div>
+          <svg class="mini-spark" width="100%" height="28" viewBox="0 0 120 28" preserveAspectRatio="none">
+            <polyline points="0,22 20,18 40,20 60,12 80,14 100,8 120,6" fill="none" stroke="#16A34A" stroke-width="2"/>
+          </svg>
+          <div class="mini-trend trend-down">▼ tiempo medio cierre -8%</div>
+        </div>
+      </div>
+    </aside>
+
+  </div>
+</div>
+
+<script>
+  // Mapa Leaflet · CartoDB light (mismo tile que el v2 real) · 2 sites TOUS Miami
+  const map = L.map('map', { zoomControl: true, attributionControl: false }).setView([25.85, -80.30], 10);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd' }).addTo(map);
+
+  const sites = [
+    { name: 'TOUS Pembroke Pines', lat: 26.0089, lng: -80.2962, code: 'PMB-001', urgent: true,  color: '#DC2626' },
+    { name: 'TOUS Dadeland Mall',  lat: 25.6855, lng: -80.3158, code: 'DDM-001', urgent: false, color: '#0A1628' },
+  ];
+
+  const markers = [];
+  sites.forEach(s => {
+    const html = `<div class="wo-pill ${s.urgent ? 'urgent' : ''}"><span class="pdot" style="background:${s.color}"></span>${s.code}</div>`;
+    const icon = L.divIcon({ className: 'srs-marker', html, iconSize: null, iconAnchor: [40, 14] });
+    const m = L.marker([s.lat, s.lng], { icon }).addTo(map);
+    m.bindPopup(`<b>${s.name}</b><br>FERVI-TOUS-${s.code}`);
+    markers.push(m);
+  });
+
+  // auto-fit a los markers (la mejora de zoom que hicimos en PROD)
+  const group = L.featureGroup(markers);
+  map.fitBounds(group.getBounds(), { padding: [60, 60], maxZoom: 12 });
+
+  // reloj vivo
+  function tick() {
+    const d = new Date();
+    const days = ['dom','lun','mar','mié','jue','vie','sáb'];
+    const months = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+    const hh = String(d.getHours()).padStart(2,'0');
+    const mm = String(d.getMinutes()).padStart(2,'0');
+    document.getElementById('clock').textContent = `${days[d.getDay()]}, ${d.getDate()} ${months[d.getMonth()]} · ${hh}:${mm}`;
+  }
+  tick(); setInterval(tick, 30000);
+</script>
+</body>
+</html>
