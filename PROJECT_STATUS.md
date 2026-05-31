@@ -9,16 +9,28 @@
 
 ---
 
-## Sprint "Afinar" · semana próxima · firmado por owner
+## Sprint "Afinar" · semana 2026-05-27 · firmado por owner
 
-Owner cerró sesión 2026-05-20 con: *"somos muchos y no sabemos ni nos notifican eso es fundamental, el path de la incidencia debe ser cristal clear"*.
+Owner cerró sesión 2026-05-20 con: *"somos muchos y no sabemos ni nos notifican eso es fundamental, el path de la incidencia debe ser cristal clear · esta semana que viene le metemos duro"*.
 
-**Prioridad #1 (bundleadas porque están acopladas · regla #9 honra MUST conjunto):**
+**Plan completo del sprint:** `memory/sprint_afinar.md` (fuente canónica viva) + espejo Notion `🎯 Sprint Afinar · plan operativo semana 2026-05-27` (hijo del hub InsiteIQ).
 
-1. **Notificaciones cross-rol** · in-app badge en sidebar + email (vía outbox existente). Eventos: tech ack briefing · tech resolved · client/coord closed · drift > 30min · scheduled_at se aproxima.
-2. **Path cristal clear · "TE TOCA A TI"** · home con bloque "Pendiente de ti · N items" · halo amber en card cuando ball=tú · botón gigante navy de la acción siguiente en WO Detail · badge count en sidebar.
+**2 prioridades MUST acopladas:**
 
-Sin estas dos, el equipo (Andros, Adriana, Iduber, Agustín, Andres, Luis) NO va a abandonar WhatsApp · que es la promesa fundamental del Blueprint Modo 1 ("WhatsApp kill day 1").
+1. **Notificaciones cross-rol** · in-app badge sidebar + dropdown campanita + email (vía outbox existente · falta SMTP_HOST). Modelo `notification` collection nueva. 8 triggers MVP (ack briefing · resolved · closed · drift · scheduled approach · thread message · briefing nuevo · WO sin asignar 24h+).
+2. **Path cristal clear · "TE TOCA A TI"** · bloque "Pendiente de ti · N items" arriba del Home/Cockpit por rol · halo amber en cards cuando ball=tú · botón gigante navy de acción siguiente en WO Detail · badge count en sidebar · empty states que enseñan.
+
+**Top 5 mejoras UX/UI senior dev (mismo sprint · ROI máximo):**
+
+1. **Tabular-numeric mono en TODAS las cifras** (CSS 1-líner · ROI enorme)
+2. **Hover preview cards** · info densa antes del click (patrón Linear/Datadog)
+3. **Compound sort default** · severity × ball_age en cualquier lista
+4. **Inline quick actions** sin modal para happy path advance
+5. **WebSocket** para alertas + notifs (vs polling 30s · base técnica de prioridad #1)
+
+Sin estas dos prioridades + Top 5, el equipo (Andros, Adriana, Iduber, Agustín, Andres, Luis) NO va a abandonar WhatsApp · que es la promesa fundamental del Blueprint Modo 1 ("WhatsApp kill day 1").
+
+**Definición de éxito · checklist 10 items:** ver `memory/sprint_afinar.md` sección "Definición de éxito". ≥7/10 al viernes = sprint exitoso.
 
 ---
 

@@ -8,6 +8,19 @@
 >
 > ---
 >
+> **🎯 SPRINT AFINAR FIRMADO · semana 2026-05-27 · plan completo en `memory/sprint_afinar.md`**
+>
+> Owner cerró 2026-05-20 con: *"esta semana que viene le metemos duro"*. 2 prioridades acopladas + Top 5 UX/UI senior dev documentados.
+>
+> **Lectura obligatoria al arrancar lunes (en orden):**
+> 1. `memory/donde_la_cagamos.md` (15 lecciones · sobre todo #9 ITERATE)
+> 2. `memory/sprint_afinar.md` (este sprint · espejo en Notion)
+> 3. `PROJECT_STATUS.md` (estado live)
+>
+> **Sin firma del owner NO se arranca nada.** Default ITERATE · 1 cambio · 1 deploy · validar · siguiente.
+>
+> ---
+>
 > **🚀 USO REAL ARRANCADO · 2026-05-20 · CASO TOUS Fervimax · cleanup TOTAL · BUG WO Detail PENDIENTE FIX**
 >
 > Owner volvió del viaje 2026-05-19. Caso operativo real entrante de Fervimax (cambio switch en 2 tiendas TOUS Miami · 3 techs distintos en 2 semanas sin transferencia formal de contexto). Cargado vía script idempotente `load_tous_miami_fervi.py`. Después cleanup TOTAL de seed (`cleanup_seed_for_real.py` · 345 docs borrados · audit_log inmutable preservado). Force-reset pwd Juan ejecutado.
