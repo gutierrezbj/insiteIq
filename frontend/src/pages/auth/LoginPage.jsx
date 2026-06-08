@@ -23,14 +23,19 @@ import { preferredSpaceFor, spaceToPath } from "../../lib/auth";
 
 const SEED_PASSWORD = "InsiteIQ2026!";
 
+// Chips demo · apuntan a usuarios DEMO dedicados (pwd seed fija · sin rotación
+// forzada · one-click siempre funciona). Operan sobre el cliente ficticio
+// "Aurora Retail (DEMO)". NO son las cuentas reales del equipo (que rotan pwd
+// y romperían los chips). Creados por scripts/load_demo_environment.py.
+// Reversibles con scripts/cleanup_demo_environment.py.
 const DEMO_ROLES = [
-  { key: "admin",    label: "Admin SRS",       sub: "Owner · full",       email: "juang@systemrapid.io" },
-  { key: "coord",    label: "Coord SRS",       sub: "Ops · Andros",       email: "androsb@systemrapid.com" },
-  { key: "finance",  label: "Finanzas SRS",    sub: "Adriana",            email: "adrianab@systemrapid.com" },
-  { key: "client",   label: "Cliente",         sub: "Fractalia · Rackel", email: "rackel.rocha@fractaliasystems.es" },
-  { key: "tech",     label: "Tech plantilla",  sub: "Agustin",            email: "agustinc@systemrapid.com" },
-  { key: "tech_ext", label: "Tech externo",    sub: "Arlindo · sub",      email: "arlindoo@systemrapid.com" },
-  { key: "pruebas",  label: "Pruebas Tech",    sub: "Doble SRS + campo",  email: "pruebas@systemrapid.com" },
+  { key: "admin",    label: "Admin SRS",       sub: "Demo · owner full",     email: "demo-admin@systemrapid.com" },
+  { key: "coord",    label: "Coord SRS",       sub: "Demo · ops",            email: "demo-coord@systemrapid.com" },
+  { key: "finance",  label: "Finanzas SRS",    sub: "Demo · finance",        email: "demo-finance@systemrapid.com" },
+  { key: "client",   label: "Cliente",         sub: "Demo · Aurora Retail",  email: "demo-cliente@systemrapid.com" },
+  { key: "tech",     label: "Tech plantilla",  sub: "Demo · campo",          email: "demo-tech@systemrapid.com" },
+  { key: "tech_ext", label: "Tech externo",    sub: "Demo · sub",            email: "demo-tech-ext@systemrapid.com" },
+  { key: "pruebas",  label: "Pruebas Tech",    sub: "Demo · doble SRS+campo", email: "demo-pruebas@systemrapid.com" },
 ];
 
 const HERO_COUNTERS = [
