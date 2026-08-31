@@ -41,9 +41,9 @@ const NAV_BY_SCOPE = {
     { to: "/client",                  key: "operations",    end: true, accent: true },
     { to: "/client/espacio-ops",      key: "espacio_ops" },
     { to: "/client/intervenciones",   key: "interventions" },
-    { to: "/client/sites",            key: "sites" },
-    { to: "/client/agreements",       key: "agreements" },
-    { to: "/client/deliverables",     key: "deliverables" },
+    // sites/agreements/deliverables podados 2026-06-08: las rutas no existían
+    // (redirigían a home). Se re-añaden cuando las vistas client-scoped
+    // se construyan de verdad (Tramo C del roadmap a operaciones).
   ],
 };
 
