@@ -62,28 +62,56 @@ export default function InterventionCardFull({
   extra,
   onDetail,
   onReport,
+  attention = false,
 }) {
   const { t } = useTranslation("common");
   const status = getStatusInfo(wo?.status);
+  // Halo amber "TE TOCA" (Sprint Afinar B3) · la WO requiere acción del viewer
+  const restBorder = attention ? "#D97706" : "#E2E5EC";
+  const restShadow = attention ? "0 0 0 1px #D97706, 0 6px 16px -6px rgba(217,119,6,0.25)" : "none";
 
   return (
     <article
       className="stage-border-top bg-cl-surface rounded-sm p-4 transition cursor-pointer"
       style={{
         "--stage-color": status.color,
-        border: "1px solid #E2E5EC",
+        border: `1px solid ${restBorder}`,
+        boxShadow: restShadow,
+        position: "relative",
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.borderColor = "#C8CDD8";
+        e.currentTarget.style.borderColor = attention ? "#D97706" : "#C8CDD8";
         e.currentTarget.style.background = "#FAFBFC";
-        e.currentTarget.style.boxShadow = "0 4px 12px -2px rgba(10, 22, 40, 0.08)";
+        e.currentTarget.style.boxShadow = attention
+          ? "0 0 0 1px #D97706, 0 8px 20px -6px rgba(217,119,6,0.35)"
+          : "0 4px 12px -2px rgba(10, 22, 40, 0.08)";
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = "#E2E5EC";
+        e.currentTarget.style.borderColor = restBorder;
         e.currentTarget.style.background = "#FFFFFF";
-        e.currentTarget.style.boxShadow = "none";
+        e.currentTarget.style.boxShadow = restShadow;
       }}
     >
+      {attention && (
+        <span
+          style={{
+            position: "absolute",
+            top: -9,
+            right: 12,
+            background: "#D97706",
+            color: "#FFFFFF",
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: 8.5,
+            fontWeight: 800,
+            letterSpacing: "0.1em",
+            padding: "2px 7px",
+            borderRadius: 4,
+            textTransform: "uppercase",
+          }}
+        >
+          {t("notifications.ball_to_me", { defaultValue: "Te toca a ti" })}
+        </span>
+      )}
       {/* Top row: WO code + badge stage */}
       <div className="flex items-center justify-between mb-2 pt-1">
         <span

@@ -1854,5 +1854,20 @@
     "mark_all": "Marcar todas leídas",
     "empty": "Sin notificaciones · todo al día",
     "ball_to_me": "Te toca a ti"
+  },
+  "pending_block": {
+    "title": "Pendiente de ti",
+    "action_one": "acción",
+    "action_other": "acciones",
+    "action_close": "Cerrar intervención",
+    "meta_resolved": "tech terminó",
+    "action_triage": "Hacer triage",
+    "meta_intake": "solicitud nueva",
+    "action_schedule": "Agendar visita",
+    "meta_unscheduled": "sin programar",
+    "action_validate": "Validar cierre",
+    "meta_resolved_client": "intervención resuelta",
+    "cta_open": "Abrir",
+    "overflow": "y {{count}} más…"
   }
 }

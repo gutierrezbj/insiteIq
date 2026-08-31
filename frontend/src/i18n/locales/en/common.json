@@ -1854,5 +1854,20 @@
     "mark_all": "Mark all read",
     "empty": "No notifications · all caught up",
     "ball_to_me": "Your turn"
+  },
+  "pending_block": {
+    "title": "Pending on you",
+    "action_one": "action",
+    "action_other": "actions",
+    "action_close": "Close intervention",
+    "meta_resolved": "tech finished",
+    "action_triage": "Triage",
+    "meta_intake": "new request",
+    "action_schedule": "Schedule visit",
+    "meta_unscheduled": "unscheduled",
+    "action_validate": "Validate closure",
+    "meta_resolved_client": "intervention resolved",
+    "cta_open": "Open",
+    "overflow": "and {{count}} more…"
   }
 }

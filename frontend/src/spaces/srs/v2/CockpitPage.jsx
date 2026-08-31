@@ -32,6 +32,7 @@ import {
   alertMatchesClientScope,
 } from "../../../lib/scope";
 import KpiStripV2 from "../../../components/cockpit-v2/KpiStripV2";
+import PendingOfYouBlock from "../../../components/cockpit-v2/PendingOfYouBlock";
 import InterventionCardFull from "../../../components/cockpit-v2/InterventionCardFull";
 import InterventionCardMini from "../../../components/cockpit-v2/InterventionCardMini";
 import {
@@ -323,6 +324,9 @@ export default function V2CockpitPage({ scope = "srs" }) {
         onFilterChange={setActiveFilter}
       />
 
+      {/* "Pendiente de ti" · path cristal clear (Sprint Afinar B3) */}
+      <PendingOfYouBlock wos={wos} scope={scope} />
+
       {/* Grid principal: 8/12 main + 4/12 sidebar (lg: 1440px en config SRS) */}
       <div className="grid grid-cols-12 gap-5 items-start">
         {/* MAIN COLUMN */}
@@ -381,6 +385,13 @@ export default function V2CockpitPage({ scope = "srs" }) {
                       tech={tech}
                       onDetail={() => handleDetail(wo)}
                       onReport={() => handleReport(wo)}
+                      attention={
+                        scope === "client"
+                          ? wo.status === "resolved"
+                          : wo.status === "resolved" ||
+                            wo.status === "intake" ||
+                            ((wo.status === "triage" || wo.status === "pre_flight") && !wo.scheduled_at)
+                      }
                     />
                   );
                 })}
