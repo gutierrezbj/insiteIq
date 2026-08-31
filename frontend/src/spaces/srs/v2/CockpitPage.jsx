@@ -51,7 +51,7 @@ import {
 import EmptyState from "../../../components/v2-shared/EmptyState";
 import { formatWoCode } from "../../../lib/woCode";
 import {
-  getBallSide, getTechId, computeSlaInfo, ballAgeHours,
+  getBallSide, getTechId, computeSlaInfo, ballAgeHours, urgencyScore,
   ACTIVE_STATUSES as WO_ACTIVE_STATUSES,
   TERMINAL_STATUSES as WO_TERMINAL_STATUSES,
 } from "../../../lib/woFields";
@@ -190,11 +190,8 @@ export default function V2CockpitPage({ scope = "srs" }) {
       (w) => ACTIVE_STATUSES.includes(w.status) && filterPredicate(w)
     );
     return active
-      .sort((a, b) => {
-        const dr = severityRank(a.severity) - severityRank(b.severity);
-        if (dr !== 0) return dr;
-        return ballAgeHours(b) - ballAgeHours(a);
-      })
+      // Urgencia compuesta (severity × ball_age) · Sprint Afinar B5
+      .sort((a, b) => urgencyScore(b) - urgencyScore(a))
       .slice(0, 3);
   }, [wos, filterPredicate]);
 

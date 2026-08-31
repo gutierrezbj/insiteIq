@@ -35,7 +35,7 @@ import { Icon, ICONS } from "../../../lib/icons";
 import { getTechTimeInfo, VIEWER_TZ_LABEL } from "../../../lib/tz";
 import { formatWoCode } from "../../../lib/woCode";
 import {
-  getBallSide, getBallLabel, getBallColor, ballAgeHours,
+  getBallSide, getBallLabel, getBallColor, ballAgeHours, urgencyScore,
   getTechId, getTag, computeSlaInfo, buildTimeline,
   ACTIVE_STATUSES, TERMINAL_STATUSES,
 } from "../../../lib/woFields";
@@ -47,9 +47,7 @@ import EmptyState from "../../../components/v2-shared/EmptyState";
 import { getStatusInfo } from "../../../components/cockpit-v2/InterventionCardFull";
 import { getSeverityInfo } from "../../../components/cockpit-v2/InterventionCardMini";
 
-function severityRank(s) {
-  return { critical: 0, high: 1, medium: 2, normal: 3, low: 4 }[s] ?? 9;
-}
+// severityRank local eliminado · el sort usa urgencyScore de woFields (B5)
 
 const SLA_BADGE = {
   BREACH:  { label: "BREACH",  bg: "#DC262622", color: "#DC2626", border: "#DC2626" },
@@ -290,11 +288,8 @@ export default function EspacioOpsPage({ scope = "srs" }) {
   }, [activeFilter]);
 
   const filteredWos = useMemo(() => {
-    return wos.filter(filterPredicate).sort((a, b) => {
-      const dr = severityRank(a.severity) - severityRank(b.severity);
-      if (dr !== 0) return dr;
-      return ballAgeHours(b) - ballAgeHours(a);
-    });
+    // Urgencia compuesta (severity × ball_age) · Sprint Afinar B5
+    return wos.filter(filterPredicate).sort((a, b) => urgencyScore(b) - urgencyScore(a));
   }, [wos, filterPredicate]);
 
   /* ─────────────────────── Map init ─────────────────────── */

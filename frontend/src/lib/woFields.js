@@ -51,6 +51,25 @@ export function ballAgeHours(wo) {
   return (Date.now() - new Date(since).getTime()) / 36e5;
 }
 
+/* ─────────────────── Urgencia compuesta (Sprint Afinar B5) ─────────────────── */
+
+const SEVERITY_WEIGHT = { critical: 8, high: 4, normal: 2, low: 1 };
+
+/**
+ * urgencyScore — severidad × tiempo esperando. Score multiplicativo:
+ * una "high" estancada 3 días SÍ supera a una "critical" de hace 2 min
+ * (el sort lexicográfico severity-primero nunca lo permitía). Es la línea
+ * entre "el sistema sabe qué importa" y "lista plana".
+ *
+ * score = weight(severity) × (0.5 + ball_age_hours)
+ * El +0.5 evita que las recién llegadas puntúen 0.
+ * Mayor score = más urgente. Ordenar desc: (a,b) => urgencyScore(b) - urgencyScore(a)
+ */
+export function urgencyScore(wo) {
+  const w = SEVERITY_WEIGHT[wo?.severity] ?? 2;
+  return w * (0.5 + ballAgeHours(wo));
+}
+
 /* ─────────────────────── Tech assignment ─────────────────────── */
 
 /** ID del tech asignado (o null si no hay). */
