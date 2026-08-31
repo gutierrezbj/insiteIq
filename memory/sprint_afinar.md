@@ -9,6 +9,26 @@ type: sprint_plan
 > **Sprint dedicado a cerrar la grieta entre "el sistema funciona" y "el equipo lo usa de verdad".**
 > Firmado por owner JuanCho al cierre de la sesión 2026-05-20.
 
+---
+
+## ⚡ ESTADO DE EJECUCIÓN · actualizado 2026-08-31
+
+**Tramo A (bloqueantes duros pre-operaciones) · 2026-08-31 mañana:**
+- ✅ `f36a3ee` Crear WOs desde la UI (IntakeWorkOrderAction montado en Kanban · VALIDADO por owner)
+- ✅ `df3836f` 3 enlaces rotos (chat tech CONSTRUIDO · sidebar client podado)
+- ✅ `e255e66` Hardening (fail-fast JWT + rate limit login VERIFICADO con 429 real + .env.example completo)
+- ⏳ SMTP · pendiente credenciales del owner (email worker en NoOp)
+
+**Tramo B (este sprint) · 2026-08-31 tarde:**
+- ✅ `cabad12` **B1 · Backend notificaciones** · modelo + notifier service + 4 endpoints + triggers en advance/briefing/capture/threads · VERIFICADO E2E en PROD (ack demo-tech → notif demo-coord)
+- ✅ `bc9e59e` **B2 · Campanita header** · badge polling 30s + dropdown feed + mark read + ball_to_me amber · visible en los 3 espacios
+- ✅ `c66947a` **B3 · Path cristal clear** · PendingOfYouBlock ("Pendiente de ti · N acciones" con CTAs) + halo amber "TE TOCA A TI" en cards
+- ✅ `63e9052` **B5.3 · Compound sort** · urgencyScore = severity × ball_age en cockpit + espacio ops
+- ⏳ **B4 · WebSocket** (upgrade del polling) · pendiente validación de B1-B3 primero
+- ⏳ **B5 restantes** · hover preview cards · inline quick actions · tabular-numeric CSS global
+
+**Pendiente de validación del owner:** B1+B2+B3+B5.3 en PROD · guion en el chat de la sesión 2026-08-31.
+
 **Snapshot:** 2026-05-20 · v1.0
 **Fechas tentativas:** semana 2026-05-27 al 2026-05-31
 **Owner:** JuanCho
