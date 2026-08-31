@@ -307,6 +307,14 @@ async def post_message(
         },
     )
 
+    # Notif a los participantes (Sprint Afinar) · solo mensajes humanos ·
+    # los system_event del advance NO pasan por aquí (evita duplicados)
+    from app.services.notifier import notify_thread_message
+    await notify_thread_message(
+        db, wo, kind=kind, preview=msg.get("text") or "",
+        actor_user_id=user.user_id,
+    )
+
     return _serialize(msg)
 
 

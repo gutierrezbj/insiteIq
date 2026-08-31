@@ -39,6 +39,7 @@ from app.routes.copilot_briefings import briefing_acknowledged_by
 from app.routes.tech_captures import capture_submitted_by
 from app.routes.ticket_threads import append_system_event, seal_threads
 from app.services.report_assembler import assemble_intervention_report
+from app.services.notifier import notify_wo_advance
 
 router = APIRouter(prefix="/work-orders", tags=["work_orders"])
 
@@ -471,6 +472,9 @@ async def advance_work_order(
         except Exception:
             import traceback
             traceback.print_exc()  # audit middleware still logs; never block the advance
+
+    # Hook: notifs cross-rol (Sprint Afinar) · fire-and-forget interno
+    await notify_wo_advance(db, doc, target=target, actor_user_id=user.user_id)
 
     refreshed = await db.work_orders.find_one({"_id": doc["_id"]})
     return _serialize(refreshed)

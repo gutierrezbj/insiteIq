@@ -26,6 +26,7 @@ from pydantic import BaseModel, ConfigDict
 from app.core.dependencies import CurrentUser, get_current_user
 from app.database import get_db
 from app.middleware.audit_log import write_audit_event
+from app.services.notifier import notify_briefing_assembled, notify_briefing_acked
 from app.services.ai_provider import (
     BRIEFING_SYSTEM_PROMPT,
     build_briefing_user_prompt,
@@ -396,6 +397,9 @@ async def assemble_briefing(wo_id: str, user: CurrentUser = Depends(get_current_
         },
     )
 
+    # Notif al tech asignado: briefing nuevo · léelo y confirma (Sprint Afinar)
+    await notify_briefing_assembled(db, wo, actor_user_id=user.user_id)
+
     return _serialize(doc)
 
 
@@ -537,6 +541,9 @@ async def acknowledge_briefing(wo_id: str, user: CurrentUser = Depends(get_curre
         ],
         context_snapshot={},
     )
+
+    # Notif al coord: el tech confirmó el briefing (Sprint Afinar)
+    await notify_briefing_acked(db, wo, actor_user_id=user.user_id)
 
     refreshed = await db.copilot_briefings.find_one({"_id": doc["_id"]})
     return _serialize(refreshed)

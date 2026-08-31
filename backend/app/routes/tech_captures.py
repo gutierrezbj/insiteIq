@@ -158,6 +158,10 @@ async def submit_capture(
         },
     )
 
+    # Notif al coord: evidencia de campo subida (Sprint Afinar)
+    from app.services.notifier import notify_capture_submitted
+    await notify_capture_submitted(db, wo, actor_user_id=user.user_id)
+
     return _serialize(doc)
 
 

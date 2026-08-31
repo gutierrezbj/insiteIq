@@ -177,6 +177,15 @@ async def ensure_indexes() -> None:
         [("scope_ref.work_order_id", 1), ("status", 1)]
     )
 
+    # --- Notifications (Sprint Afinar) ---
+    # Feed por usuario (created_at desc) + badge unread (read_at null).
+    await db.notifications.create_index(
+        [("tenant_id", 1), ("user_id", 1), ("created_at", -1)]
+    )
+    await db.notifications.create_index(
+        [("tenant_id", 1), ("user_id", 1), ("read_at", 1)]
+    )
+
 
 async def close_db() -> None:
     global client
