@@ -1848,5 +1848,11 @@
     "site_active": "active",
     "site_inactive": "inactive",
     "site_pending": "pending"
+  },
+  "notifications": {
+    "title": "Notificaciones",
+    "mark_all": "Marcar todas leídas",
+    "empty": "Sin notificaciones · todo al día",
+    "ball_to_me": "Te toca a ti"
   }
 }

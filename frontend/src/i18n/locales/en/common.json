@@ -1848,5 +1848,11 @@
     "site_active": "active",
     "site_inactive": "inactive",
     "site_pending": "pending"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "mark_all": "Mark all read",
+    "empty": "No notifications · all caught up",
+    "ball_to_me": "Your turn"
   }
 }

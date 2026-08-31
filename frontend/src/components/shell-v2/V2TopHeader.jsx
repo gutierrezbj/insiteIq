@@ -22,6 +22,7 @@ import { VIEWER_TZ, VIEWER_TZ_LABEL } from "../../lib/tz";
 import { useRefresh, formatAgo } from "../../contexts/RefreshContext";
 import { useAuth } from "../../contexts/AuthContext";
 import { Icon, ICONS } from "../../lib/icons";
+import NotificationBell from "./NotificationBell";
 
 function formatDateTime(lang = "es") {
   const now = new Date();
@@ -162,6 +163,9 @@ export default function V2TopHeader({
             {liveCount} {finalLiveLabel}
           </span>
         </span>
+
+        {/* Campanita de notificaciones (Sprint Afinar B2) */}
+        <NotificationBell />
 
         {/* Toggle ES/EN · pildora compacta · solo visible si showLanguageToggle=true */}
         {showLanguageToggle && (
