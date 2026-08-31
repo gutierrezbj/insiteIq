@@ -78,6 +78,14 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# Rate limiting (slowapi) · hoy solo /auth/login. Handler devuelve 429.
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from app.core.rate_limit import limiter
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
 # CORS — permissive in dev, tight in prod (per settings.CORS_ORIGINS)
 app.add_middleware(
     CORSMiddleware,

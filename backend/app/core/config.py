@@ -62,5 +62,18 @@ class Settings(BaseSettings):
     WEBHOOK_TIMEOUT_SECONDS: int = 15
     WEBHOOK_SIGNING_SECRET: str = ""  # si está set: header X-InsiteIQ-Signature HMAC-SHA256
 
+    # Rate limiting (slowapi) · protege /auth/login de fuerza bruta
+    RATE_LIMIT_LOGIN: str = "10/minute"
+
 
 settings = Settings()
+
+# Fail-fast: en producción NUNCA arrancar con el secret placeholder.
+# Un deploy que olvide configurar JWT_SECRET_KEY debe morir en el boot,
+# no emitir tokens falsificables en silencio.
+if settings.APP_ENV == "production" and settings.JWT_SECRET_KEY == "CHANGE-ME-IN-ENV":
+    raise RuntimeError(
+        "JWT_SECRET_KEY sin configurar en producción. Genera uno con: "
+        "python -c \"import secrets; print(secrets.token_urlsafe(64))\" "
+        "y ponlo en el .env"
+    )

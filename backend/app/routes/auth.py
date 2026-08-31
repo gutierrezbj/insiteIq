@@ -5,11 +5,12 @@ Login + refresh token. No registration endpoint (users provisioned by SRS admin 
 Domain audit event is written on successful login so we can forensically trace
 who accessed the system and when, even if HTTP middleware output is rotated.
 """
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, ConfigDict, EmailStr
 
 from app.core.config import settings
 from app.core.dependencies import CurrentUser, get_current_user
+from app.core.rate_limit import limiter
 from app.core.security import (
     create_access_token,
     create_refresh_token,
@@ -40,7 +41,8 @@ class RefreshRequest(BaseModel):
 
 
 @router.post("/login", response_model=TokenPair)
-async def login(body: LoginRequest):
+@limiter.limit(settings.RATE_LIMIT_LOGIN)
+async def login(request: Request, body: LoginRequest):
     db = get_db()
     if db is None:
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "DB not ready")
