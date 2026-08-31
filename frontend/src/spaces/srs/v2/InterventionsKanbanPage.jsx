@@ -66,6 +66,7 @@ import WoKanbanCard from "../../../components/kanban-v2/WoKanbanCard";
 import KanbanColumn from "../../../components/kanban-v2/KanbanColumn";
 import WoStageModal from "../../../components/kanban-v2/WoStageModal";
 import MultiSelectDropdown from "../../../components/kanban-v2/MultiSelectDropdown";
+import IntakeWorkOrderAction from "../../../components/workorder/IntakeWorkOrderAction";
 import { getTechId, getTag } from "../../../lib/woFields";
 import { SkeletonKanbanCard } from "../../../components/v2-shared/Skeleton";
 
@@ -479,34 +480,43 @@ export default function InterventionsKanbanPage({ scope = "srs" }) {
           <Icon icon={ICONS.refresh} size={14} />
         </button>
 
-        {/* CTA primary · navy squared (Iter 2.19 A · SQUARED OPS) */}
-        <button
-          className="flex items-center gap-2 text-[13px] font-jakarta transition"
-          style={{
-            height: 34,
-            padding: "0 16px",
-            borderRadius: 6,
-            background: "#0A1628",
-            color: "#FFFFFF",
-            fontWeight: 700,
-            letterSpacing: "0.01em",
-            border: "1.5px solid #0A1628",
-            boxShadow: "0 2px 6px -1px rgba(10, 22, 40, 0.32)",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = "#1A2640";
-            e.currentTarget.style.borderColor = "#1A2640";
-            e.currentTarget.style.boxShadow = "0 4px 12px -2px rgba(10, 22, 40, 0.42)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = "#0A1628";
-            e.currentTarget.style.borderColor = "#0A1628";
-            e.currentTarget.style.boxShadow = "0 2px 6px -1px rgba(10, 22, 40, 0.32)";
-          }}
-          onClick={() => toast.info(t("page_kanban.create_request_disabled"))}
-        >
-          + Nueva solicitud
-        </button>
+        {/* CTA primary · navy squared (Iter 2.19 A · SQUARED OPS) ·
+            Cableado a IntakeWorkOrderAction (antes toast deshabilitado).
+            Solo SRS: el backend rechaza intake a no-srs_coordinators (403). */}
+        {scope !== "client" && (
+          <IntakeWorkOrderAction
+            onCreated={() => load()}
+            renderTrigger={(openDialog) => (
+              <button
+                className="flex items-center gap-2 text-[13px] font-jakarta transition"
+                style={{
+                  height: 34,
+                  padding: "0 16px",
+                  borderRadius: 6,
+                  background: "#0A1628",
+                  color: "#FFFFFF",
+                  fontWeight: 700,
+                  letterSpacing: "0.01em",
+                  border: "1.5px solid #0A1628",
+                  boxShadow: "0 2px 6px -1px rgba(10, 22, 40, 0.32)",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "#1A2640";
+                  e.currentTarget.style.borderColor = "#1A2640";
+                  e.currentTarget.style.boxShadow = "0 4px 12px -2px rgba(10, 22, 40, 0.42)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "#0A1628";
+                  e.currentTarget.style.borderColor = "#0A1628";
+                  e.currentTarget.style.boxShadow = "0 2px 6px -1px rgba(10, 22, 40, 0.32)";
+                }}
+                onClick={openDialog}
+              >
+                + Nueva solicitud
+              </button>
+            )}
+          />
+        )}
       </section>
 
       {/* Kanban board */}

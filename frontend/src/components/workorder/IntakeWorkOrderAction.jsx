@@ -29,7 +29,7 @@ const SEVERITY_OPTIONS = [
   { v: "critical", l: "critical" },
 ];
 
-export default function IntakeWorkOrderAction({ onCreated }) {
+export default function IntakeWorkOrderAction({ onCreated, renderTrigger }) {
   const { t } = useTranslation("common");
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
@@ -163,9 +163,13 @@ export default function IntakeWorkOrderAction({ onCreated }) {
 
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)} className="btn-trigger-v2">
-        + Nueva WO
-      </button>
+      {renderTrigger ? (
+        renderTrigger(() => setOpen(true))
+      ) : (
+        <button type="button" onClick={() => setOpen(true)} className="btn-trigger-v2">
+          + Nueva WO
+        </button>
+      )}
 
       <ActionDialog
         open={open}
