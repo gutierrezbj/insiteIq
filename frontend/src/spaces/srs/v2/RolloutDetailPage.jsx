@@ -67,6 +67,7 @@ import {
 import EmptyState from "../../../components/v2-shared/EmptyState";
 import { SkeletonKpiCard } from "../../../components/v2-shared/Skeleton";
 import RolloutNotesPanel from "../../../components/rollout-v2/RolloutNotesPanel";
+import ActionDialog, { DialogLabel, DialogTextarea } from "../../../components/ui/ActionDialog";
 
 const TAB_KEYS = [
   { key: "mapa",     i18n: "tab_map",       icon: ICONS.map },
@@ -288,6 +289,7 @@ export default function RolloutDetailPage() {
               <BulkRescheduleButton count={counts.scheduled} onClick={() => setBulkOpen(true)} />
             )}
             <NotesButton onClick={() => setNotesOpen(true)} />
+            {project.status === "active" && <CloseProjectButton project={project} onClosed={load} />}
             <ExportReportButton
               project={project}
               wos={wos}
@@ -1688,88 +1690,23 @@ function ExportReportButton({ project, wos, sites, users, counts, totalSites, pr
     }
   }
 
-  function exportPdf() {
+  async function exportPdf() {
     setOpen(false);
+    const win = window.open("", "_blank");
+    if (!win) {
+      toast.error(t("page_rollout_detail.export_pdf_error", { message: "popup bloqueado" }));
+      return;
+    }
     try {
-      const reportId = "rollout-print-report";
-      document.getElementById(reportId)?.remove();
-      const numLocale = i18n.language && i18n.language.startsWith("en") ? "en-US" : "es-ES";
-      const date = new Date().toLocaleString(numLocale, { dateStyle: "long", timeStyle: "short" });
-
-      const rowsHtml = wos.map((w) => {
-        const s = sites[w.site_id] || {};
-        const tech = users[getTechId(w)];
-        const flag = classifyWoForFlag(w);
-        const flagLabel = flagLabelFor(flag, "short");
-        const flagColor = FLAG_COLORS[flag];
-        return `<tr>
-          <td style="padding:4px 6px;border-bottom:1px solid #ddd;font-family:monospace;font-size:9px;">${s.code || "—"}</td>
-          <td style="padding:4px 6px;border-bottom:1px solid #ddd;font-size:10px;">${s.name || "—"}</td>
-          <td style="padding:4px 6px;border-bottom:1px solid #ddd;font-size:9px;color:#555;">${s.country || ""}</td>
-          <td style="padding:4px 6px;border-bottom:1px solid #ddd;font-family:monospace;font-size:9px;">${formatWoCode(w)}</td>
-          <td style="padding:4px 6px;border-bottom:1px solid #ddd;font-size:9px;">${w.status}</td>
-          <td style="padding:4px 6px;border-bottom:1px solid #ddd;font-size:9px;color:${flagColor};font-weight:600;">${flagLabel}</td>
-          <td style="padding:4px 6px;border-bottom:1px solid #ddd;font-size:9px;">${tech?.full_name || tech?.name || t("page_rollout_detail.tech_unassigned")}</td>
-        </tr>`;
-      }).join("");
-
-      const summaryProblems = `<div style="color:#DC2626;">● ${t("page_rollout_detail.pdf_summary_problems", { count: counts.problem })}</div>`;
-      const summaryScheduled = `<div style="color:#3B82F6;">● ${t("page_rollout_detail.pdf_summary_scheduled", { count: counts.scheduled })}</div>`;
-      const summaryDone = `<div style="color:#16A34A;">● ${t("page_rollout_detail.pdf_summary_done", { count: counts.done })}</div>`;
-      const summaryPending = counts.pending
-        ? `<div style="color:#8B95A8;">● ${t("page_rollout_detail.pdf_summary_pending", { count: counts.pending })}</div>`
-        : "";
-
-      const wrapper = document.createElement("div");
-      wrapper.id = reportId;
-      wrapper.innerHTML = `
-        <style>
-          @media print {
-            body * { visibility: hidden; }
-            #${reportId}, #${reportId} * { visibility: visible; }
-            #${reportId} { position: absolute; top: 0; left: 0; width: 100%; padding: 16px 18px; background: white; color: #111; font-family: 'Helvetica Neue', Arial, sans-serif; }
-            @page { size: A4 landscape; margin: 10mm; }
-          }
-          @media screen { #${reportId} { display: none; } }
-        </style>
-        <header style="border-bottom:2px solid #111;padding-bottom:10px;margin-bottom:14px;">
-          <div style="font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:#666;">${t("page_rollout_detail.pdf_header_kicker")}</div>
-          <h1 style="font-size:18px;margin:5px 0 2px 0;font-weight:700;">${project.title}</h1>
-          <div style="font-size:10px;color:#555;font-family:monospace;">${project.code} · ${t("page_rollout_detail.pdf_status_label")}: ${project.status}</div>
-          <div style="font-size:9px;color:#888;margin-top:3px;">${t("page_rollout_detail.pdf_generated_at", { date })}</div>
-        </header>
-        <section style="margin-bottom:12px;display:flex;gap:18px;font-size:11px;align-items:baseline;">
-          <div><strong style="font-size:18px;">${counts.done}</strong> / ${totalSites} sites · <span style="color:#16A34A;font-weight:600;">${progressPct}%</span></div>
-          ${summaryProblems}
-          ${summaryScheduled}
-          ${summaryDone}
-          ${summaryPending}
-        </section>
-        <table style="width:100%;border-collapse:collapse;font-size:10px;">
-          <thead><tr style="background:#f5f5f5;">
-            <th style="text-align:left;padding:6px;border-bottom:2px solid #111;font-size:9px;text-transform:uppercase;letter-spacing:0.08em;">${t("page_rollout_detail.csv_header_site_code")}</th>
-            <th style="text-align:left;padding:6px;border-bottom:2px solid #111;font-size:9px;text-transform:uppercase;letter-spacing:0.08em;">${t("page_rollout_detail.csv_header_site_name")}</th>
-            <th style="text-align:left;padding:6px;border-bottom:2px solid #111;font-size:9px;text-transform:uppercase;letter-spacing:0.08em;">${t("page_rollout_detail.csv_header_country")}</th>
-            <th style="text-align:left;padding:6px;border-bottom:2px solid #111;font-size:9px;text-transform:uppercase;letter-spacing:0.08em;">${t("page_rollout_detail.pdf_col_wo")}</th>
-            <th style="text-align:left;padding:6px;border-bottom:2px solid #111;font-size:9px;text-transform:uppercase;letter-spacing:0.08em;">${t("page_rollout_detail.csv_header_status")}</th>
-            <th style="text-align:left;padding:6px;border-bottom:2px solid #111;font-size:9px;text-transform:uppercase;letter-spacing:0.08em;">${t("page_rollout_detail.csv_header_flag")}</th>
-            <th style="text-align:left;padding:6px;border-bottom:2px solid #111;font-size:9px;text-transform:uppercase;letter-spacing:0.08em;">${t("page_rollout_detail.csv_header_tech")}</th>
-          </tr></thead>
-          <tbody>${rowsHtml}</tbody>
-        </table>
-        <footer style="margin-top:14px;border-top:1px solid #ccc;padding-top:6px;font-size:8px;color:#888;">
-          ${t("page_rollout_detail.pdf_footer", { count: wos.length, date })}
-        </footer>
-      `;
-      document.body.appendChild(wrapper);
-
-      setTimeout(() => {
-        window.print();
-        setTimeout(() => document.getElementById(reportId)?.remove(), 1500);
-      }, 60);
-
+      const html = await api.get(`/projects/${project.id}/report.html`);
+      win.document.open();
+      win.document.write(html);
+      win.document.close();
+      win.focus();
+      setTimeout(() => win.print(), 400);
       toast.success(t("page_rollout_detail.export_pdf_success"));
     } catch (err) {
+      win.close();
       toast.error(t("page_rollout_detail.export_pdf_error", { message: err.message || err }));
     }
   }
@@ -1851,5 +1788,58 @@ function ExportReportButton({ project, wos, sites, users, counts, totalSites, pr
         </>
       )}
     </div>
+  );
+}
+
+
+function CloseProjectButton({ project, onClosed }) {
+  const { t } = useTranslation("common");
+  const [open, setOpen] = useState(false);
+  const [notes, setNotes] = useState("");
+  const [force, setForce] = useState(false);
+
+  async function submit() {
+    try {
+      await api.post(`/projects/${project.id}/close`, { notes: notes.trim() || null, force });
+      toast.success(t("page_rollout_detail.close_success"));
+      setOpen(false);
+      onClosed?.();
+    } catch (err) {
+      const msg = err?.message || String(err);
+      if (/sin cerrar/.test(msg)) setForce(true);
+      toast.error(msg);
+      throw err;
+    }
+  }
+
+  return (
+    <>
+      <button
+        onClick={() => setOpen(true)}
+        className="inline-flex items-center gap-2 px-3 py-2 rounded-sm font-jakarta uppercase transition"
+        style={{ fontSize: 11, fontWeight: 700, color: "#FFFFFF", border: "1px solid #0A1628", background: "#0A1628", letterSpacing: "0.08em" }}
+        title={t("page_rollout_detail.close_btn_tooltip")}
+      >
+        <Icon icon={ICONS.checkCircle} size={14} />
+        {t("page_rollout_detail.close_btn")}
+      </button>
+      <ActionDialog
+        open={open}
+        onClose={() => setOpen(false)}
+        title={t("page_rollout_detail.close_title")}
+        subtitle={force ? t("page_rollout_detail.close_force_subtitle") : t("page_rollout_detail.close_subtitle")}
+        submitLabel={force ? t("page_rollout_detail.close_force_submit") : t("page_rollout_detail.close_submit")}
+        onSubmit={submit}
+      >
+        <DialogLabel htmlFor="close-notes">{t("page_rollout_detail.close_notes_label")}</DialogLabel>
+        <DialogTextarea
+          id="close-notes"
+          rows={4}
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          placeholder={t("page_rollout_detail.close_notes_placeholder")}
+        />
+      </ActionDialog>
+    </>
   );
 }

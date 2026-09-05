@@ -30,9 +30,16 @@ from bson import ObjectId
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, ConfigDict, Field
 
+from fastapi import Response
+
 from app.core.dependencies import CurrentUser, get_current_user
 from app.database import get_db
 from app.middleware.audit_log import write_audit_event
+from app.services.project_report_assembler import (
+    assemble_project_report,
+    render_project_csv,
+    render_project_html,
+)
 from app.models.project import (
     BulkUploadSource,
     DeliveryChainTier,
@@ -278,6 +285,112 @@ async def patch_project(
     )
 
     refreshed = await db.projects.find_one({"_id": doc["_id"]})
+    return _serialize(refreshed)
+
+
+# ---------------- Informe del proyecto + cierre ----------------
+
+class CloseProjectBody(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    notes: str | None = None
+    force: bool = False
+
+
+@router.get("/projects/{project_id}/report")
+async def get_project_report(project_id: str, user: CurrentUser = Depends(get_current_user)):
+    db = get_db()
+    p = await _load_project(db, project_id, user)
+    return await assemble_project_report(db, p)
+
+
+@router.get("/projects/{project_id}/report.html", response_class=Response)
+async def get_project_report_html(project_id: str, user: CurrentUser = Depends(get_current_user)):
+    db = get_db()
+    p = await _load_project(db, project_id, user)
+    report = await assemble_project_report(db, p)
+    return Response(content=render_project_html(report), media_type="text/html; charset=utf-8")
+
+
+@router.get("/projects/{project_id}/report.csv", response_class=Response)
+async def get_project_report_csv(project_id: str, user: CurrentUser = Depends(get_current_user)):
+    db = get_db()
+    p = await _load_project(db, project_id, user)
+    report = await assemble_project_report(db, p)
+    return Response(
+        content=render_project_csv(report),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="{p.get("code") or project_id}_visitas.csv"'},
+    )
+
+
+@router.post("/projects/{project_id}/close")
+async def close_project(
+    project_id: str,
+    body: CloseProjectBody,
+    user: CurrentUser = Depends(get_current_user),
+):
+    if not user.has_space("srs_coordinators"):
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Only SRS coord can close a project")
+    db = get_db()
+    p = await _load_project(db, project_id, user)
+    if p.get("status") in ("closed", "cancelled"):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, f"Project already {p.get('status')}")
+
+    open_wos = await db.work_orders.find(
+        {"tenant_id": user.tenant_id, "project_id": project_id, "status": {"$nin": ["closed", "cancelled"]}},
+        {"reference": 1, "status": 1},
+    ).to_list(500)
+    if open_wos and not body.force:
+        refs = ", ".join(w.get("reference") or str(w["_id"]) for w in open_wos[:10])
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            f"{len(open_wos)} intervenciones sin cerrar ({refs}). Ciérralas o cancélalas antes, o fuerza el cierre.",
+        )
+
+    now = _now()
+    set_fields: dict[str, Any] = {
+        "status": "closed",
+        "actual_end_date": now,
+        "updated_at": now,
+        "updated_by": user.user_id,
+    }
+    if body.notes and body.notes.strip():
+        set_fields["summary"] = body.notes.strip()
+    await db.projects.update_one({"_id": p["_id"]}, {"$set": set_fields})
+    refreshed = await db.projects.find_one({"_id": p["_id"]})
+
+    report = await assemble_project_report(db, refreshed)
+    prev = await db.project_reports.find_one({"project_id": project_id, "tenant_id": user.tenant_id}, sort=[("version", -1)])
+    version = (prev.get("version") or 0) + 1 if prev else 1
+    await db.project_reports.insert_one({
+        "tenant_id": user.tenant_id,
+        "project_id": project_id,
+        "version": version,
+        "kind": "closure",
+        "generated_at": now,
+        "generated_by": user.user_id,
+        "report": report,
+        "html_rendered": render_project_html(report),
+        "created_at": now,
+        "updated_at": now,
+        "created_by": user.user_id,
+        "updated_by": user.user_id,
+    })
+
+    await write_audit_event(
+        db,
+        tenant_id=user.tenant_id,
+        actor_user_id=user.user_id,
+        action="project.close",
+        entity_refs=[{"collection": "projects", "id": project_id, "label": p.get("code")}],
+        context_snapshot={
+            "notes": body.notes,
+            "forced": bool(open_wos),
+            "open_work_orders": [w.get("reference") for w in open_wos],
+            "report_version": version,
+            "summary": report.get("summary"),
+        },
+    )
     return _serialize(refreshed)
 
 
