@@ -21,7 +21,12 @@
     "workspace": "Workspace",
     "build": "Build",
     "region": "Region",
-    "active_count": "{{count}} active"
+    "active_count": "{{count}} active",
+    "cockpit": "Cockpit",
+    "module_coordinacion": "Coordination",
+    "module_operaciones": "Operations",
+    "module_administracion": "Administration",
+    "pending_close_tooltip": "Pending closure in this module"
   },
   "error": {
     "boundary_title": "Something broke in this view",

@@ -286,6 +286,26 @@ async def list_work_orders(
     return [_serialize(d) for d in docs]
 
 
+@router.get("/module-counts")
+async def module_counts(user: CurrentUser = Depends(get_current_user)):
+    """Pendiente de cerrar por módulo · Coordinación / Operaciones / Administración."""
+    if not user.has_space("srs_coordinators"):
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "SRS only")
+    db = get_db()
+    t = user.tenant_id
+    coordinacion = await db.work_orders.count_documents({"tenant_id": t, "$or": [
+        {"status": {"$in": ["intake", "triage", "resolved"]}},
+        {"status": {"$in": ["pre_flight", "dispatched"]}, "scheduled_at": None},
+    ]})
+    operaciones = await db.work_orders.count_documents(
+        {"tenant_id": t, "status": {"$in": ["dispatched", "en_route", "on_site"]}}
+    )
+    administracion = await db.work_orders.count_documents(
+        {"tenant_id": t, "status": "closed", "billing_line_id": None}
+    )
+    return {"coordinacion": coordinacion, "operaciones": operaciones, "administracion": administracion}
+
+
 @router.get("/{wo_id}")
 async def get_work_order(wo_id: str, user: CurrentUser = Depends(get_current_user)):
     db = get_db()

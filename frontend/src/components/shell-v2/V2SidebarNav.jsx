@@ -13,30 +13,46 @@
  * Regla §3.6b: pulse-dot del indicador "sistema operativo" es elemento funcional.
  */
 
+import { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { api } from "../../lib/api";
 
 // Nav items por scope. SRS ve todo; client solo lo operativo.
 // `key` se usa para resolver i18n: t(`nav.${key}`).
+// Reanclaje 2026-09-05 · producto modular en 3 (owner): Coordinación ·
+// Operaciones · Administración. Cada módulo lleva su contador de
+// "pendiente de cerrar" (GET /work-orders/module-counts).
+const SRS_SECTIONS = [
+  {
+    key: "coordinacion",
+    items: [
+      { to: "/srs",                key: "cockpit", end: true },
+      { to: "/srs/espacio-ops",    key: "espacio_ops" },
+      { to: "/srs/intervenciones", key: "interventions_bf" },
+      { to: "/srs/projects",       key: "projects" },
+    ],
+  },
+  {
+    key: "operaciones",
+    items: [
+      { to: "/srs/sites", key: "sites" },
+      { to: "/srs/techs", key: "techs" },
+    ],
+  },
+  {
+    key: "administracion",
+    items: [
+      { to: "/srs/finance",    key: "finance" },
+      { to: "/srs/agreements", key: "agreements" },
+      { to: "/srs/insights",   key: "insights" },
+      { to: "/srs/admin",      key: "admin" },
+    ],
+  },
+];
+
 const NAV_BY_SCOPE = {
-  srs: [
-    // Iter 2.63j · sidebar simplificado (feedback owner sobre input Agustín):
-    //   - "Rollouts" se quita · era redundante · ahora es filtro tipo=rollout
-    //     dentro de /srs/projects
-    //   - "B&F · Intervenciones" deja claro que son reactivos (break & fix)
-    //     vs Proyectos (planificados). Owner valida si prefiere "Intervenciones"
-    //     a secas (decisión mía mientras tanto).
-    { to: "/srs",                 key: "operations",    end: true, accent: true },
-    { to: "/srs/espacio-ops",     key: "espacio_ops" },
-    { to: "/srs/intervenciones",  key: "interventions_bf" },
-    { to: "/srs/projects",        key: "projects" },
-    { to: "/srs/sites",           key: "sites" },
-    { to: "/srs/techs",           key: "techs" },
-    { to: "/srs/agreements",      key: "agreements" },
-    { to: "/srs/insights",        key: "insights" },
-    { to: "/srs/finance",         key: "finance" },
-    { to: "/srs/admin",           key: "admin" },
-  ],
+  srs: SRS_SECTIONS.flatMap((sec) => sec.items),
   client: [
     { to: "/client",                  key: "operations",    end: true, accent: true },
     { to: "/client/espacio-ops",      key: "espacio_ops" },
@@ -60,6 +76,39 @@ export default function V2SidebarNav({
 }) {
   const { t } = useTranslation("common");
   const navItems = NAV_BY_SCOPE[scope] || NAV_BY_SCOPE.srs;
+  const [counts, setCounts] = useState({});
+  useEffect(() => {
+    if (scope !== "srs") return undefined;
+    let alive = true;
+    const fetchCounts = async () => {
+      try {
+        const r = await api.get("/work-orders/module-counts");
+        if (alive && r && typeof r === "object") setCounts(r);
+      } catch {
+        /* sin permisos o sin red · el menú sigue funcionando */
+      }
+    };
+    fetchCounts();
+    const int = setInterval(fetchCounts, 60000);
+    return () => { alive = false; clearInterval(int); };
+  }, [scope]);
+
+  const renderItem = (n) => (
+    <NavLink
+      key={n.to}
+      to={n.to}
+      end={n.end}
+      className={({ isActive }) => {
+        const base = "flex items-center px-3 py-2 rounded-sm transition font-jakarta";
+        if (isActive) {
+          return `${base} text-cl-text bg-cl-amber-soft font-bold border-l-[3px] border-cl-text`;
+        }
+        return `${base} text-cl-text-mid font-medium hover:text-cl-text hover:bg-cl-surface-2`;
+      }}
+    >
+      {t(`nav.${n.key}`)}
+    </NavLink>
+  );
   const spaceLabel = SPACE_LABELS[scope] || SPACE_LABELS.srs;
   // Para client space, mostrar el nombre de la organización en el título.
   const titleText =
@@ -84,25 +133,36 @@ export default function V2SidebarNav({
       </div>
 
       {/* Nav items · activo = bg navy soft + text navy + border-left navy 3px (mock F §pattern) */}
-      <nav className="flex-1 py-3 px-2 space-y-0.5 text-[13px] overflow-y-auto wr-scroll">
-        {navItems.map((n) => (
-          <NavLink
-            key={n.to}
-            to={n.to}
-            end={n.end}
-            className={({ isActive }) => {
-              const base =
-                "flex items-center px-3 py-2 rounded-sm transition font-jakarta";
-              if (isActive) {
-                // bg navy-soft + navy text + border-left navy 3px + bold 700 (mock F)
-                return `${base} text-cl-text bg-cl-amber-soft font-bold border-l-[3px] border-cl-text`;
-              }
-              return `${base} text-cl-text-mid font-medium hover:text-cl-text hover:bg-cl-surface-2`;
-            }}
-          >
-            {t(`nav.${n.key}`)}
-          </NavLink>
-        ))}
+      <nav className="flex-1 py-3 px-2 text-[13px] overflow-y-auto wr-scroll">
+        {scope === "srs"
+          ? SRS_SECTIONS.map((sec) => {
+              const pending = counts[sec.key] || 0;
+              return (
+                <div key={sec.key} className="mb-3">
+                  <div
+                    className="flex items-center justify-between px-3 pt-2 pb-1"
+                    title={t("nav.pending_close_tooltip")}
+                  >
+                    <span
+                      className="font-jakarta uppercase text-[10px]"
+                      style={{ color: "#3D4A66", fontWeight: 800, letterSpacing: "0.14em" }}
+                    >
+                      {t(`nav.module_${sec.key}`)}
+                    </span>
+                    {pending > 0 && (
+                      <span
+                        className="font-mono text-[10px] px-1.5 rounded-sm"
+                        style={{ color: "#0A1628", background: "#E2E5EC", fontWeight: 700, fontVariantNumeric: "tabular-nums" }}
+                      >
+                        {pending}
+                      </span>
+                    )}
+                  </div>
+                  <div className="space-y-0.5">{sec.items.map(renderItem)}</div>
+                </div>
+              );
+            })
+          : navItems.map(renderItem)}
       </nav>
 
       {/* Footer · pill verde con presencia + meta data tabular */}
