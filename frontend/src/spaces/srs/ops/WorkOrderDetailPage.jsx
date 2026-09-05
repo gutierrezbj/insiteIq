@@ -488,6 +488,7 @@ function ActionBar({ wo, reload, isSrs, isClient, isAssignedTech }) {
         {canSubmitCapture && <SubmitCaptureAction wo={wo} reload={reload} />}
         {canScan && <ScanEquipmentAction wo={wo} reload={reload} />}
         {canRate && <RateTechAction wo={wo} reload={reload} isClient={isClient} />}
+        {isSrs && !isTerminal && <AssignAction wo={wo} reload={reload} />}
         {canCancel && <CancelAction wo={wo} reload={reload} />}
       </div>
     </SectionCard>
@@ -1059,6 +1060,92 @@ function SubmitCaptureAction({ wo, reload }) {
             />
           </div>
         )}
+      </ActionDialog>
+    </>
+  );
+}
+
+function AssignAction({ wo, reload }) {
+  const { t } = useTranslation("common");
+  const [open, setOpen] = useState(false);
+  const [techId, setTechId] = useState("");
+  const [scheduledAt, setScheduledAt] = useState("");
+  const [notes, setNotes] = useState("");
+
+  const { data: users } = useFetch(open ? "/users" : null, { auto: open, deps: [open] });
+  const techs = useMemo(
+    () =>
+      (users || []).filter((u) =>
+        (u.memberships || []).some((m) => m.space === "tech_field" && m.active)
+      ),
+    [users]
+  );
+
+  async function submit() {
+    const body = {};
+    if (techId) body.assigned_tech_user_id = techId;
+    if (scheduledAt) body.scheduled_at = new Date(scheduledAt).toISOString();
+    if (notes) body.notes = notes;
+    await api.post(`/work-orders/${wo.id}/assign`, body);
+    setTechId("");
+    setScheduledAt("");
+    setNotes("");
+    reload();
+  }
+
+  return (
+    <>
+      <ActionButton
+        onClick={() => setOpen(true)}
+        label={t("wo_modal.assign_btn", { defaultValue: "Reasignar / Reprogramar" })}
+        tone="soft"
+      />
+      <ActionDialog
+        open={open}
+        onClose={() => setOpen(false)}
+        title={t("wo_modal.assign_title", { defaultValue: "Reasignar / Reprogramar" })}
+        subtitle={t("wo_modal.assign_subtitle", { defaultValue: "sin cambiar el estado del WO" })}
+        submitLabel={t("wo_modal.assign_submit", { defaultValue: "Guardar" })}
+        submitDisabled={!techId && !scheduledAt}
+        onSubmit={submit}
+      >
+        <div>
+          <DialogLabel htmlFor="as-tech" optional>
+            {t("wo_modal.advance_tech_label", { defaultValue: "Tech asignado" })}
+          </DialogLabel>
+          <DialogSelect
+            id="as-tech"
+            value={techId}
+            onChange={setTechId}
+            options={[
+              { v: "", l: t("wo_modal.advance_tech_keep", { defaultValue: "— mantener actual —" }) },
+              ...techs.map((u) => ({
+                v: u.id,
+                l: `${u.full_name} · ${u.employment_type || "—"}`,
+              })),
+            ]}
+          />
+        </div>
+        <div>
+          <DialogLabel htmlFor="as-sched" optional>
+            {t("wo_modal.advance_schedule_label", { defaultValue: "Fecha programada" })}
+          </DialogLabel>
+          <DialogInput
+            id="as-sched"
+            type="datetime-local"
+            value={scheduledAt}
+            onChange={(e) => setScheduledAt(e.target.value)}
+          />
+        </div>
+        <div>
+          <DialogLabel htmlFor="as-notes" optional>{t("wo_modal.advance_notes_label")}</DialogLabel>
+          <DialogTextarea
+            id="as-notes"
+            rows={2}
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+          />
+        </div>
       </ActionDialog>
     </>
   );

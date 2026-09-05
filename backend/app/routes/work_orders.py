@@ -544,6 +544,76 @@ class EtaAckBody(BaseModel):
     notes: str | None = None
 
 
+class AssignBody(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    assigned_tech_user_id: str | None = None
+    scheduled_at: datetime | None = None
+    notes: str | None = None
+
+
+@router.post("/{wo_id}/assign")
+async def assign_work_order(
+    wo_id: str,
+    body: AssignBody,
+    user: CurrentUser = Depends(get_current_user),
+):
+    """
+    Reasigna tech y/o reprograma fecha SIN transición de estado (tech se
+    enferma en dispatched · cliente cambia la ventana). Solo SRS. No aplica
+    en estados terminales. Audita y notifica al tech nuevo.
+    """
+    if not user.has_space("srs_coordinators"):
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Only SRS coordinators can assign")
+    if body.assigned_tech_user_id is None and body.scheduled_at is None:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Nothing to assign")
+
+    db = get_db()
+    doc = await _fetch_wo_or_404(db, wo_id, user)
+    if doc["status"] in ("closed", "cancelled"):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Work order is terminal")
+
+    now = datetime.now(timezone.utc)
+    update: dict[str, Any] = {"updated_at": now, "updated_by": user.user_id}
+    if body.assigned_tech_user_id is not None:
+        update["assigned_tech_user_id"] = body.assigned_tech_user_id or None
+    if body.scheduled_at is not None:
+        update["scheduled_at"] = body.scheduled_at
+    await db.work_orders.update_one({"_id": doc["_id"]}, {"$set": update})
+
+    await write_audit_event(
+        db,
+        tenant_id=user.tenant_id,
+        actor_user_id=user.user_id,
+        action="work_order.assign",
+        entity_refs=[{"collection": "work_orders", "id": wo_id, "label": doc.get("reference")}],
+        context_snapshot={
+            "tech_was": doc.get("assigned_tech_user_id"),
+            "tech_now": body.assigned_tech_user_id,
+            "scheduled_was": doc.get("scheduled_at").isoformat() if isinstance(doc.get("scheduled_at"), datetime) else doc.get("scheduled_at"),
+            "scheduled_now": body.scheduled_at.isoformat() if body.scheduled_at else None,
+            "notes": body.notes,
+        },
+    )
+
+    if body.assigned_tech_user_id and body.assigned_tech_user_id != doc.get("assigned_tech_user_id"):
+        from app.services.notifier import notify
+        await notify(
+            db,
+            tenant_id=user.tenant_id,
+            user_ids=[body.assigned_tech_user_id],
+            event_type="wo_created",
+            entity_id=wo_id,
+            title="Te asignaron una intervención",
+            body=f"{doc.get('reference') or wo_id[-8:].upper()} · {doc.get('title') or ''}",
+            ball_to_me=True,
+            cta_url=f"/tech/ops/{wo_id}",
+            actor_user_id=user.user_id,
+        )
+
+    refreshed = await db.work_orders.find_one({"_id": doc["_id"]})
+    return _serialize(refreshed)
+
+
 @router.post("/{wo_id}/eta-ack")
 async def acknowledge_eta(
     wo_id: str,

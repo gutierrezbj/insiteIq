@@ -640,7 +640,11 @@
     "advance_tech_label": "Tech asignado",
     "advance_tech_keep": "— mantener actual —",
     "advance_tech_none": "— sin asignar —",
-    "advance_schedule_label": "Fecha programada"
+    "advance_schedule_label": "Fecha programada",
+    "assign_btn": "Reasignar / Reprogramar",
+    "assign_title": "Reasignar / Reprogramar",
+    "assign_subtitle": "sin cambiar el estado del WO",
+    "assign_submit": "Guardar"
   },
   "page_wo_detail": {
     "back_my_work": "Mis trabajos",
