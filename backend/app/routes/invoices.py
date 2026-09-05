@@ -65,6 +65,8 @@ class GenerateBody(BaseModel):
     tax_rate_pct: float = 0.0
     client_ref: str | None = None
     notes: str | None = None
+    project_id: str | None = None                 # facturar solo un proyecto / PO
+    work_order_ids: list[str] | None = None       # facturar una selección explícita
 
 
 def _wo_base_line(wo: dict, rc: dict, agreement: dict) -> BillingLine | None:
@@ -218,6 +220,10 @@ async def generate_invoice(
             {"billing_line_id": {"$exists": False}},
         ],
     }
+    if body.project_id:
+        wo_query["project_id"] = body.project_id
+    if body.work_order_ids:
+        wo_query["_id"] = {"$in": [ObjectId(i) for i in body.work_order_ids if ObjectId.is_valid(i)]}
     wos = await db.work_orders.find(wo_query).to_list(2000)
 
     # Build billing lines
