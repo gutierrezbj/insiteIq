@@ -87,8 +87,9 @@ WO_DEMO = [
             "Resolved: Adrian confirmed in-scope per SOW Section A page 2 + Section F page 5."
         ),
         "severity": "high",
-        "status": "completed",  # already resolved en historial
-        "ball_side": "client",
+        "status": "closed",  # ejecutado dic-2025 · cerrado
+        "ball_side": "srs",
+        "closed_at": datetime(2025, 12, 15, 23, 0, tzinfo=timezone.utc),
         "deadline_resolve_at": datetime(2025, 12, 15, 21, 0, tzinfo=timezone.utc),
         "scheduled_at": datetime(2025, 12, 15, 19, 0, tzinfo=timezone.utc),  # 3PM Aruba = 7PM UTC
         "tech_email": None,  # initially Endson Juneword (external, not in users); ended unassigned
@@ -132,33 +133,6 @@ WO_DEMO = [
                 "text": "Lo metieron en scope SOW, pricing USD del SOW aplica. Anti-Pellerano play: defensive email guardado. Confirmar billing T&M next month.",
             },
         ],
-    },
-    {
-        "reference": "FM-20413",
-        "site_code": "PAN-P22K1",  # PAN-P22K1-Centro de Postre
-        "title": "PAN-P22K1 Centro de Postre — Equipment installation MX68 + MR36",
-        "description": (
-            "Customer Contact: José Zúñiga & Leonel Loaiza (+507 69100304). "
-            "Service Date Mon Apr 13 2026, 5:00 AM local. "
-            "NSR: K34-GO00335PA-PA1507F-NP, K34-GO00334PA-PA1507F-NP. "
-            "Equipment: MX68 (Q2KY-S5NZ-KWDL), MR36 (Q3KB-AMLJ-8Y8V). "
-            "Tools: Laptop+adapter, Cisco console, AnyDesk, Ladder for AP installation."
-        ),
-        "severity": "medium",
-        "status": "in_progress",  # programado para HOY
-        "ball_side": "tech",
-        "deadline_resolve_at": datetime(2026, 4, 13, 17, 0, tzinfo=timezone.utc),
-        "scheduled_at": datetime(2026, 4, 13, 10, 0, tzinfo=timezone.utc),  # 5AM Panamá = 10AM UTC
-        "tech_email": "agustinc@systemrapid.com",
-        "threads_shared": [
-            {
-                "from_name": "Adrian Alvarado (CES)",
-                "from_email": "Adrian.Alvarado@usclaro.com",
-                "created_at": datetime(2026, 4, 13, 19, 35, tzinfo=timezone.utc),
-                "text": "Formal request to install PAN-P22K1-Centro de Postre. PA-1000066. Mon Apr 13 5:00 AM. Customer Contact: José Zúñiga & Leonel Loaiza +507 69100304. Equipment MX68 Q2KY-S5NZ-KWDL + MR36 Q3KB-AMLJ-8Y8V. Tools: Laptop+adapter+Cisco console+AnyDesk+Ladder. Address: Super Xtra de Pan de Azucar, Centro Comercial Oriental, San Miguelito, Panama.",
-            },
-        ],
-        "threads_internal": [],
     },
 ]
 
@@ -215,11 +189,14 @@ async def parse_panama_sites_from_xlsx() -> list[dict]:
 async def upsert_org(db, *, legal_name: str, doc: dict) -> str:
     existing = await db.organizations.find_one({"legal_name": legal_name, "tenant_id": doc["tenant_id"]})
     if existing:
+        rels = list(existing.get("partner_relationships") or [])
+        have = {r.get("type") for r in rels}
+        added = [r for r in doc.get("partner_relationships", []) if r.get("type") not in have]
         await db.organizations.update_one(
             {"_id": existing["_id"]},
-            {"$set": {**doc, "updated_at": now_utc()}},
+            {"$set": {"partner_relationships": rels + added, "updated_at": now_utc()}},
         )
-        print(f"  org UPDATE: {legal_name} ({existing['_id']})")
+        print(f"  org KEEP: {legal_name} ({existing['_id']}) · relaciones añadidas: {[r['type'] for r in added] or 'ninguna'}")
         return str(existing["_id"])
     doc.setdefault("created_at", now_utc())
     doc.setdefault("updated_at", now_utc())
@@ -282,24 +259,54 @@ async def upsert_work_order(db, *, reference: str, doc: dict) -> str:
     return str(res.inserted_id)
 
 
-async def replace_thread_messages(db, *, work_order_id: str, kind: str, messages: list[dict], tenant_id: str):
-    """Replace all messages of a given kind for a WO. Idempotent."""
-    # Delete existing messages of this kind for this WO
-    await db.ticket_messages.delete_many({"work_order_id": work_order_id, "kind": kind})
-    if not messages:
-        return
-    # Insert new
-    docs = []
-    for m in messages:
-        docs.append({
+async def replace_thread_messages(db, *, wo: dict, kind: str, messages: list[dict], tenant_id: str,
+                                  user_id_by_email: dict[str, str]):
+    """Thread (shared/internal) + mensajes del histórico real. Idempotente por (WO, kind)."""
+    work_order_id = str(wo["_id"])
+    thread = await db.ticket_threads.find_one({"work_order_id": work_order_id, "kind": kind, "tenant_id": tenant_id})
+    if not thread:
+        now = now_utc()
+        res = await db.ticket_threads.insert_one({
+            "tenant_id": tenant_id,
             "work_order_id": work_order_id,
             "kind": kind,
+            "participants": [],
+            "sealed_at": None,
+            "organization_id": wo.get("organization_id"),
+            "site_id": wo.get("site_id"),
+            "work_order_reference": wo.get("reference"),
+            "created_at": now,
+            "updated_at": now,
+            "created_by": None,
+            "updated_by": None,
+        })
+        thread = {"_id": res.inserted_id}
+    thread_id = str(thread["_id"])
+    await db.ticket_messages.delete_many({"thread_id": thread_id})
+    if not messages:
+        return
+    docs = []
+    for m in messages:
+        actor = user_id_by_email.get((m.get("from_email") or "").lower())
+        text = m.get("text") or ""
+        if not actor and m.get("from_name"):
+            text = f"[{m['from_name']}] {text}"
+        ts = m.get("created_at", now_utc())
+        docs.append({
             "tenant_id": tenant_id,
-            "from_name": m.get("from_name"),
-            "from_email": m.get("from_email"),
-            "text": m.get("text"),
-            "body": m.get("text"),  # alias
-            "created_at": m.get("created_at", now_utc()),
+            "thread_id": thread_id,
+            "work_order_id": work_order_id,
+            "kind": "message",
+            "actor_user_id": actor,
+            "ts": ts,
+            "text": text,
+            "attachments": [],
+            "mentions": [],
+            "payload": {"source": "email_chain_import", "from_name": m.get("from_name"), "from_email": m.get("from_email")},
+            "created_at": ts,
+            "updated_at": ts,
+            "created_by": actor,
+            "updated_by": actor,
         })
     await db.ticket_messages.insert_many(docs)
     print(f"    +{len(docs)} messages ({kind})")
@@ -307,7 +314,7 @@ async def replace_thread_messages(db, *, work_order_id: str, kind: str, messages
 
 # ---- Main ----
 
-async def main(dry_run: bool = False):
+async def main(dry_run: bool = False, with_sow_sites: bool = False):
     await connect_db()
     db = get_db()
 
@@ -319,8 +326,20 @@ async def main(dry_run: bool = False):
     tenant_id = str(tenant["_id"])
     print(f"Tenant: {tenant.get('name', tenant_id)} ({tenant_id})")
 
+    andros = await db.users.find_one({"email": "androsb@systemrapid.com"})
+    agustin = await db.users.find_one({"email": "agustinc@systemrapid.com"})
+    if not andros or not agustin:
+        print("ERROR: faltan users androsb@ / agustinc@ (coordinador + cluster lead).")
+        sys.exit(1)
+    coord_id = str(andros["_id"])
+    agustin_id = str(agustin["_id"])
+
     if dry_run:
         print("\n*** DRY RUN — no writes ***\n")
+        print(f"  coordinador={coord_id} (Andros) · cluster_lead={agustin_id} (Agustín)")
+        print(f"  orgs: CES + Arcos + Fervimax(merge) + Alarmas · SA {SERVICE_AGREEMENT_REF} · project {PROJECT_CODE}")
+        print(f"  sites Caribbean: {len(CARIBBEAN_SITES)} · sites SOW Panamá: {'sí' if with_sow_sites else 'NO (vienen del control real)'}")
+        print(f"  WOs histórico: {[w['reference'] for w in WO_DEMO]}")
         return
 
     # ---- 1. Organizations ----
@@ -436,7 +455,7 @@ async def main(dry_run: bool = False):
     project_id = await upsert_project(db, code=PROJECT_CODE, doc={
         "tenant_id": tenant_id,
         "type": "rollout",
-        "delivery_pattern": "multi_phase",
+        "delivery_pattern": "rollout",
         "code": PROJECT_CODE,
         "title": "Arcos Dorados SDWAN Off-Net LATAM",
         "description": (
@@ -460,6 +479,9 @@ async def main(dry_run: bool = False):
         "total_sites_target": 12 + 89,  # Phase I + Phase II
         "playbook_template": "SDWAN-install-v1",
         "status": "active",
+        "srs_coordinator_user_id": coord_id,
+        "cluster_lead_user_id": agustin_id,
+        "start_date": datetime(2025, 10, 22, tzinfo=timezone.utc),
     })
 
     # ---- 4. Caribbean Phase I sites ----
@@ -482,9 +504,11 @@ async def main(dry_run: bool = False):
         car_count += 1
     print(f"  → {car_count} Caribbean sites upserted")
 
-    # ---- 5. Panamá Phase II sites (parsed xlsx) ----
-    print("\n=== 5. Sites Panamá Phase II (from xlsx) ===")
-    pan_sites = await parse_panama_sites_from_xlsx()
+    # ---- 5. Panamá Phase II sites (lista SOW) · opcional · los reales vienen de import_panama_real_control ----
+    print("\n=== 5. Sites Panamá Phase II (lista SOW) ===")
+    pan_sites = await parse_panama_sites_from_xlsx() if with_sow_sites else []
+    if not with_sow_sites:
+        print("  omitido (--with-sow-sites para cargar los 89 teóricos del SOW)")
     print(f"  Parsed {len(pan_sites)} Panamá sites from xlsx")
     pan_count = 0
     site_code_to_id: dict[str, str] = {}
@@ -518,11 +542,15 @@ async def main(dry_run: bool = False):
     print("\n=== 7. Demo WOs + threads ===")
     # Resolve tech user_ids by email
     user_emails = {wo["tech_email"] for wo in WO_DEMO if wo.get("tech_email")}
+    for wo in WO_DEMO:
+        for m in wo.get("threads_shared", []) + wo.get("threads_internal", []):
+            if m.get("from_email"):
+                user_emails.add(m["from_email"])
     user_id_by_email: dict[str, str] = {}
     for email in user_emails:
-        u = await db.users.find_one({"email": email})
+        u = await db.users.find_one({"email": {"$in": [email, email.replace("@systemrapid.com", "@systemrapid.io")]}})
         if u:
-            user_id_by_email[email] = str(u["_id"])
+            user_id_by_email[email.lower()] = str(u["_id"])
 
     for wo_data in WO_DEMO:
         site_id = site_code_to_id.get(wo_data["site_code"]) or car_code_to_id.get(wo_data["site_code"])
@@ -531,11 +559,17 @@ async def main(dry_run: bool = False):
             continue
         tech_id = user_id_by_email.get(wo_data["tech_email"]) if wo_data.get("tech_email") else None
 
+        sched = wo_data.get("scheduled_at")
+        closed_at = wo_data.get("closed_at")
+        status_timestamps = {st: sched for st in ("intake", "triage", "pre_flight", "dispatched")}
+        if closed_at:
+            status_timestamps.update({"on_site": closed_at, "resolved": closed_at, "closed": closed_at})
         wo_doc = {
             "tenant_id": tenant_id,
             "organization_id": ces_id,  # client facturador
             "site_id": site_id,
             "service_agreement_id": sa_id,
+            "project_id": project_id,
             "reference": wo_data["reference"],
             "title": wo_data["title"],
             "description": wo_data["description"],
@@ -553,23 +587,29 @@ async def main(dry_run: bool = False):
             },
             "ball_in_court": {
                 "side": wo_data["ball_side"],
-                "since": wo_data.get("scheduled_at") or now_utc(),
+                "actor_user_id": coord_id,
+                "since": closed_at or sched or now_utc(),
             },
             "deadline_resolve_at": wo_data.get("deadline_resolve_at"),
+            "scheduled_at": sched,
+            "closed_at": closed_at,
+            "status_timestamps": status_timestamps,
+            "srs_coordinator_user_id": coord_id,
             "assigned_tech_user_id": tech_id,
             "handshakes": [],
             "pre_flight_checklist": {},
             "after_hours": False,
         }
         wo_id = await upsert_work_order(db, reference=wo_data["reference"], doc=wo_doc)
+        wo_full = {**wo_doc, "_id": wo_id}
 
         # Replace threads (idempotent)
-        await replace_thread_messages(db, work_order_id=wo_id, kind="shared",
+        await replace_thread_messages(db, wo=wo_full, kind="shared",
                                        messages=wo_data.get("threads_shared", []),
-                                       tenant_id=tenant_id)
-        await replace_thread_messages(db, work_order_id=wo_id, kind="internal",
+                                       tenant_id=tenant_id, user_id_by_email=user_id_by_email)
+        await replace_thread_messages(db, wo=wo_full, kind="internal",
                                        messages=wo_data.get("threads_internal", []),
-                                       tenant_id=tenant_id)
+                                       tenant_id=tenant_id, user_id_by_email=user_id_by_email)
 
     print("\n=== DONE ===")
     print(f"Tenant: {tenant_id}")
@@ -583,5 +623,6 @@ async def main(dry_run: bool = False):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--with-sow-sites", action="store_true", help="cargar también los 89 sites teóricos del SOW")
     args = parser.parse_args()
-    asyncio.run(main(dry_run=args.dry_run))
+    asyncio.run(main(dry_run=args.dry_run, with_sow_sites=args.with_sow_sites))

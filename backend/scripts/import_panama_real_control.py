@@ -51,6 +51,42 @@ XLSX_PATH = Path(__file__).resolve().parent / "_data" / "panama_control_25-04-26
 PROJECT_CODE = "ARCOS-CLARO-SDWAN-OFFNET"
 SERVICE_AGREEMENT_REF = "04MSP-V1.1"
 TECH_EMAIL = "agustinc@systemrapid.com"
+COORD_EMAIL = "androsb@systemrapid.com"
+SOW_SITES_JSON = Path(__file__).resolve().parent / "_panama_sites.json"
+PANAMA_STATUS_ORDER = ["intake", "triage", "pre_flight", "dispatched"]
+
+
+def load_sow_lookup() -> dict[str, dict]:
+    """Índice loc_base → {lat, lng, name, fm_ids} desde la lista SOW (_panama_sites.json).
+
+    La hoja de control usa loc codes (P22, P22K1, 101, 106...). La lista SOW usa
+    nombres tipo "PANAMA P07 PLAZA LA MITRA Restaurante" / "PAN-P22K1-Centro de Postre"
+    / "ARCOS DORADOS PANAMA MARBELLA 101". Se cruzan por el número de loc.
+    """
+    import json
+    if not SOW_SITES_JSON.exists():
+        return {}
+    sites = json.load(SOW_SITES_JSON.open())
+    lookup: dict[str, dict] = {}
+    for x in sites:
+        text = f"{x.get('name','')} {x.get('code','')}".upper()
+        m = re.search(r"\bP(\d{1,3})(K\d)?\b", text)
+        if m:
+            base, suffix = f"P{m.group(1)}", m.group(2)
+        else:
+            m = re.search(r"\b(1\d\d)\b", text)
+            if not m:
+                continue
+            base, suffix = m.group(1), None
+        entry = lookup.setdefault(base, {"lat": None, "lng": None, "name": None, "fm_ids": []})
+        if x.get("order_id_fm") and str(x["order_id_fm"]) not in entry["fm_ids"]:
+            entry["fm_ids"].append(str(x["order_id_fm"]))
+        prefer = suffix is None or entry["name"] is None
+        if prefer and (entry["lat"] is None) and x.get("lat") and x.get("lng"):
+            entry["lat"], entry["lng"] = x["lat"], x["lng"]
+        if suffix is None or entry["name"] is None:
+            entry["name"] = re.sub(r"\s+", " ", str(x.get("name") or "")).strip() or None
+    return lookup
 
 # ---- Spanish date parser ----
 
@@ -272,6 +308,8 @@ async def main(dry_run: bool = False):
     project = await db.projects.find_one({"code": PROJECT_CODE, "tenant_id": tenant_id})
     agreement = await db.service_agreements.find_one({"contract_ref": SERVICE_AGREEMENT_REF, "tenant_id": tenant_id})
     tech_user = await db.users.find_one({"email": TECH_EMAIL})
+    coord_user = await db.users.find_one({"email": COORD_EMAIL})
+    sow = load_sow_lookup()
 
     missing = []
     if not ces_org: missing.append("CES org")
@@ -279,6 +317,7 @@ async def main(dry_run: bool = False):
     if not project: missing.append(f"Project {PROJECT_CODE}")
     if not agreement: missing.append(f"Agreement {SERVICE_AGREEMENT_REF}")
     if not tech_user: missing.append(f"Tech user {TECH_EMAIL}")
+    if not coord_user: missing.append(f"Coord user {COORD_EMAIL}")
     if missing:
         print(f"ERROR: missing prerequisites: {missing}. Run seed_foundation + seed_arcos_claro first.")
         sys.exit(1)
@@ -288,8 +327,10 @@ async def main(dry_run: bool = False):
     project_id = str(project["_id"])
     agreement_id = str(agreement["_id"])
     tech_id = str(tech_user["_id"])
+    coord_id = str(coord_user["_id"])
 
     print(f"Tenant: {tenant_id}")
+    print(f"Coordinador SRS (Andros): {coord_id} · SOW lookup: {len(sow)} locs con coordenadas/FM")
     print(f"Project: {project_id} (code: {PROJECT_CODE})")
     print(f"Tech (Agustín): {tech_id}")
 
@@ -373,6 +414,11 @@ async def main(dry_run: bool = False):
 
     if dry_run:
         print("\n*** DRY RUN — no writes ***")
+        print(f"{'LOC':8} {'FECHA':10} {'ESTADO':10} {'EQ':>2} {'COORD':5} {'FM':14} NOMBRE/DIRECCIÓN")
+        for vk, v in sorted(visits.items(), key=lambda kv: kv[1]["planned_date"]):
+            info = sow.get(v["loc_base"]) or {}
+            st = "closed" if "Completed" in v["status_set"] else ("cancelled" if v["status_set"] <= {"Cancelled", "NA"} else "closed")
+            print(f"{v['loc_base']:8} {vk[1]:10} {st:10} {len(v['rows']):>2} {'sí' if info.get('lat') else 'no':5} {','.join(info.get('fm_ids', []))[:14]:14} {(info.get('name') or v['address'] or '')[:48]}")
         for vk, v in list(visits.items())[:5]:
             print(f"\n{vk}:")
             print(f"  scheduled: {combine_date_time(v['planned_date'], v['planned_time'])}")
@@ -420,19 +466,24 @@ async def main(dry_run: bool = False):
             wo_status = "closed"
             ball_side = "srs"
 
-        # 1. Upsert site
+        # 1. Upsert site (coordenadas + nombre desde la lista SOW cuando cruza)
+        info = sow.get(loc_base) or {}
+        fm_ids = info.get("fm_ids") or []
         site_doc = {
             "tenant_id": tenant_id,
             "organization_id": arcos_id,  # site belongs to end-client Arcos
             "code": full_loc_code,
-            "name": v["address"] or full_loc_code,
+            "name": info.get("name") or v["address"] or full_loc_code,
             "country": "PA",
             "city": "Panamá",
             "address": v["address"],
+            "lat": info.get("lat"),
+            "lng": info.get("lng"),
             "site_type": "retail",
             "status": "active",
             "timezone": "America/Panama",
-            "notes": f"Phase II Panamá — PA-1000066. Real control Agustín 25-abr-2026. Loc base: {loc_base}.",
+            "notes": f"Phase II Panamá — PA-1000066. Control real Agustín 25-abr-2026. Loc: {loc_base}."
+                     + (f" FM Claro: {', '.join(fm_ids)}." if fm_ids else ""),
         }
         site_id = await upsert_site(
             db, tenant_id=tenant_id, organization_id=arcos_id,
@@ -472,6 +523,19 @@ async def main(dry_run: bool = False):
         )
         notes_summary = " | ".join(r["notes"] for r in v["rows"] if r["notes"])
 
+        base_ts = scheduled_at or now_utc()
+        status_timestamps = {st: base_ts for st in PANAMA_STATUS_ORDER}
+        onsite_at = combine_date_time(v["planned_date"], v["real_start"]) or arrival_at
+        if arrival_at:
+            status_timestamps["en_route"] = arrival_at
+        if onsite_at:
+            status_timestamps["on_site"] = onsite_at
+        if wo_status == "closed":
+            status_timestamps["resolved"] = end_at or onsite_at or base_ts
+            status_timestamps["closed"] = end_at or onsite_at or base_ts
+        else:
+            status_timestamps["cancelled"] = base_ts
+
         wo_doc = {
             "tenant_id": tenant_id,
             "organization_id": ces_id,  # client facturador
@@ -479,16 +543,21 @@ async def main(dry_run: bool = False):
             "service_agreement_id": agreement_id,
             "project_id": project_id,
             "reference": wo_reference,
-            "title": f"PAN-{loc_base} {v['address'] or ''} — Instalación SDWAN".strip(),
-            "description": f"Equipos: {device_summary}. {notes_summary}".strip(),
+            "title": f"PAN-{loc_base} {info.get('name') or v['address'] or ''} — Instalación SDWAN".strip(),
+            "description": (f"Equipos: {device_summary}. {notes_summary}".strip()
+                            + (f" FM Claro: {', '.join(fm_ids)}." if fm_ids else "")),
             "severity": "normal",
             "status": wo_status,
             "shield_level": "gold",
             "sla_snapshot": sla_snapshot,
             "ball_in_court": {
                 "side": ball_side,
-                "since": scheduled_at or now_utc(),
+                "actor_user_id": coord_id,
+                "since": end_at or scheduled_at or now_utc(),
+                "reason": "Importado del control real de Agustín 25-abr-2026",
             },
+            "srs_coordinator_user_id": coord_id,
+            "status_timestamps": status_timestamps,
             "scheduled_at": scheduled_at,
             "deadline_resolve_at": scheduled_at,  # same day deadline
             "assigned_tech_user_id": tech_id,
