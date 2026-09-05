@@ -415,7 +415,7 @@ async def main(dry_run: bool = False):
     if dry_run:
         print("\n*** DRY RUN — no writes ***")
         print(f"{'LOC':8} {'FECHA':10} {'ESTADO':10} {'EQ':>2} {'COORD':5} {'FM':14} NOMBRE/DIRECCIÓN")
-        for vk, v in sorted(visits.items(), key=lambda kv: kv[1]["planned_date"]):
+        for vk, v in sorted(visits.items(), key=lambda kv: kv[0][1]):
             info = sow.get(v["loc_base"]) or {}
             st = "closed" if "Completed" in v["status_set"] else ("cancelled" if v["status_set"] <= {"Cancelled", "NA"} else "closed")
             print(f"{v['loc_base']:8} {vk[1]:10} {st:10} {len(v['rows']):>2} {'sí' if info.get('lat') else 'no':5} {','.join(info.get('fm_ids', []))[:14]:14} {(info.get('name') or v['address'] or '')[:48]}")
