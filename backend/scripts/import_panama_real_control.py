@@ -212,10 +212,10 @@ def normalize_model(raw) -> str | None:
     """Clean a device model cell."""
     if raw is None:
         return None
-    s = str(raw).strip()
-    if s.upper() in ("", "NA", "TBD", "-"):
+    s = str(raw).strip().upper()
+    if s in ("", "NA", "TBD", "-"):
         return None
-    return s
+    return re.sub(r"-HW$", "", s)
 
 
 def asset_category_from_reference(ref: str | None, model: str | None) -> str:
