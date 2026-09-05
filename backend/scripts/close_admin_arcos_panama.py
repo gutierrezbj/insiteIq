@@ -77,7 +77,7 @@ async def main():
     aruba = [w for w in closed if w.get("reference") == ARUBA_REF]
     unbilled_panama = [w for w in panama if not w.get("billing_line_id")]
     unbilled_aruba = [w for w in aruba if not w.get("billing_line_id")]
-    no_cost = [w for w in closed if (w.get("cost_snapshot") or {}).get("labor") is None]
+    no_cost = [w for w in panama if (w.get("cost_snapshot") or {}).get("labor") is None]
     installed_sites = len({w.get("site_id") for w in panama if w.get("site_id")})
     mrc = round(installed_sites * float(rc.get("monthly_fee") or 0), 2)
     sub_title = f"Arcos Dorados Panamá · MRC SD-WAN · {installed_sites} sitios × ${rc.get('monthly_fee')}"
