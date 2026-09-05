@@ -389,6 +389,13 @@ def render_html(report: dict, scope: Scope = "srs") -> str:
   .warn {{ background: #fdecc8; }}
   footer {{ margin-top: 2rem; font-size: .78rem; color: #999;
           border-top: 1px solid #eee; padding-top: .8rem; }}
+  @page {{ size: A4; margin: 18mm 16mm; }}
+  @media print {{
+    body {{ max-width: none; margin: 0; padding: 0; color: #000; }}
+    h1, h2 {{ break-after: avoid; }}
+    table, tr, img {{ break-inside: avoid; }}
+    a {{ color: inherit; text-decoration: none; }}
+  }}
 </style>
 </head>
 <body>

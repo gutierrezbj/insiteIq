@@ -136,8 +136,9 @@ export default function InterventionReportPage() {
         <SectionCard style={{ marginBottom: 16 }}>
           <SectionTitle>{t("page_report.section_emit")}</SectionTitle>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-            <ChannelLink href={`/api/work-orders/${wo_id}/report.html`} label="HTML ↗" external />
-            <ChannelLink href={`/api/work-orders/${wo_id}/report.csv`} label="CSV ↓" />
+            <ChannelButton label="PDF ↓" onClick={() => openReportWindow(wo_id, true)} />
+            <ChannelButton label="HTML ↗" onClick={() => openReportWindow(wo_id, false)} />
+            <ChannelButton label="CSV ↓" onClick={() => downloadReportCsv(wo_id, h.work_order_reference)} />
             <DispatchEmailAction wo_id={wo_id} reload={reload} />
             <DispatchWebhookAction wo_id={wo_id} reload={reload} />
             <RegenerateAction wo_id={wo_id} reload={reload} />
@@ -309,12 +310,44 @@ export default function InterventionReportPage() {
 
 /* ─── Building blocks ──────────────────────────────────────────── */
 
-function ChannelLink({ href, label, external }) {
+async function openReportWindow(wo_id, print) {
+  const win = window.open("", "_blank");
+  if (!win) return;
+  try {
+    const html = await api.get(`/work-orders/${wo_id}/report.html`);
+    win.document.open();
+    win.document.write(html);
+    win.document.close();
+    if (print) {
+      win.focus();
+      setTimeout(() => win.print(), 300);
+    }
+  } catch (err) {
+    win.close();
+    alert(err?.message || "No se pudo generar el informe");
+  }
+}
+
+async function downloadReportCsv(wo_id, reference) {
+  try {
+    const csv = await api.get(`/work-orders/${wo_id}/report.csv`);
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `informe_${reference || wo_id}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    alert(err?.message || "No se pudo descargar el CSV");
+  }
+}
+
+function ChannelButton({ label, onClick }) {
   return (
-    <a
-      href={href}
-      target={external ? "_blank" : undefined}
-      rel={external ? "noreferrer" : undefined}
+    <button
+      type="button"
+      onClick={onClick}
       style={{
         ...MONO_CAPS,
         fontSize: 11,
@@ -324,7 +357,7 @@ function ChannelLink({ href, label, external }) {
         color: "#3D4A66",
         border: "1.5px solid #C8CDD8",
         borderRadius: 6,
-        textDecoration: "none",
+        cursor: "pointer",
         transition: "all 160ms",
       }}
       onMouseEnter={(e) => {
@@ -339,7 +372,7 @@ function ChannelLink({ href, label, external }) {
       }}
     >
       {label}
-    </a>
+    </button>
   );
 }
 
