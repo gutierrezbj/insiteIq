@@ -184,6 +184,7 @@ async def create_project(
         "srs_coordinator_user_id": body.srs_coordinator_user_id or user.user_id,
         "total_sites_target": body.total_sites_target,
         "playbook_template": body.playbook_template,
+        "report_template_id": body.report_template_id,
         "status": "draft",
         "start_date": body.start_date,
         "target_end_date": body.target_end_date,
