@@ -57,6 +57,7 @@ function useLocalStorageBool(key, defaultValue) {
   }, [key, state]);
   return [state, setState];
 }
+import { useNavigate } from "react-router-dom";
 import { api } from "../../../lib/api";
 import { useRefresh } from "../../../contexts/RefreshContext";
 import { useAuth } from "../../../contexts/AuthContext";
@@ -116,6 +117,7 @@ export default function InterventionsKanbanPage({ scope = "srs" }) {
     [COLUMNS]
   );
   const { markRefreshing, markFresh } = useRefresh();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const clientOrgId = scope === "client" ? getClientOrgId(user) : null;
   const [allWos, setWos] = useState([]);
@@ -345,7 +347,10 @@ export default function InterventionsKanbanPage({ scope = "srs" }) {
   const handleAdvance = useCallback(
     async (toStatus, action) => {
       if (action === "download") {
-        toast.info(t("page_kanban.downloading_report", { code: modalWo?.code || "" }));
+        if (modalWo) {
+          setModalWoId(null);
+          navigate(`${scope === "client" ? "/client" : "/srs"}/ops/${modalWo.id}/report`);
+        }
         return;
       }
       if (!toStatus || !modalWo) return;
@@ -366,7 +371,7 @@ export default function InterventionsKanbanPage({ scope = "srs" }) {
         toast.error(t("page_kanban.advance_failed", { message: err?.message || t("page_kanban.server_error") }));
       }
     },
-    [modalWo, load]
+    [modalWo, load, navigate, scope]
   );
 
   /* ─────────────────────── Render ─────────────────────── */
