@@ -39,6 +39,7 @@ from app.routes.copilot_briefings import briefing_acknowledged_by
 from app.routes.tech_captures import capture_submitted_by
 from app.routes.ticket_threads import append_system_event, seal_threads
 from app.services.report_assembler import assemble_intervention_report
+from app.services.survey import missing_required_fields, template_for_work_order
 from app.services.notifier import notify_wo_advance
 
 router = APIRouter(prefix="/work-orders", tags=["work_orders"])
@@ -402,6 +403,20 @@ async def advance_work_order(
                     "Tech Capture not submitted by assigned tech — "
                     "set emergency=true to override",
                 )
+            template = await template_for_work_order(db, doc)
+            if template:
+                cap = await db.tech_captures.find_one(
+                    {"work_order_id": wo_id, "tenant_id": user.tenant_id, "status": "submitted"}
+                )
+                missing = missing_required_fields(template, (cap or {}).get("template_responses"))
+                if missing:
+                    labels = " · ".join(m["label"] for m in missing[:8])
+                    more = f" (+{len(missing) - 8})" if len(missing) > 8 else ""
+                    raise HTTPException(
+                        status.HTTP_400_BAD_REQUEST,
+                        f"Playbook incompleto · faltan {len(missing)} campos obligatorios: {labels}{more}"
+                        " — set emergency=true to override",
+                    )
 
     # Build ball-in-court for new status
     now = _now()

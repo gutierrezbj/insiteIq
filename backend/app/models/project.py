@@ -77,6 +77,9 @@ class Project(BaseMongoModel):
     total_sites_target: int | None = None
     playbook_template: str | None = None                # e.g. "SDWAN-install-v1"
 
+    # Modo 5 · plantilla del cliente (report_templates) · obligatoria en type=survey
+    report_template_id: str | None = None
+
     # Lifecycle
     status: ProjectStatus = "draft"
     start_date: datetime | None = None

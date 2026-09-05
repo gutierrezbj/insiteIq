@@ -29,6 +29,8 @@ from app.routes import organizations as organizations_routes
 from app.routes import project_notes as project_notes_routes
 from app.routes import projects as projects_routes
 from app.routes import recurring_billing as recurring_billing_routes
+from app.routes import report_templates as report_templates_routes
+from app.routes import survey_deliverables as survey_deliverables_routes
 from app.routes import service_agreements as service_agreements_routes
 from app.routes import sites as sites_routes
 from app.routes import skill_passports as skill_passports_routes
@@ -116,6 +118,8 @@ app.include_router(intervention_reports_routes.router, prefix="/api")
 app.include_router(budget_approvals_routes.router, prefix="/api")
 app.include_router(skill_passports_routes.router, prefix="/api")
 app.include_router(projects_routes.router, prefix="/api")
+app.include_router(report_templates_routes.router, prefix="/api")
+app.include_router(survey_deliverables_routes.router, prefix="/api")
 app.include_router(project_notes_routes.router, prefix="/api")
 app.include_router(equipment_routes.router, prefix="/api")
 app.include_router(uploads_routes.router, prefix="/api")

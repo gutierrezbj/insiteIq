@@ -114,8 +114,8 @@ async def get_report_html(wo_id: str, user: CurrentUser = Depends(get_current_us
     return Response(content=body, media_type="text/html; charset=utf-8")
 
 
-MAX_INLINE_PHOTOS = 12
-MAX_INLINE_BYTES = 24 * 1024 * 1024
+MAX_INLINE_PHOTOS = 40
+MAX_INLINE_BYTES = 40 * 1024 * 1024
 
 
 async def _photo_data_uris(db, report: dict, tenant_id: str) -> dict[str, str]:

@@ -118,6 +118,7 @@ class CreateProjectBody(BaseModel):
     srs_coordinator_user_id: str | None = None
     total_sites_target: int | None = None
     playbook_template: str | None = None
+    report_template_id: str | None = None
     start_date: datetime | None = None
     target_end_date: datetime | None = None
     summary: str | None = None
@@ -134,6 +135,7 @@ class PatchProjectBody(BaseModel):
     srs_coordinator_user_id: str | None = None
     total_sites_target: int | None = None
     playbook_template: str | None = None
+    report_template_id: str | None = None
     start_date: datetime | None = None
     target_end_date: datetime | None = None
     actual_end_date: datetime | None = None
@@ -286,6 +288,124 @@ async def patch_project(
 
     refreshed = await db.projects.find_one({"_id": doc["_id"]})
     return _serialize(refreshed)
+
+
+# ---------------- Modo 5 · generar visitas (1 WO por sitio) ----------------
+
+class GenerateVisitsBody(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    site_ids: list[str]
+    scheduled_at: datetime | None = None
+    assigned_tech_user_id: str | None = None
+
+
+@router.post("/projects/{project_id}/generate-visits", status_code=status.HTTP_201_CREATED)
+async def generate_visits(
+    project_id: str,
+    body: GenerateVisitsBody,
+    user: CurrentUser = Depends(get_current_user),
+):
+    """Crea una intervención (WO en intake) por sitio seleccionado. Survey exige plantilla."""
+    if not user.has_space("srs_coordinators"):
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Only SRS coord")
+    db = get_db()
+    p = await _load_project(db, project_id, user)
+    if p.get("status") in ("closed", "cancelled"):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Project is closed")
+    template = None
+    if p.get("report_template_id") and ObjectId.is_valid(p["report_template_id"]):
+        template = await db.report_templates.find_one({"_id": ObjectId(p["report_template_id"]), "tenant_id": user.tenant_id})
+    if p.get("type") == "survey" and not template:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Sin plantilla del cliente no hay survey: asigna report_template_id al proyecto")
+    if not body.site_ids:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "site_ids vacío")
+
+    sa = await db.service_agreements.find_one({"_id": ObjectId(p["service_agreement_id"])}) if ObjectId.is_valid(p.get("service_agreement_id") or "") else None
+    if not sa:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Project without service agreement")
+
+    existing = await db.work_orders.find(
+        {"tenant_id": user.tenant_id, "project_id": project_id}, {"site_id": 1, "reference": 1}
+    ).to_list(5000)
+    existing_sites = {w.get("site_id") for w in existing}
+    existing_refs = {w.get("reference") for w in existing}
+    coord_id = p.get("srs_coordinator_user_id") or user.user_id
+    now = _now()
+    created, skipped = [], []
+    for sid in body.site_ids:
+        if not ObjectId.is_valid(sid):
+            skipped.append({"site_id": sid, "reason": "id inválido"})
+            continue
+        if sid in existing_sites:
+            skipped.append({"site_id": sid, "reason": "ya tiene visita en este proyecto"})
+            continue
+        site = await db.sites.find_one({"_id": ObjectId(sid), "tenant_id": user.tenant_id})
+        if not site:
+            skipped.append({"site_id": sid, "reason": "sitio no encontrado"})
+            continue
+        base_ref = f"{p.get('code')}-{site.get('code') or sid[-4:].upper()}"
+        ref, n = base_ref, 1
+        while ref in existing_refs:
+            n += 1
+            ref = f"{base_ref}-{n}"
+        existing_refs.add(ref)
+        kind = "Survey" if p.get("type") == "survey" else "Visita"
+        doc = {
+            "tenant_id": user.tenant_id,
+            "organization_id": p["client_organization_id"],
+            "site_id": sid,
+            "service_agreement_id": str(sa["_id"]),
+            "reference": ref,
+            "project_id": project_id,
+            "cluster_group_id": None,
+            "title": f"{kind} · {site.get('name') or site.get('code') or sid}",
+            "description": (f"Visita de survey según plantilla {template.get('name')} v{template.get('version')}."
+                            if template else f"Visita del proyecto {p.get('code')}."),
+            "severity": "normal",
+            "status": "intake",
+            "ball_in_court": {"side": "srs", "actor_user_id": coord_id, "since": now, "reason": "Visita generada desde el proyecto"},
+            "assigned_tech_user_id": body.assigned_tech_user_id,
+            "srs_coordinator_user_id": coord_id,
+            "noc_operator_user_id": None,
+            "onsite_resident_user_id": None,
+            "shield_level": sa.get("shield_level"),
+            "sla_snapshot": sa.get("sla_spec"),
+            "deadline_receive_at": None,
+            "deadline_resolve_at": None,
+            "scheduled_at": body.scheduled_at,
+            "status_timestamps": {"intake": now},
+            "eta_ack": None,
+            "handshakes": [],
+            "pre_flight_checklist": {},
+            "billing_line_id": None,
+            "cost_snapshot": None,
+            "after_hours": False,
+            "closed_at": None,
+            "cancelled_at": None,
+            "cancel_reason": None,
+            "created_at": now,
+            "updated_at": now,
+            "created_by": user.user_id,
+            "updated_by": user.user_id,
+        }
+        res = await db.work_orders.insert_one(doc)
+        wo_id = str(res.inserted_id)
+        existing_sites.add(sid)
+        created.append({"work_order_id": wo_id, "reference": ref, "site_id": sid, "site_name": site.get("name")})
+        await write_audit_event(
+            db, tenant_id=user.tenant_id, actor_user_id=user.user_id, action="work_order.intake",
+            entity_refs=[{"collection": "work_orders", "id": wo_id, "label": ref},
+                         {"collection": "projects", "id": project_id, "label": p.get("code")}],
+            context_snapshot={"from_status": None, "to_status": "intake", "source": "project.generate_visits",
+                              "template": (template or {}).get("code")},
+        )
+
+    await write_audit_event(
+        db, tenant_id=user.tenant_id, actor_user_id=user.user_id, action="project.generate_visits",
+        entity_refs=[{"collection": "projects", "id": project_id, "label": p.get("code")}],
+        context_snapshot={"created": [c["reference"] for c in created], "skipped": len(skipped)},
+    )
+    return {"created": created, "skipped": skipped}
 
 
 # ---------------- Informe del proyecto + cierre ----------------

@@ -36,6 +36,7 @@ async def ensure_indexes() -> None:
 
     # --- Modo 1 Reactive (Fase 1) ---
     await db.sites.create_index([("tenant_id", 1), ("organization_id", 1)])
+    await db.report_templates.create_index([("tenant_id", 1), ("code", 1), ("version", 1)], unique=True)
     await db.sites.create_index([("tenant_id", 1), ("code", 1)])
     await db.sites.create_index([("country", 1)])
 

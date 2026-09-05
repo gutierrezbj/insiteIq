@@ -70,8 +70,8 @@ async def _load_wo(db, wo_id: str, user: CurrentUser) -> dict:
 
 class SubmitBody(BaseModel):
     model_config = ConfigDict(extra="ignore")
-    what_found: str
-    what_did: str
+    what_found: str | None = None
+    what_did: str | None = None
     anything_new_about_site: str | None = None
     devices_touched: list[DeviceTouched] = Field(default_factory=list)
     photos: list[MessageAttachment] = Field(default_factory=list)
@@ -79,6 +79,7 @@ class SubmitBody(BaseModel):
     parts_used: list[dict] = Field(default_factory=list)
     follow_up_needed: bool = False
     follow_up_notes: str | None = None
+    template_responses: dict = Field(default_factory=dict)   # Modo 5 · respuestas por campo de la plantilla
 
 
 @router.post("/submit", status_code=status.HTTP_201_CREATED)
@@ -94,8 +95,13 @@ async def submit_capture(
             status.HTTP_403_FORBIDDEN, "Only the assigned tech can submit the capture"
         )
 
-    # Basic content guard
-    if not body.what_found.strip() or not body.what_did.strip():
+    # Basic content guard · con plantilla (survey) los campos genéricos se derivan
+    what_found = (body.what_found or "").strip()
+    what_did = (body.what_did or "").strip()
+    if body.template_responses:
+        what_found = what_found or str(body.template_responses.get("findings_summary") or "Survey · ver plantilla").strip()
+        what_did = what_did or "Survey ejecutado según plantilla"
+    if not what_found or not what_did:
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST,
             "what_found and what_did are required non-empty",
@@ -119,8 +125,9 @@ async def submit_capture(
         "work_order_id": wo_id,
         "submitted_at": now,
         "submitted_by": user.user_id,
-        "what_found": body.what_found,
-        "what_did": body.what_did,
+        "what_found": what_found,
+        "what_did": what_did,
+        "template_responses": body.template_responses,
         "anything_new_about_site": body.anything_new_about_site,
         "devices_touched": [d.model_dump() for d in body.devices_touched],
         "photos": [p.model_dump() for p in body.photos],
@@ -155,6 +162,7 @@ async def submit_capture(
             "photos_count": len(body.photos),
             "time_on_site_minutes": body.time_on_site_minutes,
             "follow_up_needed": body.follow_up_needed,
+            "template_fields": len(body.template_responses or {}),
         },
     )
 
