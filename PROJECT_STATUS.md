@@ -19,7 +19,7 @@
 
 **Pendiente owner:** cerrar Pembroke (Pendiente de ti) · datos de Dadeland · SMTP en `.env` · validar Rollouts `/srs/rollouts/6a9bfd62c8a8d64e11b5f7da` con Andros.
 
-**Tramo 2:** cierre del rollout dentro del sistema + entregable para Claro + espacio Cliente para la demo. **Tramo 3:** vertical survey VE/PA/Caribe. Todo lo demás congelado.
+**Tramo 2 (iter 1 hecha 2026-09-05):** cierre de proyecto + informe de avance/cierre del rollout (`/api/projects/{id}/report.html`) + sidebar SRS en 3 módulos con pendiente de cerrar por módulo. Falta: alcance real con Andros y pulsar el cierre. Owner: "aquí no hay nada que enseñar, tenemos que terminar el producto" → nada de demo; foco en que Coordinación, Operaciones y Administración cierren su parte. **Siguiente:** Administración cierra (pre-factura Claro + vendor Alarmas desde WOs cerradas). **Tramo 3:** vertical survey VE/PA/Caribe. Todo lo demás congelado.
 
 ---
 
