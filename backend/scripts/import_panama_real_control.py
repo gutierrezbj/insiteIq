@@ -34,7 +34,7 @@ import argparse
 import asyncio
 import re
 import sys
-from datetime import datetime, time, timezone
+from datetime import datetime, time, timedelta, timezone
 from pathlib import Path
 
 # Add project root to path
@@ -561,7 +561,7 @@ async def main(dry_run: bool = False):
             "srs_coordinator_user_id": coord_id,
             "status_timestamps": status_timestamps,
             "scheduled_at": scheduled_at,
-            "deadline_resolve_at": scheduled_at,  # same day deadline
+            "deadline_resolve_at": (scheduled_at + timedelta(minutes=sla_snapshot["resolve_minutes"])) if scheduled_at else None,
             "assigned_tech_user_id": tech_id,
             "handshakes": handshakes,
             "pre_flight_checklist": {},
