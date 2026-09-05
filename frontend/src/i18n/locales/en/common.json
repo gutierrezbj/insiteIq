@@ -636,7 +636,11 @@
     "cancel_subtitle": "Irreversible action — seals threads and emits audit_log",
     "cancel_submit": "Cancel WO",
     "cancel_reason_label": "Reason",
-    "cancel_reason_placeholder": "Client withdrew, out of scope, duplicate…"
+    "cancel_reason_placeholder": "Client withdrew, out of scope, duplicate…",
+    "advance_tech_label": "Assigned tech",
+    "advance_tech_keep": "— keep current —",
+    "advance_tech_none": "— unassigned —",
+    "advance_schedule_label": "Scheduled date"
   },
   "page_wo_detail": {
     "back_my_work": "My work",

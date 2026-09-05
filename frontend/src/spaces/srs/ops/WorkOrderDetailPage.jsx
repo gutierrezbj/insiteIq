@@ -31,6 +31,7 @@ import ActionDialog, {
   DialogInput,
   DialogTextarea,
   DialogCheckbox,
+  DialogSelect,
 } from "../../../components/ui/ActionDialog";
 import AuthImage from "../../../components/ui/AuthImage";
 import BriefingSection from "../../../components/workorder/BriefingSection";
@@ -550,16 +551,33 @@ function AdvanceAction({ wo, target, label, handshake, soft, isSrs, reload }) {
   const [open, setOpen] = useState(false);
   const [notes, setNotes] = useState("");
   const [emergency, setEmergency] = useState(false);
+  const [techId, setTechId] = useState("");
+  const [scheduledAt, setScheduledAt] = useState("");
 
   const isDispatch = wo.status === "pre_flight" && target === "dispatched";
   const isEnRoute = wo.status === "dispatched" && target === "en_route";
   const isResolve = wo.status === "on_site" && target === "resolved";
   const needsEmergencyHint = isDispatch || isEnRoute || isResolve;
 
+  const earlyStage = isSrs && ["triage", "pre_flight", "dispatched"].includes(target);
+  const { data: users } = useFetch(open && earlyStage ? "/users" : null, {
+    auto: open && earlyStage,
+    deps: [open],
+  });
+  const techs = useMemo(
+    () =>
+      (users || []).filter((u) =>
+        (u.memberships || []).some((m) => m.space === "tech_field" && m.active)
+      ),
+    [users]
+  );
+
   async function submit() {
     const body = { target_status: target, notes: notes || undefined };
     if (handshake) body.handshake = handshake;
     if (emergency) body.emergency = true;
+    if (earlyStage && techId) body.assigned_tech_user_id = techId;
+    if (earlyStage && scheduledAt) body.scheduled_at = new Date(scheduledAt).toISOString();
     await api.post(`/work-orders/${wo.id}/advance`, body);
     reload();
   }
@@ -575,6 +593,43 @@ function AdvanceAction({ wo, target, label, handshake, soft, isSrs, reload }) {
         submitLabel={label}
         onSubmit={submit}
       >
+        {earlyStage && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            <div>
+              <DialogLabel htmlFor="adv-tech" optional>
+                {t("wo_modal.advance_tech_label", { defaultValue: "Tech asignado" })}
+              </DialogLabel>
+              <DialogSelect
+                id="adv-tech"
+                value={techId}
+                onChange={setTechId}
+                options={[
+                  {
+                    v: "",
+                    l: wo.assigned_tech_user_id
+                      ? t("wo_modal.advance_tech_keep", { defaultValue: "— mantener actual —" })
+                      : t("wo_modal.advance_tech_none", { defaultValue: "— sin asignar —" }),
+                  },
+                  ...techs.map((u) => ({
+                    v: u.id,
+                    l: `${u.full_name} · ${u.employment_type || "—"}`,
+                  })),
+                ]}
+              />
+            </div>
+            <div>
+              <DialogLabel htmlFor="adv-sched" optional>
+                {t("wo_modal.advance_schedule_label", { defaultValue: "Fecha programada" })}
+              </DialogLabel>
+              <DialogInput
+                id="adv-sched"
+                type="datetime-local"
+                value={scheduledAt}
+                onChange={(e) => setScheduledAt(e.target.value)}
+              />
+            </div>
+          </div>
+        )}
         <div>
           <DialogLabel htmlFor="notes" optional>{t("wo_modal.advance_notes_label")}</DialogLabel>
           <DialogTextarea
