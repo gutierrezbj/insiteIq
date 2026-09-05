@@ -117,6 +117,8 @@ def parse_planned_date(val) -> datetime | None:
         month_name = m.group(2)
         year = int(m.group(3))
         month = SPANISH_MONTHS.get(month_name)
+        if year < 2020:
+            year = 2026
         if month:
             return datetime(year, month, day, tzinfo=timezone.utc)
     # Fallback: try ISO-ish
