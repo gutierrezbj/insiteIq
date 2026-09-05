@@ -1,11 +1,25 @@
 # InsiteIQ — Project Status
 
-**Estado:** 🚀 PRIMERA VUELTA MODO 1 CERRADA · 2026-05-20 tarde · 8 bugs cazados + Iduber ejecutó flow tech end-to-end · sprint "Afinar" firmado semana próxima
+**Estado:** 🧭 REANCLAJE 2026-09-05 · owner: "volver a la app pensada al inicio y terminar algo concreto" · Tramo 1 ejecutado (McDonald's Panamá real cargado · informe cliente ES · baja Luis) · pendiente validación owner
 **Decisión:** Owner (JuanCho)
-**Último commit live en PROD:** `96381c5` · rama `v1-foundation` · cleanup scripts deployed
+**Último commit live en PROD:** `7d0d143`+ · rama `v1-foundation`
 **Dominio:** https://insiteiq.systemrapid.io
 **Repo:** https://github.com/gutierrezbj/insiteIq
-**Caso operativo activo:** Fervimax → SRS · cambio switch TOUS Miami (2 tiendas) · tech Iduber Montes · Pembroke EJECUTADO (resolved · pendiente cierre coord) · Dadeland pendiente coord con Oscar Urrutia (jueves)
+**Operación viva (owner 2026-09-05):** McDonald's/Arcos Panamá vía Claro CES (rollout · casi termina · YA DENTRO del sistema) · oferta surveys Venezuela/Panamá/Caribe pedida · demo a Grupo Claro viva · Luis fuera · Telefónica desapareció · TOUS Pembroke `resolved` pendiente cierre · Dadeland `pre_flight` pendiente datos
+
+---
+
+## 🧭 Reanclaje 2026-09-05 · volver al blueprint
+
+**Evidencia (audit_log PROD):** mayo 104 acciones del equipo · junio 1 · julio 0 · agosto 4 (demo) · septiembre 11 (demo). Cero uso real desde 2026-05-20 mientras se deployaban 14 commits de features. Lección #16 en `memory/donde_la_cagamos.md`.
+
+**Decisión del owner:** afinar sobre la base actual (backend + modelo sólidos), no reiniciar. Producto modular en 3 módulos: **Administración · Operaciones · Coordinación**; cada módulo necesita información de los otros para cerrar su parte, no para continuar. "Terminado" = entregable real emitido por el sistema con data real, validado por quien lo usa. Solo se toca producto contra un caso real en vuelo.
+
+**Tramo 1 (hecho 2026-09-05):** McDonald's Panamá real cargado (58 WOs · 57 sites · 63 equipos) · informe de intervención ES con fotos · baja de Luis · Pembroke → Andros. Detalle en `memory/sprint_afinar.md` (sección Reanclaje) y Notion `🧭 Reanclaje 2026-09-05`.
+
+**Pendiente owner:** cerrar Pembroke (Pendiente de ti) · datos de Dadeland · SMTP en `.env` · validar Rollouts `/srs/rollouts/6a9bfd62c8a8d64e11b5f7da` con Andros.
+
+**Tramo 2:** cierre del rollout dentro del sistema + entregable para Claro + espacio Cliente para la demo. **Tramo 3:** vertical survey VE/PA/Caribe. Todo lo demás congelado.
 
 ---
 

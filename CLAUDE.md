@@ -8,6 +8,16 @@
 >
 > ---
 >
+> **🧭 REANCLAJE 2026-09-05 · LEE ESTO ANTES QUE NADA**
+>
+> Owner: *"derivamos la app sin terminar nada concreto · volver a la creación de la app que teníamos pensada al inicio y de allí evolucionar"*. Lección #16 (`memory/donde_la_cagamos.md`): 0 uso real desde mayo · features sin operación dentro · verificar con cuentas demo NO es terminado.
+>
+> Reglas vigentes: (1) solo se toca producto contra un caso real en vuelo (hoy: cierre McDonald's Panamá + surveys VE/PA/Caribe); (2) "terminado" = entregable real emitido con data real validado por quien lo usa; (3) cero data sintética; (4) producto modular en 3: Administración · Operaciones · Coordinación (cada uno necesita info de los otros para CERRAR, no para continuar); (5) Notion se espeja al cerrar cada tramo.
+>
+> Estado: Tramo 1 ejecutado (ver `PROJECT_STATUS.md` sección Reanclaje). Luis ya no está en SRS · Telefónica desapareció · Fractalia no es driver.
+>
+> ---
+>
 > **🎯 SPRINT AFINAR FIRMADO · semana 2026-05-27 · plan completo en `memory/sprint_afinar.md`**
 >
 > Owner cerró 2026-05-20 con: *"esta semana que viene le metemos duro"*. 2 prioridades acopladas + Top 5 UX/UI senior dev documentados.

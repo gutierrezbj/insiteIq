@@ -714,7 +714,7 @@ Hicimos:
 
 Owner ejecutó el flow completo TOUS Pembroke jugando el papel de Iduber Montes desde la PWA Tech. 8 commits de fix consecutivos cazando bugs latentes que el seed enmascaraba.
 
-### Lecciones nuevas (#12 a #15)
+### Lecciones nuevas (#12 a #16)
 
 **#12 · "Defenses must work in PROD too" (ErrorBoundary.jsx:31 + 84)**
 
@@ -752,6 +752,16 @@ Backend espera `target_status` en `/work-orders/{id}/advance`. Frontend Kanban e
 Mismo patrón en `submitCapture` · frontend Tech PWA llamaba `/work-orders/{id}/capture` (sin `/submit`) → 405 silencioso.
 
 **Lección:** sin contract tests (frontend genera payload · backend valida) estos bugs viven hasta que alguien los pisa en producción. Idea para iter: openapi spec + tipos generados automáticamente · o smoke test post-deploy que hace 1 advance + 1 capture/submit.
+
+**#16 · "Cuatro meses construyendo sin operación dentro" · verificar con cuentas demo NO es terminado**
+
+Del 2026-05-20 al 2026-09-05 el audit_log de PROD registra 104 acciones reales del equipo en mayo y CERO después. Todo lo de agosto/septiembre son cuentas demo (el agente probándose a sí mismo). En ese hueco se deployaron 14 commits de features correctas (ambiente demo Aurora, notificaciones, "Pendiente de ti", `/assign`, informe PDF) que nadie ha usado. Pembroke siguió `resolved` sin cerrar y el informe del cliente se hizo a mano fuera del sistema.
+
+Causas: (1) se calibró contra un cliente ficticio pese a `feedback_herramienta_interna_no_mvp` y la lección #13; (2) el agente dio por "VERIFICADO E2E en PROD" lo que solo probó con cuentas demo; (3) el sprint "Afinar" quedó abierto sin caso real que lo cerrara; (4) Notion se quedó congelado en mayo.
+
+**Regla:** "terminado" = entregable real emitido por el sistema con data real y validado por quien lo usa (Andros / Adriana / cliente). Solo se toca producto contra un caso real en vuelo; si no hay caso, no hay trabajo. Verificación con cuentas demo vale para no romper, nunca para declarar hecho. Notion se espeja al cerrar cada tramo.
+
+Owner 2026-09-05: *"derivamos la app sin terminar nada concreto · volver a la creación de la app que teníamos pensada al inicio y de allí evolucionar"*.
 
 ### Cronología del día
 

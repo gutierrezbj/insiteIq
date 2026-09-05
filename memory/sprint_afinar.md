@@ -35,6 +35,17 @@ type: sprint_plan
 - ✅ `aac475a` Iter 3 · botón reporte del modal Kanban navega al informe (era stub con toast)
 - ✅ `6c81e12` Iter 4 · informe = entregable PDF para el cliente (decisión owner 2026-09-05: "el informe es para cliente, no lo puede modificar, sería PDF") · botón PDF ↓ abre el HTML autenticado y lanza impresión · HTML ↗ / CSV ↓ ahora con Bearer (antes 401 por `<a href>`) · CSS `@page` A4 + `@media print` en report_assembler · DEPLOYED · el informe se ensambla al cerrar el WO (Pembroke sigue en resolved → botón PDF pendiente de validar tras el cierre)
 
+**Reanclaje 2026-09-05 · "volver a la app pensada al inicio" · Tramo 1 (firmado por owner):**
+- Diagnóstico: 0 uso real desde 2026-05-20 (audit_log) · features sin operación dentro · lección #16
+- Decisión owner: afinar sobre la base actual, NO reiniciar · producto modular en 3: **Administración · Operaciones · Coordinación** · cada módulo necesita info de los otros para CERRAR su parte, no para continuar
+- ✅ `e2a4536`+`7d0d143` McDonald's Panamá REAL cargado desde la hoja de Andros (`Hoja de control Panama/…25-04-26.xlsx`): org Claro CES + Arcos + Alarmas · SA 04MSP-V1.1 · project `ARCOS-CLARO-SDWAN-OFFNET` · 57 sites PA (52 con coordenadas vía lista SOW) + 12 Caribe · 58 WOs (51 cerradas · 7 canceladas) con status_timestamps reales · 63 equipos Cisco con serial + evento installed · coordinador Andros · cluster lead Agustín
+- ✅ `a024ab7` `deactivate_user.py` · Luis Sánchez dado de baja (is_active=False · sin borrar) · Pembroke reasignada a Andros
+- ✅ `e764fdb` Informe de intervención en español calcado del docx que el owner hizo a mano para Pembroke · resumen de cierre (notas del coord al cerrar) · anexo fotográfico incrustado en el HTML/PDF (fotos de la captura como data URI · antes 401 en ventana nueva)
+- ⏳ Owner: cerrar Pembroke desde Pendiente de ti (ya con Andros como coord) → primer informe real · datos de Dadeland (qué pasó y cuándo) para cerrarla/cancelarla · SMTP en `.env`
+- ⏳ Tramo 2: cierre del rollout McDonald's dentro del sistema (definir alcance real vs 101 del SOW · hoy dashboard 50.5%) + entregable de cierre para Claro + espacio Cliente listo para la demo a Grupo Claro
+- ⏳ Tramo 3: vertical survey (Venezuela · Panamá · Caribe) = primer proyecto que nace dentro
+- ❄️ Congelado hasta terminar 1-3: finanzas, insights/AI, F4E, WebSocket, hover cards, dashboards de eventos, ambiente demo Aurora (sale del login)
+
 **Snapshot:** 2026-05-20 · v1.0
 **Fechas tentativas:** semana 2026-05-27 al 2026-05-31
 **Owner:** JuanCho
