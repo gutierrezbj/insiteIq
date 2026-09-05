@@ -15,6 +15,8 @@ en futuro — v1 Foundation persiste la intencion de delivery + razon).
 Regenerate (POST /api/work-orders/{id}/report/regenerate) fuerza
 re-assembly y supersede. Util si el WO se reabre o hay correcciones.
 """
+import base64
+import os
 from datetime import datetime, timezone
 from typing import Any, Literal
 
@@ -25,6 +27,7 @@ from pydantic import BaseModel, ConfigDict
 from app.core.dependencies import CurrentUser, get_current_user
 from app.database import get_db
 from app.middleware.audit_log import write_audit_event
+from app.routes.uploads import UPLOADS_ROOT
 from app.services.report_assembler import (
     assemble_intervention_report,
     render_csv,
@@ -106,12 +109,39 @@ async def get_report_html(wo_id: str, user: CurrentUser = Depends(get_current_us
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Report not assembled yet")
 
     scope = _scope_for(user)
-    # Cached html is SRS-scoped; re-render on the fly for client
-    if scope == "srs" and report.get("html_rendered"):
-        body = report["html_rendered"]
-    else:
-        body = render_html(report, scope=scope)
+    photo_uris = await _photo_data_uris(db, report, user.tenant_id)
+    body = render_html(report, scope=scope, photo_uris=photo_uris)
     return Response(content=body, media_type="text/html; charset=utf-8")
+
+
+MAX_INLINE_PHOTOS = 12
+MAX_INLINE_BYTES = 24 * 1024 * 1024
+
+
+async def _photo_data_uris(db, report: dict, tenant_id: str) -> dict[str, str]:
+    """Fotos de la captura como data URIs (el HTML se abre en ventana nueva sin Bearer)."""
+    uris: dict[str, str] = {}
+    total = 0
+    photos = ((report.get("capture") or {}).get("photos") or [])[:MAX_INLINE_PHOTOS]
+    for ph in photos:
+        upload_id = ph.get("upload_id")
+        if not upload_id or not ObjectId.is_valid(upload_id):
+            continue
+        up = await db.uploads.find_one({"_id": ObjectId(upload_id), "tenant_id": tenant_id})
+        if not up or not up.get("storage_name"):
+            continue
+        path = os.path.join(UPLOADS_ROOT, up["storage_name"])
+        try:
+            with open(path, "rb") as fh:
+                data = fh.read()
+        except OSError:
+            continue
+        total += len(data)
+        if total > MAX_INLINE_BYTES:
+            break
+        mime = up.get("mime_type") or "application/octet-stream"
+        uris[upload_id] = f"data:{mime};base64,{base64.b64encode(data).decode('ascii')}"
+    return uris
 
 
 # ---------------- 3. CSV ----------------
