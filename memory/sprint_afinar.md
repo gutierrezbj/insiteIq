@@ -29,6 +29,12 @@ type: sprint_plan
 
 **Pendiente de validación del owner:** B1+B2+B3+B5.3 en PROD · guion en el chat de la sesión 2026-08-31.
 
+**Auditoría E2E operativo (sesión 2026-09-05) · 3 huecos cerrados:**
+- ✅ `fcf520a` Iter 1 · modal de advance del WO Detail expone tech + fecha programada en transiciones tempranas (el backend ya los aceptaba · solo faltaba UI)
+- ✅ `2c35d25` Iter 2 · POST /work-orders/{id}/assign · reasignar tech / reprogramar SIN transición de estado (SRS only · audita · notifica ball_to_me al tech nuevo) + AssignAction en la ActionBar · VERIFICADO E2E en PROD
+- ✅ `aac475a` Iter 3 · botón reporte del modal Kanban navega al informe (era stub con toast)
+- ⏳ HUECO B pendiente decisión owner: informe como entregable (el docx de Pembroke se generó a mano fuera del sistema con generate_informe_pembroke.js · decidir formato: botón Imprimir/PDF del HTML vs generador docx integrado)
+
 **Snapshot:** 2026-05-20 · v1.0
 **Fechas tentativas:** semana 2026-05-27 al 2026-05-31
 **Owner:** JuanCho
