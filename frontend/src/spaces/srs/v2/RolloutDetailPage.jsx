@@ -164,6 +164,15 @@ export default function RolloutDetailPage() {
   const [bulkOpen, setBulkOpen] = useState(false);
 
   // Carga
+  const [template, setTemplate] = useState(null);
+  useEffect(() => {
+    const tid = project?.report_template_id;
+    if (!tid) { setTemplate(null); return undefined; }
+    let alive = true;
+    api.get(`/report-templates/${tid}`).then((t) => { if (alive) setTemplate(t); }).catch(() => { if (alive) setTemplate(null); });
+    return () => { alive = false; };
+  }, [project?.report_template_id]);
+
   const load = useCallback(async () => {
     if (!project_id) return;
     markRefreshing();
@@ -289,6 +298,18 @@ export default function RolloutDetailPage() {
               <BulkRescheduleButton count={counts.scheduled} onClick={() => setBulkOpen(true)} />
             )}
             <NotesButton onClick={() => setNotesOpen(true)} />
+            {template && (
+              <span
+                className="font-mono text-[10px] px-2 py-1 rounded-sm"
+                style={{ color: "#0A1628", background: "#F4F6F8", border: "1px solid #C8CDD8" }}
+                title={t("page_rollout_detail.template_chip_tooltip")}
+              >
+                {t("page_rollout_detail.template_chip")} · {template.name} v{template.version}
+              </span>
+            )}
+            {project.status !== "closed" && project.status !== "cancelled" && (
+              <GenerateVisitsButton project={project} wos={wos} onDone={load} />
+            )}
             {project.status === "active" && <CloseProjectButton project={project} onClosed={load} />}
             <ExportReportButton
               project={project}
@@ -391,7 +412,7 @@ export default function RolloutDetailPage() {
           <MapTab wos={filteredWos} sites={siteMap} users={userMap} onScheduled={load} />
         )}
         {activeTab === "kanban" && (
-          <KanbanTab wos={filteredWos} sites={siteMap} users={userMap} reload={load} />
+          <KanbanTab wos={filteredWos} sites={siteMap} users={userMap} reload={load} project={project} />
         )}
         {activeTab === "cuadro" && (
           <DashboardTab dashboard={dashboard} counts={counts} totalSites={totalSites} progressPct={progressPct} wos={wos} />
@@ -1183,7 +1204,7 @@ const KANBAN_COLUMN_KEYS = [
   { key: "cerrado",     i18n: "kanban_col_closed",     statuses: ["completed", "closed"] },
 ];
 
-function KanbanTab({ wos, sites, users, reload }) {
+function KanbanTab({ wos, sites, users, reload, project }) {
   const { t } = useTranslation("common");
   const KANBAN_COLUMNS = useMemo(
     () => KANBAN_COLUMN_KEYS.map((c) => ({ ...c, label: t(`page_rollout_detail.${c.i18n}`) })),
@@ -1267,6 +1288,16 @@ function KanbanTab({ wos, sites, users, reload }) {
                   <div className="text-[10px] text-cl-text-mid truncate">
                     {site?.code || ""} · {tech?.full_name || tech?.name || t("page_rollout_detail.tech_unassigned_short")}
                   </div>
+                  {project?.report_template_id && (wo.status === "resolved" || wo.status === "closed") && (
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); openDeliverable(wo.id, t); }}
+                      className="mt-2 font-jakarta uppercase text-[10px] px-2 py-1 rounded-sm"
+                      style={{ color: "#0A1628", border: "1px solid #0A1628", background: "#FFFFFF", fontWeight: 700, letterSpacing: "0.06em" }}
+                    >
+                      {t("page_rollout_detail.deliverable_btn")}
+                    </button>
+                  )}
                 </article>
               );
             })}
@@ -1843,3 +1874,113 @@ function CloseProjectButton({ project, onClosed }) {
     </>
   );
 }
+
+
+async function openDeliverable(woId, t) {
+  const win = window.open("", "_blank");
+  if (!win) { toast.error(t("page_rollout_detail.export_pdf_error", { message: "popup bloqueado" })); return; }
+  try {
+    const html = await api.get(`/work-orders/${woId}/deliverable.html`);
+    win.document.open(); win.document.write(html); win.document.close(); win.focus();
+  } catch (err) {
+    win.close();
+    toast.error(err?.message || String(err));
+  }
+}
+
+function GenerateVisitsButton({ project, wos, onDone }) {
+  const { t } = useTranslation("common");
+  const [open, setOpen] = useState(false);
+  const [sites, setSites] = useState(null);
+  const [selected, setSelected] = useState(new Set());
+
+  useEffect(() => {
+    if (!open) return undefined;
+    let alive = true;
+    const orgIds = [project.client_organization_id, project.end_client_organization_id].filter(Boolean);
+    Promise.all(orgIds.map((id) => api.get(`/sites?organization_id=${id}&limit=500`).catch(() => [])))
+      .then((lists) => {
+        if (!alive) return;
+        const all = lists.flatMap((l) => (Array.isArray(l) ? l : l?.items || []));
+        const withVisit = new Set((wos || []).map((w) => w.site_id));
+        const seen = new Set();
+        const free = all.filter((s) => !withVisit.has(s.id) && !seen.has(s.id) && seen.add(s.id));
+        setSites(free);
+        setSelected(new Set());
+      });
+    return () => { alive = false; };
+  }, [open, project.client_organization_id, project.end_client_organization_id, wos]);
+
+  function toggle(id) {
+    const next = new Set(selected);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    setSelected(next);
+  }
+
+  async function submit() {
+    if (selected.size === 0) {
+      toast.error(t("page_rollout_detail.bulk_select_one_site"));
+      throw new Error("no sites");
+    }
+    try {
+      const r = await api.post(`/projects/${project.id}/generate-visits`, { site_ids: Array.from(selected) });
+      toast.success(t("page_rollout_detail.generate_visits_success", { count: r?.created?.length || 0 }));
+      setOpen(false);
+      onDone?.();
+    } catch (err) {
+      toast.error(err?.message || String(err));
+      throw err;
+    }
+  }
+
+  return (
+    <>
+      <button
+        onClick={() => setOpen(true)}
+        className="inline-flex items-center gap-2 px-3 py-2 rounded-sm font-jakarta uppercase transition"
+        style={{ fontSize: 11, fontWeight: 700, color: "#0A1628", border: "1px solid #0A1628", background: "#FFFFFF", letterSpacing: "0.08em" }}
+        title={t("page_rollout_detail.generate_visits_tooltip")}
+      >
+        <Icon icon={ICONS.plus || ICONS.document} size={14} />
+        {t("page_rollout_detail.generate_visits_btn")}
+      </button>
+      <ActionDialog
+        open={open}
+        onClose={() => setOpen(false)}
+        title={t("page_rollout_detail.generate_visits_title")}
+        subtitle={t("page_rollout_detail.generate_visits_subtitle")}
+        submitLabel={t("page_rollout_detail.generate_visits_submit", { count: selected.size })}
+        onSubmit={submit}
+        submitDisabled={selected.size === 0}
+      >
+        {sites === null && <p className="text-[12px] text-cl-text-dim">{t("common.loading")}</p>}
+        {sites && sites.length === 0 && (
+          <p className="text-[12px]" style={{ color: "#3D4A66", fontWeight: 600 }}>{t("page_rollout_detail.generate_visits_none")}</p>
+        )}
+        {sites && sites.length > 0 && (
+          <>
+            <button
+              type="button"
+              onClick={() => setSelected(selected.size === sites.length ? new Set() : new Set(sites.map((s) => s.id)))}
+              className="text-[11px] font-jakarta mb-2"
+              style={{ color: "#0A1628", fontWeight: 700 }}
+            >
+              {selected.size === sites.length ? t("page_rollout_detail.bulk_modal_deselect_all") : t("page_rollout_detail.bulk_modal_select_all")}
+            </button>
+            <div className="max-h-[320px] overflow-y-auto border border-cl-border rounded-sm">
+              {sites.map((s) => (
+                <label key={s.id} className="flex items-center gap-3 px-3 py-2 border-b border-cl-border cursor-pointer" style={{ fontSize: 12 }}>
+                  <input type="checkbox" checked={selected.has(s.id)} onChange={() => toggle(s.id)} />
+                  <span className="font-mono text-[10px] text-cl-text-dim w-28 truncate">{s.code || "—"}</span>
+                  <span className="text-cl-text truncate">{s.name || t("page_rollout_detail.site_no_name")}</span>
+                  <span className="text-cl-text-dim truncate">{s.city || ""}</span>
+                </label>
+              ))}
+            </div>
+          </>
+        )}
+      </ActionDialog>
+    </>
+  );
+}
+

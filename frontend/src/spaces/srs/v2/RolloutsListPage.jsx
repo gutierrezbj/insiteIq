@@ -64,7 +64,7 @@ export default function RolloutsListPage() {
         if (cancelled) return;
         const projItems = Array.isArray(projData) ? projData : projData?.items || [];
         const orgItems = Array.isArray(orgsData) ? orgsData : orgsData?.items || [];
-        const onlyRollouts = projItems.filter((p) => p.type === "rollout");
+        const onlyRollouts = projItems.filter((p) => p.type === "rollout" || p.type === "survey");
         const orgs = Object.fromEntries(orgItems.map((o) => [o.id, o]));
         setProjects(onlyRollouts);
         setOrgsMap(orgs);

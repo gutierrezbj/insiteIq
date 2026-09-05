@@ -390,7 +390,17 @@
     "close_notes_placeholder": "What was delivered, what was left out and why",
     "close_submit": "Close project",
     "close_force_submit": "Force closure",
-    "close_success": "Project closed · closure report generated"
+    "close_success": "Project closed · closure report generated",
+    "template_chip": "Template",
+    "template_chip_tooltip": "Client template that drives the tech playbook and the per-site deliverable",
+    "generate_visits_btn": "Generate visits",
+    "generate_visits_tooltip": "Creates one work order per selected site",
+    "generate_visits_title": "Generate visits",
+    "generate_visits_subtitle": "One work order per site. Sites that already have a visit in this project are hidden.",
+    "generate_visits_submit": "Create {{count}} visits",
+    "generate_visits_none": "Every site of the organization already has a visit in this project.",
+    "generate_visits_success": "{{count}} visits created",
+    "deliverable_btn": "Deliverable"
   },
   "page_report": {
     "back_wo": "Work order",

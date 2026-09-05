@@ -390,7 +390,17 @@
     "close_notes_placeholder": "Qué se entregó, qué quedó fuera y por qué",
     "close_submit": "Cerrar proyecto",
     "close_force_submit": "Forzar cierre",
-    "close_success": "Proyecto cerrado · informe de cierre generado"
+    "close_success": "Proyecto cerrado · informe de cierre generado",
+    "template_chip": "Plantilla",
+    "template_chip_tooltip": "Plantilla del cliente que guía el playbook del técnico y el entregable por sitio",
+    "generate_visits_btn": "Generar visitas",
+    "generate_visits_tooltip": "Crea una intervención por sitio seleccionado",
+    "generate_visits_title": "Generar visitas",
+    "generate_visits_subtitle": "Una intervención por sitio. Los sitios que ya tienen visita en este proyecto no aparecen.",
+    "generate_visits_submit": "Crear {{count}} visitas",
+    "generate_visits_none": "Todos los sitios de la organización ya tienen visita en este proyecto.",
+    "generate_visits_success": "{{count}} visitas creadas",
+    "deliverable_btn": "Entregable"
   },
   "page_report": {
     "back_wo": "Work order",

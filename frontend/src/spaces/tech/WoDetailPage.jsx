@@ -120,16 +120,28 @@ export default function TechWoDetailPage() {
   const [photos, setPhotos] = useState([]); // [{upload_id, url, kind}]
   const [captureDirty, setCaptureDirty] = useState(false);
 
+  // Modo 5 · plantilla del cliente (survey) · el playbook del tech se deriva de ella
+  const { data: tplData } = useFetch(
+    wo?.project_id ? `/work-orders/${wo_id}/template` : null,
+    { deps: [wo_id, wo?.project_id] }
+  );
+  const template = tplData?.exists ? tplData.template : null;
+  const [tplResponses, setTplResponses] = useState({});
+
   useEffect(() => {
     if (existingCapture) {
       setWhatFound(existingCapture.what_found || "");
       setWhatDid(existingCapture.what_did || "");
       setPhotos(existingCapture.photos || []);
+      setTplResponses(existingCapture.template_responses || {});
       setCaptureDirty(false);
     }
   }, [existingCapture]);
 
-  const canAdvanceToResolved = whatDid.trim().length > 5 && photos.length >= 1;
+  const missingRequired = useMemo(() => missingTemplateFields(template, tplResponses), [template, tplResponses]);
+  const canAdvanceToResolved = template
+    ? missingRequired.length === 0
+    : whatDid.trim().length > 5 && photos.length >= 1;
 
   async function submitCapture() {
     const body = {
@@ -137,6 +149,7 @@ export default function TechWoDetailPage() {
       what_did: whatDid.trim() || null,
       photos: photos,
       time_on_site_minutes: null,
+      ...(template ? { template_responses: tplResponses } : {}),
     };
     try {
       await api.post(`/work-orders/${wo_id}/capture/submit`, body);
@@ -212,8 +225,19 @@ export default function TechWoDetailPage() {
         />
       )}
 
-      {/* Capture form · solo cuando on_site o más adelante */}
-      {(isWorking || wo.status === "resolved" || isDone) && (
+      {/* Capture form · solo cuando on_site o más adelante · con plantilla = playbook guiado */}
+      {(isWorking || wo.status === "resolved" || isDone) && template && (
+        <TemplateBlock
+          template={template}
+          responses={tplResponses}
+          setResponses={(r) => { setTplResponses(r); setCaptureDirty(true); }}
+          missing={missingRequired}
+          locked={isDone || wo.status === "resolved"}
+          dirty={captureDirty}
+          onSave={async () => { await submitCapture(); }}
+        />
+      )}
+      {(isWorking || wo.status === "resolved" || isDone) && !template && (
         <InterventionBlock
           whatFound={whatFound}
           setWhatFound={(v) => { setWhatFound(v); setCaptureDirty(true); }}
@@ -249,7 +273,9 @@ export default function TechWoDetailPage() {
             fontWeight: 600,
           }}
         >
-          Antes de terminar: escribí qué hiciste + subí al menos 1 foto
+          {template
+            ? `Antes de terminar: faltan ${missingRequired.length} campos del playbook · ${missingRequired.slice(0, 3).map((m) => m.label).join(" · ")}${missingRequired.length > 3 ? "…" : ""}`
+            : "Antes de terminar: escribí qué hiciste + subí al menos 1 foto"}
         </p>
       )}
 
@@ -890,3 +916,235 @@ function Centered({ text, danger }) {
     </div>
   );
 }
+
+
+// ─── Modo 5 · playbook derivado de la plantilla ──────────────────────
+function fieldHasValue(field, value) {
+  if (value === null || value === undefined) return false;
+  if (field.type === "photo" || field.type === "photos") {
+    const arr = Array.isArray(value) ? value : [value];
+    return arr.filter(Boolean).length >= (field.min_photos || 1);
+  }
+  if (field.type === "boolean") return typeof value === "boolean";
+  if (field.type === "number" || field.type === "rating") return value !== "" && value !== null;
+  return String(value).trim() !== "";
+}
+
+function missingTemplateFields(template, responses) {
+  if (!template) return [];
+  const out = [];
+  for (const sec of template.sections || []) {
+    for (const f of sec.fields || []) {
+      if (f.required && !fieldHasValue(f, (responses || {})[f.key])) out.push({ key: f.key, label: f.label, section: sec.title });
+    }
+  }
+  return out;
+}
+
+function TemplateBlock({ template, responses, setResponses, missing, locked, dirty, onSave }) {
+  const [saving, setSaving] = useState(false);
+  const total = (template.sections || []).reduce((n, s) => n + (s.fields || []).filter((f) => f.required).length, 0);
+  const done = total - missing.length;
+  const missingKeys = new Set(missing.map((m) => m.key));
+  const setField = (key, value) => setResponses({ ...responses, [key]: value });
+
+  async function save() {
+    setSaving(true);
+    try { await onSave(); } finally { setSaving(false); }
+  }
+
+  return (
+    <Block kicker={`Playbook · ${template.name} v${template.version}`} accent={AMBER}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+        <span style={{ fontFamily: JAKARTA, fontSize: 13, fontWeight: 700, color: NAVY }}>
+          {done}/{total} campos obligatorios
+        </span>
+        <span style={{ fontFamily: MONO, fontSize: 11, color: done === total ? SUCCESS : WARN, fontWeight: 700 }}>
+          {done === total ? "✓ completo" : `faltan ${total - done}`}
+        </span>
+      </div>
+      <div style={{ height: 6, background: SOFT, borderRadius: 3, overflow: "hidden", marginBottom: 14 }}>
+        <div style={{ width: `${total ? Math.round((done / total) * 100) : 0}%`, height: "100%", background: done === total ? SUCCESS : AMBER }} />
+      </div>
+
+      {(template.sections || []).map((sec) => (
+        <section key={sec.key} style={{ marginBottom: 18, paddingTop: 10, borderTop: `1px solid ${BORDER}` }}>
+          <div style={{ fontFamily: JAKARTA, fontSize: 14, fontWeight: 800, color: NAVY, marginBottom: 2 }}>{sec.title}</div>
+          {sec.description && (
+            <div style={{ fontFamily: JAKARTA, fontSize: 12, color: TEXT_DIM, marginBottom: 8 }}>{sec.description}</div>
+          )}
+          {(sec.fields || []).map((f) => (
+            <TemplateField
+              key={f.key}
+              field={f}
+              value={responses[f.key]}
+              onChange={(v) => setField(f.key, v)}
+              locked={locked}
+              missing={missingKeys.has(f.key)}
+            />
+          ))}
+        </section>
+      ))}
+
+      {!locked && (
+        <button
+          type="button"
+          onClick={save}
+          disabled={saving}
+          style={{
+            width: "100%", padding: "14px 16px", borderRadius: 8, border: "none",
+            background: dirty ? NAVY : SOFT, color: dirty ? "#FFFFFF" : TEXT_MID,
+            fontFamily: JAKARTA, fontSize: 15, fontWeight: 800, letterSpacing: "0.02em",
+            cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.6 : 1,
+          }}
+        >
+          {saving ? "Guardando…" : dirty ? "GUARDAR AVANCE" : "Avance guardado"}
+        </button>
+      )}
+    </Block>
+  );
+}
+
+function TemplateField({ field, value, onChange, locked, missing }) {
+  const label = (
+    <label style={{ fontFamily: MONO, fontSize: 10, fontWeight: 700, color: missing ? WARN : TEXT_DIM, letterSpacing: "0.12em", textTransform: "uppercase", display: "block", marginBottom: 6, marginTop: 12 }}>
+      {field.label}{field.unit ? ` (${field.unit})` : ""} {field.required && <span style={{ color: missing ? WARN : SUCCESS }}>*</span>}
+    </label>
+  );
+  const help = field.help ? (
+    <div style={{ fontFamily: JAKARTA, fontSize: 11, color: TEXT_DIM, marginTop: 4 }}>{field.help}</div>
+  ) : null;
+
+  if (field.type === "photo" || field.type === "photos") {
+    return (
+      <div>
+        {label}
+        <PhotoField value={Array.isArray(value) ? value : value ? [value] : []} onChange={onChange} locked={locked} min={field.min_photos || 1} />
+        {help}
+      </div>
+    );
+  }
+  if (field.type === "boolean") {
+    return (
+      <div>
+        {label}
+        <div style={{ display: "flex", gap: 8 }}>
+          {[["Sí", true], ["No", false]].map(([txt, v]) => (
+            <button
+              key={txt}
+              type="button"
+              disabled={locked}
+              onClick={() => onChange(v)}
+              style={{
+                flex: 1, padding: "12px 0", borderRadius: 8, fontFamily: JAKARTA, fontSize: 14, fontWeight: 700,
+                border: `1px solid ${value === v ? NAVY : BORDER}`, background: value === v ? NAVY : "#FFFFFF",
+                color: value === v ? "#FFFFFF" : TEXT_MID,
+              }}
+            >
+              {txt}
+            </button>
+          ))}
+        </div>
+        {help}
+      </div>
+    );
+  }
+  if (field.type === "rating") {
+    return (
+      <div>
+        {label}
+        <div style={{ display: "flex", gap: 6 }}>
+          {[1, 2, 3, 4, 5].map((n) => (
+            <button
+              key={n}
+              type="button"
+              disabled={locked}
+              onClick={() => onChange(n)}
+              style={{ flex: 1, padding: "10px 0", borderRadius: 8, border: `1px solid ${BORDER}`, background: "#FFFFFF", fontSize: 22, color: Number(value) >= n ? AMBER : BORDER }}
+            >
+              ★
+            </button>
+          ))}
+        </div>
+        {help}
+      </div>
+    );
+  }
+  if (field.type === "choice") {
+    return (
+      <div>
+        {label}
+        <select value={value ?? ""} onChange={(e) => onChange(e.target.value || null)} disabled={locked} style={{ ...fieldStyle, height: 44 }}>
+          <option value="">— elegir —</option>
+          {(field.options || []).map((o) => <option key={o} value={o}>{o}</option>)}
+        </select>
+        {help}
+      </div>
+    );
+  }
+  if (field.type === "textarea") {
+    return (
+      <div>
+        {label}
+        <textarea value={value ?? ""} onChange={(e) => onChange(e.target.value)} disabled={locked} rows={3} style={fieldStyle} />
+        {help}
+      </div>
+    );
+  }
+  return (
+    <div>
+      {label}
+      <input
+        type={field.type === "number" ? "number" : "text"}
+        inputMode={field.type === "number" ? "decimal" : "text"}
+        value={value ?? ""}
+        onChange={(e) => onChange(field.type === "number" ? (e.target.value === "" ? null : Number(e.target.value)) : e.target.value)}
+        disabled={locked}
+        style={{ ...fieldStyle, height: 44 }}
+      />
+      {help}
+    </div>
+  );
+}
+
+function PhotoField({ value, onChange, locked, min }) {
+  const [uploading, setUploading] = useState(false);
+  const [err, setErr] = useState(null);
+  async function pick(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true); setErr(null);
+    try {
+      const res = await uploadFile(file);
+      onChange([...value, { upload_id: res.id || res._id, url: res.url, kind: "image", added_at: new Date().toISOString() }]);
+    } catch (ex) {
+      setErr(ex.message || "Error al subir");
+    } finally {
+      setUploading(false);
+      e.target.value = "";
+    }
+  }
+  return (
+    <div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(84px, 1fr))", gap: 8, marginBottom: 8 }}>
+        {value.map((p, i) => (
+          <div key={p.upload_id || i} style={{ position: "relative", aspectRatio: "1 / 1", borderRadius: 6, overflow: "hidden", background: SOFT, border: `1px solid ${BORDER}` }}>
+            {p.url ? <img src={p.url} alt={`Foto ${i + 1}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : null}
+            {!locked && (
+              <button type="button" onClick={() => onChange(value.filter((_, j) => j !== i))}
+                style={{ position: "absolute", top: 4, right: 4, width: 22, height: 22, borderRadius: "50%", background: "rgba(0,0,0,0.65)", color: "#FFFFFF", border: "none", fontSize: 13 }}>×</button>
+            )}
+          </div>
+        ))}
+      </div>
+      {!locked && (
+        <label style={{ display: "inline-flex", alignItems: "center", gap: 8, fontFamily: JAKARTA, fontSize: 13, fontWeight: 700, color: "#FFFFFF", background: NAVY, padding: "10px 14px", borderRadius: 8, cursor: uploading ? "not-allowed" : "pointer", opacity: uploading ? 0.5 : 1 }}>
+          📷 {uploading ? "Subiendo…" : value.length ? "Añadir otra" : `Tomar foto (mín. ${min})`}
+          <input type="file" accept="image/*" capture="environment" onChange={pick} disabled={uploading} style={{ display: "none" }} />
+        </label>
+      )}
+      {err && <div style={{ fontFamily: JAKARTA, fontSize: 12, color: DANGER, marginTop: 6 }}>{err}</div>}
+    </div>
+  );
+}
+
